@@ -7443,7 +7443,17 @@ body.mobile-mode .evo-fab .shop-fab-label{ font-size:6.5px; }
 /* 중복 진화석 → 발톱 안내 한 줄 */
 .gcut-dupe{ margin-top:14px; font-size:12.5px; color:rgba(255,255,255,0.72); line-height:1.5; }
 /* ===== [Ver 9.12] 밸런스 패치 ===== */
-/* [Ver 9.13.1] 메뉴(≡) 옆에 있던 진입 버튼(.nm-balance)은 삭제되었다 — 드로어의 "시스템" 폴더로 들어감 */
+/* 메뉴(≡) 옆 진입 버튼 */
+.nm-balance{
+  display:flex; align-items:center; gap:6px; cursor:pointer;
+  padding:7px 13px; border-radius:999px;
+  border:1.5px solid var(--line); background:var(--bg-panel); color:var(--fg);
+  font-family:inherit; font-size:12px; font-weight:700; white-space:nowrap;
+  transition:border-color .14s ease, transform .14s ease;
+}
+.nm-balance:hover{ border-color:#ffd75e; transform:translateY(-1px); }
+.nm-balance .nmb-ic{ font-size:14px; line-height:1; }
+@media (max-width: 560px){ .nm-balance .nmb-tx{ display:none; } .nm-balance{ padding:7px 10px; } }
 
 .bp-vers{ display:flex; gap:6px; flex-wrap:wrap; padding:0 2px 12px; }
 .bp-ver{
@@ -8113,6 +8123,21 @@ body:not(.paper-skin) .pet-fx .pfx-bad{ color: #ff7b7b; }
 }
 .evo-glow-ephemeral.card-fx-evolved::after{ filter: drop-shadow(0 0 6px #ff5cc8) drop-shadow(0 0 12px #d1007a) hue-rotate(-28deg); }
 
+/* [Ver 9.13.1] 비밀결사+ 신호 — 판에 비밀결사 카드를 든 다른 사람이 있으면 카드가 천천히 발광한다.
+   진화 글로우 위에 금색 테두리 맥박을 한 겹 더 얹는다(누가 들고 있는지는 알려주지 않는다). */
+.card-fx-society-signal{ animation: societySignal 1.6s ease-in-out infinite !important; }
+@keyframes societySignal{
+  0%,100%{ box-shadow:
+    0 0 18px 4px color-mix(in srgb, var(--evo-a, #be3cff) 65%, transparent),
+    0 0 0 2px var(--evo-a, #e08cff),
+    0 6px 14px rgba(0,0,0,0.6); }
+  50%{ box-shadow:
+    0 0 26px 10px rgba(255,215,94,0.85),
+    0 0 0 3px #ffd75e,
+    0 6px 14px rgba(0,0,0,0.6); }
+}
+@media (prefers-reduced-motion: reduce){ .card-fx-society-signal{ animation: none !important; } }
+
 /* 진화 능력 한 줄 — 원본 설명 아래에 보라색으로 덧붙는다 */
 .evo-bonus{
   margin-top: 4px; padding-top: 4px;
@@ -8158,6 +8183,19 @@ body:not(.paper-skin) .pet-fx .pfx-bad{ color: #ff7b7b; }
 .inv-chip-up{ background:#3fa860; color:#04210e; font-weight:800; border-color:#3fa860; }
 .inv-chip-up:disabled{ opacity:.35; cursor:not-allowed; }
 .inv-chip-up:not(:disabled):hover{ filter:brightness(1.12); }
+
+/* ---- [Ver 9.14] 윌슨 체력 게이지 (스탯창 안 · 지지율 게이지 바로 아래 한 줄) ----
+   본체 HP바와 헷갈리지 않도록 파란 계열 + 배구공 아이콘으로 확실히 구분한다. */
+.wilson-row{ display:flex; align-items:center; gap:5px; margin-top:3px; }
+.wilson-face{ font-size:11px; line-height:1; flex-shrink:0; }
+.wilson-track{
+  position:relative; flex:1; height:7px; min-width:26px;
+  border:1.5px solid var(--line); border-radius:6px; overflow:hidden;
+  background:color-mix(in srgb, var(--fg) 8%, transparent);
+}
+.wilson-track > i{ display:block; height:100%; background:linear-gradient(90deg,#3a8fe8,#8ec7ff); transition:width .25s ease; }
+.wilson-num{ font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; color:#5aa9ff; flex-shrink:0; }
+body.mobile-mode .wilson-num{ font-size:8px; }
 
 /* ---- [Ver 9.10.2] 정치인 지지율 게이지 (스탯창 안) ---- */
 .approval-row{ display:flex; align-items:center; gap:5px; margin-top:3px; }
@@ -8267,7 +8305,7 @@ body.mobile-mode .hitman-panel{ font-size:8px; padding:2px 8px; top:-11px; }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 9.13.1</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 9.14</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -8290,9 +8328,12 @@ body.mobile-mode .hitman-panel{ font-size:8px; padding:2px 8px; top:-11px; }
 
     <!-- [Ver 9.2] 우측 상단 — 우비나이트 보유량 + ≡ 메뉴 버튼.
          우비나이트 배지는 renderUbiniteBadge()가 이 컨테이너의 ≡ 버튼 앞에 끼워 넣는다. -->
-    <!-- [Ver 9.13.1] 우측 상단은 "우비나이트 배지 + ≡" 두 개만 남긴다.
-         밸런스 패치는 ≡ 안의 "시스템" 폴더로 들어갔다. -->
     <div class="nm-topright" id="nmTopRight">
+      <!-- [Ver 9.12] 밸런스 패치 — 이번 판 조정 내역을 그림과 함께 한눈에 본다.
+           (9.13.1에서 드로어로 넣어봤다가, 바로 눈에 보이는 게 낫다는 판단으로 원위치) -->
+      <button class="nm-balance" id="nmBalance" onclick="openBalancePatch()" title="밸런스 패치">
+        <span class="nmb-ic">⚖️</span><span class="nmb-tx">밸런스 패치</span>
+      </button>
       <button class="nm-burger" id="nmBurger" onclick="toggleMenuDrawer()" title="메뉴" aria-label="메뉴 열기">
         <span></span><span></span><span></span>
       </button>
@@ -8394,8 +8435,8 @@ body.mobile-mode .hitman-panel{ font-size:8px; padding:2px 8px; top:-11px; }
          [Ver 9.13.1] 메뉴 정리 — 화면 곳곳에 흩어져 있던 버튼을 성격별로 세 폴더에 몰아넣었다.
            · 🌐 온라인   : 메인 화면의 "온라인" 버튼이 통째로 들어왔다 (랭킹 · 계정 · 통계 · 공지)
            · 📮 기록·보상 : 전투 기록 · 우편함 · 코드
-           · ⚙️ 시스템    : 우측 상단에 따로 떠 있던 "밸런스 패치"가 여기로 합류했다
-         메인 화면에 남는 버튼은 "게임 시작 3종 + 내 물건 4칸"뿐이다. -->
+           · ⚙️ 시스템    : 설정 · 업데이트 로그 · 크레딧
+         메인 화면에 남는 버튼은 "게임 시작 3종 + 내 물건 4칸 + 우측 상단 밸런스 패치"뿐이다. -->
     <div class="nm-drawer-bg" id="nmDrawerBg" onclick="closeMenuDrawer()">
       <aside class="nm-drawer" onclick="event.stopPropagation()">
         <div class="nm-drawer-head">
@@ -8475,16 +8516,11 @@ body.mobile-mode .hitman-panel{ font-size:8px; padding:2px 8px; top:-11px; }
           <button class="nm-folder-head" onclick="toggleMenuFolder(this)">
             <span class="nm-folder-icon">⚙️</span>
             <span class="nm-folder-title">시스템</span>
-            <span class="nm-folder-sub">밸런스 · 설정 · 로그 · 크레딧</span>
+            <span class="nm-folder-sub">설정 · 로그 · 크레딧</span>
             <span class="nm-folder-chev">›</span>
           </button>
           <div class="nm-folder-body">
             <div class="nm-folder-inner">
-              <!-- [Ver 9.13.1] 우측 상단에 따로 떠 있던 밸런스 패치 버튼이 여기로 들어왔다 -->
-              <button class="nm-item" onclick="openBalancePatch()">
-                <span class="nm-item-ic">⚖️</span>
-                <span class="nm-item-tx"><b>밸런스 패치</b><small>바뀌기 전 → 바뀐 후를 한눈에</small></span>
-              </button>
               <button class="nm-item" onclick="goToSettings()">
                 <span class="nm-item-ic">⚙️</span>
                 <span class="nm-item-tx"><b>환경설정</b><small>테마와 옵션 변경</small></span>
@@ -9178,11 +9214,18 @@ function startDemocracyVote(caster, card, onComplete){
   if(!cands.length){ if(onComplete) onComplete(); return; }
   window.__demVotes = {};                        // voterId -> targetId ([Ver 9.12.1] 시간 내에 몇 번이든 바꿀 수 있다)
   window.__demOnComplete = onComplete || null;   // 투표 종료 후 게임 진행을 재개하는 콜백
-  log('highlight', `🗳️ ${J(caster.name,'이','가')} "민주주의"를 발동했습니다! ${sec}초 동안 익명 투표가 진행됩니다.`);
-  // 봇 표는 즉시 무작위로 (자기 자신 제외). [Ver 9.12.1] 개표 전까지 공개하지 않는다.
+  /* [Ver 9.13.1] 민주주의+ — 투표가 **공개투표**가 된다.
+     누가 누구를 찍었는지 표가 들어오는 즉시 로그에 남는다(랜서버에서도 로그가 그대로 동기화된다). */
+  const __demOpen = (typeof isEvoOf==='function') && isEvoOf(card, '민주주의');
+  window.__demOpenVote = __demOpen;
+  log('highlight', `🗳️ ${J(caster.name,'이','가')} "${card.name}"을(를) 발동했습니다! ${sec}초 동안 ${__demOpen?'<b>공개</b>':'익명'} 투표가 진행됩니다.`);
+  // 봇 표는 즉시 무작위로 (자기 자신 제외). [Ver 9.12.1] 개표 전까지 공개하지 않는다(공개투표면 즉시 공개).
   voters.filter(v=>v.isBot).forEach(v=>{
     const opts = cands.filter(c=>c.id!==v.id);
-    if(opts.length) window.__demVotes[v.id] = opts[Math.floor(Math.random()*opts.length)].id;
+    if(!opts.length) return;
+    const pick = opts[Math.floor(Math.random()*opts.length)];
+    window.__demVotes[v.id] = pick.id;
+    if(__demOpen) log('sys', `🗳️ ${J(v.name,'이','가')} ${pick.name}에게 투표했습니다.`);
   });
   const me = (typeof viewer==='function') ? viewer() : null;
   /* [Ver 9.12.1] 투표를 **완전 익명**으로 되돌린다.
@@ -9192,7 +9235,9 @@ function startDemocracyVote(caster, card, onComplete){
   const demBodyFor = (viewerId)=> `
     <div style="margin-bottom:10px;color:var(--fg-dim);font-size:12px;">
       누구를 보낼지 고르세요. <b>제한 시간 안에는 몇 번이든 바꿀 수 있습니다.</b><br>
-      모든 표는 <b>익명</b>이며, 개표 전까지 누가 누구를 찍었는지 알 수 없습니다.
+      ${__demOpen
+        ? '이번 투표는 <b style="color:var(--tone-blue);">공개투표</b>입니다 — 누가 누구를 찍었는지 로그에 그대로 남습니다.'
+        : '모든 표는 <b>익명</b>이며, 개표 전까지 누가 누구를 찍었는지 알 수 없습니다.'}
     </div>
     <div id="demList" style="display:flex;flex-direction:column;gap:5px;">
       ${cands.filter(c=>!viewerId || c.id!==viewerId).map(c=>`<button class="btn btn-sm dem-opt" data-tid="${c.id}" style="border-color:var(--tone-blue);color:var(--tone-blue);" onclick="democracyCast('${c.id}')">${escapeHtml(c.name)}</button>`).join('')}
@@ -9259,7 +9304,13 @@ function democracyCast(targetId){
   }
   const me = (typeof viewer==='function') ? viewer() : null;
   if(!me || !window.__demVotes) return;
+  const prev = window.__demVotes[me.id];
   window.__demVotes[me.id] = targetId;   // 덮어쓰기 — 몇 번이든 바꿀 수 있다
+  // [Ver 9.13.1] 민주주의+ 공개투표 — 표가 바뀔 때마다 누가 누구를 찍었는지 공개된다
+  if(window.__demOpenVote && prev !== targetId){
+    const t = players.find(p=>p.id===targetId);
+    log('sys', `🗳️ ${J(me.name,'이','가')} ${t?t.name:'?'}에게 투표했습니다.${prev?' (표 변경)':''}`);
+  }
   /* [버그수정/랜서버] 호스트가 원격 참가자의 투표를 LAN.__actAs로 대리 처리할 때,
      그 사람은 자기 화면에서 이미 표시를 갱신했으므로 호스트 DOM은 건드리지 않는다. */
   const isLocalScreenOwner = !(typeof LAN!=='undefined' && LAN.__actAs);
@@ -11487,13 +11538,22 @@ function startHotseat(count, names){
 
 /* "보여주기 카드" — 정규 턴이 아니라 4초 반응시간에 내야만 효과가 있는 카드.
    턴에 포함되지 않으며, 특별한 설명이 없는 한 1회용이다. */
-const REVEAL_TYPES = ['REACT_CANCEL_NAMED','REACT_BUYOUT','REACT_MIRROR','REACT_GUARD','REACT_SKIP_NEXT','REACT_REDIRECT','REACT_SEIZE','REACT_PATROL','REACT_NULLIFY_DMG','REACT_REFLECT_LIMITED','REACT_GOLD_SEIZE','REACT_BLOCK_SELF','REACT_STEAL_EFFECT','REACT_INSTAKILL','REACT_BLOCK_BIG_ATK','REACT_DAMAGE_TO_HP','REACT_EMERGENCY_SHIELD','REACT_GRANDPA_COUNTER','REACT_TIMEMACHINE','REACT_ZEUS','REACT_PROTECT_THIRD','FISHING_ROD_BAIT','REACT_PRISM_BUFF','REACT_NOT_SORRY'];
+const REVEAL_TYPES = ['REACT_CANCEL_NAMED','REACT_BUYOUT','REACT_MIRROR','REACT_GUARD','REACT_SKIP_NEXT','REACT_REDIRECT','REACT_SEIZE','REACT_PATROL','REACT_NULLIFY_DMG','REACT_REFLECT_LIMITED','REACT_GOLD_SEIZE','REACT_BLOCK_SELF','REACT_STEAL_EFFECT','REACT_INSTAKILL','REACT_BLOCK_BIG_ATK','REACT_DAMAGE_TO_HP','REACT_EMERGENCY_SHIELD','REACT_GRANDPA_COUNTER','REACT_TIMEMACHINE','REACT_ZEUS','REACT_PROTECT_THIRD','FISHING_ROD_BAIT','REACT_PRISM_BUFF','REACT_NOT_SORRY','REACT_REFLECT_HALF'];
 function isRevealCard(card){ return REVEAL_TYPES.includes(card.type); }
 /* v4.61: "소지만 하고 있어도(내지 않아도) 조건 충족 시 자동 발동하는" 순수 패시브 카드 목록.
    보여주기 카드(REVEAL_TYPES)와 마찬가지로 등급 옆에 태그를 붙여 한눈에 구분할 수 있게 한다. */
 const PASSIVE_HOLD_TYPES = ['DOTTUSA_COUNTER_PASSIVE','RAPTOR_FANCLUB_PASSIVE','JUMADEUNG_LAST_STAND','PRISON_RETURN_PASSIVE','MIRACLE_REVIVE_PASSIVE','ROYAL_IMPEACH_INHERIT','LAST_STAND_ATK','NINE_TAILED_RAPTOR_PASSIVE','DEATH_WIN_IF_UNSEEN','ADRENALINE_PASSIVE','SUBSTITUTE_EGRADE_PASSIVE','JACKPOT_PASSIVE','AWAKEN_PASSIVE','PENTHOUSE_PASSIVE','RED_OCEAN_PASSIVE','JEOJJEOL_PASSIVE','WIN_IF_HP1','HAND_COUNT_ATK_BUFF_PASSIVE','UNDERDOG_ATK_DR_PASSIVE','NO_REVIVE_AURA_PASSIVE','KKAENIP_INFINITE_PASSIVE','MINE_SHOP','MINE_DRAW','PROPHET_WIN','CURSE_DOLL_PASSIVE','SUPERCONDUCTOR_PASSIVE','UBINCALIBUR_PASSIVE','ANTI_STEAL_KILL_PASSIVE','LUCKY_CHARM_PASSIVE','SIN_PASSIVE','RAPTOR_EGG',
   // [Ver 8.10] "잠재력"이 전부 수거할 수 있도록 기존에 이 배열에 빠져있던 (사실상 패시브류인) 타입들을 보강
-  'BULLETPROOF_PASSIVE','COACH_JO_PASSIVE','GAMST_FRUIT_PASSIVE','KANE_PASSIVE','MUSIN_COUP_PASSIVE','PAGLIACCI_PASSIVE','PROBLEM_CHILD_PASSIVE','FLEE_ON_DEATH_PASSIVE','BLUE_OCEAN_PASSIVE'];
+  'PROBLEM_CHILD_PASSIVE','FLEE_ON_DEATH_PASSIVE','BLUE_OCEAN_PASSIVE'];
+/* [Ver 9.14 버그수정] 아래 6종은 이름만 "…_PASSIVE"일 뿐, 실제로는 **카드를 내야** 발동한다
+   (resolveCardEffect에 case가 있고 coachJoActive 같은 플래그를 그때 켠다).
+   그런데 PASSIVE_HOLD_TYPES에 들어 있어서
+     · 손패에 "패시브" 태그가 붙고
+     · 내려고 하면 "아무 효과 없이 버려집니다" 경고가 뜨고
+     · 봇은 아예 내지 않아(41683) 영영 발동되지 않았다.
+   이제 "소지만 해도 발동"에서 빼고, 대신 **"낸 뒤 계속 발동"**을 뜻하는 지속 태그를 붙인다. */
+const PLAY_THEN_PASSIVE_TYPES = ['BULLETPROOF_PASSIVE','COACH_JO_PASSIVE','GAMST_FRUIT_PASSIVE','KANE_PASSIVE','MUSIN_COUP_PASSIVE','PAGLIACCI_PASSIVE'];
+function isPlayThenPassiveCard(card){ return !!card && PLAY_THEN_PASSIVE_TYPES.includes(card.type); }
 // [Ver 8.1.6] "금쪽같은 내새끼"(PROBLEM_CHILD_PASSIVE)는 소지만으로 "엄마 공격 허용" 효과가 자동 적용되지만,
 // 손패에 남겨두는 것 외에 "그냥 냈을 때" AOE 피해라는 별도 효과도 있는 이중 역할 카드다. 그래서 소지 즉시
 // 발동 후 사라지는 순수 PASSIVE_HOLD_TYPES에는 넣지 않고, 아래 canAttackMother()에서 "소지 여부"만 매번
@@ -11623,11 +11683,14 @@ function renderUbiniteBadge(){
     }
     /* [Ver 9.2] 위치 변경 — 예전엔 유저 스탯바 바로 아래에 붙었지만,
        이제 우측 상단 ≡ 버튼 "왼쪽"에 나란히 둔다.
-       [Ver 9.13.1] 밸런스 패치 버튼이 드로어로 들어가, 우측 상단은 배지 + ≡ 둘뿐이다. */
+       [Ver 9.12] 밸런스 패치 버튼이 ≡ 바로 옆에 붙어야 하므로, 배지는 그 **앞**에 끼운다.
+       (배지가 사이에 끼면 "메뉴 옆 버튼"이 아니라 멀찍이 떨어진 버튼이 된다) */
     const tr = document.getElementById('nmTopRight');
     const burger = document.getElementById('nmBurger');
+    const balance = document.getElementById('nmBalance');
     if(tr && burger){
-      if(el.parentNode !== tr || el.nextElementSibling !== burger) tr.insertBefore(el, burger);
+      const ref = balance || burger;
+      if(el.parentNode !== tr || el.nextElementSibling !== ref) tr.insertBefore(el, ref);
     } else {
       const bar = document.querySelector('.user-stat-bar');
       if(!el.parentNode && bar && bar.parentNode) bar.parentNode.insertBefore(el, bar.nextSibling);
@@ -14510,6 +14573,50 @@ async function fbLookupRemoteCode(code){
    ########################################################################## */
 const BALANCE_PATCHES = [
   {
+    version: 'Ver 9.14', date: '2026-08-13',
+    groups: [
+      { title:'시스템 정정 · 버그', kind:'system', icon:'🛠️',
+        note:'<b>쉴드 파괴</b>와 <b>쉴드 관통</b>이 코드상 같은 처리라 사실상 하나의 효과였습니다. 이번에 두 개념을 제대로 갈라놓았으니, 파괴·관통 표기가 붙은 카드의 체감이 달라집니다.',
+        rows:[
+          { name:'쉴드 파괴', icon:'💥', rows:[
+            { label:'처리', from:'쉴드 무시 + 쉴드 보존(=관통과 동일)', to:'쉴드를 체력처럼 깎으며 관통', dir:'neutral' },
+            { label:'예시',  from:'HP2000·쉴드300 ← 1000 : HP 1000 · 쉴드 300', to:'쉴드 0 · HP 1300', dir:'neutral' },
+          ]},
+          { name:'쉴드 관통', icon:'🗡️', rows:[
+            { label:'처리', from:'쉴드 무시 + 쉴드 보존', to:'유지 (쉴드는 그대로 남음)', dir:'neutral' },
+          ]},
+          { name:'람보르기니', icon:'🏎', rows:[
+            { label:'무한 카드 조합', from:'봇이 무한히 내고 턴이 멈춤', to:'한 턴 연속 20장 상한', dir:'up' },
+          ]},
+          { name:'패시브 분류', icon:'🏷️', rows:[
+            { label:'코치조 · 케인 · 감스트 · 무신정변 · 파야치 · 방탄', from:'"패시브"(소지만 해도 발동) · 봇이 안 냄', to:'"지속"(내면 계속 발동) · 정상 사용', dir:'up' },
+          ]},
+          { name:'블루오션', icon:'🌊', rows:[
+            { label:'발동 판정', from:'턴 시작 때만 갱신(1:1이 된 턴엔 안 켜짐)', to:'맞는 순간 즉시 판정', dir:'up' },
+          ]},
+        ]},
+      { title:'도박 · 랜덤 이벤트', kind:'system', icon:'🎲',
+        rows:[
+          { name:'도뜨사', icon:'💀', rows:[
+            { label:'기본 확률', from:'1%', to:'2%', dir:'down' },
+          ]},
+          { name:'골드 랜덤 이벤트', icon:'💰', note:'보통~매우 낮음 등급만 해당', rows:[
+            { label:'월급날',       from:'100골드',  to:'35골드',  dir:'down' },
+            { label:'편의점 알바',  from:'300골드',  to:'105골드', dir:'down' },
+            { label:'보물상자',     from:'200골드',  to:'70골드',  dir:'down' },
+            { label:'새뱃돈',       from:'500골드',  to:'175골드', dir:'down' },
+            { label:'슬롯머신',     from:'777.77골드', to:'277.77골드', dir:'down' },
+            { label:'교통사고',     from:'-300골드', to:'-105골드', dir:'up' },
+            { label:'보이스 피싱',  from:'-500골드', to:'-175골드', dir:'up' },
+            { label:'브롤패스 구매', from:'-200골드', to:'-70골드', dir:'up' },
+          ]},
+          { name:'신규 카드', icon:'🃏', rows:[
+            { label:'카드 수', from:'—', to:'27종 추가', dir:'up' },
+          ]},
+        ]},
+    ]
+  },
+  {
     version: 'Ver 9.13.1', date: '2026-08-13',
     groups: [
       { title:'지후펫 리워크', kind:'pet',
@@ -14544,14 +14651,18 @@ const BALANCE_PATCHES = [
         rows:[
           { name:'메뉴 화면', icon:'🧹', rows:[
             { label:'온라인 버튼',   from:'메인 화면 별관 5칸 중 하나', to:'≡ 메뉴 → 온라인 폴더', dir:'neutral' },
-            { label:'밸런스 패치',   from:'우측 상단 고정 버튼',        to:'≡ 메뉴 → 시스템 폴더', dir:'neutral' },
             { label:'별관 버튼',     from:'5칸',                        to:'4칸(인벤·뽑기·광산·마트)', dir:'neutral' },
+            { label:'밸런스 패치',   from:'우측 상단 고정 버튼',        to:'유지', dir:'neutral' },
           ]},
           { name:'리더보드', icon:'🏅', rows:[
             { label:'순위 항목', from:'4종', to:'5종 (플레이 시간 추가)', dir:'up' },
           ]},
           { name:'진화 카드', icon:'🧬', rows:[
             { label:'진화 가능 카드', from:'25종', to:'40종', dir:'up' },
+            { label:'진화 능력',     from:'표시만 됨(미작동)', to:'40종 전부 실제 발동', dir:'up' },
+          ]},
+          { name:'진화석 컷신', icon:'🎬', rows:[
+            { label:'유지 시간', from:'등급 무관 3초', to:'Normal 2초 · Ancient 3초 · Universal 4초 · Ephemeral 5초', dir:'up' },
           ]},
         ]},
     ]
@@ -15351,7 +15462,14 @@ function gachaCostFor(count){
    · 화면 아무 곳이나 누르면 다음 장으로 넘어가고, 우상단 SKIP은 남은 걸 전부 건너뛴다.
    ========================================================================== */
 const GACHA_FADE_MS = 2000;   // 암전에 걸리는 시간
-const GACHA_BLACK_MS = 3000;  // 검은 화면(컷신 대사) 유지 시간 — [Ver 9.10.5] 5초 → 3초
+const GACHA_BLACK_MS = 3000;  // 검은 화면(컷신 대사) 기본 유지 시간 — [Ver 9.10.5] 5초 → 3초
+/* [Ver 9.13.1] 등급이 높을수록 컷신을 더 오래 끈다. 최고는 Ephemeral의 5초.
+   (Normal 2초 · Ancient 3초 · Universal 4초 · Ephemeral 5초) */
+const GACHA_BLACK_MS_BY_TIER = { Normal:2000, Ancient:3000, Universal:4000, Ephemeral:5000 };
+function gachaBlackMsFor(tier){
+  const v = GACHA_BLACK_MS_BY_TIER[tier];
+  return (typeof v === 'number') ? v : GACHA_BLACK_MS;
+}
 
 /* [Ver 9.10.5] 진화석 등급별 컷신 효과음. 암전이 시작되는 그 순간 재생한다.
    Normal은 효과음이 없다. Universal(Archangel)은 음원 자체를 13초로 잘라 페이드아웃까지 구워뒀다. */
@@ -15466,6 +15584,8 @@ function showGachaReveal(res, onNext, onSkip, idx, total){
   const ev = evoOf(res.card) || {};
   const td = evoTierDef(res.tier);
   const cut = ev.cutscene || '';
+  // [Ver 9.13.1] 컷신 유지 시간은 진화 등급을 따라간다 (Ephemeral이 가장 길다 — 5초)
+  const blackMs = gachaBlackMsFor(res.tier);
   ov.classList.add('gcut-stone', td.cls);
   /* [Ver 9.10.5] 컷신이 시작되는 순간 = 암전이 시작되는 순간.
      이때 배경음(뽑기 BGM 포함)을 음소거하고 등급별 효과음을 튼다. */
@@ -15517,7 +15637,7 @@ function showGachaReveal(res, onNext, onSkip, idx, total){
     mountSkip();
     ov.classList.add('revealed');
     ov.addEventListener('click', finish);
-  }, GACHA_FADE_MS + GACHA_BLACK_MS);
+  }, GACHA_FADE_MS + blackMs);
 }
 /* 별 n개 (최대 5칸) */
 function gachaStarsHtml(n){
@@ -15703,6 +15823,12 @@ function initPersistentSystems(){
   loadSettingsFromStorage();
   loadEditorChecksFromStorage();
   try{ runPetWipeOnce(); }catch(e){} // [Ver 9.12] 지후펫 전량 회수 (계정당 1회, 보상은 BYEBYEPET 코드)
+  /* [Ver 9.13.1] 이미 가지고 있던 진화석도 해금으로 인정한다.
+     9.13 이전에 받아둔 진화석은 도감 기록이 없어 "해금 안 됨"으로 남아 진화가 막혀 있었다. */
+  try{
+    const st = loadEvoStones();
+    Object.keys(st).forEach(n=>{ if(st[n] > 0) recordCardPlayedToDex(n); });
+  }catch(e){}
   try{ updateDevMenuButtons(); }catch(e){} // [Ver 9.12.1] 개발자 전용 메뉴 항목 표시 상태 초기화
   migrateLegacyTierIfNeeded(); // [Ver 8.0] 티어 개편 전 "태초 시즌" 최고 티어 스냅샷 보존 + 진행 티어 초기화
   loadTierFromStorage();
@@ -15927,18 +16053,36 @@ function exitPlaygroundBar(){
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
   {
+    version: 'Ver 9.14',
+    date: '2026-08-13',
+    items: [
+      '🃏 <b>[신규 카드 27종]</b> — 샷건치기 · 동네사거리파 · 접어라ㅋ걍 · 충전기 · 카드 뷔페 · 조광일 · <b>윌슨</b> · 정도전 · 엽서 · 돌림노래 · 무조건반사 · 우빈 설렁탕 · 우빈랩터의 고대 유적 · 도박 마스터 · 권모술수pro · 불타는남자 · 영계의 낫 · 경기 회복 · 우빈 리커버리 · 영혼재판 · 사의 경계 · 입대 · 중성화 의사 · 불편 · 적절한 거리를 점프할 수 있음 · 코 · 개쉐끼 랩터',
+      '🏐 [신규] <b>윌슨</b> — 자신이 받는 피해를 대신 받아주는 분신입니다. 스탯창에 <b>전용 파란 체력 게이지</b>가 따로 생기며, 윌슨이 맞을 때마다 주인의 HP가 200씩 회복됩니다. <b>쉴드 관통</b> 공격은 윌슨을 그냥 지나치고, <b>쉴드 파괴·쉴드 제거</b>를 맞으면 윌슨은 그 자리에서 터집니다.',
+      '🛡️ <b>[중요/정정] 쉴드 파괴와 쉴드 관통이 사실상 같은 효과였습니다.</b> 둘 다 "쉴드를 무시하고 HP에 직격"으로 처리되어 개념이 구분되지 않았습니다. 이제 <b>파괴는 쉴드를 체력처럼 깎으며 뚫고 들어가고</b>(예: HP 2000·쉴드 300이 1000 파괴 피해를 받으면 쉴드 0 · HP 1300), <b>관통은 쉴드를 건드리지 않고 HP에만</b> 꽂힙니다. 파괴·관통 표기가 붙은 모든 카드에 적용됩니다.',
+      '🐛 <b>[버그수정] 람보르기니 무한 루프</b> — 봇이 람보르기니 상태에서 <b>무한 사용 카드</b>를 집으면 손패가 줄지 않아 같은 카드를 영원히 내고 <b>턴이 넘어가지 않았습니다.</b> 이제 한 턴에 연속으로 낼 수 있는 장수에 상한(20장)이 생겨 루프가 끊깁니다.',
+      '🐛 <b>[버그수정] 패시브 카드 오분류</b> — <b>코치조 · 케인 · 감스트 · 무신정변 · 파야치 · 방탄</b>은 <b>내야</b> 발동하는 카드인데 "소지만 해도 발동"으로 분류되어 있었습니다. 그래서 손패에 "패시브" 태그가 붙고, 내려고 하면 "아무 효과 없이 버려집니다" 경고가 뜨고, <b>봇은 아예 내지 않아 영영 발동되지 않았습니다.</b> 이제 <b>지속</b> 태그로 바뀌고 정상적으로 낼 수 있습니다.',
+      '🐛 <b>[버그수정] 블루오션</b> — 발동 여부를 <b>턴이 시작될 때만</b> 갱신해서, 누군가 죽어 1:1이 된 바로 그 턴에는 효과가 켜지지 않았습니다. 이제 레드오션처럼 <b>맞는 순간 손패를 직접 확인</b>해 즉시 적용됩니다.',
+      '🎲 [밸런스] <b>도뜨사 기본 확률 1% → 2%</b>로 상향했습니다.',
+      '💰 [밸런스] <b>보통~매우 낮음</b> 등급 랜덤 이벤트의 <b>골드 획득·손실량을 약 35% 수준으로 하향</b>했습니다. 월급날 100→35 · 편의점 알바 300→105 · 새뱃돈 500→175 · 교통사고 -300→-105 · 보이스피싱 -500→-175 · 슬롯머신 777.77→277.77 등. 이벤트 한 번으로 판이 뒤집히던 문제를 줄입니다.'
+    ]
+  },
+  {
     version: 'Ver 9.13.1',
     date: '2026-08-13',
     items: [
       '🎁 [코드] <b>BYEBYEDATA</b> — 서버를 파이어베이스로 옮기며 모든 유저의 데이터가 초기화되었습니다. 보상으로 <b>Ephemeral 확정 진화석 뽑기권 1장 + 카드뽑기 티켓 5장</b>을 드립니다. 메뉴 → 기록·보상 → 코드 입력에서 받아주세요.',
       '🎫 <b>[신규] 등급 확정 진화석 뽑기권</b> — 쓰면 그 등급의 진화석이 <b>반드시</b> 나옵니다. 카드 뽑기 화면에서 보유한 등급의 버튼이 따로 뜨며, 그 등급에서 <b>아직 진화하지 않은 카드</b>를 우선해서 골라줍니다.',
-      '🧹 <b>[메뉴 정리]</b> 메인 화면의 <b>🌐 온라인</b> 버튼과 우측 상단의 <b>⚖️ 밸런스 패치</b> 버튼이 사라지고, 전부 <b>≡ 메뉴</b> 안으로 들어갔습니다. ≡ 메뉴는 <b>온라인 · 기록/보상 · 시스템</b> 세 폴더로 정리되었고, 메인 화면 오른쪽은 <b>인벤토리 · 카드 뽑기 · 유물 광산 · 랩터마트24</b> 네 칸으로 통일되었습니다.',
+      '🧹 <b>[메뉴 정리]</b> 메인 화면의 <b>🌐 온라인</b> 버튼이 <b>≡ 메뉴</b> 안으로 들어갔습니다. ≡ 메뉴는 <b>온라인 · 기록/보상 · 시스템</b> 세 폴더로 정리되었고, 메인 화면 오른쪽은 <b>인벤토리 · 카드 뽑기 · 유물 광산 · 랩터마트24</b> 네 칸으로 통일되었습니다. (⚖️ 밸런스 패치는 우측 상단 그대로입니다)',
       '⏱️ [온라인] 리더보드에 <b>플레이 시간</b>이 추가되었습니다. 글로벌 통계에도 <b>총 플레이 시간 · 1인 평균 · 최장 플레이</b>가 함께 표시됩니다. (기록은 <b>내 기록 올리기</b>를 눌러야 반영됩니다)',
       '🎩 <b>[리워크] 정치인 지후</b> — <b>월급 150%가 삭제</b>되고, 대신 <b>다른 사람이 돈을 얻을 때마다 그 금액의 60%를 자신도 함께 받습니다.</b> 상대의 돈을 빼앗는 게 아니라 따로 생기는 돈입니다. 지지율 즉사는 그대로입니다.',
       '🔮 <b>[리워크] 점쟁이 지후</b> — 좋은 점괘/나쁜 점괘 둘 중 하나였던 것이 <b>6가지 점괘</b>로 늘었습니다. 자신의 턴마다 하나가 무작위로 <b>1바퀴</b> 걸립니다. ① 회피율 +30% ② 받는 피해 +30% ③ 다음 월급 2배 ④ 공격력 -30% ⑤ 받는 피해 -25%·공격력 +25% ⑥ 300 피해',
       '📈 <b>[리워크] 투자자 지후</b> — 사이클이 빨라졌습니다. <b>자신의 턴에 투자 → 바로 다음 사람의 턴에 회수</b>, 그 뒤로도 한 턴 걸러 투자와 회수를 반복합니다. 회수량은 <b>50~200% → 25~200%</b>로 조정되었습니다.',
       '💰 [밸런스] <b>부자 지후</b>의 시작 골드가 <b>200 → 250</b>으로 올랐습니다.',
-      '🧬 <b>[진화 카드 15종 추가]</b> — 안죄송해+ · 괴한+ · NO U+ · 복선+ · 도박+ · 청부업자+ · 무한리필 양념돼지목살+ (Ephemeral) / 아이언랩터+ · 비상계엄 선포+ · CCTV+ · 비밀결사+ (Ancient) / 민주주의+ · 메타톤 잼민이+ (Universal) / 신용카드+ · 무지개떡+ (Normal)'
+      '🧬 <b>[진화 카드 15종 추가]</b> — 안죄송해+ · 괴한+ · NO U+ · 복선+ · 도박+ · 청부업자+ · 무한리필 양념돼지목살+ (Ephemeral) / 아이언랩터+ · 비상계엄 선포+ · CCTV+ · 비밀결사+ (Ancient) / 민주주의+ · 메타톤 잼민이+ (Universal) / 신용카드+ · 무지개떡+ (Normal)',
+      '⚡ <b>[진화 능력이 실제로 작동합니다]</b> — 지금까지 진화 카드의 능력은 카드에 <b>보라색 글씨로 표시만</b> 되고 게임에는 아무 영향이 없었습니다. 이제 <b>40종 전부</b>가 실제로 발동합니다. 배트맨+의 홈런, 한석원+의 사기 저하, 용암 낙하+의 화상, 차르봄바+의 유언 폭발, NO U+의 9999 반사, CCTV+의 추가 사용, 복선+의 전이, 민주주의+의 공개투표까지 전부입니다.',
+      '🎬 [뽑기] 진화석 <b>컷신 길이가 등급을 따라갑니다.</b> Normal 2초 · Ancient 3초 · Universal 4초 · <b>Ephemeral 5초</b>. 좋은 게 나올수록 여운이 깁니다.',
+      '🔓 [인벤토리] <b>진화석을 얻으면 그 카드가 바로 해금됩니다.</b> 예전에는 그 카드를 한 번도 뽑은 적이 없으면 진화석이 있어도 진화할 수 없어 쓸모없는 진화석이 쌓였습니다. <b>이미 가지고 있던 진화석도 전부 소급 적용</b>됩니다.',
+      '🛠️ [버그수정/개발자 모드] 개발자 모드에서 인벤토리 격자는 전부 해금돼 보이는데, 카드를 누르면 <b>"🔒 미획득"</b> 창이 떠서 능력을 볼 수 없던 문제를 고쳤습니다.'
     ]
   },
   {
@@ -19899,7 +20043,7 @@ function evolvedGradeOf(grade){ return String(grade||'') + '+'; }
 function makeEvolvedCard(baseCard, uid){
   const ev = evoOf(baseCard && baseCard.name);
   if(!baseCard || !ev) return null;
-  return {
+  const out = {
     ...baseCard,
     name: evolvedNameOf(baseCard.name),
     uid: uid || baseCard.uid,
@@ -19908,11 +20052,339 @@ function makeEvolvedCard(baseCard, uid){
     __evoTier: ev.tier,
     __evoBonus: ev.bonus
   };
+  /* [Ver 9.13.1] 숫자로 표현되는 진화 능력(공격력·회복량·확률·비용 …)은 여기서 카드에 직접 새긴다.
+     그러면 손패에 그려지는 숫자도 진화한 값 그대로 보이고, 각 case 핸들러는 손댈 필요가 없다. */
+  try{ evoApplyStats(out); }catch(e){ console.error('[진화] 능력치 적용 실패', e); }
+  return out;
 }
 /* 진화 능력 한 줄 — 원본 설명 아래에 보라색으로 덧붙는다. 카드가 그려지는 모든 곳에서 공용으로 쓴다. */
 function evoBonusHtml(c){
   if(!c || !c.__evolved || !c.__evoBonus) return '';
   return `<div class="evo-bonus">${escapeHtml(c.__evoBonus)}</div>`;
+}
+
+/* ##########################################################################
+   [Ver 9.13.1 신규] 진화 능력 — 실제 게임 로직
+   --------------------------------------------------------------------------
+   9.10.1~9.13에서 진화 카드는 **보라색 설명 한 줄**만 있고 아무 일도 하지 않았다.
+   여기서 그 40종의 능력을 전부 실제 효과로 연결한다.
+
+   ▶ 붙이는 방식은 딱 네 갈래다. 새 진화 카드를 넣을 때도 이 넷 중 하나를 고르면 된다.
+     ① **숫자 능력** → evoApplyStats(). 진화하는 순간 카드 필드(power·pierce·maxUses·
+        winChance …)를 직접 고쳐 새긴다. 핸들러를 건드리지 않아도 되고, 손패에 보이는
+        숫자까지 저절로 맞는다.
+     ② **명중 시 능력** → evoOnHitBonus() / evoAfterHit(). dealDamage 한 곳에서만 불린다.
+        (배트맨의 홈런처럼 피해량을 바꾸는 건 앞쪽, 디버프를 남기는 건 뒤쪽)
+     ③ **낸 뒤 능력** → evoAfterCast(). continueAfterEffect(카드 한 장이 완전히 끝나는 자리)
+        에서 불린다. "사용할 때마다 성장"하는 카드도 여기서 자란다.
+     ④ **그 카드만의 특수 동작** → 해당 case 핸들러에 isEvoOf(card,'이름') 한 줄.
+        (스턴 기간·반동 무시·즉사 회피처럼 그 카드 안에서만 의미가 있는 것들)
+
+   ▶ 진화 여부는 언제나 `card.__evolved` + `card.__evolvedFrom`(원본 이름)으로 판별한다.
+     이름으로 비교하는 곳이 없도록 isEvoOf()만 쓴다 — 진화형 이름은 "원본+"라 헷갈리기 쉽다.
+   ########################################################################## */
+function isEvo(c){ return !!(c && c.__evolved); }
+function isEvoOf(c, baseName){ return !!(c && c.__evolved && c.__evolvedFrom === baseName); }
+/* 지금 해석 중인 카드가 X의 진화형인가 — dealDamage처럼 카드를 인자로 못 받는 곳에서 쓴다. */
+function castingIsEvoOf(baseName){
+  return isEvoOf(window.__evoCastingCard, baseName);
+}
+
+/* ---- ① 숫자 능력 — 진화하는 순간 카드에 새긴다 ---- */
+function evoApplyStats(c){
+  if(!c || !c.__evolved || c.__evoStatsDone) return c;
+  c.__evoStatsDone = true;
+  const mul = (v, m)=> Math.round((v||0) * m);
+  switch(c.__evolvedFrom){
+    case '응급처치':      c.power = mul(c.power, 1.10); break;                 // 회복량 +10%
+    case '박치기':        c.power = mul(c.power, 1.50); break;                 // 피해 +50% (반동은 evoAfterHit)
+    case '레일건':        c.power = mul(c.power, 1.15); break;                 // 공격력 +15%
+    case '당근':          c.power = mul(c.power, 2); c.hpBonus = mul(c.hpBonus, 2); break; // 공격력·회복량 +100%
+    case '자본주의':      c.power = mul(c.power, 2); break;                    // 획득 골드 +100%
+    case '치유의 선율':   c.power = (c.power||0) + 200; break;                 // 회복량 +200
+    case '무지개떡':      c.power = (c.power||0) + 1; break;                   // 회복량 +1
+    case '신용카드':      c.power = 9999999999999999999999; break;             // 블랙카드
+    case '절대영도':      c.pierce = 'PIERCE'; break;                          // 쉴드 파괴 → 관통
+    case '변이물감':      c.maxUses = (c.maxUses||3) + 1; break;               // 사용 횟수 +1
+    case '아이언랩터':    c.goldCost = Math.max(0, (c.goldCost||350) - 50); break; // 수리비 -50
+    case '도박':          c.winChance = (c.winChance||40) + 10; break;         // 성공률 +10%
+    case '신고버튼':      c.deathChance = (c.deathChance||35) + 5; break;      // 신고 성공 +5%
+    case '안죄송해':      c.successChance = (c.successChance||50) + 10; break; // 발동 확률 +10%
+    /* 나머지는 숫자로 표현되지 않아 ②③④에서 처리한다. */
+  }
+  return c;
+}
+
+/* ---- ② 명중 관련 ---- */
+/* 피해가 실제로 들어가기 직전 — 지금 내고 있는 카드의 진화 보정을 얹는다. */
+function evoOnHitBonus(caster, target, amount){
+  if(castingIsEvoOf('배트맨') && Math.random() < 0.05){
+    log('highlight', `🦇 배트맨+ 홈런! ${J(target.name,'에게','에게')} 들어가는 피해가 200 증가합니다.`);
+    return amount + 200;
+  }
+  return amount;
+}
+/* 피해가 확정으로 들어간 직후 — 대상에게 남기는 진화 디버프 · 시전자 반동 */
+function evoAfterHit(caster, target, amount){
+  if(!caster || !target) return;
+  // 한석원+ — 맞은 사람은 풀이 죽어 공격력 5% 감소
+  if(castingIsEvoOf('한석원') && target.id !== caster.id){
+    target.atkMultiplier = (target.atkMultiplier||0) - 5;
+    log('sys', `📉 한석원+ — ${J(target.name,'이','가')} 풀이 죽어 공격력이 5% 감소했습니다.`);
+  }
+  // 비상계엄 선포+ — 입막음을 당해 피격자 전원 공격력 5% 감소
+  if(castingIsEvoOf('비상계엄 선포') && target.id !== caster.id){
+    target.atkMultiplier = (target.atkMultiplier||0) - 5;
+    log('sys', `🔇 비상계엄 선포+ — ${J(target.name,'이','가')} 입막음을 당해 공격력이 5% 감소했습니다.`);
+  }
+  // 용암 낙하+ — 맞은 대상에게 5바퀴 화상(턴당 30)
+  if(castingIsEvoOf('용암 낙하') && target.alive && !target.debuffImmune){
+    target.burned = true;
+    target.burnDamage = Math.max(target.burnDamage||0, 30);
+    target.burnDueRound = Math.max(target.burnDueRound||0, turnCount + 5);
+    log('sys', `🌋 용암 낙하+ — ${J(target.name,'이','가')} 5바퀴 동안 화상(턴당 30)을 입습니다.`);
+  }
+  // 박치기+ — 서로 아프다. 자신도 50 피해 (한 장에 한 번만)
+  if(castingIsEvoOf('박치기') && !window.__evoHeadbuttDone){
+    window.__evoHeadbuttDone = true;
+    log('sys', `🤕 박치기+ — ${J(caster.name,'도','도')} 반동으로 50 피해를 입습니다.`);
+    currentAttackContext = { attackerName: caster.name, attackerId: caster.id, cardName: '박치기+' };
+    applyDamageToPlayer(caster, 50, 'NONE');
+    try{ checkWinCondition(); }catch(e){}
+  }
+}
+
+/* ---- ③ 카드 한 장을 다 낸 뒤 ---- */
+/* continueAfterEffect에서 딱 한 번 불린다. "낸 뒤에 붙는 효과"와 "쓸수록 자라는 카드"를 여기서 처리한다.
+   ⚠ 턴을 넘길지 정하는 분기보다 **먼저** 불려야 한다 (CCTV+의 추가 사용이 그 분기를 탄다). */
+function evoAfterCast(caster, card){
+  /* 박치기+ 반동 1회 제한 해제 — 진화 카드가 아니어도 반드시 풀어야 한다.
+     (안 풀면 사이에 다른 카드가 한 번 끼는 순간 다음 박치기+의 반동이 통째로 사라진다) */
+  window.__evoHeadbuttDone = false;
+  if(!card || !card.__evolved || !caster) return;
+  switch(card.__evolvedFrom){
+    /* 쓸수록 자라는 카드 — 이번 판에 쓴 값은 이미 적용됐고, 다음 사용분부터 오른다. */
+    case '괴한':
+      card.power = Math.round((card.power||0) * 1.05);
+      log('sys', `🔪 괴한+ — 다음 사용부터 공격력이 5% 오릅니다. (현재 ${card.power.toLocaleString()})`);
+      break;
+    case '무한리필 양념돼지목살':
+      card.power = Math.round((card.power||0) * 1.10);
+      log('sys', `🍖 무한리필 양념돼지목살+ — 다음 사용부터 회복량이 10% 오릅니다. (현재 ${card.power.toLocaleString()})`);
+      break;
+    /* 낸 뒤에 얹히는 효과 */
+    case '역시 정상화는 신창섭': {
+      const cleared = (typeof cleanseAllEffects==='function') ? cleanseAllEffects(caster) : [];
+      log('sys', `🔧 역시 정상화는 신창섭+ — ${J(caster.name,'이','가')} 자신에게 걸린 디버프를 전부 정상화했습니다.${cleared && cleared.length?` (${cleared.join(', ')})`:''}`);
+      break;
+    }
+    case '8은 a이렇게되는거지 그럼 몇 a가 돼 9a-10이야 그럼 9a는 얼마가 돼. 열여덟. 따라서 a값이나왔으니까 이식을 일차함수에 대입하면 얼마나와': {
+      const others = alivePlayers().filter(p=> p.id !== caster.id);
+      others.forEach(p=>{ p.damageReductionPct = (p.damageReductionPct||0) - 1; });
+      if(others.length) log('sys', `📐 수학의 신 — 모든 상대가 일어서서 받는 피해량이 1% 증가했습니다.`);
+      break;
+    }
+    case '내가 선배님이니까.':
+      caster.atkMultiplier = (caster.atkMultiplier||0) + 1;
+      caster.__evoSunbaeDue = turnCount + 1;   // 1바퀴 뒤 되돌린다 (tickEvoTempExpire)
+      log('sys', `😤 내가 선배님이니까.+ — 기강을 잡아 1바퀴 동안 공격력이 1% 증가합니다.`);
+      break;
+    case '상납금':
+      caster.tributeGold = 25;                 // 15 → 25
+      log('gold', `💸 상납금+ — 이제 매 바퀴 상대마다 25골드씩 거둬들입니다.`);
+      break;
+    case '사장님이 미쳤어요':
+      caster.freePurchaseCount = (caster.freePurchaseCount||0) + 1;  // 무료 구매 1회 추가
+      log('sys', `🏷️ 사장님이 미쳤어요+ — 무료 구매 기회가 한 번 더 생겼습니다. (남은 ${1 + caster.freePurchaseCount}회)`);
+      break;
+    case 'CCTV':
+      caster.evoExtraCard = (caster.evoExtraCard||0) + 1;
+      log('sys', `📹 CCTV+ — 훔쳐본 김에 이번 턴에 카드를 한 번 더 낼 수 있습니다.`);
+      break;
+  }
+}
+
+/* ---- ④ 사망을 계기로 발동하는 진화 능력 ---- */
+/* onPlayerDeath 안에서 딱 한 번 불린다.
+     · 차르봄바+ — 손에 든 채로 죽으면 턴과 관계없이 그 자리에서 터진다(유언).
+     · 복선+     — 복선에 걸린 대상이 복선보다 먼저 죽으면, 건 사람을 뺀 랜덤한 사람에게 넘어간다. */
+function evoOnDeath(dead){
+  if(!dead) return;
+  /* 복선+ 전이 — 이 사람에게 걸려 있던 진화 복선을 다른 사람에게 옮긴다. */
+  if(Array.isArray(pendingDeaths) && pendingDeaths.length){
+    pendingDeaths.forEach(d=>{
+      if(!d || !d.evo || d.targetId !== dead.id || d.moved) return;
+      const pool = alivePlayers().filter(p=> p.id !== d.casterId && p.id !== dead.id);
+      if(!pool.length){ log('sys', `⧗ 복선+이 옮겨갈 사람이 없어 그대로 사라집니다.`); return; }
+      const next = pool[Math.floor(Math.random()*pool.length)];
+      d.targetId = next.id;
+      d.moved = true;   // 릴레이로 무한히 도는 것을 막는다 — 전이는 한 번뿐
+      log('highlight', `⧗ 복선+ — ${J(dead.name,'이','가')} 먼저 사망해, 복선이 ${next.name}에게 옮겨갔습니다!`);
+    });
+  }
+  /* 차르봄바+ 유언 — 손패에 있으면 자동으로 터진다. */
+  if(window.__evoCharBombBusy) return;
+  const idx = (dead.hand||[]).findIndex(c=> isEvoOf(c, '차르봄바'));
+  if(idx < 0) return;
+  const bomb = dead.hand.splice(idx, 1)[0];
+  window.__evoCharBombBusy = true;
+  try{
+    log('highlight', `☢️ 차르봄바+ — ${J(dead.name,'이','가')} 쓰러지며 마지막 버튼을 눌렀습니다! 모두가 ${(bomb.power||5000).toLocaleString()} 피해(쉴드파괴)를 입습니다.`);
+    try{ window.__charBombBoom = true; if(bomb.sfx) cardAudioTriggerKey('sfx', bomb.sfx, dead.id); }catch(e){}
+    currentAttackContext = { attackerName: dead.name, attackerId: dead.id, cardName: bomb.name };
+    alivePlayers().forEach(p=> applyDamageToPlayer(p, bomb.power||5000, 'BREAK'));
+    currentAttackContext = null;
+    try{ renderBoard(); renderHand(); }catch(e){}
+  } finally { window.__evoCharBombBusy = false; }
+}
+
+/* ##########################################################################
+   [Ver 9.14 신규] 신규 카드 지원 함수
+   ########################################################################## */
+/* ---- [Ver 9.14 이스터에그] 개쉐끼 랩터 ----
+   "야! 개 짖는 소리좀 안나게 해라" 계열 카드로 개쉐끼 랩터를 막으려 들면,
+   오히려 시전자가 그 자리에서 물려 죽는다. 카드 설명에는 절대 쓰지 않고 로그로만 드러난다.
+   (판정은 카드 이름으로 한다 — 그런 카드가 아직 없어도 아무 일도 일어나지 않는다) */
+function madDogBackfire(caster, target, card){
+  if(!caster || !target || !card) return false;
+  if(!target.madDogPct) return false;                    // 대상이 개쉐끼 랩터 상태가 아니면 무관
+  const nm = String(card.name||'');
+  if(!(nm.includes('짖') || nm.includes('짓')) || !nm.includes('개')) return false;
+  log('highlight', `🐕 ${J(caster.name,'이','가')} 개쉐끼가 된 ${target.name}에게 조용히 하라고 했습니다... 그리고 물어뜯겼습니다.`);
+  forceKillWithRevive(caster, '개쉐끼 랩터를 건드림', card.name);
+  try{ renderBoard(); checkWinCondition(); }catch(e){}
+  return true;
+}
+
+/* ---- 영혼재판: 사람이 낼 카드를 고른 순간 ---- */
+function soulTrialPick(i){
+  const s = window.__soulTrial;
+  if(!s) return;
+  const picked = s.list[i];
+  window.__soulTrial = null;
+  try{ closeModal(); }catch(e){}
+  s.settle(picked);
+}
+/* ---- 카드 뷔페: 30장을 늘어놓고 상점가로 산다 ---- */
+function openCardBuffet(){
+  const b = window.__buffet;
+  if(!b) return;
+  const me = players.find(p=> p.id === b.ownerId);
+  if(!me){ return; }
+  const rows = b.menu.map((c,i)=>{
+    if(c.__sold) return '';
+    const price = Math.max(0, shopSlotPrice(me, { card:c }));
+    const can = (me.gold||0) >= price;
+    return `<button class="btn btn-sm" ${can?'':'disabled'} style="justify-content:space-between;text-align:left;width:100%;"
+      onclick="buffetBuy(${i})"><span>[${escapeHtml(displayGrade(c))}] ${escapeHtml(c.name)}</span><b>${fmtWon(price)}</b></button>`;
+  }).join('');
+  const left = b.menu.filter(c=> !c.__sold).length;
+  showModal('🍽️ 카드 뷔페', `<div style="margin-bottom:8px;color:var(--fg-dim);font-size:12px;">
+      상점과 같은 가격으로 <b>얼마든지</b> 살 수 있습니다. 남은 매물 <b>${left}</b>장 · 보유 <b>${fmtWon(me.gold||0)}</b></div>
+    <div style="display:flex;flex-direction:column;gap:4px;max-height:52vh;overflow-y:auto;">${rows || '<div style="text-align:center;padding:14px;">전부 가져갔습니다.</div>'}</div>`,
+    [{ label:'그만 먹기', solid:true, action: ()=> { window.__buffet = null; setTimeout(advanceTurn, 300); } }]);
+}
+function buffetBuy(i){
+  const b = window.__buffet;
+  if(!b) return;
+  const me = players.find(p=> p.id === b.ownerId);
+  const c = b.menu[i];
+  if(!me || !c || c.__sold) return;
+  const price = Math.max(0, shopSlotPrice(me, { card:c }));
+  if((me.gold||0) < price) return;
+  me.gold -= price;
+  me.goldSpent = (me.goldSpent||0) + price;
+  c.__sold = true;
+  grantCardToPlayer(me, { ...c, __sold:undefined }, '카드 뷔페');
+  log('gold', `🍽️ ${J(me.name,'이','가')} 카드 뷔페에서 "${c.name}"을(를) ${fmtWon(price)}에 가져갔습니다.`);
+  try{ renderHand(); renderBoard(); }catch(e){}
+  openCardBuffet();   // 목록 갱신
+}
+
+/* ---- 매 개인 턴마다 도는 신규 카드 판정 ---- */
+/* 고대 유적(모든 사람의 턴) · 개쉐끼 랩터/경기 회복/우빈 리커버리(자기 턴) */
+function tickNewCardsEveryTurn(){
+  // 🏛️ 우빈랩터의 고대 유적 — 누구의 턴이든 확률로 보물
+  players.forEach(p=>{
+    if(!p.alive || !p.ruinsActive) return;
+    if(Math.random()*100 >= (p.ruinsPct||10)) return;
+    grantGold(p, p.ruinsGold||10000);
+    const n = p.ruinsCards||3;
+    for(let i=0;i<n;i++){ const c = drawCard(p); if(c) grantCardToPlayer(p, c, '고대 유적'); }
+    log('highlight', `🏛️ ${J(p.name,'이','가')} 고대 유적에서 보물을 찾았습니다! ${fmtWon(p.ruinsGold||10000)} + 카드 ${n}장`);
+  });
+  // 🕸️ 권모술수pro — 예약된 바퀴가 되면 전체 약화
+  players.forEach(p=>{
+    if(!p.alive || !p.schemeProDue || turnCount < p.schemeProDue) return;
+    p.schemeProDue = 0;
+    const victims = alivePlayers().filter(v=> v.id !== p.id && !(v.team && v.team===p.team));
+    victims.forEach(v=>{
+      v.atkMultiplier = (v.atkMultiplier||0) - (p.schemeProAtk||30);
+      v.hp = Math.max(1, Math.floor(v.hp * (1 - (p.schemeProHpCut||50)/100)));
+    });
+    log('highlight', `🕸️ ${J(p.name,'의','의')} "권모술수pro"가 발동했습니다! 상대 ${victims.length}명의 공격력 -${p.schemeProAtk||30}%, 체력 절반.`);
+    try{ renderBoard(); checkWinCondition(); }catch(e){}
+  });
+}
+/* 자기 턴에만 도는 신규 카드 판정 */
+function tickNewCardsOwnTurn(p){
+  if(!p || !p.alive) return;
+  // 🐕 개쉐끼 랩터 — 자기 턴마다 확률로 중성화(고자)
+  if(p.madDogPct && Math.random()*100 < p.madDogPct){
+    if(p.gojaImmune){
+      log('sys', `🐕 ${J(p.name,'이','가')} "고자방지권"으로 중성화수술을 피했습니다!`);
+    } else {
+      p.maxHp = 1; p.hp = Math.min(p.hp, 1); p.shield = 0;
+      try{ cardAudioTriggerKey('sfx', 'goja', p.id); }catch(e){}
+      log('highlight', `🐕 개쉐끼 랩터 — ${J(p.name,'이','가')} 중성화수술을 당했습니다! (MaxHP 1)`);
+    }
+  }
+  // 💹 경기 회복 — 지난 바퀴에 쓴 골드의 일부 환급
+  if(p.ecoRebatePct){
+    const spent = Math.max(0, (p.goldSpent||0) - (p.__ecoMark||0));
+    p.__ecoMark = p.goldSpent||0;
+    const back = Math.floor(spent * (p.ecoRebatePct/100));
+    if(back > 0){ grantGold(p, back); log('gold', `💹 경기 회복 — ${J(p.name,'이','가')} 지난 바퀴에 쓴 돈의 ${p.ecoRebatePct}%인 ${fmtWon(back)}을(를) 돌려받았습니다.`); }
+  }
+  // 🩹 우빈 리커버리 — 지난 바퀴에 입은 피해의 일부 회복
+  if(p.dmgRebatePct){
+    const took = Math.max(0, (p.dmgTakenTotal||0) - (p.__dmgMark||0));
+    p.__dmgMark = p.dmgTakenTotal||0;
+    const heal = healAmountFor(p, Math.floor(took * (p.dmgRebatePct/100)));
+    const actual = Math.min(heal, Math.max(0, p.maxHp - p.hp));
+    if(actual > 0){
+      p.hp += actual;
+      showFloatNumber(p.id, '+'+actual.toLocaleString(), 'heal');
+      log('heal', `🩹 우빈 리커버리 — ${J(p.name,'이','가')} 지난 바퀴에 입은 피해의 ${p.dmgRebatePct}%인 ${actual.toLocaleString()}을(를) 회복했습니다.`);
+    }
+  }
+}
+/* 공격이 명중한 뒤 도는 신규 카드 판정 (불타는남자 · 영계의 낫) */
+function newCardsOnHit(caster, target){
+  if(!caster || !target || !target.alive || target.id === caster.id) return;
+  if(caster.burningManBurn && !target.debuffImmune){
+    target.burned = true;
+    target.burnDamage = (target.burnDamage||0) + caster.burningManBurn;   // 중첩
+    target.burnDueRound = Math.max(target.burnDueRound||0, turnCount + 99);
+    log('sys', `🔥 불타는남자 — ${J(target.name,'이','가')} 화상에 휩싸였습니다. (턴당 ${target.burnDamage})`);
+  }
+  if(caster.reaperScythePct && !target.debuffImmune){
+    const pct = (target.maxHp > 0) ? (target.hp / target.maxHp * 100) : 100;
+    if(pct <= caster.reaperScythePct && trySetStunned(target)){
+      log('sys', `🌾 영계의 낫 — ${J(target.name,'이','가')} 빈사 상태(HP ${Math.round(pct)}%)라 1턴 스턴되었습니다.`);
+    }
+  }
+}
+
+/* 1바퀴짜리 진화 버프 해제 — 라운드가 넘어갈 때 부른다. */
+function tickEvoTempExpire(){
+  players.forEach(p=>{
+    if(p.__evoSunbaeDue && turnCount >= p.__evoSunbaeDue){
+      p.atkMultiplier = (p.atkMultiplier||0) - 1;
+      p.__evoSunbaeDue = 0;
+      log('sys', `${J(p.name,'의','의')} "내가 선배님이니까.+" 기강 효과가 끝났습니다.`);
+    }
+  });
 }
 
 /* ---- 진화석 · 우빈랩터 발톱 ---- */
@@ -19929,6 +20401,10 @@ function grantEvoStone(cardName, n){
   const s = loadEvoStones();
   s[cardName] = (s[cardName]||0) + (n||1);
   saveEvoStones();
+  /* [Ver 9.13.1] 진화석을 뽑으면 그 카드는 **그 자리에서 해금된다.**
+     예전에는 "그 카드를 한 번도 뽑은 적 없으면" 진화석이 있어도 진화할 수 없어,
+     쓸 수 없는 진화석이 인벤토리에 쌓이기만 했다. 이제 진화석 자체가 해금 조건이 된다. */
+  try{ recordCardPlayedToDex(cardName); }catch(e){}
 }
 function consumeEvoStone(cardName){
   const s = loadEvoStones();
@@ -20001,8 +20477,10 @@ function evolveCardPermanently(cardName){
   const def = evoOf(cardName);
   if(!def) return { ok:false, reason:'이 카드에는 진화형이 없습니다.' };
   if(isCardEvolved(cardName)) return { ok:false, reason:'이미 진화한 카드입니다.' };
-  if(!isCardInDex(cardName)) return { ok:false, reason:'아직 해금하지 않은 카드입니다. 먼저 이 카드를 한 번 뽑아야 합니다.' };
   if(getEvoStone(cardName) <= 0) return { ok:false, reason:'이 카드의 진화석이 없습니다.' };
+  /* [Ver 9.13.1] 진화석을 가지고 있으면 그 자체가 해금이다.
+     (이전 버전에서 받아둔 진화석도 여기서 함께 해금되도록, 도감에도 지금 기록한다) */
+  if(!isCardInDex(cardName)) recordCardPlayedToDex(cardName);
   if(!consumeEvoStone(cardName)) return { ok:false, reason:'진화석을 사용하지 못했습니다.' };
   const ev = loadEvolved();
   ev[cardName] = { at: Date.now(), tier: def.tier, to: evolvedNameOf(cardName) };
@@ -20355,12 +20833,12 @@ function renderDexScreen(){
   if(dexGradeFilter === '__evolvable')      list = list.filter(c=> isEvolvableCardName(c.name) && !isCardEvolved(c.name));
   else if(dexGradeFilter === '__evolved')   list = list.filter(c=> isCardEvolved(c.name));
   else if(dexGradeFilter)                   list = list.filter(c=> c.grade===dexGradeFilter);
-  if(dexDiscoveredOnly) list = list.filter(c=> dex[c.name]);
+  if(dexDiscoveredOnly) list = list.filter(c=> isCardInDex(c.name)); // [Ver 9.13.1] 개발자 모드 전체 해금과 일관되게
   if(dexSearch) list = list.filter(c=> (c.name||'').toLowerCase().includes(dexSearch));
 
   // 상단 요약
   const sum = document.getElementById('invSummary');
-  if(sum) sum.innerHTML = `수집 <b>${discoveredTotal}</b> / ${total}종 · ${pct}% · 한 번이라도 <b>뽑은</b> 카드가 해금됩니다`;
+  if(sum) sum.innerHTML = `수집 <b>${discoveredTotal}</b> / ${total}종 · ${pct}% · 한 번이라도 <b>뽑은</b> 카드와 <b>진화석을 얻은</b> 카드가 해금됩니다`;
 
   // 등급 필터 칩
   const fw = document.getElementById('invFilters');
@@ -20397,7 +20875,7 @@ function renderDexScreen(){
   // JSON 문자열로 만든 뒤 큰따옴표까지 엔티티로 바꿔야 속성이 깨지지 않는다.
   const attrArg = (s)=> escapeHtml(JSON.stringify(s)).replace(/"/g,'&quot;');
   const cellHtml = (c)=>{
-    const got = devMode || !!dex[c.name];  // [Ver 9.12.1] 개발자 모드 = 전체 해금
+    const got = isCardInDex(c.name);  // [Ver 9.12.1] 개발자 모드 = 전체 해금 / [Ver 9.13.1] 진화석 보유도 해금
     const m = masteryInfo(c.name);
     /* 미획득 카드도 실물 카드 그대로 보여주되 .locked의 filter로 통째로 흑백 처리한다.
        (등급 글로우까지 같이 회색이 되므로 "아직 못 얻은 칸"이 한눈에 구분된다) */
@@ -20435,15 +20913,18 @@ function renderDexScreen(){
 /* [Ver 9.10] 카드 상세 — 능력·공격력·회복량 등을 한 화면에서 보고, 진화도 여기서 한다.
    미획득 카드는 이름과 등급만 보여주고 내용은 가린다(도감 시절 규칙 유지). */
 function showDexCardDetail(name){
-  const dex = loadCardDex();
   const c = cards.find(x=>x.name===name);
   if(!c) return;
-  const got = !!dex[name];
+  /* [Ver 9.13.1 버그수정] 여기만 도감을 직접 읽어 devMode를 무시하고 있었다.
+     그래서 개발자 모드에서 격자에는 전부 해금돼 보이는데, 정작 카드를 누르면
+     "🔒 미획득" 창이 떠서 능력을 볼 수 없었다. 판정은 isCardInDex() 하나로 통일한다.
+     (진화석을 가진 카드도 grantEvoStone에서 도감에 기록되므로 함께 열린다) */
+  const got = isCardInDex(name);
   if(!got){
     showModal('🔒 미획득 카드', `<div style="text-align:center;line-height:1.8;">
       <div style="font-size:15px;font-weight:700;margin-bottom:6px;">${escapeHtml(c.name)}</div>
       <div style="font-size:12px;color:var(--fg-dim);">등급 <b>${escapeHtml(displayGrade(c))}</b></div>
-      <div style="font-size:12px;color:var(--fg-faint);margin-top:10px;">이 카드를 <b>한 번 뽑으면</b> 해금되어 능력을 볼 수 있습니다.</div>
+      <div style="font-size:12px;color:var(--fg-faint);margin-top:10px;">이 카드를 <b>한 번 뽑거나</b>, 이 카드의 <b>진화석</b>을 얻으면 해금되어 능력을 볼 수 있습니다.</div>
     </div>`, [{label:'닫기', solid:true}]);
     return;
   }
@@ -21981,7 +22462,36 @@ function loadSampleCards(mergeMissing=false){
     {grade:'B', name:'테무 익스프레스', type:'TEMU_EXPRESS_ATK', power:0, sendCount:5, shipCost:99, pierce:'NONE', desc:'사용한 적에게 테무 익스프레스로 판매불가인 D등급 카드를 5장 보낸 뒤, 배송비로 99골드를 가져간다. (상대의 돈이 99 이하일 경우, 음수가 된다.)', flavor:'배송비는 유료입니다.'},
     {grade:'A', name:'도주', type:'FLEE_ON_DEATH_PASSIVE', power:0, pierce:'NONE', unplayable:true, desc:'(패시브) 소지 시 자신이 사망에 이르는 공격을 받을 시 죽지 않고 "도주" 효과를 1턴 얻으며 1바퀴 동안 게임에서 제외된다. 그 뒤엔 최대체력이 1인 상태로 게임으로 돌아온다.', flavor:'니게룽다요~!'},
     {grade:'SSR', name:'잠재력', type:'POTENTIAL_COLLECT_PASSIVES', power:0, pierce:'NONE', desc:'낼 시 부활 관련 카드를 제외한 게임 내 존재하는 모든 패시브 계열 카드를 전부 가져온다.', flavor:''},
-    {grade:'A', name:'우빈 들개', type:'UBIN_STRAY_DOG_ATK', power:500, bleedDamage:25, bleedRounds:3, sfxNow:'개짓는소리', pierce:'NONE', desc:'들개를 풀어 500의 데미지를 입힌다. 그리고 "출혈"을 3바퀴 동안 남긴다. 출혈은 화면을 클릭할 때마다 25의 데미지를 입힌다.', flavor:'물어!', penaltyDesc:'(야! 개짖는 소리좀 안나게 해라 카드에 효과를 받는다)'}
+    {grade:'A', name:'우빈 들개', type:'UBIN_STRAY_DOG_ATK', power:500, bleedDamage:25, bleedRounds:3, sfxNow:'개짓는소리', pierce:'NONE', desc:'들개를 풀어 500의 데미지를 입힌다. 그리고 "출혈"을 3바퀴 동안 남긴다. 출혈은 화면을 클릭할 때마다 25의 데미지를 입힌다.', flavor:'물어!', penaltyDesc:'(야! 개짖는 소리좀 안나게 해라 카드에 효과를 받는다)'},
+
+    /* ===================== [Ver 9.14] 신규 카드 27종 ===================== */
+    {grade:'B', name:'샷건치기', type:'ATK_AOE', power:350, pierce:'NONE', desc:'ATK 350 (전체 공격)', flavor:'쾅쾅쾅쾅'},
+    {grade:'C', name:'동네사거리파', type:'ATK', power:250, pierce:'NONE', desc:'ATK 250', flavor:'동네 깡패들을 불러온다'},
+    {grade:'S', name:'접어라ㅋ걍', type:'EXECUTE_LOWEST_HP', power:0, hpCap:500, pierce:'NONE', desc:'게임 내 체력이 가장 낮은 사람을 즉사시킨다. (그 사람의 체력이 500 이하여야 하며, 대상이 없으면 실패한다)', flavor:'접어라ㅋ걍'},
+    {grade:'S', name:'충전기', type:'CHARGER_TOGGLE', power:0, chargeDmg:300, chargeAtkPct:5, chargeRounds:4, infinite:true, pierce:'NONE', desc:'(무한 사용) 카드를 눌러 흡수/방출 모드를 바꾼다. [흡수] 카드를 내 에너지를 1 모은다. [방출] 모은 에너지 × 300 피해를 입히고, 4바퀴 동안 자신의 공격력이 에너지 × 5% 증가한다.', flavor:'치지직'},
+    {grade:'SR', name:'카드 뷔페', type:'CARD_BUFFET', power:0, buffetCount:30, pierce:'NONE', desc:'임의의 카드 30장을 늘어놓는다. 이 중 원하는 카드를 상점과 같은 가격으로 얼마든지 살 수 있다.', flavor:'골라 먹는 재미가 있다'},
+    {grade:'SR', name:'조광일', type:'DOUBLE_CAST_AURA', power:0, pierce:'NONE', desc:'속사포가 되어, 앞으로 자신의 턴마다 카드를 2장씩 낼 수 있다. (지속 효과)', flavor:'쏘아라'},
+    {grade:'SR', name:'윌슨', type:'WILSON_SUMMON', power:0, wilsonHp:2000, wilsonHeal:200, pierce:'NONE', desc:'자신이 받는 피해를 100% 대신 받아주는 윌슨을 소환한다. 윌슨 HP 2000. 윌슨이 맞을 때마다 자신의 HP가 200 회복된다. 쉴드 관통 공격은 윌슨이 막지 못하며, 쉴드 파괴 공격이나 쉴드 제거 효과를 받으면 윌슨은 그 자리에서 사라진다.', flavor:'윌슨! 윌슨!!'},
+    {grade:'A', name:'정도전', type:'BURN_ALL_HANDS_REDISTRIBUTE', power:0, pierce:'NONE', desc:'자신을 제외한 모두의 카드를 불살라 없애고, 자신의 카드를 전원에게 공평하게 나눠준다. (나누고 남은 카드는 자신이 갖는다)', flavor:'새 나라를 세우겠다'},
+    {grade:'B', name:'엽서', type:'ATK_THEN_KEEP_OR_GIVE', power:500, pierce:'NONE', desc:'ATK 500. 사용 후 이 카드를 자신이 다시 가져갈지, 원하는 사람에게 넘길지 고른다.', flavor:'받는 사람: 당신'},
+    {grade:'B', name:'돌림노래', type:'ATK_PASS_GROWING', power:400, growPct:20, pierce:'NONE', desc:'ATK 400. 사용하면 이 카드가 대상에게 넘어가며, 넘어갈 때마다 공격력이 20% 증가한다.', flavor:'다 함께 부르자'},
+    {grade:'B', name:'무조건반사', type:'REACT_REFLECT_HALF', power:0, reflectPct:50, pierce:'NONE', cost:0, desc:'보여줄 시, 상대의 공격을 그대로 맞되 그 피해의 50%를 시전자에게 되돌려준다.', flavor:'몸이 먼저 반응했다'},
+    {grade:'B', name:'우빈 설렁탕', type:'SELF_STAT_BUNDLE', power:0, maxHpAdd:200, hpAdd:500, atkPct:10, pierce:'NONE', desc:'MaxHP +200, HP +500, 자신의 공격력이 영구적으로 10% 증가한다.', flavor:'총을 춥게 쏘면 ? 설렁탕! 우하하하하하'},
+    {grade:'SR', name:'우빈랩터의 고대 유적', type:'ANCIENT_RUINS_AURA', power:0, procPct:10, ruinGold:10000, ruinCards:3, pierce:'NONE', desc:'모든 사람의 턴마다 10% 확률로 보물을 찾는다. 보물을 찾으면 100골드와 무작위 카드 3장을 얻는다. (지속 효과)', flavor:'들어오면 왠지 마음이 편안해지는 유적이다.'},
+    {grade:'A', name:'도박 마스터', type:'GAMBLE_MASTER', power:0, pierce:'NONE', desc:'영구적으로 자신에게는 도뜨사가 뜨지 않는다.', flavor:'하우스는 나를 못 이긴다'},
+    {grade:'SR', name:'권모술수pro', type:'SCHEME_PRO_DELAYED', power:0, delayRounds:3, atkDebuffPct:30, hpCutPct:50, pierce:'NONE', desc:'3바퀴 뒤, 모든 상대의 공격력이 30% 감소하고 체력이 현재 체력의 50%가 된다.', flavor:'판은 이미 짜여 있었다'},
+    {grade:'A', name:'불타는남자', type:'BURNING_MAN_AURA', power:0, burnPerTurn:30, pierce:'NONE', desc:'앞으로 자신의 모든 공격이 대상에게 화상(턴당 30)을 남긴다. 화상은 중첩된다. (지속 효과)', flavor:'뜨거운 남자'},
+    {grade:'S', name:'영계의 낫', type:'REAPER_SCYTHE_AURA', power:0, hpPct:44, pierce:'NONE', desc:'앞으로 HP가 44% 이하인 상대를 공격하면 그 대상을 1턴 스턴시킨다. (지속 효과)', flavor:'명부의 낫은 약한 자를 먼저 거둔다'},
+    {grade:'B', name:'경기 회복', type:'ECONOMY_REBATE_AURA', power:0, rebatePct:25, pierce:'NONE', desc:'다음 자신의 턴마다, 이번 바퀴에 쓴 골드의 25%를 돌려받는다. (지속 효과)', flavor:'내수가 살아난다'},
+    {grade:'B', name:'우빈 리커버리', type:'DAMAGE_REBATE_AURA', power:0, rebatePct:25, pierce:'NONE', desc:'다음 자신의 턴마다, 이번 바퀴에 입은 피해량의 25%를 회복한다. (지속 효과)', flavor:'회복력 하나는 알아준다'},
+    {grade:'SR', name:'영혼재판', type:'SOUL_TRIAL_AOE', power:1000, pierce:'NONE', desc:'ATK 1000 (전체 공격). 그리고 아무도 볼 수 없는 숫자를 500~2000 사이에서 100 단위로 정한다. 모든 상대는 그 숫자보다 낮은 공격력의 카드를 제출해야 하며, 제출한 카드는 시전자가 가져간다. 제출하지 못하면 1000의 피해를 입는다.', flavor:'전부 조용, 지금부터 재판을 시작하겠다.'},
+    {grade:'SR', name:'사의 경계', type:'ATK_DEATH_CHANCE', power:0, deathChance:25, pierce:'NONE', desc:'25% 확률로 대상을 즉사시킨다.', flavor:'삭여라, 그리고 새겨라'},
+    {grade:'S', name:'입대', type:'SELF_STAT_BUNDLE', power:0, atkPct:30, reducePct:-20, maxHpAdd:1000, pierce:'NONE', desc:'군대에 입대해 머리를 밀어 받는 피해가 20% 증가하지만, 훈련을 받아 공격력이 30%·MaxHP가 1000 증가한다.', flavor:'새끼.. 기합!'},
+    {grade:'S', name:'중성화 의사', type:'CASTRATE_TARGET', power:0, pierce:'NONE', desc:'상대의 호두를 따버려 고자로 만든다. (MaxHP·HP가 1이 된다)', flavor:'꽈드득'},
+    {grade:'A', name:'불편', type:'BUFF_DENY_STUN', power:0, stunTurns:2, pierce:'NONE', desc:'상대가 버프를 얻는 것을 아니꼽게 본다. 그 효과를 무효화하는 동시에 상대를 2턴 동안 행동불능으로 만든다.', flavor:'참 불편하네요'},
+    {grade:'A', name:'적절한 거리를 점프할 수 있음', type:'JUMP_SLAM_AOE', power:600, selfDamage:400, failPct:30, pierce:'NONE', desc:'ATK 600 (전체 공격). 단 30% 확률로 적절한 거리를 점프하지 못해 다리가 부러져 자신이 400의 피해를 입는다.', flavor:'쾅'},
+    {grade:'S', name:'코', type:'SELF_STAT_BUNDLE', power:0, reducePct:40, shieldAdd:1000, outDmgPct:-30, pierce:'NONE', desc:'코가 커져 받는 피해가 40% 감소하고 쉴드 1000을 얻는다. 다만 움직이기 어려워 주는 피해가 30% 감소한다.', flavor:'케인인님 한판 해요'},
+    {grade:'S', name:'개쉐끼 랩터', type:'MAD_DOG_RAPTOR', power:0, atkPct:60, vulnPct:30, gojaPct:10, pierce:'NONE', desc:'개쉐끼가 되어 공격력이 60% 증가하지만 받는 피해량도 30% 증가한다. 또한 자신의 턴마다 10% 확률로 중성화수술을 당해 고자가 된다.', flavor:'멍멍!'}
   ];
   if(mergeMissing){
     const existing = new Set(cards.map(c=> `${c.grade}::${c.name}::${c.type}`));
@@ -23276,6 +23786,33 @@ function mkPlayer(id,name,isBot){
     metatonGrowth:false, // 메타톤 잼민이: 자기 턴마다 HP/MaxHP +200
     gachaDrawUntilA:false, // 가챠 뽑기: 다음 드로우부터 A등급 이상 나올 때까지 계속 뽑기
     tributeTurnsLeft:0, // 상납금: 남은 지속 바퀴 수(매 바퀴 상대에게서 15골드씩 징수)
+    /* [Ver 9.13.1] 진화 능력용 필드 (전부 진화 카드에서만 채워진다)
+         tributeGold        : 상납금+ 징수액 25 (기본 15)
+         freePurchaseCount  : 사장님이 미쳤어요+ 무료 구매 여분
+         evoExtraCard       : CCTV+ 이번 턴 추가 사용 횟수
+         evoDiamondDr       : 다이아몬드 방벽+ 로 걸린 받는피해 경감(쉴드가 깨지면 반환)
+         baitStacks         : 강태공+ [미끼] 중첩 수
+         metatonEvo/Bonus   : 메타톤 잼민이+ 회복량 누적 증가
+         __evoSunbaeDue     : 내가 선배님이니까.+ 공격력 +1%의 만료 바퀴 */
+    tributeGold:0, freePurchaseCount:0, evoExtraCard:0, evoDiamondDr:0,
+    baitStacks:0, metatonEvo:false, metatonEvoBonus:0, __evoSunbaeDue:0,
+    /* [Ver 9.14] 신규 카드용 필드
+         wilsonHp/wilsonMaxHp/wilsonHeal : 윌슨 (대신 맞아주는 분신)
+         doubleCastAura                  : 조광일 (턴마다 2장)
+         ruinsActive/ruinsPct/…          : 우빈랩터의 고대 유적
+         schemeProDue/…                  : 권모술수pro (3바퀴 뒤 발동 예약)
+         burningManBurn                  : 불타는남자 (내 공격에 화상)
+         reaperScythePct                 : 영계의 낫 (빈사 대상 스턴)
+         ecoRebatePct / dmgRebatePct     : 경기 회복 / 우빈 리커버리
+         dmgTakenTotal                   : 누적 피격량 (우빈 리커버리 계산용)
+         madDogPct                       : 개쉐끼 랩터 (매 턴 고자 확률)
+         outDamagePct                    : 코 (주는 피해 증감 %)
+         reflexHalfPending               : 무조건반사 예약 */
+    wilsonHp:0, wilsonMaxHp:0, wilsonHeal:0, doubleCastAura:false,
+    ruinsActive:false, ruinsPct:0, ruinsGold:0, ruinsCards:0,
+    schemeProDue:0, schemeProAtk:0, schemeProHpCut:0,
+    burningManBurn:0, reaperScythePct:0, ecoRebatePct:0, dmgRebatePct:0,
+    dmgTakenTotal:0, madDogPct:0, outDamagePct:0, reflexHalfPending:null,
     reviveCharge:false, // 영웅은 죽지 않아요: 사망 시 1회 풀피 부활
     miracleRevive:false, // OH JESUS A MIRACLE: 소지하고 있는 한 사망 시 1회 HP 5000으로 부활
     freePurchase:false, // 사장님이 미쳤어요: 다음 상점 구매 1회 무료
@@ -23695,7 +24232,7 @@ function getStatusChips(p){
   if(p.syncTargetId){ const partner = players.find(pp=>pp.id===p.syncTargetId); addChip('🔗', `싱크로 · ${partner?partner.name:'?'}과 해로운 효과 공유`, 'yellow'); }
   if(p.ufcPartnerId){ const rival = players.find(pp=>pp.id===p.ufcPartnerId); addChip('🥊', `UFC · ${rival?rival.name:'?'}과 서로 받는 피해 +${p.ufcAmpPct||50}%`, 'red'); }
   if(p.invincible) addChip('🛡️', '무적 (모든 피해·효과 무시)', 'blue');
-  if(p.baitDebuff) addChip('🎣', '[미끼] (강태공 반응시 일괄피해 대상)', 'red');
+  if(p.baitDebuff) addChip('🎣', `[미끼]${(p.baitStacks||1) > 1 ? ` ${p.baitStacks}중첩` : ''} (강태공 반응시 일괄피해 대상)`, 'red');
   if(p.proxyTargetId){ const proxy = players.find(pp=>pp.id===p.proxyTargetId); addChip('🎭', `프록시 · ${proxy?proxy.name:'?'}에게 해로운 효과 전가`, 'yellow'); }
   if(p.hpBugActive) addChip('🐞', 'HP 100000↑ 즉사 버그', 'red');
   if(p.chromaticMultiplier && p.chromaticMultiplier>0) addChip('🌈', `크로마틱(공격력 ${Math.round(p.chromaticMultiplier)}% 증가)`, 'yellow');
@@ -23758,6 +24295,19 @@ function getStatusChips(p){
   if(p.shopBanned) addChip('🚫', p.tradeNoDraw ? '거래(상점·드로우 불가)' : '상점 입장불가', 'red');
   if((p.shopBlockDueRound||0) > turnCount) addChip('🚧', `봉쇄 (상점 ${Math.max(0,(p.shopBlockDueRound||0)-turnCount)}바퀴)`, 'red'); // [Ver 6.8]
   if(p.blueOceanActive) addChip('🌊', '블루오션 (1:1시 받는피해 -50%)', 'green'); // [Ver 6.8]
+  /* ===== [Ver 9.14] 신규 카드 상태 칩 ===== */
+  if((p.wilsonHp||0) > 0) addChip('🏐', `윌슨 ${p.wilsonHp.toLocaleString()} / ${(p.wilsonMaxHp||2000).toLocaleString()}`, 'blue');
+  if(p.doubleCastAura) addChip('🔫', '조광일 (턴마다 카드 2장)', 'yellow');
+  if(p.ruinsActive) addChip('🏛️', `고대 유적 (매 턴 ${p.ruinsPct||10}% 보물)`, 'green');
+  if(p.dottusaImmune) addChip('🎲', '도뜨사 면역', 'green');
+  if(p.burningManBurn) addChip('🔥', `불타는남자 (내 공격에 화상 ${p.burningManBurn})`, 'yellow');
+  if(p.reaperScythePct) addChip('🌾', `영계의 낫 (HP ${p.reaperScythePct}% 이하 스턴)`, 'yellow');
+  if(p.ecoRebatePct) addChip('💹', `경기 회복 (쓴 돈 ${p.ecoRebatePct}% 환급)`, 'green');
+  if(p.dmgRebatePct) addChip('🩹', `우빈 리커버리 (받은 피해 ${p.dmgRebatePct}% 회복)`, 'green');
+  if(p.madDogPct) addChip('🐕', `개쉐끼 랩터 (매 턴 ${p.madDogPct}% 고자)`, 'red');
+  if(p.outDamagePct) addChip('🐘', `주는 피해 ${p.outDamagePct>0?'+':''}${p.outDamagePct}%`, p.outDamagePct<0?'red':'green');
+  if(p.schemeProDue && turnCount < p.schemeProDue) addChip('🕸️', `권모술수pro · ${p.schemeProDue - turnCount}바퀴`, 'yellow');
+  if(p.reflexHalfPending) addChip('🤸', '무조건반사 대기 (다음 피격 50% 반사)', 'blue');
   if(p.musinCoupActive) addChip('⚔️', `무신정변 (${p.musinTargetedStreak||0}/3)`, 'blue'); // [Ver 6.8]
   if(p.flowerScentOnDeath) addChip('🌸', '꽃향기 (사망 시 전원 공격력↑)', 'blue'); // [Ver 6.8]
   if(p.rouletteLockUid) addChip('🔫', '러시안룰렛 (이 카드만 사용 가능)', 'red'); // [Ver 6.8]
@@ -24063,8 +24613,10 @@ const METATON_GROWTH_AMT = 80;
 function tickMetatonGrowth(){
   players.forEach(p=>{
     if(p.metatonGrowth && p.alive){
-      // [Ver 9.12.1 밸런스] 100 → 80
-      const __mg = METATON_GROWTH_AMT;
+      /* [Ver 9.12.1 밸런스] 100 → 80
+         [Ver 9.13.1] 메타톤 잼민이+ — 회복할 때마다 회복량이 5씩 더 커진다(첫 회복은 그대로 80). */
+      const __mg = METATON_GROWTH_AMT + (p.metatonEvo ? (p.metatonEvoBonus||0) : 0);
+      if(p.metatonEvo) p.metatonEvoBonus = (p.metatonEvoBonus||0) + 5;
       p.maxHp += __mg; p.hp += __mg;
       log('heal', `${J(p.name,'이','가')} "메타톤"의 효과로 MaxHP·HP가 ${__mg}씩 증가했습니다. (HP ${p.hp}/${p.maxHp})`);
     }
@@ -24085,9 +24637,11 @@ function tickTribute(){
   players.forEach(caster=>{
     if(caster.tributeTurnsLeft > 0 && caster.alive){
       caster.tributeTurnsLeft--;
+      // [Ver 9.13.1] 상납금+ — 거둬들이는 금액이 15 → 25로 오른다 (evoAfterCast에서 tributeGold를 심는다)
+      const __trib = caster.tributeGold || 15;
       alivePlayers().forEach(t=>{
         if(t.id===caster.id) return;
-        if(t.gold >= 15){ t.gold -= 15; grantGold(caster, 15); }
+        if(t.gold >= __trib){ t.gold -= __trib; grantGold(caster, __trib); }
         else { currentAttackContext = { attackerName: caster.name, attackerId: caster.id, cardName: '상납금' }; applyDamageToPlayer(t, 1000, 'NONE'); }
       });
       log('gold', `${caster.name}의 "상납금" 효과로 상대들에게서 공물을 거둬들였습니다. (남은 지속 ${caster.tributeTurnsLeft}바퀴)`);
@@ -24183,6 +24737,7 @@ function runTurnStart(){
   // [Ver 9.10.2] 지후펫 — 누구 턴이든 한 번씩 도는 판정(정치인 지지율)
   try{ petOnEveryTurn(); }catch(e){ console.error('[지후펫] 매 턴 판정 오류', e); }
   try{ artOnEveryTurn(); }catch(e){ console.error('[유물] 매 턴 판정 오류', e); } // [Ver 9.11] 신용카드·용돈
+  try{ tickNewCardsEveryTurn(); }catch(e){ console.error('[9.14] 매 턴 판정 오류', e); } // 고대 유적 · 권모술수pro
   // [Ver 5.3.4 batch6] 핫시트: 다음 사람 차례로 넘어갈 때 기기 넘기기 오버레이를 띄운다.
   // viewerId가 아직 이 사람이 아니면(=직전 사람/반응자 화면 상태) 오버레이를 보여주고, 확인 후 다시 진입한다.
   if(hotseatMode && !p.isBot && viewerId !== p.id){
@@ -24557,6 +25112,7 @@ function continueTurnStartAfterRefill(p){
     // [Ver 9.10.2] 지후펫 — 자기 턴에만 도는 판정(백수 용돈 · 점쟁이 점괘 · 의사 · 사기꾼 …)
     try{ petOnOwnTurnStart(p); }catch(e){ console.error('[지후펫] 턴 시작 판정 오류', e); }
     try{ artOnOwnTurnStart(p); }catch(e){ console.error('[유물] 턴 시작 판정 오류', e); } // [Ver 9.11] 과자·우빈 엄마
+    try{ tickNewCardsOwnTurn(p); }catch(e){ console.error('[9.14] 자기 턴 판정 오류', e); } // 개쉐끼 랩터 · 경기 회복 · 우빈 리커버리
     /* [Ver 9.13.1] 턴 시작 판정으로 그 자리에서 죽을 수 있다 (점쟁이 지후의 <살> — 300 피해).
        죽은 사람으로 턴을 계속 진행하면 아래 로직이 전부 헛돌므로 여기서 턴을 넘긴다.
        (checkWinCondition이 이미 판을 끝냈다면 gameActive가 false라 넘기지 않는다) */
@@ -25610,6 +26166,7 @@ function advanceTurn(){
     try{ petHitmanLapPenalty(); }catch(e){} // [Ver 9.11] 청부업자 — 한 바퀴 동안 의뢰를 방치했으면 자벌
     tickVoyagerShield(); tickProphetCheck();
     tickMatrixReturn(); tickHealMultExpire(); tickRomanticDoctorExpire(); tickTemptationExpire();
+    try{ tickEvoTempExpire(); }catch(e){}   // [Ver 9.13.1] 1바퀴짜리 진화 버프 해제
     tickDoomStatuses();
     // 라운드 틱에서 사망이 발생했을 수 있으니 즉시 승리 판정
     if(checkWinCondition()) return true;
@@ -26550,6 +27107,19 @@ function petCardIconHtml(p){
 }
 /* [Ver 9.10.2] 정치인 지후 전용 — 스탯창 안에 지지율 게이지를 한 줄 넣는다.
    40%가 즉사선이라 그 지점에 눈금을 그어, 얼마나 아슬아슬한지 한눈에 보이게 했다. */
+/* [Ver 9.14 신규] 윌슨 — 본체와 완전히 분리된 별도 체력 게이지.
+   지지율 게이지와 같은 자리(스탯창 안)를 쓰되, 파란색 배구공 테마로 한 줄을 더 차지한다. */
+function wilsonBarHtml(p){
+  if(!p || !((p.wilsonHp||0) > 0)) return '';
+  const max = p.wilsonMaxHp || 2000;
+  const v = Math.max(0, Math.min(max, p.wilsonHp));
+  const pct = max > 0 ? Math.round(v/max*100) : 0;
+  return `<div class="wilson-row" title="윌슨 ${v} / ${max} — 내가 받는 피해를 대신 받습니다">
+    <span class="wilson-face">🏐</span>
+    <span class="wilson-track"><i style="width:${pct}%"></i></span>
+    <span class="wilson-num">${v.toLocaleString()}</span>
+  </div>`;
+}
 function approvalGaugeHtml(p){
   if(!p || p.petApproval == null || !hasPet(p,'politician')) return '';
   const v = Math.max(0, Math.min(100, p.petApproval));
@@ -26695,6 +27265,7 @@ function renderBoard(){
       ${isMeCard?`<div class="p-gold" data-pid="${p.id}">${fmtWon(p.gold)}</div>`:''}
       <div class="status-icons">${chips.map(c=>`<span class="status-chip ${c.cls}"${c.style?` style="${c.style}"`:''}><span class="ic">${c.ic}</span>${c.label}</span>`).join('')}</div>
       ${approvalGaugeHtml(p)}
+      ${wilsonBarHtml(p)}
       ${petCardIconHtml(p)}
       ${playerTitleHtml(p)}
       ${hitmanPanelHtml(p)}
@@ -27431,7 +28002,17 @@ function cardVisualClass(card){
     // [Ver 9.10.2] 진화 등급마다 글로우 색이 다르다 — Normal 연보라 → Ancient → Universal 순으로 진해지고,
     //   Ephemeral만 보라 대신 핫핑크를 쓴다.
     const tierCls = 'evo-glow-' + String(card.__evoTier || 'Normal').toLowerCase();
-    return (base ? base + ' ' : '') + 'card-fx-evolved ' + tierCls;
+    /* [Ver 9.13.1] 비밀결사+ — 판에 비밀결사 카드를 든 다른 사람이 있으면 카드가 발광한다.
+       (동맹 상대가 될 수 있는 사람이 있다는 신호. 누구인지는 알려주지 않는다) */
+    let sig = '';
+    if(card.__evolvedFrom === '비밀결사'){
+      try{
+        const owner = players.find(p=> p.hand && p.hand.some(c=> c && c.uid === card.uid));
+        const other = players.some(p=> p.alive && (!owner || p.id !== owner.id) && (p.hand||[]).some(c=> c && c.type === 'SECRET_SOCIETY'));
+        if(other) sig = ' card-fx-society-signal';
+      }catch(e){}
+    }
+    return (base ? base + ' ' : '') + 'card-fx-evolved ' + tierCls + sig;
   }
   return cardVisualClassBase(card);
 }
@@ -27564,6 +28145,28 @@ function powerLine(c){
   if(c.type==='FLEE_ON_DEATH_PASSIVE') return `<div class="hc-power">패시브 · 소지시 사망방지+1바퀴 제외(복귀시 최대체력 1)</div>`;
   if(c.type==='POTENTIAL_COLLECT_PASSIVES') return `<div class="hc-power">게임 내 모든 패시브 카드 획득 (부활 관련 제외)</div>`;
   if(c.type==='UBIN_STRAY_DOG_ATK') return `<div class="hc-power">ATK ${(c.power||500).toLocaleString()} · "출혈" ${c.bleedRounds||3}바퀴(화면 클릭시 ${c.bleedDamage||25} 피해)</div>`;
+  /* ===== [Ver 9.14] 신규 카드 능력 한 줄 ===== */
+  if(c.type==='EXECUTE_LOWEST_HP') return `<div class="hc-power">최저 체력 대상 즉사 (HP ${c.hpCap||500} 이하일 때만)</div>`;
+  if(c.type==='CHARGER_TOGGLE') return `<div class="hc-power">⚡${c.chargeEnergy||0} · 흡수/방출 · 방출 시 에너지×${c.chargeDmg||300} 전체피해 + 공격력 +에너지×${c.chargeAtkPct||5}%</div>`;
+  if(c.type==='CARD_BUFFET') return `<div class="hc-power">무작위 ${c.buffetCount||30}장 · 상점가로 자유 구매</div>`;
+  if(c.type==='DOUBLE_CAST_AURA') return `<div class="hc-power">지속 · 자신의 턴마다 카드 2장 사용</div>`;
+  if(c.type==='WILSON_SUMMON') return `<div class="hc-power">윌슨 HP ${(c.wilsonHp||2000).toLocaleString()} · 대신 피격 + 맞을 때마다 HP +${c.wilsonHeal||200}</div>`;
+  if(c.type==='BURN_ALL_HANDS_REDISTRIBUTE') return `<div class="hc-power">전원 손패 소각 + 내 손패 균등 분배</div>`;
+  if(c.type==='ATK_THEN_KEEP_OR_GIVE') return `<div class="hc-power">ATK ${(c.power||500).toLocaleString()} · 사용 후 회수 또는 양도${pierceTag(c)}</div>`;
+  if(c.type==='ATK_PASS_GROWING') return `<div class="hc-power">ATK ${(c.power||400).toLocaleString()} · 대상에게 넘어가며 +${c.growPct||20}%${pierceTag(c)}</div>`;
+  if(c.type==='REACT_REFLECT_HALF') return `<div class="hc-power">보여주기 · 맞은 피해의 ${c.reflectPct||50}%를 시전자에게 반사</div>`;
+  if(c.type==='ANCIENT_RUINS_AURA') return `<div class="hc-power">지속 · 매 턴 ${c.procPct||10}% 확률로 ${fmtWon(c.ruinGold||10000)} + 카드 ${c.ruinCards||3}장</div>`;
+  if(c.type==='GAMBLE_MASTER') return `<div class="hc-power">영구 · 도뜨사 면역</div>`;
+  if(c.type==='SCHEME_PRO_DELAYED') return `<div class="hc-power">${c.delayRounds||3}바퀴 뒤 · 전체 공격력 -${c.atkDebuffPct||30}% · 체력 ${c.hpCutPct||50}% 감소</div>`;
+  if(c.type==='BURNING_MAN_AURA') return `<div class="hc-power">지속 · 모든 공격에 화상(턴당 ${c.burnPerTurn||30}) 중첩 부여</div>`;
+  if(c.type==='REAPER_SCYTHE_AURA') return `<div class="hc-power">지속 · HP ${c.hpPct||44}% 이하 대상 공격 시 1턴 스턴</div>`;
+  if(c.type==='ECONOMY_REBATE_AURA') return `<div class="hc-power">지속 · 매 자기 턴 지난 바퀴에 쓴 골드의 ${c.rebatePct||25}% 환급</div>`;
+  if(c.type==='DAMAGE_REBATE_AURA') return `<div class="hc-power">지속 · 매 자기 턴 지난 바퀴에 받은 피해의 ${c.rebatePct||25}% 회복</div>`;
+  if(c.type==='SOUL_TRIAL_AOE') return `<div class="hc-power">ATK ${(c.power||1000).toLocaleString()} (전체) · 비공개 기준치(500~2000) 미만 카드 제출 / 실패 시 1000 피해</div>`;
+  if(c.type==='CASTRATE_TARGET') return `<div class="hc-power">지목 · 고자 (MaxHP·HP 1)</div>`;
+  if(c.type==='BUFF_DENY_STUN') return `<div class="hc-power">지목 · 버프 제거 + ${c.stunTurns||2}턴 행동불능</div>`;
+  if(c.type==='JUMP_SLAM_AOE') return `<div class="hc-power">ATK ${(c.power||600).toLocaleString()} (전체) · ${c.failPct||30}% 확률로 자신 ${c.selfDamage||400} 피해</div>`;
+  if(c.type==='MAD_DOG_RAPTOR') return `<div class="hc-power">공격력 +${c.atkPct||60}% · 받는피해 +${c.vulnPct||30}% · 매 턴 ${c.gojaPct||10}% 고자</div>`;
   if(c.type==='REACT_REFLECT_LIMITED') return `<div class="hc-power">보여주기 · 공격 반사 (${c.uses!=null?c.uses:3}회)</div>`;
   if(c.type==='SELF_HP_MAXHP_LOSS') return `<div class="hc-power">HP·MaxHP -404</div>`;
   if(c.type==='REACT_NULLIFY_DMG') return `<div class="hc-power">보여주기 · 무효화+${c.power||300} 반격</div>`;
@@ -28294,7 +28897,10 @@ function needsSingleTarget(type, card, caster){
   if(type === 'SOLEMN_LAMENT') return true;
   return needsSingleTargetBase(type);
 }
-function needsSingleTargetBase(type){ return ['ATK','STUN','GOLD_STEAL','EXECUTE_CHAIN','VIEW_HAND','CARD_STEAL_RANDOM','CARD_MARK_STEAL','ATK_SUMMON','SECRET_SOCIETY','DELAYED_DEATH','ATK_GOLD_STEAL_PCT','ATK_DEATH_CHANCE','IMPEACH_RISKY','ACCURACY_DEBUFF','INFINITE_ATK_STEAL','INFINITE_ATK_DRAIN','ATK_BURN_CHANCE','CARD_GIFT','PARCEL_DELIVERY','PREVENT_REVIVE','HP_AVERAGE_SHARE','CARD_DISCARD_SELF_ATK','BOUNCE_ATK','ATK_STUN_TRIPLE','SHIELD_SEIZE','FATE_CHAIN','INFINITE_ATK_CHROMATIC','MATRIX_SEND','PARALLEL_UNIVERSE_SHIFTER','POISON_ATK','INFINITE_ATK_STUN_NO_REPEAT','MULTI_HIT_ATK','INFINITE_ATK_STEAL_PRO','SELF_RECOIL_ATK','INFINITE_HP_PERCENT_ATK','ATK_GOLD_COST','MUTATE_HIGHEST_TO_BLANK','BOUND_CURSE','CARD_MARK_STEAL_ALL','SYNC_LINK_DEBUFF','PROXY_LINK_DEBUFF','COMBO','REINFORCE_PIPE','GOLD_STEAL_HALF_INF','SWAP_HAND','CARD_SHARE_LINK','ATK_STUN_RIGID','MUTUAL_SELF_TARGET_DMG','FIRST_TURN_SHIELD_STRIP_HP1','BLIND_NEXT_ENEMY_ATK','HUNTER_MARK','ATK_AND_SELF_HEAL','INSTANT_KILL_TARGET','DETECTIVE_ATK_KILL_CRIMINAL','MUTUAL_HEAL_SELF_TARGET','CARROT_CHOICE','SANDS_ATK_DBLOCK','ZINGO_HP_BLIND','REDUCE_MAXHP_TARGET','EAGLE_ATK_EXCLUDE_FALL','PORTAL_SELF_EXCLUDE_DELAYED_ATK','MATRIX_EVAPORATE_DELAYED_ATK','SPACE_EXCLUDE_ONLY','INFINITE_PORTAL_SELF_EXCLUDE_DELAYED_ATK','ATK_LOCK_SELL_PRICE','ATK_FIXED_ACC_SELFDMG_ON_MISS','ATK_AND_CARD_STEAL_RANDOM','INFINITE_ATK_PLAIN','ATK_SELF_VULN_ATKBUFF','ATK_RANDOM_HEAL_ANY','PERMA_VULN_TARGET','ATK_AND_SELF_SHIELD','CARROT_SCAM_TRADE','CARROT_SCAM_VICTIM','DOUBLE_GOZA_BOTH','STALK_VIEW_HAND','ICBM_CONSUME_ATK','PIERCING_ATK_ALL_VULN','PULSE_BEAM_DELAYED_STUN','CARROT_HAND_MUTATE_ALL','MAGICIAN_HAND_MUTATE_RANDOM','LABOR_EXPLOITATION','RANDOM_CARD_SWAP_ONE','CHARGE_ATK_DOUBLE_ON_MISS','RANDOM_RECAST_ATK','PARALYZE_DEBUFF','RAPTOR_VIRUS_MARK','TIME_DOESNT_TREAT_ME_SPECIALLY','SYNC_STEAL_BUFFS','SUNBEAM_ATK_DEBUFF','RECKLESS_STABBING_ATK','GOLD_DEMAND_REDIRECT','DEFENSE_PROTOCOL','MUTUAL_ATK_BUFF_DEBUFF','NEXTLEVEL_ATK','NURSING_CLEANSE','NO_NULLIFY_ATK','GUIDED_MISSILE','KOKUSHIMUSOU','REPLACE_CARDS_SAME_GRADE','IMPEACH_TRANSFER','GOLD_THROW_ATK','ASSASSIN_JIHU','ATK_RESTART_FROM_SELF','ATK_SEND_LOW_GRADE','MUTATE_TARGET_ALL_TO_GRADE','DOCTOR_WHO_LASER','EAT_SWALLOW_BUFF_DELAYED_ATK','NON_GRATA_NEIGHBOR_ATK','UBIN_GREATSWORD_INFINITE','VULN_TARGET_SELF_HEAL','STEAL_ALL_GRADE_OR_KILL','IGNITE_STEAL_HALF_ON_CAST','HYPNOSIS_RANDOM_TARGET','INHERIT_REDISTRIBUTE','FORCED_ALLY_THEN_BETRAY','FISHING_ROD_BAIT','ROUTER_SHARE_ALL','FORCE_ALLY_ONE_TIME','SHOP_BAN_TARGET','COUPLE_TEE_ALLY','ATK_ATK_DEBUFF','SHOP_BAN_TARGET_TEMP','RUSSIAN_ROULETTE','SELF_HP_PERCENT_ATK','CULT_RECRUIT','REPORT_INSTAKILL_OR_SELFSTUN','GRANT_JUNK_CARDS','IMPEACH_ROUNDS','STEAL_ALL_OR_LOSE_ALL_50','ATK_AND_SELF_DAMAGE','HAND_MASK_TARGET','MOTHER_PROTECT','UBIN_BREATH_ATK','LOAN_SHARK','SPINE_FRACTURE','GIFT_CHOOSE_CARD','CHAT_TIMEOUT','ATK_VULN_PCT','ATK_STEAL_ALL_GOLD','VANISH_THEN_STEAL','ENCORE_LOCK_ONE','SONGPYEON_GIFT','HEAL','CLEANSE_HEAL','MAXHP_AND_HEAL','MAXHP_AND_HEAL_DIFF','HEAL_OVERFLOW_SHIELD','HEAL_GOLD_COST','MOM_CAPTURE_DEBUFF','MULTI_HIT_ATK_STUN','WHITETIGER_STRIKE','TELEKINESIS_CONTROL','POISON_DEATH_TARGET','POISON_DEATH_SELF','GRADE_LOCK_LOW','RAINBOW_DEATHNOTE','REPEAT_STEAL_UI','ATK_REMOVE_HIGH_GRADE','HONG_KICK_EXCLUDE_STUN','ASH_REVOLUTION','UBIN_STAB','CHALK_SHOT','ANCESTRAL_RITE_TABLE','MENDEL_STEAL','TEMU_EXPRESS_ATK','UBIN_STRAY_DOG_ATK'].includes(type); }
+function needsSingleTargetBase(type){ return [
+  /* [Ver 9.14] 신규 지목 카드 — 엽서 · 돌림노래 · 중성화 의사 · 불편 */
+  'ATK_THEN_KEEP_OR_GIVE','ATK_PASS_GROWING','CASTRATE_TARGET','BUFF_DENY_STUN',
+  'ATK','STUN','GOLD_STEAL','EXECUTE_CHAIN','VIEW_HAND','CARD_STEAL_RANDOM','CARD_MARK_STEAL','ATK_SUMMON','SECRET_SOCIETY','DELAYED_DEATH','ATK_GOLD_STEAL_PCT','ATK_DEATH_CHANCE','IMPEACH_RISKY','ACCURACY_DEBUFF','INFINITE_ATK_STEAL','INFINITE_ATK_DRAIN','ATK_BURN_CHANCE','CARD_GIFT','PARCEL_DELIVERY','PREVENT_REVIVE','HP_AVERAGE_SHARE','CARD_DISCARD_SELF_ATK','BOUNCE_ATK','ATK_STUN_TRIPLE','SHIELD_SEIZE','FATE_CHAIN','INFINITE_ATK_CHROMATIC','MATRIX_SEND','PARALLEL_UNIVERSE_SHIFTER','POISON_ATK','INFINITE_ATK_STUN_NO_REPEAT','MULTI_HIT_ATK','INFINITE_ATK_STEAL_PRO','SELF_RECOIL_ATK','INFINITE_HP_PERCENT_ATK','ATK_GOLD_COST','MUTATE_HIGHEST_TO_BLANK','BOUND_CURSE','CARD_MARK_STEAL_ALL','SYNC_LINK_DEBUFF','PROXY_LINK_DEBUFF','COMBO','REINFORCE_PIPE','GOLD_STEAL_HALF_INF','SWAP_HAND','CARD_SHARE_LINK','ATK_STUN_RIGID','MUTUAL_SELF_TARGET_DMG','FIRST_TURN_SHIELD_STRIP_HP1','BLIND_NEXT_ENEMY_ATK','HUNTER_MARK','ATK_AND_SELF_HEAL','INSTANT_KILL_TARGET','DETECTIVE_ATK_KILL_CRIMINAL','MUTUAL_HEAL_SELF_TARGET','CARROT_CHOICE','SANDS_ATK_DBLOCK','ZINGO_HP_BLIND','REDUCE_MAXHP_TARGET','EAGLE_ATK_EXCLUDE_FALL','PORTAL_SELF_EXCLUDE_DELAYED_ATK','MATRIX_EVAPORATE_DELAYED_ATK','SPACE_EXCLUDE_ONLY','INFINITE_PORTAL_SELF_EXCLUDE_DELAYED_ATK','ATK_LOCK_SELL_PRICE','ATK_FIXED_ACC_SELFDMG_ON_MISS','ATK_AND_CARD_STEAL_RANDOM','INFINITE_ATK_PLAIN','ATK_SELF_VULN_ATKBUFF','ATK_RANDOM_HEAL_ANY','PERMA_VULN_TARGET','ATK_AND_SELF_SHIELD','CARROT_SCAM_TRADE','CARROT_SCAM_VICTIM','DOUBLE_GOZA_BOTH','STALK_VIEW_HAND','ICBM_CONSUME_ATK','PIERCING_ATK_ALL_VULN','PULSE_BEAM_DELAYED_STUN','CARROT_HAND_MUTATE_ALL','MAGICIAN_HAND_MUTATE_RANDOM','LABOR_EXPLOITATION','RANDOM_CARD_SWAP_ONE','CHARGE_ATK_DOUBLE_ON_MISS','RANDOM_RECAST_ATK','PARALYZE_DEBUFF','RAPTOR_VIRUS_MARK','TIME_DOESNT_TREAT_ME_SPECIALLY','SYNC_STEAL_BUFFS','SUNBEAM_ATK_DEBUFF','RECKLESS_STABBING_ATK','GOLD_DEMAND_REDIRECT','DEFENSE_PROTOCOL','MUTUAL_ATK_BUFF_DEBUFF','NEXTLEVEL_ATK','NURSING_CLEANSE','NO_NULLIFY_ATK','GUIDED_MISSILE','KOKUSHIMUSOU','REPLACE_CARDS_SAME_GRADE','IMPEACH_TRANSFER','GOLD_THROW_ATK','ASSASSIN_JIHU','ATK_RESTART_FROM_SELF','ATK_SEND_LOW_GRADE','MUTATE_TARGET_ALL_TO_GRADE','DOCTOR_WHO_LASER','EAT_SWALLOW_BUFF_DELAYED_ATK','NON_GRATA_NEIGHBOR_ATK','UBIN_GREATSWORD_INFINITE','VULN_TARGET_SELF_HEAL','STEAL_ALL_GRADE_OR_KILL','IGNITE_STEAL_HALF_ON_CAST','HYPNOSIS_RANDOM_TARGET','INHERIT_REDISTRIBUTE','FORCED_ALLY_THEN_BETRAY','FISHING_ROD_BAIT','ROUTER_SHARE_ALL','FORCE_ALLY_ONE_TIME','SHOP_BAN_TARGET','COUPLE_TEE_ALLY','ATK_ATK_DEBUFF','SHOP_BAN_TARGET_TEMP','RUSSIAN_ROULETTE','SELF_HP_PERCENT_ATK','CULT_RECRUIT','REPORT_INSTAKILL_OR_SELFSTUN','GRANT_JUNK_CARDS','IMPEACH_ROUNDS','STEAL_ALL_OR_LOSE_ALL_50','ATK_AND_SELF_DAMAGE','HAND_MASK_TARGET','MOTHER_PROTECT','UBIN_BREATH_ATK','LOAN_SHARK','SPINE_FRACTURE','GIFT_CHOOSE_CARD','CHAT_TIMEOUT','ATK_VULN_PCT','ATK_STEAL_ALL_GOLD','VANISH_THEN_STEAL','ENCORE_LOCK_ONE','SONGPYEON_GIFT','HEAL','CLEANSE_HEAL','MAXHP_AND_HEAL','MAXHP_AND_HEAL_DIFF','HEAL_OVERFLOW_SHIELD','HEAL_GOLD_COST','MOM_CAPTURE_DEBUFF','MULTI_HIT_ATK_STUN','WHITETIGER_STRIKE','TELEKINESIS_CONTROL','POISON_DEATH_TARGET','POISON_DEATH_SELF','GRADE_LOCK_LOW','RAINBOW_DEATHNOTE','REPEAT_STEAL_UI','ATK_REMOVE_HIGH_GRADE','HONG_KICK_EXCLUDE_STUN','ASH_REVOLUTION','UBIN_STAB','CHALK_SHOT','ANCESTRAL_RITE_TABLE','MENDEL_STEAL','TEMU_EXPRESS_ATK','UBIN_STRAY_DOG_ATK'].includes(type); }
 
 /* shared helper: who can legally be targeted by this card, for a given caster.
    used by both the human UI and the bot AI so the "no valid target" rule is defined in exactly one place. */
@@ -28917,7 +29523,7 @@ function cardExtraTagsHTML(card){
   // [Ver 8.2] 지뢰는 켜짐/꺼짐을 카드에 표시한다 (누르기 전엔 상태를 알 수 없었다)
   const mineTag = (card && (card.type==='MINE_SHOP' || card.type==='MINE_DRAW'))
     ? `<span class="mine-tag ${card.mineArmed?'on':'off'}">${card.mineArmed?'ON':'OFF'}</span>` : '';
-  return `${mineTag}${isRevealCard(card) ? '<span class="reveal-tag">보여주기</span>' : ''}${isPassiveHoldCard(card) ? '<span class="passive-tag">패시브</span>' : ''}${isInfiniteCard(card) ? '<span class="inf-tag">INF</span>' : ''}${cardUsesTag(card)}`;
+  return `${mineTag}${isRevealCard(card) ? '<span class="reveal-tag">보여주기</span>' : ''}${isPassiveHoldCard(card) ? '<span class="passive-tag">패시브</span>' : ''}${isPlayThenPassiveCard(card) ? '<span class="passive-tag">지속</span>' : ''}${isInfiniteCard(card) ? '<span class="inf-tag">INF</span>' : ''}${cardUsesTag(card)}`;
 }
 function playCard(playerId, handIdx, targetId, isChainCast, sourceOwnerId){
   // [Ver 7.1] 원격 클라이언트: 직접 실행하지 않고 호스트에 입력을 전달한다.
@@ -29181,6 +29787,17 @@ function playCard(playerId, handIdx, targetId, isChainCast, sourceOwnerId){
       try{ cardAudioStopNow(); lanQueueAudioEvent('stopNow',null,null); }catch(e){} // [Ver 7.2] 반사됨 → 특수 음원 정지
       // NO U: the reactor plays the exact same card straight back at the original caster
       const mirrorPlayer = players.find(x=>x.id === result.mirrorBy);
+      /* [Ver 9.13.1] NO U+ — 공격 카드를 반사할 때는 원래 카드를 되돌리는 대신 9999 피해를 그대로 꽂는다. */
+      if(result.mirrorEvo9999 && mirrorPlayer && p && p.alive){
+        log('highlight', `💥 "NO U+"의 반사! ${J(p.name,'에게','에게')} 9999 피해가 그대로 꽂힙니다.`);
+        currentAttackContext = { attackerName: mirrorPlayer.name, attackerId: mirrorPlayer.id, cardName: 'NO U+' };
+        applyDamageToPlayer(p, 9999, 'BREAK');
+        currentAttackContext = null;
+        renderBoard();
+        if(checkWinCondition()) return;
+        continueAfterEffect(mirrorPlayer, card, {}, deckDrawCounter>drawCountBefore);
+        return;
+      }
       resolveCardEffect(mirrorPlayer, card, p.id, (chainInfo)=> continueAfterEffect(mirrorPlayer, card, chainInfo, deckDrawCounter>drawCountBefore));
       return;
     }
@@ -29225,9 +29842,44 @@ function playCard(playerId, handIdx, targetId, isChainCast, sourceOwnerId){
   });
 }
 
+/* ==========================================================================
+   [Ver 9.14 버그수정] 람보르기니 무한 루프
+   --------------------------------------------------------------------------
+   람보르기니는 "손패가 2장 이상 남아 있으면 턴을 넘기지 않는다"로 되어 있다.
+   그런데 **무한 사용 카드(INFINITE_TYPES)는 내도 손패에서 사라지지 않는다.**
+   봇이 람보르기니 상태에서 무한 카드를 집으면 hand.length가 영원히 줄지 않아
+   같은 카드를 무한히 내고 턴이 절대 넘어가지 않았다(게임 정지).
+   ▶ 한 턴에 이어서 낼 수 있는 횟수에 상한을 둔다. 사람이 정상적으로 굴릴 때는
+     닿을 일이 없는 값이라 체감 너프는 없고, 무한 루프만 확실히 끊긴다.
+   ========================================================================== */
+/* [Ver 9.14] 조광일 — "한 턴에 2장"이므로 개인 턴마다 딱 1회만 추가 사용을 준다. */
+function doubleCastAllow(p){
+  if(!p) return false;
+  const key = (typeof totalIndividualTurns !== 'undefined') ? totalIndividualTurns : 0;
+  if(p.__dcTurnKey !== key){ p.__dcTurnKey = key; p.__dcUsed = 0; }
+  if((p.__dcUsed||0) >= 1) return false;
+  p.__dcUsed = (p.__dcUsed||0) + 1;
+  return true;
+}
+const LAMBO_MAX_CHAIN = 20;
+function lamboAllowMore(p){
+  if(!p) return false;
+  // 개인 턴이 바뀌면 카운터를 새로 시작한다 (totalIndividualTurns = 절대 개인턴 번호)
+  const key = (typeof totalIndividualTurns !== 'undefined') ? totalIndividualTurns : 0;
+  if(p.__lamboTurnKey !== key){ p.__lamboTurnKey = key; p.__lamboChain = 0; }
+  p.__lamboChain = (p.__lamboChain||0) + 1;
+  if(p.__lamboChain < LAMBO_MAX_CHAIN) return true;
+  log('sys', `🏎 ${J(p.name,'의','의')} 람보르기니가 과열되어 이번 턴은 여기서 끝납니다. (연속 ${LAMBO_MAX_CHAIN}장)`);
+  return false;
+}
+
 /* shared "what happens after an effect resolves" step, used by both the normal path and the
    NO U mirrored path so the chain/mark-pick/advance-turn logic isn't duplicated */
 function continueAfterEffect(caster, card, chainInfo, drewCard){
+  /* [Ver 9.13.1] 진화 능력 — "낸 뒤에 붙는" 효과와 "쓸수록 자라는" 카드를 여기서 처리한다.
+     ⚠ 아래 턴 넘김 분기보다 반드시 먼저 불러야 한다 (CCTV+가 그 분기에서 추가 사용을 쓴다). */
+  try{ evoAfterCast(caster, card); }catch(e){ console.error('[진화] 사용 후 처리 오류', e); }
+  window.__evoCastingCard = null;   // [Ver 9.13.1] 카드 한 장이 완전히 끝났다 — 진화 훅의 시전 카드 해제
   window.__prismBuffPct = 0; // [Ver 8.8] 프리즘 1회성 버프 소비/해제
   window.__petGoldCardCaster = null; // [Ver 9.10.2] 거지 지후 — 카드 효과가 끝났으므로 "카드 수입" 표시를 지운다
   /* [Ver 9.0] 이상한 재단 — "카드를 낼 때마다" 판정(고자/풀피/전체 몰수)을 여기서 딱 한 번 굴린다.
@@ -29264,9 +29916,20 @@ function continueAfterEffect(caster, card, chainInfo, drewCard){
     const restartIdx = turnOrder.findIndex(idx=>players[idx] && players[idx].id===caster.id);
     if(restartIdx !== -1) currentTurnIdx = restartIdx;
     setTimeout(runTurnStart, 900);
-  } else if(caster && caster.alive && caster.lamboUnlimited && caster.hand.length > 1 && !drewCard){
+  } else if(caster && caster.alive && caster.lamboUnlimited && caster.hand.length > 1 && !drewCard && lamboAllowMore(caster)){
     // v4.25 람보르기니: 손패가 2장 이상 남아있고, 이번 카드로 드로우가 발생하지 않았다면 턴이 넘어가지 않는다.
     log('sys', `${J(caster.name,'이','가')} "람보르기니"로 속도가 붙어 계속 카드를 낼 수 있습니다! (남은 카드 ${caster.hand.length}장)`);
+    renderBoard(); renderHand();
+    if(caster.isBot){ setTimeout(()=> botPlay(), 500); }
+  } else if(caster && caster.alive && caster.doubleCastAura && caster.hand.length > 0 && !drewCard && doubleCastAllow(caster)){
+    // [Ver 9.14] 조광일 — 속사포. 자기 턴마다 카드를 2장까지 낼 수 있다.
+    log('sys', `🔫 ${J(caster.name,'이','가')} "조광일"의 속사포로 한 장 더 낼 수 있습니다! (남은 카드 ${caster.hand.length}장)`);
+    renderBoard(); renderHand();
+    if(caster.isBot){ setTimeout(()=> botPlay(), 500); }
+  } else if(caster && caster.alive && (caster.evoExtraCard||0) > 0 && caster.hand.length > 0 && !drewCard){
+    // [Ver 9.13.1] CCTV+ — 이번 턴에 카드를 한 번 더 낼 수 있다. 여분 1회를 소모하고 턴을 유지한다.
+    caster.evoExtraCard -= 1;
+    log('sys', `📹 ${J(caster.name,'이','가')} "CCTV+"로 이번 턴에 카드를 한 번 더 낼 수 있습니다! (남은 카드 ${caster.hand.length}장)`);
     renderBoard(); renderHand();
     if(caster.isBot){ setTimeout(()=> botPlay(), 500); }
   } else if(caster && caster.alive && (caster.nuleukkiExtraCard||0) > 0 && caster.hand.length > 0 && !drewCard){
@@ -29291,6 +29954,9 @@ function computeAffectedTargets(caster, card, targetId){
   }
   switch(card.type){
     case 'ATK_AOE': return getTargetsForAoe(caster);
+    // [Ver 9.14] 신규 전체 공격 — 반응창이 "누가 맞는지" 알아야 보여주기 카드가 정상 작동한다
+    case 'SOUL_TRIAL_AOE': return getTargetsForAoe(caster);
+    case 'JUMP_SLAM_AOE': return getTargetsForAoe(caster);
     case 'ATK_AOE_DISCARD_ALL_SELF': return getTargetsForAoe(caster);
     case 'VIPER_SURVIVOR_AOE': return getTargetsForAoe(caster);
     case 'ATK_AOE_DEATH_CHANCE': return getTargetsForAoe(caster);
@@ -29305,6 +29971,8 @@ function computeAffectedTargets(caster, card, targetId){
     case 'ATK_AOE_INFINITE': return getTargetsForAoe(caster);
     case 'ATK_AOE_ANYCARD_DEFEND': return getTargetsForAoe(caster);
     case 'ATK_AOE_SELFDMG_STUNALL': return getTargetsForAoe(caster);
+    case 'SOUL_TRIAL_AOE': return getTargetsForAoe(caster);   // [Ver 9.14] 영혼재판
+    case 'JUMP_SLAM_AOE': return getTargetsForAoe(caster);    // [Ver 9.14] 적절한 거리를 점프할 수 있음
     case 'HALVE_ALL_OTHERS_HP': return alivePlayers().filter(p=>p.id!==caster.id); // [Ver 8.5.5] 분노의 샤우팅
     case 'GOLD_GAIN': return alivePlayers();
     case 'GOLD_GAIN_ALL': return alivePlayers();
@@ -29522,7 +30190,12 @@ function estimateEffectiveDamage(target, amount, pierce){
   if(!target) return 0;
   let remaining = Math.max(0, amount) + (target.permaDamageBonus||0);
   if(target.damageReductionPct){ const __drCapE = target.__rouletteInvuln ? 99 : 90; remaining = Math.max(0, Math.round(remaining * (1 - Math.min(__drCapE,target.damageReductionPct)/100))); } // [Ver 5.0] 음수도 적용 / [밸런스] 상한 90%, 룰렛 진행중 예외 99%
-  if(target.shield>0 && pierce!=='PIERCE' && pierce!=='BREAK'){
+  /* [Ver 9.14] 쉴드 처리 규칙을 applyDamageToPlayer와 맞춘다.
+       · 일반   : 쉴드가 막아내고 남은 몫만 HP로 (다 못 막아도 HP는 보호)
+       · 관통   : 쉴드를 통째로 무시하고 HP에 그대로
+       · 파괴   : 쉴드를 체력처럼 깎고 **남은 만큼** HP로 (= 일반과 같은 뺄셈이지만 쉴드가 사라진다)
+     예측값 기준으로는 파괴와 일반의 HP 피해가 같으므로 한 갈래로 묶는다. */
+  if(target.shield>0 && pierce!=='PIERCE'){
     remaining = Math.max(0, remaining - target.shield);
   }
   return remaining;
@@ -30028,9 +30701,12 @@ function openReactionWindow(caster, card, targetId, onResolve){
   // [Ver 7.2] 카드에 reactionMs가 지정돼 있으면(특수 음원의 드랍 타이밍 맞춤) 그 값을 쓴다.
   const __casterFast = (caster && caster.fastReactionMs) ? caster.fastReactionMs : 0; // [Ver 8.2] 느려
   const __cardMs = (typeof cardReactionMs==='function') ? cardReactionMs(card) : 0;
+  /* [Ver 9.13.1] 기습공격!!!+ — 진화하면 반응 시간이 1초 줄어든다.
+     카드에 reactionMs를 박지 않고 여기서 깎는 이유는, 핫시트(15초)에서도 "1초 단축"이 되게 하기 위해서다. */
+  const __evoQuickCut = isEvoOf(card, '기습공격!!!') ? 1000 : 0;
   const REACT_MS = hasOverride
     ? window.__reactionMsOverride
-    : (__cardMs || __casterFast || (hotseatMode ? 15000 : 4000)); // [Ver 5.3.4] 핫시트는 15초, 단일플레이는 4초 / [Ver 8.2] "느려" 소지자는 1.5초
+    : Math.max(1000, (__cardMs || __casterFast || (hotseatMode ? 15000 : 4000)) - __evoQuickCut); // [Ver 5.3.4] 핫시트는 15초, 단일플레이는 4초 / [Ver 8.2] "느려" 소지자는 1.5초
   // [Ver 8.1.18] 표시용 타이머 = 실제 반응시간(REACT_MS).
   // · 카드에 reactionMs가 있으면(딱지남 러시안룰렛 37.5초, 메카드 6초, 12초 구간 등) 그 숫자부터 카운트다운한다.
   // · hasOverride(튜토리얼 등)만 예외적으로 표시는 기본 4/15초처럼 보이게 하고 슬로우모션 처리.
@@ -30109,7 +30785,9 @@ function openReactionWindow(caster, card, targetId, onResolve){
     log('highlight', `${J(reactor.name,'이','가')} ${rc.name}으로 효과를 그대로 반사했습니다!`);
     try{ if(rc.sfx) cardAudioTriggerKey('sfx', rc.sfx, reactor.id); }catch(e){} // [Ver 7.3] 보여주기 발동 시 효과음 (반사)
     renderBoard();
-    finish({ mirrored:true, mirrorBy: reactor.id });
+    /* [Ver 9.13.1] NO U+ — 상대가 낸 것이 공격 카드라면, 그 카드를 되돌리는 대신 9999 피해로 반사한다. */
+    const evo9999 = isEvoOf(rc, 'NO U') && (typeof isAtkLikeCard==='function') && isAtkLikeCard(card);
+    finish({ mirrored:true, mirrorBy: reactor.id, mirrorEvo9999: evo9999 });
   };
   // ZEUS: NO U와 동일하게 카드 효과를 그대로 반사하되, 추가로 원래 공격을 낸 사람(caster)에게
   // 2000 고정 피해 + 2바퀴 스턴 + 5바퀴 마비 + 2바퀴 경직 + 공격력 15% 감소 디버프를 건다.
@@ -30348,6 +31026,20 @@ function openReactionWindow(caster, card, targetId, onResolve){
     finish({});
     checkWinCondition();
   };
+  /* [Ver 9.14] 무조건반사 — 공격을 "막지 않고" 그대로 맞되, 그 피해의 절반을 시전자에게 되돌린다.
+     반사(mirrored)와 달리 원래 카드는 정상적으로 해석되며, 되돌리는 몫만 여기서 예약해둔다.
+     실제 반사는 applyDamageToPlayer가 이 사람에게 피해를 넣는 순간 처리한다(reflexHalfPending). */
+  const doReflexHalf = (rc)=>{
+    if(resolved) return;
+    const liveIdx = reactor.hand.findIndex(c=>c.uid===rc.uid);
+    if(liveIdx===-1) return;
+    reactor.hand.splice(liveIdx,1);
+    bumpReactionStat(reactor, 'reflected');
+    reactor.reflexHalfPending = { pct: rc.reflectPct||50, fromId: caster ? caster.id : null };
+    log('highlight', `🤸 ${J(reactor.name,'이','가')} "${rc.name}"을(를) 보여줍니다! 맞는 대신 그 피해의 ${rc.reflectPct||50}%를 ${caster?caster.name:'시전자'}에게 되돌립니다.`);
+    renderHand(); renderBoard();
+    finish({});
+  };
   // [Ver 5.5] 라크로스 랩크로스: 상대 공격 카드를 반사(원래 시전자에게 되돌림). 3회 사용 가능.
   const doLacrosse = (rc)=>{
     if(resolved) return;
@@ -30503,8 +31195,11 @@ function openReactionWindow(caster, card, targetId, onResolve){
     log('highlight', `${J(reactor.name,'이','가')} "${rc.name}"을(를) 보여줍니다! 낚싯줄을 당겨 [미끼]에 걸린 ${baited.length}명에게 ${rc.reactPower||500}의 피해를 입힙니다!`);
     currentAttackContext = { attackerName: reactor.name, attackerId: reactor.id, cardName: rc.name };
     baited.forEach(p=>{
-      p.baitDebuff = false;
-      applyDamageToPlayer(p, rc.reactPower||500, 'NONE');
+      // [Ver 9.13.1] 강태공+로 쌓인 [미끼] 중첩만큼 피해가 곱해진다 (기본은 1중첩 = 그대로)
+      const stacks = Math.max(1, p.baitStacks||1);
+      p.baitDebuff = false; p.baitStacks = 0;
+      if(stacks > 1) log('sys', `🎣 ${J(p.name,'의','의')} [미끼] ${stacks}중첩! 피해가 ${stacks}배가 됩니다.`);
+      applyDamageToPlayer(p, (rc.reactPower||500) * stacks, 'NONE');
     });
     renderBoard(); renderHand();
     finish({});
@@ -30680,6 +31375,15 @@ function openReactionWindow(caster, card, targetId, onResolve){
       btn.className = 'btn btn-sm btn-solid';
       btn.textContent = `${rc.name} 사용 (공격력 +${rc.buffPct||60}%)`;
       btn.onclick = ()=> doPrism(rc);
+      actions.appendChild(btn);
+    }
+    // [Ver 9.14] 무조건반사 — 공격 카드에만 보여줄 수 있다
+    if(reactor && isAtkLikeCard(card) && reactor.hand.some(c=>c.type==='REACT_REFLECT_HALF')){
+      const rc = reactor.hand.find(c=>c.type==='REACT_REFLECT_HALF');
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-sm btn-solid';
+      btn.textContent = `${rc.name} 사용 (피해 ${rc.reflectPct||50}% 되돌리기)`;
+      btn.onclick = ()=> doReflexHalf(rc);
       actions.appendChild(btn);
     }
     if(hasGuard){
@@ -31053,10 +31757,23 @@ function resolveCardEffect(caster, card, targetId, onDone){
   currentStatCardName = card.name;
   currentAttackContext = null;
   currentCastingCard = card;
+  /* [Ver 9.13.1] 진화 훅 전용 "지금 시전 중인 카드".
+     currentCastingCard는 카드가 끝나도 지워지지 않아(다음 카드가 덮어쓸 때까지 남는다),
+     백호 추가타처럼 카드 밖에서 일어나는 피해에 진화 효과가 잘못 묻어나기 때문에 따로 둔다.
+     continueAfterEffect에서 반드시 지운다. */
+  window.__evoCastingCard = card;
   /* [Ver 9.10.2] 거지 지후 — "카드로 얻는 돈"만 2배가 되어야 한다.
      지금 카드를 내는 사람이 누구인지 여기서 표시해두고, grantGold가 그 사람일 때만 배수를 건다.
      (바퀴 수입처럼 카드와 무관한 수입까지 2배가 되지 않도록 continueAfterEffect에서 반드시 지운다) */
   window.__petGoldCardCaster = caster ? caster.id : null;
+
+  /* [Ver 9.14 이스터에그] 개쉐끼 랩터를 "조용히 시키려" 든 카드는 시전자를 죽인다. */
+  try{
+    if(targetId){
+      const __mdT = players.find(p=>p.id===targetId);
+      if(__mdT && madDogBackfire(caster, __mdT, card)){ onDone({}); return; }
+    }
+  }catch(e){}
 
   // [Ver 6.8] ABYSSAL HUNTER — 시전 시 화면이 잠시 바닷속으로 잠긴다.
   if(card.name === 'ABYSSAL HUNTER'){ try{ triggerAbyssalFlash(); }catch(e){} }
@@ -31594,6 +32311,13 @@ function resolveCardEffect(caster, card, targetId, onDone){
       const pool = alivePlayers();
       if(!pool.length){ onDone({}); return; }
       const victim = pool[Math.floor(Math.random()*pool.length)];
+      /* [Ver 9.13.1] 명탐정 고난+ — 주인공 버프. 자신이 즉사 대상으로 뽑히면 HP 1로 살아남는다. */
+      if(isEvoOf(card, '명탐정 고난') && victim.id === caster.id){
+        caster.hp = 1;
+        log('highlight', `🔍 명탐정 고난+ — ${J(caster.name,'이','가')} 지목됐지만, 주인공은 죽지 않습니다! (HP 1로 생존)`);
+        renderBoard();
+        onDone({}); break;
+      }
       log('highlight', `🔍 명탐정 고난 — ${J(victim.name,'이','가')} 지목되어 즉사합니다!`);
       forceKillWithRevive(victim, '"명탐정 고난"의 무작위 지목', card.name);
       renderBoard();
@@ -32140,7 +32864,12 @@ function resolveCardEffect(caster, card, targetId, onDone){
     }
     case 'ATK_AOE_SELFDMG_STUNALL': {
       const targets = getTargetsForAoe(caster);
-      applyDamageToPlayer(caster, 400, 'NONE');
+      /* [Ver 9.13.1] 빙결화도+ — 반동 데미지를 무시한다. */
+      if(isEvoOf(card, '빙결화도')){
+        log('sys', `❄️ 빙결화도+ — 반동 400 피해를 무시합니다.`);
+      } else {
+        applyDamageToPlayer(caster, 400, 'NONE');
+      }
       let blessedSkipped = 0;
       targets.forEach(t=>{
         dealDamage(caster, t, card.power, card.pierce, true);
@@ -32148,7 +32877,7 @@ function resolveCardEffect(caster, card, targetId, onDone){
         if(isGodBlessedProtected(t, card)){ blessedSkipped++; return; }
         trySetStunned(t);
       });
-      log('sys', `${caster.name}의 ${card.name}! 자신도 400 피해를 입고, 모든 적이 얼어붙어 다음 턴을 스킵합니다.${blessedSkipped>0?` (신의 가호 보유자 ${blessedSkipped}명은 스턴 면역)`:''}`);
+      log('sys', `${caster.name}의 ${card.name}! ${isEvoOf(card,'빙결화도')?'반동 없이':'자신도 400 피해를 입고,'} 모든 적이 얼어붙어 다음 턴을 스킵합니다.${blessedSkipped>0?` (신의 가호 보유자 ${blessedSkipped}명은 스턴 면역)`:''}`);
       renderBoard();
       onDone({});
       break;
@@ -33835,6 +34564,11 @@ function resolveCardEffect(caster, card, targetId, onDone){
     }
     case 'METATON_GROWTH': {
       caster.metatonGrowth = true;
+      // [Ver 9.13.1] 메타톤 잼민이+ — 회복할 때마다 회복량이 5씩 증가한다
+      if(isEvoOf(card, '메타톤 잼민이')){
+        caster.metatonEvo = true;
+        log('sys', `👶 메타톤 잼민이+ — 회복할 때마다 회복량이 5씩 더 커집니다.`);
+      }
       log('sys', `${J(caster.name,'이','가')} ${card.name}을 발동했습니다! 앞으로 누군가의 턴이 지날 때마다 HP와 MaxHP가 ${METATON_GROWTH_AMT}씩 증가합니다. (지속 효과)`);
       renderBoard();
       onDone({});
@@ -34748,6 +35482,13 @@ function resolveCardEffect(caster, card, targetId, onDone){
       const shRecv = (cultMode && targetId) ? (players.find(p=>p.id===targetId)||caster) : caster; // [Ver 6.19]
       if(shieldBlockUntilTurn && turnCount < shieldBlockUntilTurn && shRecv.id !== shieldBlockCasterId){ log('sys', `"NO SHIELD?" 효과로 ${J(shRecv.name,'은','는')} 쉴드를 획득할 수 없습니다.`); onDone({}); return; }
       shRecv.shield += card.power;
+      /* [Ver 9.13.1] 다이아몬드 방벽+ — 이 쉴드가 처음으로 전부 깨질 때까지 받는 피해량 2.5% 감소.
+         깨지는 순간 applyDamageToPlayer가 이 보정을 되돌린다(evoDiamondDr). */
+      if(isEvoOf(card, '다이아몬드 방벽') && !shRecv.evoDiamondDr){
+        shRecv.evoDiamondDr = 2.5;
+        shRecv.damageReductionPct = (shRecv.damageReductionPct||0) + 2.5;
+        log('sys', `💎 다이아몬드 방벽+ — 쉴드가 전부 깨질 때까지 ${J(shRecv.name,'은','는')} 받는 피해량이 2.5% 감소합니다.`);
+      }
       log('sys', `${J(caster.name,'이','가')} ${shRecv.id!==caster.id?J(shRecv.name,'에게','에게')+' ':''}쉴드 ${card.power} 부여 (현재 ${shRecv.shield})`);
       if(shRecv.id!==caster.id) cultBumpSuspicion(shRecv, caster, 'shield'); // [Ver 6.19]
       renderBoard();
@@ -34776,7 +35517,18 @@ function resolveCardEffect(caster, card, targetId, onDone){
       if(target.debuffImmune){ log('sys', `${J(target.name,'은','는')} 디버프 면역이라 ${card.name} 효과가 무시되었습니다.`); onDone({}); return; }
       if(tryNullify(target)){ onDone({}); return; }
       applyHarmfulStatus(target, (t)=>{
-        if(trySetStunned(t)) log('sys', `${J(t.name,'이','가')} 스턴 상태가 되었습니다.`);
+        if(trySetStunned(t)){
+          /* [Ver 9.13.1] 마취총+ — 스턴 기간이 1턴 늘어난다.
+             기본 스턴(stunned)은 다음 자기 턴 하나를 날리는 1회성이라, 늘어나는 몫은
+             지속 스턴(stunLockTurns) 1턴으로 얹는다. */
+          if(isEvoOf(card, '마취총')){
+            t.stunLockTurns = Math.max(t.stunLockTurns||0, 1);
+            t.stunLockLabel = '마취';
+            log('sys', `💉 ${J(t.name,'이','가')} 마취총+에 깊이 잠들었습니다. (스턴 1턴 추가)`);
+          } else {
+            log('sys', `${J(t.name,'이','가')} 스턴 상태가 되었습니다.`);
+          }
+        }
       });
       onDone({});
       break;
@@ -34833,8 +35585,13 @@ function resolveCardEffect(caster, card, targetId, onDone){
           } else if(!target.baitDebuff){
             applyHarmfulStatus(target, (t)=>{
               t.baitDebuff = true;
+              t.baitStacks = 1;
               log('sys', `${J(target.name,'에게','에게')} "${card.name}"의 [미끼]가 부여되었습니다.`);
             });
+          } else if(isEvoOf(card, '강태공')){
+            /* [Ver 9.13.1] 강태공+ — [미끼]가 중첩된다. 당길 때 중첩 수만큼 피해가 곱해진다. */
+            target.baitStacks = (target.baitStacks||1) + 1;
+            log('sys', `🎣 강태공+ — ${J(target.name,'의','의')} [미끼]가 ${target.baitStacks}중첩이 되었습니다.`);
           } else {
             log('sys', `${J(target.name,'은','는')} 이미 [미끼]가 있어 중첩되지 않았습니다.`);
           }
@@ -35293,12 +36050,15 @@ function resolveCardEffect(caster, card, targetId, onDone){
         onDone({});
         return;
       }
+      /* [Ver 9.13.1] 괴도+ — 2턴 뒤가 아니라 1턴 뒤에 강탈해온다. */
+      const __markTurns = isEvoOf(card, '괴도') ? 1 : 2;
       if(isChoiceOwner(caster)){
         window.__markCaster = caster;
         window.__markTarget = target;
         window.__markCardName = card.name;
+        window.__markTurns = __markTurns;
         const body = `
-          <div style="margin-bottom:10px;">2턴 뒤 자신의 턴에, 아래 카드가 아직 상대 패에 남아있다면 가져옵니다. 하나를 지목하세요.</div>
+          <div style="margin-bottom:10px;">${__markTurns}턴 뒤 자신의 턴에, 아래 카드가 아직 상대 패에 남아있다면 가져옵니다. 하나를 지목하세요.</div>
           <div style="display:flex; flex-direction:column; gap:6px;">
             ${/* [Ver 8.1.6] 여기서도 c.__masked를 무시하고 원본 등급·이름으로 지목 목록을 보여준다 */''}
             ${target.hand.map(c=>`<button class="btn btn-sm" onclick="confirmMarkPick('${c.uid}')" style="width:100%; text-align:left;">[${c.grade}] ${escapeHtml(c.name)}</button>`).join('')}
@@ -35307,8 +36067,8 @@ function resolveCardEffect(caster, card, targetId, onDone){
         onDone({ markPick:true });
       } else {
         const pick = target.hand[Math.floor(Math.random()*target.hand.length)];
-        pendingMarks.push({ casterId:caster.id, targetId:target.id, cardUid:pick.uid, cardName:pick.name, turnsLeft:2 });
-        log('sys', `${J(caster.name,'이','가')} ${target.name}의 카드 하나를 은밀히 지목했습니다. (2턴 뒤 확인)`);
+        pendingMarks.push({ casterId:caster.id, targetId:target.id, cardUid:pick.uid, cardName:pick.name, turnsLeft:__markTurns });
+        log('sys', `${J(caster.name,'이','가')} ${target.name}의 카드 하나를 은밀히 지목했습니다. (${__markTurns}턴 뒤 확인)`);
         onDone({});
       }
       break;
@@ -35939,14 +36699,18 @@ function resolveCardEffect(caster, card, targetId, onDone){
         onDone({});
         return;
       }
+      /* [Ver 9.13.1] 복선+ — 대상이 복선보다 먼저 죽으면 효과가 다른 사람에게 넘어간다.
+         넘길 때 "자신"을 제외해야 하므로 건 사람(casterId)을 예약에 함께 적어둔다. */
+      const __evoFore = isEvoOf(card, '복선');
       if(target.reflectNext){
         target.reflectNext = false;
         log('sys', `${J(target.name,'이','가')} ${J(card.name,'을','를')} 반사했습니다! 대신 ${caster.name}에게 복선이 걸립니다.`);
-        pendingDeaths.push({ targetId: caster.id, dueRound: turnCount + 3 });
+        pendingDeaths.push({ targetId: caster.id, dueRound: turnCount + 3, evo: __evoFore, casterId: target.id });
         onDone({});
         return;
       }
-      pendingDeaths.push({ targetId: target.id, dueRound: turnCount + 3 });
+      pendingDeaths.push({ targetId: target.id, dueRound: turnCount + 3, evo: __evoFore, casterId: caster.id });
+      if(__evoFore) log('sys', `⧗ 복선+ — 대상이 먼저 사망하면 복선은 다른 사람에게 옮겨갑니다.`);
       log('sys', `${target.name}에게 "복선"이 드리워졌습니다. 3바퀴(전원이 3번씩 턴을 도는 동안) 뒤 사망합니다. (지금 막지 않으면 이후엔 제거할 수 없습니다)`);
       onDone({});
       break;
@@ -36513,6 +37277,9 @@ function resolveCardEffect(caster, card, targetId, onDone){
       if(card.flatReduce){ caster.permaFlatReduce = (caster.permaFlatReduce||0) + card.flatReduce; msgs.push(`받는 피해 -${card.flatReduce}(고정)`); }
       if(card.maxHpAdd){ caster.maxHp += card.maxHpAdd; msgs.push(`MaxHP +${card.maxHpAdd}`); }
       if(card.hpAdd){ caster.hp = Math.min(caster.maxHp, caster.hp + card.hpAdd); msgs.push(`HP +${card.hpAdd}`); }
+      // [Ver 9.14] 코 — 쉴드 획득 / 주는 피해 감소
+      if(card.shieldAdd){ grantShield(caster, card.shieldAdd, card.name); msgs.push(`쉴드 +${card.shieldAdd}`); }
+      if(card.outDmgPct){ caster.outDamagePct = (caster.outDamagePct||0) + card.outDmgPct; msgs.push(`주는 피해 ${card.outDmgPct>0?'+':''}${card.outDmgPct}%`); }
       log('sys', `${J(caster.name,'이','가')} "${card.name}"을(를) 발동! ${msgs.join(', ')} (영구)`);
       renderBoard(); onDone({}); break;
     }
@@ -38286,6 +39053,259 @@ function resolveCardEffect(caster, card, targetId, onDone){
       onDone({});
       break;
     }
+    /* ===================== [Ver 9.14] 신규 카드 효과 ===================== */
+    case 'EXECUTE_LOWEST_HP': { // 접어라ㅋ걍 — 체력이 가장 낮은 사람을 즉사 (단, 그 체력이 cap 이하일 때만)
+      const cap = card.hpCap || 500;
+      const pool = alivePlayers().filter(p=> p.id!==caster.id && !(p.team && p.team===caster.team));
+      if(!pool.length){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
+      const low = pool.reduce((a,b)=> (b.hp < a.hp ? b : a), pool[0]);
+      if(low.hp > cap){
+        log('sys', `🃏 "${card.name}" — 가장 체력이 낮은 ${low.name}조차 HP ${low.hp}(으)로 ${cap}을(를) 넘어 실패했습니다.`);
+        onDone({}); break;
+      }
+      log('highlight', `🃏 ${J(caster.name,'이','가')} "${card.name}"! 체력이 가장 낮은 ${J(low.name,'이','가')} 그대로 접습니다.`);
+      forceKillWithRevive(low, `"${card.name}"`, card.name);
+      renderBoard(); checkWinCondition(); onDone({}); break;
+    }
+    case 'CHARGER_TOGGLE': { // 충전기 — 흡수/방출 (무한 사용)
+      const doCharge = ()=>{
+        card.chargeEnergy = (card.chargeEnergy||0) + 1;
+        log('sys', `🔌 ${J(caster.name,'이','가')} 충전기로 에너지를 모읍니다. (현재 ⚡${card.chargeEnergy})`);
+        try{ renderHand(); }catch(e){}
+        onDone({});
+      };
+      const doRelease = ()=>{
+        const e = card.chargeEnergy||0;
+        if(e <= 0){ log('sys', `🔌 모아둔 에너지가 없어 방출하지 못했습니다.`); onDone({}); return; }
+        card.chargeEnergy = 0;
+        const dmg = e * (card.chargeDmg||300);
+        const pct = e * (card.chargeAtkPct||5);
+        caster.tempAtkBuffMult = (caster.tempAtkBuffMult||0) + pct;
+        caster.tempAtkBuffTurns = Math.max(caster.tempAtkBuffTurns||0, card.chargeRounds||4);
+        caster.tempAtkBuffLabel = '충전기'; caster.tempAtkBuffIcon = '🔌';
+        log('highlight', `⚡ ${J(caster.name,'이','가')} 충전기를 방출합니다! 에너지 ${e} × ${card.chargeDmg||300} = ${dmg.toLocaleString()} 피해, 공격력 +${pct}% (${card.chargeRounds||4}바퀴)`);
+        const targets = getTargetsForAoe(caster);
+        targets.forEach(t=> dealDamage(caster, t, dmg, card.pierce, true));
+        try{ renderHand(); }catch(e2){}
+        onDone({});
+      };
+      if(isChoiceOwner(caster)){
+        showModal('🔌 충전기', `모아둔 에너지 <b>⚡${card.chargeEnergy||0}</b><br><br>
+          · <b>흡수</b> — 에너지를 1 모읍니다.<br>
+          · <b>방출</b> — 에너지 × ${card.chargeDmg||300} 피해 + 공격력 +에너지×${card.chargeAtkPct||5}% (${card.chargeRounds||4}바퀴)`, [
+          { label:'흡수 (⚡+1)', action: doCharge },
+          { label:`방출 (⚡${card.chargeEnergy||0})`, solid:true, action: doRelease }
+        ]);
+      } else {
+        // 봇 — 3 이상 모았거나 마무리가 되면 방출, 아니면 계속 모은다
+        if((card.chargeEnergy||0) >= 3) doRelease(); else doCharge();
+      }
+      break;
+    }
+    case 'CARD_BUFFET': { // 카드 뷔페 — 무작위 30장을 늘어놓고 상점가로 산다
+      const n = card.buffetCount || 30;
+      const menu = [];
+      for(let i=0;i<n;i++){ const c = (caster.isBot ? botRandomShopCard() : randomShopCard()); if(c) menu.push(mkUidCard(c)); }
+      if(!menu.length){ log('sys','뽑을 카드가 없어 효과가 무산되었습니다.'); onDone({}); return; }
+      if(isChoiceOwner(caster)){
+        window.__buffet = { ownerId: caster.id, menu };
+        openCardBuffet();
+        onDone({ markPick:true });
+      } else {
+        // 봇 — 돈이 되는 만큼 위에서부터 산다
+        let bought = 0;
+        menu.forEach(c=>{
+          const price = Math.max(0, shopSlotPrice(caster, { card:c }));
+          if((caster.gold||0) >= price){ caster.gold -= price; grantCardToPlayer(caster, c, '카드 뷔페'); bought++; }
+        });
+        log('sys', `🍽️ ${J(caster.name,'이','가')} 카드 뷔페에서 ${bought}장을 집어갔습니다.`);
+        renderBoard(); onDone({});
+      }
+      break;
+    }
+    case 'DOUBLE_CAST_AURA': { // 조광일 — 앞으로 자기 턴마다 카드 2장
+      caster.doubleCastAura = true;
+      log('highlight', `🔫 ${J(caster.name,'이','가')} "${card.name}"! 속사포가 되어 앞으로 자신의 턴마다 카드를 <b>2장</b>씩 낼 수 있습니다.`);
+      renderBoard(); onDone({}); break;
+    }
+    case 'WILSON_SUMMON': { // 윌슨 — 대신 맞아주는 분신
+      caster.wilsonHp = card.wilsonHp || 2000;
+      caster.wilsonMaxHp = card.wilsonHp || 2000;
+      caster.wilsonHeal = card.wilsonHeal || 200;
+      log('highlight', `🏐 ${J(caster.name,'이','가')} <b>윌슨</b>을 소환했습니다! (윌슨 HP ${caster.wilsonHp.toLocaleString()}) 앞으로 받는 피해를 윌슨이 대신 받고, 맞을 때마다 ${caster.wilsonHeal} 회복합니다.`);
+      renderBoard(); onDone({}); break;
+    }
+    case 'BURN_ALL_HANDS_REDISTRIBUTE': { // 정도전 — 남의 패를 태우고 내 패를 나눠준다
+      const others = alivePlayers().filter(p=> p.id!==caster.id);
+      let burned = 0;
+      others.forEach(p=>{ burned += (p.hand||[]).length; p.hand = []; });
+      const mine = (caster.hand||[]).slice();
+      caster.hand = [];
+      const each = others.length ? Math.floor(mine.length / others.length) : 0;
+      let k = 0;
+      others.forEach(p=>{ for(let i=0;i<each;i++){ if(k < mine.length) p.hand.push(mine[k++]); } });
+      while(k < mine.length) caster.hand.push(mine[k++]);   // 나누고 남은 건 자신이
+      log('highlight', `🔥 ${J(caster.name,'이','가')} "${card.name}"! 남들의 카드 ${burned}장을 전부 불사르고, 자신의 카드 ${mine.length}장을 ${each}장씩 나눠줬습니다.`);
+      renderHand(); renderBoard(); onDone({}); break;
+    }
+    case 'ATK_THEN_KEEP_OR_GIVE': { // 엽서 — 공격 후 회수 또는 양도
+      const target = players.find(p=>p.id===targetId);
+      if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
+      dealDamage(caster, target, card.power, card.pierce);
+      const back = { ...card, uid:'u'+Date.now().toString(36)+Math.random().toString(36).slice(2,8) };
+      const pool = alivePlayers().filter(p=> p.id!==caster.id);
+      const give = (p)=>{ grantCardToPlayer(p, back, '엽서'); log('sys', `💌 "${card.name}"이(가) ${p.name}에게 넘어갔습니다.`); renderHand(); renderBoard(); onDone({}); };
+      const keep = ()=>{ grantCardToPlayer(caster, back, '엽서'); log('sys', `💌 ${J(caster.name,'이','가')} "${card.name}"을(를) 다시 챙겼습니다.`); renderHand(); renderBoard(); onDone({}); };
+      if(isChoiceOwner(caster) && pool.length){
+        showModal('💌 엽서', '이 카드를 어떻게 할까요?', [
+          { label:'내가 다시 갖기', solid:true, action: keep },
+          ...pool.slice(0,3).map(p=> ({ label:`${p.name}에게 주기`, action: ()=> give(p) }))
+        ]);
+      } else keep();
+      break;
+    }
+    case 'ATK_PASS_GROWING': { // 돌림노래 — 공격 후 대상에게 넘어가며 공격력 성장
+      const target = players.find(p=>p.id===targetId);
+      if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
+      dealDamage(caster, target, card.power, card.pierce);
+      const grown = Math.round((card.power||400) * (1 + (card.growPct||20)/100));
+      const passed = { ...card, power: grown, uid:'u'+Date.now().toString(36)+Math.random().toString(36).slice(2,8) };
+      grantCardToPlayer(target, passed, '돌림노래');
+      log('sys', `🎶 "${card.name}"이(가) ${target.name}에게 넘어갔습니다. 공격력이 ${card.power} → <b>${grown}</b>으로 커집니다.`);
+      renderHand(); renderBoard(); onDone({}); break;
+    }
+    case 'ANCIENT_RUINS_AURA': { // 우빈랩터의 고대 유적 — 매 턴 확률로 보물
+      caster.ruinsActive = true;
+      caster.ruinsPct = card.procPct || 10;
+      caster.ruinsGold = card.ruinGold || 10000;
+      caster.ruinsCards = card.ruinCards || 3;
+      log('highlight', `🏛️ ${J(caster.name,'이','가')} "${card.name}"에 들어섰습니다! 앞으로 모든 사람의 턴마다 ${caster.ruinsPct}% 확률로 보물을 찾습니다.`);
+      renderBoard(); onDone({}); break;
+    }
+    case 'GAMBLE_MASTER': { // 도박 마스터 — 도뜨사 영구 면역
+      caster.dottusaImmune = true;
+      log('highlight', `🎲 ${J(caster.name,'이','가')} "${card.name}"! 앞으로 도박에서 <b>도뜨사가 뜨지 않습니다.</b>`);
+      renderBoard(); onDone({}); break;
+    }
+    case 'SCHEME_PRO_DELAYED': { // 권모술수pro — 3바퀴 뒤 전체 약화
+      caster.schemeProDue = turnCount + (card.delayRounds||3);
+      caster.schemeProAtk = card.atkDebuffPct || 30;
+      caster.schemeProHpCut = card.hpCutPct || 50;
+      log('highlight', `🕸️ ${J(caster.name,'이','가')} "${card.name}"을(를) 발동했습니다! <b>${card.delayRounds||3}바퀴 뒤</b> 모든 상대의 공격력이 ${caster.schemeProAtk}% 감소하고 체력이 절반이 됩니다.`);
+      renderBoard(); onDone({}); break;
+    }
+    case 'BURNING_MAN_AURA': { // 불타는남자 — 모든 공격에 화상
+      caster.burningManBurn = card.burnPerTurn || 30;
+      log('highlight', `🔥 ${J(caster.name,'이','가')} "${card.name}"! 앞으로 자신의 모든 공격이 화상(턴당 ${caster.burningManBurn})을 남기며, 화상은 중첩됩니다.`);
+      renderBoard(); onDone({}); break;
+    }
+    case 'REAPER_SCYTHE_AURA': { // 영계의 낫 — 빈사 상대 공격 시 스턴
+      caster.reaperScythePct = card.hpPct || 44;
+      log('highlight', `🌾 ${J(caster.name,'이','가')} "${card.name}"을(를) 쥐었습니다! 앞으로 HP ${caster.reaperScythePct}% 이하인 상대를 공격하면 1턴 스턴시킵니다.`);
+      renderBoard(); onDone({}); break;
+    }
+    case 'ECONOMY_REBATE_AURA': { // 경기 회복 — 쓴 돈의 일부 환급
+      caster.ecoRebatePct = card.rebatePct || 25;
+      caster.__ecoMark = caster.goldSpent || 0;
+      log('highlight', `💹 ${J(caster.name,'이','가')} "${card.name}"! 앞으로 자신의 턴마다 지난 바퀴에 쓴 골드의 ${caster.ecoRebatePct}%를 돌려받습니다.`);
+      renderBoard(); onDone({}); break;
+    }
+    case 'DAMAGE_REBATE_AURA': { // 우빈 리커버리 — 받은 피해의 일부 회복
+      caster.dmgRebatePct = card.rebatePct || 25;
+      caster.__dmgMark = caster.dmgTakenTotal || 0;
+      log('highlight', `🩹 ${J(caster.name,'이','가')} "${card.name}"! 앞으로 자신의 턴마다 지난 바퀴에 입은 피해의 ${caster.dmgRebatePct}%를 회복합니다.`);
+      renderBoard(); onDone({}); break;
+    }
+    case 'SOUL_TRIAL_AOE': { // 영혼재판 — AOE + 비공개 기준치 카드 제출
+      const targets = getTargetsForAoe(caster);
+      targets.forEach(t=> dealDamage(caster, t, card.power, card.pierce, true));
+      const line = 500 + Math.floor(Math.random()*16) * 100;   // 500~2000, 100 단위
+      log('highlight', `⚖️ ${J(caster.name,'이','가')} "${card.name}"을(를) 선고했습니다! 모두 <b>비공개 기준치</b>보다 낮은 공격력의 카드를 제출해야 합니다.`);
+      const judges = alivePlayers().filter(p=> p.id!==caster.id);
+      let i = 0;
+      const judgeNext = ()=>{
+        if(i >= judges.length){ renderHand(); renderBoard(); checkWinCondition(); onDone({}); return; }
+        const v = judges[i++];
+        const settle = (picked)=>{
+          if(picked && (picked.power||0) < line){
+            const idx = v.hand.findIndex(c=> c && c.uid === picked.uid);
+            if(idx >= 0) v.hand.splice(idx,1);
+            grantCardToPlayer(caster, picked, '영혼재판');
+            log('sys', `⚖️ ${J(v.name,'이','가')} "${picked.name}"을(를) 제출해 재판을 통과했습니다. (카드는 ${caster.name}에게)`);
+          } else {
+            log('sys', `⚖️ ${J(v.name,'이','가')} 제출에 실패했습니다. (기준치 ${line}) 1000 피해!`);
+            currentAttackContext = { attackerName: caster.name, attackerId: caster.id, cardName: card.name };
+            applyDamageToPlayer(v, 1000, 'NONE');
+          }
+          judgeNext();
+        };
+        const usable = (v.hand||[]).filter(c=> c);
+        if(!usable.length){ settle(null); return; }
+        if(v.isBot || !isChoiceOwner(v)){
+          // 봇 — 기준치를 모르므로 "가장 약한 카드"를 낸다
+          const weakest = usable.reduce((a,b)=> ((b.power||0) < (a.power||0) ? b : a), usable[0]);
+          settle(weakest);
+        } else {
+          showModal('⚖️ 영혼재판 — 카드 제출', `<div style="margin-bottom:8px;color:var(--fg-dim);font-size:12px;">
+              기준치는 <b>아무도 볼 수 없습니다.</b> (500~2000 사이) 기준치보다 <b>낮은 공격력</b>의 카드를 내야 통과합니다.<br>
+              실패하면 <b>1000 피해</b>를 입습니다.</div>
+            <div style="display:flex;flex-direction:column;gap:4px;max-height:46vh;overflow-y:auto;">
+              ${usable.map((c,ci)=>`<button class="btn btn-sm" style="justify-content:flex-start;text-align:left;" onclick="soulTrialPick(${ci})">[${escapeHtml(c.grade)}] ${escapeHtml(c.name)}${c.power?` · ATK ${c.power.toLocaleString()}`:''}</button>`).join('')}
+            </div>`, [{ label:'포기 (1000 피해)', action: ()=> settle(null) }]);
+          window.__soulTrial = { list: usable, settle };
+        }
+      };
+      judgeNext();
+      break;
+    }
+    case 'CASTRATE_TARGET': { // 중성화 의사 — 고자
+      const target = players.find(p=>p.id===targetId);
+      if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
+      if(target.debuffImmune){ log('sys', `${J(target.name,'은','는')} 디버프 면역이라 ${card.name} 효과가 무시되었습니다.`); onDone({}); return; }
+      if(tryNullify(target)){ onDone({}); return; }
+      if(target.gojaImmune){
+        log('sys', `✂️ ${J(target.name,'이','가')} "고자방지권"으로 중성화를 피했습니다!`);
+      } else {
+        target.maxHp = 1; target.hp = 1; target.shield = 0;
+        try{ cardAudioTriggerKey('sfx', 'goja', target.id); }catch(e){}
+        log('highlight', `✂️ ${J(caster.name,'이','가')} ${target.name}의 호두를 따버렸습니다! (MaxHP·HP 1)`);
+      }
+      renderBoard(); checkWinCondition(); onDone({}); break;
+    }
+    case 'BUFF_DENY_STUN': { // 불편 — 버프 무효화 + 2턴 행동불능
+      const target = players.find(p=>p.id===targetId);
+      if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
+      if(tryNullify(target)){ onDone({}); return; }
+      const stripped = [];
+      if((target.atkMultiplier||0) > 0){ stripped.push(`공격력 +${Math.round(target.atkMultiplier)}%`); target.atkMultiplier = 0; }
+      if((target.damageReductionPct||0) > 0){ stripped.push(`받는피해 -${target.damageReductionPct}%`); target.damageReductionPct = 0; }
+      if((target.tempAtkBuffMult||0) > 0){ stripped.push('임시 공격력 버프'); target.tempAtkBuffMult = 0; target.tempAtkBuffTurns = 0; }
+      if((target.shield||0) > 0){ stripped.push(`쉴드 ${target.shield}`); target.shield = 0; }
+      if(!target.debuffImmune){
+        target.stunLockTurns = Math.max(target.stunLockTurns||0, card.stunTurns||2);
+        target.stunLockLabel = '불편';
+      }
+      log('highlight', `😑 ${J(caster.name,'이','가')} ${J(target.name,'의','의')} 꼴을 못 봐줍니다! ${stripped.length?`버프 제거(${stripped.join(', ')}) + `:''}${card.stunTurns||2}턴 행동불능.`);
+      renderBoard(); onDone({}); break;
+    }
+    case 'JUMP_SLAM_AOE': { // 적절한 거리를 점프할 수 있음
+      const targets = getTargetsForAoe(caster);
+      if(targets.length===0){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
+      targets.forEach(t=> dealDamage(caster, t, card.power, card.pierce, true));
+      if(Math.random()*100 < (card.failPct||30)){
+        log('sys', `🦴 ${J(caster.name,'이','가')} 적절한 거리를 점프하지 못해 다리가 부러졌습니다! (자신 ${card.selfDamage||400} 피해)`);
+        currentAttackContext = { attackerName: caster.name, attackerId: caster.id, cardName: card.name };
+        applyDamageToPlayer(caster, card.selfDamage||400, 'NONE');
+      }
+      renderBoard(); checkWinCondition(); onDone({}); break;
+    }
+    case 'MAD_DOG_RAPTOR': { // 개쉐끼 랩터
+      caster.atkMultiplier = (caster.atkMultiplier||0) + (card.atkPct||60);
+      caster.damageReductionPct = (caster.damageReductionPct||0) - (card.vulnPct||30);
+      caster.madDogPct = card.gojaPct || 10;
+      log('highlight', `🐕 ${J(caster.name,'이','가')} 개쉐끼가 되었습니다! 공격력 +${card.atkPct||60}%, 받는 피해 +${card.vulnPct||30}%. 자신의 턴마다 ${caster.madDogPct}% 확률로 중성화수술을 당합니다.`);
+      renderBoard(); onDone({}); break;
+    }
     case 'HUNBALROM_CURSE': {
       // 내가 선배님이니까. — 훈발롬이 되어 받는 피해 증가 + 회복량 감소 + 고자 + 영구 탄핵. 전부 자기 자신에게.
       const vuln = card.vulnPct || 99;
@@ -38619,8 +39639,10 @@ function confirmMarkPick(cardUid){
   const target = window.__markTarget;
   const fallbackName = window.__markCardName;
   const pick = target.hand.find(c=>c.uid===cardUid);
-  pendingMarks.push({ casterId:caster.id, targetId:target.id, cardUid, cardName: pick ? pick.name : fallbackName, turnsLeft:2 });
-  log('sys', `${J(caster.name,'이','가')} ${target.name}의 카드 ${J(pick ? pick.name : fallbackName,'을','를')} 지목했습니다. (2턴 뒤 확인)`);
+  // [Ver 9.13.1] 괴도+는 1턴 뒤에 가져온다 (핸들러가 window.__markTurns에 심어둔 값)
+  const turns = (window.__markTurns === 1) ? 1 : 2;
+  pendingMarks.push({ casterId:caster.id, targetId:target.id, cardUid, cardName: pick ? pick.name : fallbackName, turnsLeft:turns });
+  log('sys', `${J(caster.name,'이','가')} ${target.name}의 카드 ${J(pick ? pick.name : fallbackName,'을','를')} 지목했습니다. (${turns}턴 뒤 확인)`);
   setTimeout(advanceTurn, 900);
 }
 
@@ -38673,7 +39695,14 @@ function renderGuessModal(feedback){
         ${s.candidates.map(c=>`<button class="btn btn-sm ${c.id===s.target.id?'btn-solid':''}" ${!c.alive?'disabled':''} onclick="switchGuessTarget('${c.id}')">${escapeHtml(c.name)}</button>`).join('')}
       </div>`
     : '';
-  const initials = s.target.hand.map(c=> (c.name||'?').trim().charAt(0));
+  /* [Ver 9.13.1] 청부업자+ — 첫 글자만이 아니라 **첫 글자와 마지막 글자**를 함께 본다.
+     (한 글자짜리 카드는 그 글자 하나로 끝) */
+  const __guessEvo = isEvoOf(s.card, '청부업자');
+  const initials = s.target.hand.map(c=>{
+    const nm = (c.name||'?').trim();
+    if(!__guessEvo) return nm.charAt(0);
+    return nm.length <= 1 ? nm : `${nm.charAt(0)}…${nm.charAt(nm.length-1)}`;
+  });
   const body = `
     <div class="guess-head">
       <div class="guess-target">🎯 <b>${escapeHtml(s.target.name)}</b></div>
@@ -38681,7 +39710,7 @@ function renderGuessModal(feedback){
     </div>
     ${switchRow}
     <div class="guess-intel">
-      <div class="guess-intel-label">🔍 확보한 정보 — 카드 첫 글자</div>
+      <div class="guess-intel-label">🔍 확보한 정보 — 카드 ${__guessEvo ? '첫 글자 · 마지막 글자' : '첫 글자'}</div>
       <div class="guess-initials">
         ${initials.length ? initials.map(ch=>`<span class="guess-chip">${escapeHtml(ch)}</span>`).join('') : '<span class="guess-empty">패 없음</span>'}
       </div>
@@ -39227,7 +40256,7 @@ function cleanseAllEffects(p){
   if(p.permaAtkFlat){ p.permaAtkFlat=0; cleared.push('영구 공격력(사디스트/마조히스트)'); }
   if(p.ufcPartnerId){ p.ufcPartnerId=null; p.ufcAmpPct=0; cleared.push('UFC'); }
   if(p.invincible){ p.invincible=false; p.invincibleTurns=0; cleared.push('무적'); }
-  if(p.baitDebuff){ p.baitDebuff=false; cleared.push('[미끼]'); }
+  if(p.baitDebuff){ p.baitDebuff=false; p.baitStacks=0; cleared.push('[미끼]'); } // [Ver 9.13.1] 강태공+ 중첩도 함께 정리
   if(p.stealImmuneUntilEmpty){ p.stealImmuneUntilEmpty=false; cleared.push('만수무강(강탈 면역)'); }
   if(p.hypnotized){ p.hypnotized=false; cleared.push('최면'); }
   if(p.blackMarketRegular){ p.blackMarketRegular=false; cleared.push('암시장 단골 혜택'); }
@@ -39367,6 +40396,8 @@ function onPlayerDeath(deadPlayer, cause, cardName){
     // [Ver 4.28] 항복이면 cause='surrender', 그 외 사망은 정상 정산으로 취급
     settleTierForHuman(placement, cause === '항복' ? 'surrender' : 'normal');
   }
+  /* [Ver 9.13.1] 진화 능력 — 사망을 계기로 발동하는 것들 (차르봄바+ 유언 폭발 · 복선+ 전이) */
+  try{ evoOnDeath(deadPlayer); }catch(e){ console.error('[진화] 사망 처리 오류', e); }
   const UNKNOWN_CAUSE_FALLBACKS = ['전투 중 사망', '누적된 피해'];
   const resolvedCardName = cardName || currentStatCardName || null;
   // 정말 만에 하나 사인을 특정할 수 없는 극단적인 상황이라면, 그냥 "개쩌는 피지컬"로 퉁친다.
@@ -39789,6 +40820,7 @@ function getTotalAtkPctBonus(caster){
   if(caster.matrixId != null && caster.matrixAtkMod) pct += caster.matrixAtkMod;
   if(caster.unconsciousActive) pct += 250; // 기존 3.5배(=100%+250%)와 동일한 결과
   if(caster.poisoned) pct -= 15;
+  if(caster.outDamagePct) pct += caster.outDamagePct;   // [Ver 9.14] 코 — 주는 피해 감소(-30)
   /* [Ver 9.7 정리] 9.6에서 폐지된 "돈 재단 Lv2 = 보유 돈 비례 공격력"의 잔재(fdnGoldAtkPct 호출)를 제거.
      항상 0을 더하던 빈 호출이라 계산 결과는 그대로다. Lv2는 이제 매 턴 고정 수입이다. */
   // [Ver 8.2] 공격력 "감소"는 아무리 겹쳐도 최대 95%까지만 (증가 방향은 상한 없음)
@@ -40227,6 +41259,9 @@ function dealDamage(caster, target, amount, pierce, isAoe, deathChance, onHitRes
     caster.permaAtkFlat = (caster.permaAtkFlat||0) + 50;
     log('sys', `🔪 ${J(caster.name,'이','가')} "사디스트"로 HP ${sHeal.toLocaleString()} 회복하고 공격력이 50 증가했습니다. (누적 +${caster.permaAtkFlat})`);
   }
+  /* [Ver 9.13.1] 진화 능력 — 피해가 들어가기 직전에 얹는 보정(배트맨+의 홈런).
+     흡혈·강탈이 보정된 값을 기준으로 계산되도록 지후펫 판정보다 먼저 굴린다. */
+  try{ amount = evoOnHitBonus(caster, target, amount); }catch(e){ console.error('[진화] 명중 보정 오류', e); }
   /* [Ver 9.10.2] 지후펫 — 명중이 확정된 이 시점에 뱀파이어 흡혈·도둑 강탈을 처리한다.
      (사디스트와 같은 자리 = "공격이 실제로 꽂힌 순간") */
   try{ petOnAttackHit(caster, target, amount); }catch(e){}
@@ -40349,6 +41384,12 @@ function dealDamage(caster, target, amount, pierce, isAoe, deathChance, onHitRes
     }
   }
   if(onHitResult) onHitResult(true); // 실제로 대상에게 피해가 들어간, 진짜 "명중"이 확정된 시점
+
+  /* [Ver 9.13.1] 진화 능력 — 명중이 확정된 뒤 남기는 것들
+     (한석원+·비상계엄 선포+의 공격력 감소, 용암 낙하+의 화상, 박치기+의 반동) */
+  try{ evoAfterHit(caster, target, amount); }catch(e){ console.error('[진화] 명중 후 처리 오류', e); }
+  // [Ver 9.14] 불타는남자(화상 중첩) · 영계의 낫(빈사 스턴)
+  try{ newCardsOnHit(caster, target); }catch(e){ console.error('[9.14] 명중 후 처리 오류', e); }
 
   // 인성질: 이 효과를 보유한 캐스터의 공격이 명중할 때마다 대상의 영구 공격력이 누적 감소
   if(caster.vengeanceAuraPct > 0 && target && target.alive && target.id !== caster.id){
@@ -40911,7 +41952,11 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
   }
   // [Ver 6.8] 블루오션: 생존자가 자신 포함 정확히 2명(=최후의 1:1)일 때만 받는 피해가 절반이 된다.
   //   damageReductionPct와는 독립된 별도 배율이며, "받는 피해 감소 무시"(UFM 등) 공격에는 적용되지 않는다.
-  if(remaining > 0 && target.blueOceanActive && !window.__ignoreDamageReduction){
+  /* [Ver 9.14 버그수정] 예전엔 blueOceanActive 플래그만 봤는데, 그 플래그는 **턴이 시작될 때만** 갱신된다.
+     그래서 누군가 죽어 1:1이 된 그 턴 안에서는 계속 꺼져 있었고, 정작 필요한 순간에 발동하지 않았다.
+     레드오션이 "소지만 하면 켜지는" 카드인 것처럼, 블루오션도 **맞는 그 순간에 손패를 직접 확인**한다. */
+  if(remaining > 0 && !window.__ignoreDamageReduction &&
+     (target.blueOceanActive || (target.hand||[]).some(c=> c && c.type==='BLUE_OCEAN_PASSIVE'))){
     try{
       if(alivePlayers().length === 2){
         const cut = remaining - Math.round(remaining * 0.5);
@@ -40982,6 +42027,44 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
     target.tripleShieldCharges -= 1;
     if(target.tripleShieldCharges <= 0){ target.tripleShieldCharges = 0; target.tripleShieldReducePct = 0; }
   }
+  /* ===== [Ver 9.14] 윌슨 · 무조건반사 — 쉴드 계산 직전에 가로챈다 ===== */
+  /* 🏐 윌슨 — 자신이 받는 피해를 100% 대신 받아준다.
+       · 쉴드 "관통"(PIERCE)은 윌슨을 지나쳐 그대로 본체 HP로 간다.
+       · 쉴드 "파괴"(BREAK)나 쉴드 제거(REMOVE)를 맞으면 윌슨이 그 자리에서 터진다.
+       · 대신 맞을 때마다 주인의 HP가 회복된다. */
+  if(remaining > 0 && (target.wilsonHp||0) > 0){
+    if(pierce === 'BREAK' || pierce === 'REMOVE'){
+      target.wilsonHp = 0;
+      log('highlight', `🏐 ${J(target.name,'의','의')} 윌슨이 ${pierce==='REMOVE'?'쉴드 제거':'쉴드 파괴'} 공격에 터져버렸습니다!`);
+    } else if(pierce !== 'PIERCE'){
+      const eaten = Math.min(target.wilsonHp, remaining);
+      target.wilsonHp -= eaten;
+      remaining -= eaten;
+      const heal = healAmountFor(target, target.wilsonHeal||200);
+      const actual = Math.min(heal, Math.max(0, target.maxHp - target.hp));
+      if(actual > 0){ target.hp += actual; showFloatNumber(target.id, '+'+actual.toLocaleString(), 'heal'); }
+      log('dmg', `🏐 윌슨이 ${J(target.name,'을','를')} 대신해 ${eaten.toLocaleString()} 피해를 받았습니다. (윌슨 ${target.wilsonHp}/${target.wilsonMaxHp||2000}${actual>0?` · ${target.name} HP +${actual}`:''})`);
+      if(target.wilsonHp <= 0) log('highlight', `🏐 윌슨이 쓰러졌습니다... 윌슨!!!`);
+      if(remaining <= 0){ renderBoard(); return false; }
+    }
+  }
+  /* 🤸 무조건반사 — 맞는 건 그대로 맞고, 그 피해의 일부를 시전자에게 되돌린다. (1회 소모) */
+  if(remaining > 0 && target.reflexHalfPending){
+    const rp = target.reflexHalfPending;
+    target.reflexHalfPending = null;
+    const back = Math.floor(remaining * ((rp.pct||50)/100));
+    const from = players.find(p=> p.id === rp.fromId);
+    if(back > 0 && from && from.alive && from.id !== target.id && !window.__reflexHalfBusy){
+      window.__reflexHalfBusy = true;
+      try{
+        log('highlight', `🤸 무조건반사! ${J(target.name,'이','가')} 맞은 피해의 ${rp.pct||50}%인 ${back.toLocaleString()}을(를) ${from.name}에게 되돌립니다.`);
+        const keep = currentAttackContext;
+        currentAttackContext = { attackerName: target.name, attackerId: target.id, cardName: '무조건반사' };
+        applyDamageToPlayer(from, back, 'NONE');
+        currentAttackContext = keep;
+      } finally { window.__reflexHalfBusy = false; }
+    }
+  }
   let shieldAbsorbedAmount = 0;
   let __hpDamageApplied = 0; // [Ver 5.0] 실제 HP에 들어간 피해량 (통계용)
 
@@ -40999,12 +42082,28 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
       log('dmg', `${target.name}의 쉴드(${absorbed})가 전부 깨졌습니다. HP는 보호됨.`);
     }
   } else if(pierce === 'PIERCE'){
-    if(target.shield>0) log('dmg', `쉴드 관통 — 쉴드 무시하고 HP에 피해.`);
+    /* 쉴드 관통 — 쉴드가 있어도 **무시하고 HP에 직접** 꽂는다. 쉴드는 깎이지 않고 그대로 남는다. */
+    if(target.shield>0) log('dmg', `쉴드 관통 — 쉴드(${target.shield})를 무시하고 HP에 그대로 피해. (쉴드는 남습니다)`);
   } else if(pierce === 'BREAK'){
-    // [Ver 4.47 버그수정] "쉴드파괴"는 쉴드의 HP보호 기능(흡수)만 무시하고 데미지를 그대로 통과시키는 효과이며,
-    // 쉴드 자체를 삭제하는 효과가 아니다. 쉴드를 실제로 삭제하는 것은 "쉴드제거"라는 별도의 독립된 효과이므로
-    // 여기서는 쉴드를 건드리지 않는다. (쉴드제거는 card.stripShieldOnHit 플래그가 있는 카드에서 dealDamage 쪽에서 별도 처리)
-    if(target.shield>0) log('dmg', `쉴드 파괴 — 쉴드의 보호 무시하고 HP에 그대로 피해. (쉴드 ${target.shield}는 유지됨)`);
+    /* [Ver 9.14 정정] 쉴드 파괴 — **쉴드를 체력으로 간주해 뚫고 들어간다.**
+       예전에는 관통과 완전히 같은 처리(쉴드 무시 + 쉴드 보존)라 두 개념이 사실상 하나였다.
+       이제 쉴드를 먼저 깎고 **남은 만큼만** HP로 넘긴다.
+         예) HP 2000 · 쉴드 300 에 1000 파괴 피해 → 쉴드 0, HP 1300
+       (일반 피해는 쉴드가 다 못 막아도 HP를 보호하지만, 파괴는 남은 몫이 그대로 넘어간다) */
+    if(target.shield > 0){
+      const eaten = Math.min(target.shield, remaining);
+      target.shield -= eaten;
+      remaining -= eaten;
+      shieldAbsorbedAmount = eaten;   // 쉴드가 실제로 깎였으므로 "쉴드 피격" 훅(흐릿한 결계 등)도 정상 작동
+      log('dmg', `쉴드 파괴 — ${target.name}의 쉴드 ${eaten}이(가) 체력처럼 깎여나갑니다. (남은 쉴드 ${target.shield} · HP로 넘어간 피해 ${remaining})`);
+    }
+  }
+  /* [Ver 9.13.1] 다이아몬드 방벽+ — 쉴드가 처음으로 전부 사라지는 순간 2.5% 경감이 풀린다.
+     관통·파괴·제거 어느 경로로 0이 되든 잡히도록 위 분기 밖에서 확인한다. */
+  if(target.evoDiamondDr && (target.shield||0) <= 0){
+    target.damageReductionPct = (target.damageReductionPct||0) - target.evoDiamondDr;
+    target.evoDiamondDr = 0;
+    log('sys', `💎 ${J(target.name,'의','의')} "다이아몬드 방벽+"이 깨져 받는 피해 경감이 사라졌습니다.`);
   }
 
   // [Ver 6.3 버그수정] 흐릿한 결계(SHIELD_HIT_TRIGGERS_AOE): 이 쉴드가 "피격당했다"고 볼 수 있는 만큼(흡수량이 0보다 크면,
@@ -41024,6 +42123,8 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
   if(remaining > 0){
     target.hp -= remaining;
     __hpDamageApplied = remaining; // [Ver 5.0] 통계용 실적용량 기록
+    // [Ver 9.14] 우빈 리커버리 — "이번 바퀴에 입은 피해"를 재려면 사람별 누적 피해가 필요하다
+    target.dmgTakenTotal = (target.dmgTakenTotal||0) + remaining;
     log('dmg', `${J(target.name,'이','가')} ${remaining.toLocaleString()} 피해 (HP ${Math.max(0,target.hp)}/${target.maxHp})`);
     // [Ver 5.8] 역학적에너지 보존의 법칙: 가장 최근 HP 감소량을 기록해둔다.
     lastHpLossAmount = remaining;
@@ -41345,7 +42446,11 @@ function botShopBuyStep(bot){
   bot.goldSpent = (bot.goldSpent||0) + price;
   payShopOwner(bot, price, '카드 구매'); // [Ver 5.8] 상점 인수: 매출을 인수자에게 (사람과 동일)
   const wasFree = bot.freePurchase || raptorFree;
-  if(bot.freePurchase && !raptorFree) bot.freePurchase = false;
+  /* [Ver 9.13.1] 사장님이 미쳤어요+ — 사람 쪽(buyShopSlot)과 같은 규칙으로 여분을 먼저 쓴다. */
+  if(bot.freePurchase && !raptorFree){
+    if((bot.freePurchaseCount||0) > 0) bot.freePurchaseCount--;
+    else bot.freePurchase = false;
+  }
   grantCardToPlayer(bot, mkUidCard(slot.card), '봇 상점 구매');
   log('gold', `${J(bot.name,'이','가')} 상점에서 ${J(slot.card.name,'을','를')} ${wasFree?(raptorFree?'"랩터 팬클럽" 효과로 무료로':'무료로'):fmtWon(price)+'에'} 구매했습니다.`);
   // [Ver 9.0] 매물의 재단 Lv5(30%)도 "영수증"과 같은 환급 판정에 합산된다 (사람 쪽과 동일)
@@ -41517,7 +42622,7 @@ function botDoGamble(bot){
   const __botTierNoDeath = gambleTierHasNoDeath(bot, tier);
   const pool = [];
   for(let i=0;i<tier.pool;i++){
-    if(!__botTierNoDeath && !__botNoDeath && Math.random() < (0.01 + (reDottusaBonus||0) + __botTazzaDot)) pool.push({ name:'도뜨사', grade:'E', type:'GAMBLE_DEATH' });
+    if(!__botTierNoDeath && !__botNoDeath && Math.random() < (DOTTUSA_BASE_RATE + (reDottusaBonus||0) + __botTazzaDot)) pool.push({ name:'도뜨사', grade:'E', type:'GAMBLE_DEATH' });
     else pool.push(gamblePickCard(tier, __botGex, botRandomShopCard));
   }
   const order = pool.map((_,i)=>i).sort(()=>Math.random()-0.5);
@@ -42390,6 +43495,10 @@ const SHOP_SELL_PRICE = { D:10, C:10, B:10, A:30, S:70, SR:100, SSR:200 };
      그 티어의 후보 풀에 아예 오르지 않는다. (GRADE_RANK에 없는 '?' 등급은 어느 범위에도
      속하지 않으므로 도박에서는 나오지 않는다)
    ▶ 전설·신화는 도뜨사(즉사 함정)가 적용되지 않는다. */
+/* [Ver 9.14 밸런스] 도뜨사(도박 즉사) 기본 확률 1% → 2%.
+   봇 도박(botGamble)과 사람 도박이 각각 따로 굴리므로, 두 곳이 어긋나지 않게 상수 하나로 묶었다.
+   (여기에 랜덤이벤트 '도박주의보'의 reDottusaBonus와 타짜 지후의 +4%p가 더해진다) */
+const DOTTUSA_BASE_RATE = 0.02;
 const GAMBLE_TIERS = [
   { key:'low',    label:'하급도박',   sub:'3장 중 1장',   cost:10,  pool:3,  pick:1, minGrade:'E', maxGrade:'C' },
   { key:'mid',    label:'중급도박',   sub:'3장 중 1장',   cost:30,  pool:3,  pick:1, minGrade:'E', maxGrade:'A' },
@@ -42548,24 +43657,24 @@ function reGrantByName(p, name){
      ⚠ 효과 수치를 고칠 때는 apply와 eff를 반드시 함께 고칠 것 — 둘이 어긋나면 안내문구가 거짓말이 된다. */
 const RANDOM_EVENTS = [
   /* ===== 보통 ===== */
-  { id:'salary',    rarity:'common', icon:'💼', name:'월급날',            desc:'월급을 받았습니다',                                    eff:'돈 100골드를 받습니다.',   good:true,  apply:p=> reGive(p, 10000) },
-  { id:'findcash',  rarity:'common', icon:'💵', name:'땅에서 돈을 줍다',  desc:'땅에서 돈을 주웠습니다',                                eff:'돈 50골드를 받습니다.',    good:true,  apply:p=> reGive(p, 5000) },
-  { id:'scratch',   rarity:'common', icon:'🎟️', name:'즉석 복권 당첨',    desc:'즉석 복권에 당첨 되었습니다',                            eff:'돈 77.77골드를 받습니다.',    good:true,  apply:p=> reGive(p, 7777) },
+  { id:'salary',    rarity:'common', icon:'💼', name:'월급날',            desc:'월급을 받았습니다',                                    eff:'돈 35골드를 받습니다.',    good:true,  apply:p=> reGive(p, 3500) },
+  { id:'findcash',  rarity:'common', icon:'💵', name:'땅에서 돈을 줍다',  desc:'땅에서 돈을 주웠습니다',                                eff:'돈 18골드를 받습니다.',    good:true,  apply:p=> reGive(p, 1800) },
+  { id:'scratch',   rarity:'common', icon:'🎟️', name:'즉석 복권 당첨',    desc:'즉석 복권에 당첨 되었습니다',                            eff:'돈 27.77골드를 받습니다.',    good:true,  apply:p=> reGive(p, 2777) },
   { id:'junkbox',   rarity:'common', icon:'📦', name:'고물상자',          desc:'고물상자를 발견했습니다',                                eff:'돈 1골드를 받습니다.',      good:true,  apply:p=> reGive(p, 100) },
-  { id:'treasure',  rarity:'common', icon:'💎', name:'보물상자',          desc:'보물상자를 발견했습니다',                                eff:'돈 200골드를 받습니다.',   good:true,  apply:p=> reGive(p, 20000) },
-  { id:'parttime',  rarity:'common', icon:'🏪', name:'편의점 알바',       desc:'편의점 아르바이트를 했습니다',                            eff:'돈 300골드를 받습니다.',   good:true,  apply:p=> reGive(p, 30000) },
+  { id:'treasure',  rarity:'common', icon:'💎', name:'보물상자',          desc:'보물상자를 발견했습니다',                                eff:'돈 70골드를 받습니다.',    good:true,  apply:p=> reGive(p, 7000) },
+  { id:'parttime',  rarity:'common', icon:'🏪', name:'편의점 알바',       desc:'편의점 아르바이트를 했습니다',                            eff:'돈 105골드를 받습니다.',   good:true,  apply:p=> reGive(p, 10500) },
   { id:'jihoobeat', rarity:'common', icon:'👊', name:'지후한테 쳐맞음',   desc:'지후한테 깝치다가 맞았습니다',                            eff:'1턴 동안 공격력이 10% 감소합니다.', good:false, apply:p=>{ p.tempAtkBuffMult = (p.tempAtkBuffMult||0) - 10; p.tempAtkBuffTurns = Math.max(p.tempAtkBuffTurns||0, 1); p.tempAtkBuffLabel = '지후한테 쳐맞음'; p.tempAtkBuffIcon = '👊'; } },
   { id:'cold',      rarity:'common', icon:'🤧', name:'감기 걸림',         desc:'감기에 걸려 면역력이 약화되었습니다',                      eff:'1바퀴 동안 받는 피해가 10% 증가합니다.', good:false, apply:p=>{ p.vulnPct = (p.vulnPct||0) + 10; p.vulnDueRound = Math.max(p.vulnDueRound||0, turnCount + 1); p.vulnLabel = '감기 걸림'; p.vulnIcon = '🤧'; } },
-  { id:'cracked',   rarity:'common', icon:'📱', name:'휴대폰 필름 깨짐',  desc:'액정 나간줄 알고 식겁했다',                              eff:'돈 70골드를 잃습니다.',    good:false, apply:p=> reGive(p, -7000) },
-  { id:'foodpois',  rarity:'common', icon:'🥛', name:'식중독으로 입원',   desc:'유통기한 지난 지후우유를 마시다가 식중독에 걸렸습니다',      eff:'돈 120골드를 잃습니다.',   good:false, apply:p=> reGive(p, -12000) },
-  { id:'brawlpass', rarity:'common', icon:'🎮', name:'브롤패스 플러스 구매', desc:'브패플을 질렀습니다. 딱히 효과는 없네요',              eff:'돈 200골드를 잃습니다.',   good:false, apply:p=> reGive(p, -20000) },
+  { id:'cracked',   rarity:'common', icon:'📱', name:'휴대폰 필름 깨짐',  desc:'액정 나간줄 알고 식겁했다',                              eff:'돈 25골드를 잃습니다.',    good:false, apply:p=> reGive(p, -2500) },
+  { id:'foodpois',  rarity:'common', icon:'🥛', name:'식중독으로 입원',   desc:'유통기한 지난 지후우유를 마시다가 식중독에 걸렸습니다',      eff:'돈 42골드를 잃습니다.',    good:false, apply:p=> reGive(p, -4200) },
+  { id:'brawlpass', rarity:'common', icon:'🎮', name:'브롤패스 플러스 구매', desc:'브패플을 질렀습니다. 딱히 효과는 없네요',              eff:'돈 70골드를 잃습니다.',    good:false, apply:p=> reGive(p, -7000) },
   { id:'shout',     rarity:'common', icon:'📣', name:'협곡을 울리는 함성', desc:'소리질러!',                                             eff:'1턴 동안 공격력이 10% 증가합니다.', good:true,  apply:p=>{ p.tempAtkBuffMult = (p.tempAtkBuffMult||0) + 10; p.tempAtkBuffTurns = Math.max(p.tempAtkBuffTurns||0, 1); p.tempAtkBuffLabel = '협곡을 울리는 함성'; p.tempAtkBuffIcon = '📣'; } },
   { id:'gym',       rarity:'common', icon:'💪', name:'헬스장',            desc:'헬스장에 가서 체력단련을 했어요',                          eff:'1바퀴 동안 받는 피해가 10% 감소합니다.', good:true,  apply:p=>{ p.damageReductionPct = (p.damageReductionPct||0) + 10; p.__reDrDue = turnCount + 1; p.__reDrAmt = 10; } },
-  { id:'sadollar',  rarity:'common', icon:'🍔', name:'사딸라',            desc:'사딸라!',                                               eff:'돈 40골드를 받습니다.',    good:true,  apply:p=> reGive(p, 4000) },
+  { id:'sadollar',  rarity:'common', icon:'🍔', name:'사딸라',            desc:'사딸라!',                                               eff:'돈 14골드를 받습니다.',    good:true,  apply:p=> reGive(p, 1400) },
 
   /* ===== 낮음 ===== */
-  { id:'caraccid',  rarity:'rare', icon:'🚚', name:'교통사고',            desc:'자전거를 타다 우빈랩터트럭에 치였습니다',                  eff:'돈 300골드를 잃습니다.',   good:false, apply:p=> reGive(p, -30000) },
-  { id:'newyear',   rarity:'rare', icon:'🧧', name:'새뱃돈',              desc:'새배를 드려 돈을 받았습니다',                             eff:'돈 500골드를 받습니다.',   good:true,  apply:p=> reGive(p, 50000) },
+  { id:'caraccid',  rarity:'rare', icon:'🚚', name:'교통사고',            desc:'자전거를 타다 우빈랩터트럭에 치였습니다',                  eff:'돈 105골드를 잃습니다.',   good:false, apply:p=> reGive(p, -10500) },
+  { id:'newyear',   rarity:'rare', icon:'🧧', name:'새뱃돈',              desc:'새배를 드려 돈을 받았습니다',                             eff:'돈 175골드를 받습니다.',   good:true,  apply:p=> reGive(p, 17500) },
   { id:'bankrupt',  rarity:'rare', icon:'📉', name:'파산',                desc:'저런',                                                  eff:'보유한 돈이 1골드만 남고 전부 사라집니다.', good:false, apply:p=>{ p.gold = 1; } },
   { id:'powerbill', rarity:'rare', icon:'🔌', name:'전기세 폭탄',         desc:'에어컨 누가 안꺼놓고 자러갔냐',                            eff:'보유한 돈이 절반으로 줄어듭니다.', good:false, apply:p=>{ p.gold = Math.floor((p.gold||0)/2); } },
   { id:'emart24',   rarity:'rare', icon:'🍙', name:'이마트24',            desc:'음 맛있다',                                             eff:'회복 계열 카드를 무작위로 3장 얻습니다.', good:true,  apply:p=> reGrantHealCards(p, 3) },
@@ -42591,9 +43700,9 @@ const RANDOM_EVENTS = [
   { id:'yourmom',   rarity:'rare', icon:'😛', name:'니 엄마다!',          desc:'상대를 놀린다. 딱히 아무일도 없다',                        eff:'아무 일도 일어나지 않습니다.', good:null,  apply:()=>{} },
 
   /* ===== 매우 낮음 ===== */
-  { id:'voicefish', rarity:'superrare', icon:'📞', name:'보이스 피싱당함', desc:'아이고 할아버지',                                        eff:'돈 500골드를 잃습니다.',  good:false, apply:p=> reGive(p, -50000) },
+  { id:'voicefish', rarity:'superrare', icon:'📞', name:'보이스 피싱당함', desc:'아이고 할아버지',                                        eff:'돈 175골드를 잃습니다.',  good:false, apply:p=> reGive(p, -17500) },
   { id:'dupebug',   rarity:'superrare', icon:'🐛', name:'돈 복사버그',     desc:'돈이 복사가 된다고?',                                    eff:'보유한 돈이 2배가 됩니다.', good:true,  apply:p=>{ grantGold(p, p.gold||0); } },
-  { id:'slot',      rarity:'superrare', icon:'🎰', name:'슬롯머신',        desc:'야르 ㅋㅋㅋㅋㅋㅋ',                                      eff:'돈 777.77골드를 받습니다.',  good:true,  apply:p=> reGive(p, 77777) },
+  { id:'slot',      rarity:'superrare', icon:'🎰', name:'슬롯머신',        desc:'야르 ㅋㅋㅋㅋㅋㅋ',                                      eff:'돈 277.77골드를 받습니다.',  good:true,  apply:p=> reGive(p, 27777) },
   { id:'devbless',  rarity:'superrare', icon:'🛠️', name:'개발자의 축복',   desc:'손패의 카드가 전부 한 등급씩 올라갑니다',                    eff:'손패의 카드가 전부 한 등급 위의 카드로 바뀝니다. (최고 등급 카드는 그대로)', good:true,  apply:p=>{ try{ mutateHandGradeUp(p); }catch(e){} } },
   { id:'ohno',      rarity:'superrare', icon:'💀', name:'저런',            desc:'저런',                                                  eff:'손패의 카드가 전부 사라지고, 돈도 0골드가 됩니다.', good:false, apply:p=> reWipe(p) },
   { id:'goja',      rarity:'superrare', icon:'✂️', name:'내가 고자라니',   desc:'이게 무슨 소리야!',                                      eff:'최대 체력이 1이 되고 쉴드가 사라집니다. (고자 면역이면 무효)', good:false, apply:p=> reGoja(p) },
@@ -44611,7 +45720,11 @@ function buyShopSlot(i){
     if(isMyPlayer(me)) bumpStat('goldSpent', price); // [Ver 5.7.1] 통계: 소비한 골드가 집계되지 않던 문제 수정
     payShopOwner(me, price, '카드 구매'); // [Ver 5.8] 상점 인수: 매출을 인수자에게
     const wasFree = me.freePurchase || raptorFree;
-    if(me.freePurchase && !raptorFree) me.freePurchase = false;
+    /* [Ver 9.13.1] 사장님이 미쳤어요+ — 무료 구매 여분(freePurchaseCount)이 있으면 그걸 먼저 쓴다. */
+    if(me.freePurchase && !raptorFree){
+      if((me.freePurchaseCount||0) > 0) me.freePurchaseCount--;
+      else me.freePurchase = false;
+    }
     grantCardToPlayer(me, mkUidCard(slot.card), blackMarketActive?'암시장 구매':'상점 구매');
     // [Ver 8.9.9 버그수정/소프트락] 상점에서 직접 "뽑뜨사"(TRAP_INSTANT_DEATH)를 구매해도 noShop이 아니라
     // 판매 슬롯에 뜰 수 있는데, grantCardToPlayer 내부에서 즉사(handleTrapDeath)까지 처리해버린다.
@@ -44872,7 +45985,7 @@ function startGamble(key){
   const __noDeath = gambleTierHasNoDeath(me, tier);
   const pool = [];
   for(let i=0;i<tier.pool;i++){
-    if(!__noDeath && !__fdnNoDeath && Math.random() < (0.01 + (reDottusaBonus||0) + __tazzaDot)){
+    if(!__noDeath && !__fdnNoDeath && Math.random() < (DOTTUSA_BASE_RATE + (reDottusaBonus||0) + __tazzaDot)){
       pool.push({ name:'도뜨사', grade:'E', type:'GAMBLE_DEATH', desc:'도박 중 즉사하는 함정 카드' });
       // [Ver 5.9] 아니 억까 하지 마: 하급(가장 싼) 도박 티어에서 도뜨사가 등장하면 달성
       try{ const tiers = getEffectiveGambleTiers(me); if(tiers && tiers[0] && tier.label===tiers[0].label) markGameAch('lowGambleDottusa'); }catch(e){}
