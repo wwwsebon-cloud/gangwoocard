@@ -14585,8 +14585,8 @@ const BALANCE_PATCHES = [
           { name:'쉴드 관통', icon:'🗡️', rows:[
             { label:'처리', from:'쉴드 무시 + 쉴드 보존', to:'유지 (쉴드는 그대로 남음)', dir:'neutral' },
           ]},
-          { name:'람보르기니', icon:'🏎', rows:[
-            { label:'무한 카드 조합', from:'봇이 무한히 내고 턴이 멈춤', to:'한 턴 연속 20장 상한', dir:'up' },
+          { name:'무한 사용 카드', icon:'♾️', rows:[
+            { label:'한 턴 사용 가능 장수', from:'제한 없음(람보르기니와 겹치면 턴이 멈춤)', to:'1장', dir:'down' },
           ]},
           { name:'패시브 분류', icon:'🏷️', rows:[
             { label:'코치조 · 케인 · 감스트 · 무신정변 · 파야치 · 방탄', from:'"패시브"(소지만 해도 발동) · 봇이 안 냄', to:'"지속"(내면 계속 발동) · 정상 사용', dir:'up' },
@@ -16059,7 +16059,7 @@ const CHANGELOG = [
       '🃏 <b>[신규 카드 27종]</b> — 샷건치기 · 동네사거리파 · 접어라ㅋ걍 · 충전기 · 카드 뷔페 · 조광일 · <b>윌슨</b> · 정도전 · 엽서 · 돌림노래 · 무조건반사 · 우빈 설렁탕 · 우빈랩터의 고대 유적 · 도박 마스터 · 권모술수pro · 불타는남자 · 영계의 낫 · 경기 회복 · 우빈 리커버리 · 영혼재판 · 사의 경계 · 입대 · 중성화 의사 · 불편 · 적절한 거리를 점프할 수 있음 · 코 · 개쉐끼 랩터',
       '🏐 [신규] <b>윌슨</b> — 자신이 받는 피해를 대신 받아주는 분신입니다. 스탯창에 <b>전용 파란 체력 게이지</b>가 따로 생기며, 윌슨이 맞을 때마다 주인의 HP가 200씩 회복됩니다. <b>쉴드 관통</b> 공격은 윌슨을 그냥 지나치고, <b>쉴드 파괴·쉴드 제거</b>를 맞으면 윌슨은 그 자리에서 터집니다.',
       '🛡️ <b>[중요/정정] 쉴드 파괴와 쉴드 관통이 사실상 같은 효과였습니다.</b> 둘 다 "쉴드를 무시하고 HP에 직격"으로 처리되어 개념이 구분되지 않았습니다. 이제 <b>파괴는 쉴드를 체력처럼 깎으며 뚫고 들어가고</b>(예: HP 2000·쉴드 300이 1000 파괴 피해를 받으면 쉴드 0 · HP 1300), <b>관통은 쉴드를 건드리지 않고 HP에만</b> 꽂힙니다. 파괴·관통 표기가 붙은 모든 카드에 적용됩니다.',
-      '🐛 <b>[버그수정] 람보르기니 무한 루프</b> — 봇이 람보르기니 상태에서 <b>무한 사용 카드</b>를 집으면 손패가 줄지 않아 같은 카드를 영원히 내고 <b>턴이 넘어가지 않았습니다.</b> 이제 한 턴에 연속으로 낼 수 있는 장수에 상한(20장)이 생겨 루프가 끊깁니다.',
+      '🐛 <b>[버그수정] 람보르기니 무한 루프</b> — 봇이 람보르기니 상태에서 <b>무한 사용 카드</b>를 집으면 손패가 줄지 않아 같은 카드를 영원히 내고 <b>턴이 넘어가지 않았습니다.</b> 이제 <b>무한 사용 카드는 한 턴에 1장까지만</b> 낼 수 있습니다. (람보르기니로 일반 카드를 이어 내는 것은 예전 그대로 무제한입니다)',
       '🐛 <b>[버그수정] 패시브 카드 오분류</b> — <b>코치조 · 케인 · 감스트 · 무신정변 · 파야치 · 방탄</b>은 <b>내야</b> 발동하는 카드인데 "소지만 해도 발동"으로 분류되어 있었습니다. 그래서 손패에 "패시브" 태그가 붙고, 내려고 하면 "아무 효과 없이 버려집니다" 경고가 뜨고, <b>봇은 아예 내지 않아 영영 발동되지 않았습니다.</b> 이제 <b>지속</b> 태그로 바뀌고 정상적으로 낼 수 있습니다.',
       '🐛 <b>[버그수정] 블루오션</b> — 발동 여부를 <b>턴이 시작될 때만</b> 갱신해서, 누군가 죽어 1:1이 된 바로 그 턴에는 효과가 켜지지 않았습니다. 이제 레드오션처럼 <b>맞는 순간 손패를 직접 확인</b>해 즉시 적용됩니다.',
       '🎲 [밸런스] <b>도뜨사 기본 확률 1% → 2%</b>로 상향했습니다.',
@@ -20242,16 +20242,21 @@ function evoOnDeath(dead){
    [Ver 9.14 신규] 신규 카드 지원 함수
    ########################################################################## */
 /* ---- [Ver 9.14 이스터에그] 개쉐끼 랩터 ----
-   "야! 개 짖는 소리좀 안나게 해라" 계열 카드로 개쉐끼 랩터를 막으려 들면,
-   오히려 시전자가 그 자리에서 물려 죽는다. 카드 설명에는 절대 쓰지 않고 로그로만 드러난다.
-   (판정은 카드 이름으로 한다 — 그런 카드가 아직 없어도 아무 일도 일어나지 않는다) */
-function madDogBackfire(caster, target, card){
-  if(!caster || !target || !card) return false;
-  if(!target.madDogPct) return false;                    // 대상이 개쉐끼 랩터 상태가 아니면 무관
-  const nm = String(card.name||'');
-  if(!(nm.includes('짖') || nm.includes('짓')) || !nm.includes('개')) return false;
-  log('highlight', `🐕 ${J(caster.name,'이','가')} 개쉐끼가 된 ${target.name}에게 조용히 하라고 했습니다... 그리고 물어뜯겼습니다.`);
-  forceKillWithRevive(caster, '개쉐끼 랩터를 건드림', card.name);
+   "야! 개짓는 소리좀 안나게 해라!"(REACT_INSTAKILL)로 개쉐끼가 된 사람을 조용히 시키려 들면,
+   오히려 **그 카드를 보여준 사람**이 물려 죽는다.
+   ⚠ 카드 설명(desc)에는 절대 쓰지 않는다 — 로그로만 드러나는 숨은 규칙이다. */
+function isDogSilenceCard(c){
+  const nm = String((c && c.name) || '');
+  return nm.includes('개') && (nm.includes('짓는') || nm.includes('짖는')) && nm.includes('소리');
+}
+/* 반환 true면 "원래 즉사"를 취소하고 반응자가 대신 죽은 것으로 처리한다. */
+function madDogBackfire(reactor, madDog, reactCard){
+  if(!reactor || !madDog || !reactCard) return false;
+  if(!madDog.madDogPct) return false;          // 상대가 개쉐끼 랩터 상태가 아니면 평범하게 진행
+  if(!isDogSilenceCard(reactCard)) return false;
+  log('highlight', `🐕 ${J(reactor.name,'이','가')} 개쉐끼가 된 ${madDog.name}에게 조용히 하라고 했습니다... 그리고 물어뜯겼습니다.`);
+  currentAttackContext = { attackerName: madDog.name, attackerId: madDog.id, cardName: '개쉐끼 랩터' };
+  forceKillWithRevive(reactor, '개쉐끼 랩터를 건드림', '개쉐끼 랩터');
   try{ renderBoard(); checkWinCondition(); }catch(e){}
   return true;
 }
@@ -21515,6 +21520,15 @@ function typeLabel(t){
     TEAM_EXECUTE_IF_LOSING:'아군전원즉사(열세조건)', ATK_AND_SELF_DAMAGE:'공격+자해', VEHICLE_PURGE_ATK:'전원-탈것카드제거+장당피해',
     SELF_ATK_BUFF_ROUNDS:'자신공격력증가(기간)', HAND_MASK_TARGET:'대상손패은폐', ATK_AOE_MASK:'전체공격+손패은폐', MOTHER_PROTECT:'대상피공격면역(기간)', PROBLEM_CHILD_PASSIVE:'패시브-엄마공격허용', DOCTOR_EXECUTE_PROBLEM_CHILDREN:'조건부전체즉사', UBIN_BREATH_ATK:'공격+화상+영구디버프',
     TEMU_EXPRESS_ATK:'지목-D등급5장전송+돈강탈', FLEE_ON_DEATH_PASSIVE:'패시브-사망방지+1바퀴제외+최대체력1', POTENTIAL_COLLECT_PASSIVES:'전체패시브카드획득(부활제외)', UBIN_STRAY_DOG_ATK:'공격+출혈(클릭시피해)',
+    /* [Ver 9.14] 신규 카드 타입 */
+    EXECUTE_LOWEST_HP:'최저체력자즉사(조건부)', CHARGER_TOGGLE:'무한-흡수/방출충전', CARD_BUFFET:'무작위30장-상점가구매',
+    DOUBLE_CAST_AURA:'지속-턴마다카드2장', WILSON_SUMMON:'윌슨소환(대신피격+회복)', BURN_ALL_HANDS_REDISTRIBUTE:'전원손패소각+내패분배',
+    ATK_THEN_KEEP_OR_GIVE:'지목-공격후회수/양도', ATK_PASS_GROWING:'지목-공격후카드이전(+20%)', REACT_REFLECT_HALF:'보여주기-피해50%반사',
+    ANCIENT_RUINS_AURA:'지속-매턴확률보물', GAMBLE_MASTER:'영구-도뜨사면역', SCHEME_PRO_DELAYED:'3바퀴뒤-전체약화',
+    BURNING_MAN_AURA:'지속-내공격에화상중첩', REAPER_SCYTHE_AURA:'지속-빈사대상스턴',
+    ECONOMY_REBATE_AURA:'지속-쓴골드환급', DAMAGE_REBATE_AURA:'지속-받은피해회복',
+    SOUL_TRIAL_AOE:'전체공격+비공개기준카드제출', CASTRATE_TARGET:'지목-고자', BUFF_DENY_STUN:'지목-버프제거+행동불능',
+    JUMP_SLAM_AOE:'전체공격+확률자해', MAD_DOG_RAPTOR:'자강화-공격력+/받는피해+/확률고자',
     REVERSE_TURN:'턴순서반전', TAX_ALL:'전원징수',
     GAMBLE_EXTRA_CHOICE:'도박선택+1', GAMBLE_CHEAP:'도박반값', LOW_GAMBLE_FREE:'하급도박무료',
     SELL_1G_ALL:'전원판매가1G', SHOP_LOCK:'상점독점', SHOP_STEAL_ALL:'상점전체절도',
@@ -22490,7 +22504,7 @@ function loadSampleCards(mergeMissing=false){
     {grade:'S', name:'중성화 의사', type:'CASTRATE_TARGET', power:0, pierce:'NONE', desc:'상대의 호두를 따버려 고자로 만든다. (MaxHP·HP가 1이 된다)', flavor:'꽈드득'},
     {grade:'A', name:'불편', type:'BUFF_DENY_STUN', power:0, stunTurns:2, pierce:'NONE', desc:'상대가 버프를 얻는 것을 아니꼽게 본다. 그 효과를 무효화하는 동시에 상대를 2턴 동안 행동불능으로 만든다.', flavor:'참 불편하네요'},
     {grade:'A', name:'적절한 거리를 점프할 수 있음', type:'JUMP_SLAM_AOE', power:600, selfDamage:400, failPct:30, pierce:'NONE', desc:'ATK 600 (전체 공격). 단 30% 확률로 적절한 거리를 점프하지 못해 다리가 부러져 자신이 400의 피해를 입는다.', flavor:'쾅'},
-    {grade:'S', name:'코', type:'SELF_STAT_BUNDLE', power:0, reducePct:40, shieldAdd:1000, outDmgPct:-30, pierce:'NONE', desc:'코가 커져 받는 피해가 40% 감소하고 쉴드 1000을 얻는다. 다만 움직이기 어려워 주는 피해가 30% 감소한다.', flavor:'케인인님 한판 해요'},
+    {grade:'S', name:'코', type:'SELF_STAT_BUNDLE', power:0, reducePct:40, shieldAdd:1000, atkPct:-30, pierce:'NONE', desc:'코가 커져 받는 피해가 40% 감소하고 쉴드 1000을 얻는다. 다만 움직이기 어려워 공격력이 30% 감소한다.', flavor:'케인인님 한판 해요'},
     {grade:'S', name:'개쉐끼 랩터', type:'MAD_DOG_RAPTOR', power:0, atkPct:60, vulnPct:30, gojaPct:10, pierce:'NONE', desc:'개쉐끼가 되어 공격력이 60% 증가하지만 받는 피해량도 30% 증가한다. 또한 자신의 턴마다 10% 확률로 중성화수술을 당해 고자가 된다.', flavor:'멍멍!'}
   ];
   if(mergeMissing){
@@ -23806,13 +23820,12 @@ function mkPlayer(id,name,isBot){
          ecoRebatePct / dmgRebatePct     : 경기 회복 / 우빈 리커버리
          dmgTakenTotal                   : 누적 피격량 (우빈 리커버리 계산용)
          madDogPct                       : 개쉐끼 랩터 (매 턴 고자 확률)
-         outDamagePct                    : 코 (주는 피해 증감 %)
          reflexHalfPending               : 무조건반사 예약 */
     wilsonHp:0, wilsonMaxHp:0, wilsonHeal:0, doubleCastAura:false,
     ruinsActive:false, ruinsPct:0, ruinsGold:0, ruinsCards:0,
     schemeProDue:0, schemeProAtk:0, schemeProHpCut:0,
     burningManBurn:0, reaperScythePct:0, ecoRebatePct:0, dmgRebatePct:0,
-    dmgTakenTotal:0, madDogPct:0, outDamagePct:0, reflexHalfPending:null,
+    dmgTakenTotal:0, madDogPct:0, reflexHalfPending:null,
     reviveCharge:false, // 영웅은 죽지 않아요: 사망 시 1회 풀피 부활
     miracleRevive:false, // OH JESUS A MIRACLE: 소지하고 있는 한 사망 시 1회 HP 5000으로 부활
     freePurchase:false, // 사장님이 미쳤어요: 다음 상점 구매 1회 무료
@@ -24305,7 +24318,6 @@ function getStatusChips(p){
   if(p.ecoRebatePct) addChip('💹', `경기 회복 (쓴 돈 ${p.ecoRebatePct}% 환급)`, 'green');
   if(p.dmgRebatePct) addChip('🩹', `우빈 리커버리 (받은 피해 ${p.dmgRebatePct}% 회복)`, 'green');
   if(p.madDogPct) addChip('🐕', `개쉐끼 랩터 (매 턴 ${p.madDogPct}% 고자)`, 'red');
-  if(p.outDamagePct) addChip('🐘', `주는 피해 ${p.outDamagePct>0?'+':''}${p.outDamagePct}%`, p.outDamagePct<0?'red':'green');
   if(p.schemeProDue && turnCount < p.schemeProDue) addChip('🕸️', `권모술수pro · ${p.schemeProDue - turnCount}바퀴`, 'yellow');
   if(p.reflexHalfPending) addChip('🤸', '무조건반사 대기 (다음 피격 50% 반사)', 'blue');
   if(p.musinCoupActive) addChip('⚔️', `무신정변 (${p.musinTargetedStreak||0}/3)`, 'blue'); // [Ver 6.8]
@@ -29843,35 +29855,40 @@ function playCard(playerId, handIdx, targetId, isChainCast, sourceOwnerId){
 }
 
 /* ==========================================================================
-   [Ver 9.14 버그수정] 람보르기니 무한 루프
+   [Ver 9.14 버그수정] 람보르기니 무한 루프 — 무한 사용 카드는 한 턴에 1장까지
    --------------------------------------------------------------------------
    람보르기니는 "손패가 2장 이상 남아 있으면 턴을 넘기지 않는다"로 되어 있다.
-   그런데 **무한 사용 카드(INFINITE_TYPES)는 내도 손패에서 사라지지 않는다.**
+   그런데 **무한 사용 카드(INFINITE_TYPES / infinite:true)는 내도 손패에서 사라지지 않는다.**
    봇이 람보르기니 상태에서 무한 카드를 집으면 hand.length가 영원히 줄지 않아
    같은 카드를 무한히 내고 턴이 절대 넘어가지 않았다(게임 정지).
-   ▶ 한 턴에 이어서 낼 수 있는 횟수에 상한을 둔다. 사람이 정상적으로 굴릴 때는
-     닿을 일이 없는 값이라 체감 너프는 없고, 무한 루프만 확실히 끊긴다.
+   ▶ 그래서 **무한 사용 카드는 한 턴에 1장까지만** 낼 수 있게 막는다.
+     한 장을 내는 순간 그 턴의 연속 사용은 거기서 끝난다.
+     람보르기니로 **일반 카드**를 이어서 내는 것 자체는 예전처럼 제한이 없다.
+   ▶ 이 판정은 람보르기니뿐 아니라 조광일·CCTV+ 등 "한 장 더" 계열이 전부 함께 쓴다.
    ========================================================================== */
-/* [Ver 9.14] 조광일 — "한 턴에 2장"이므로 개인 턴마다 딱 1회만 추가 사용을 준다. */
-function doubleCastAllow(p){
+const INFINITE_PLAYS_PER_TURN = 1;
+/* 방금 낸 카드가 무한 사용 카드였다면 이번 턴의 연속 사용을 여기서 끊는다. */
+function infiniteChainAllow(p, card){
   if(!p) return false;
+  const key = (typeof totalIndividualTurns !== 'undefined') ? totalIndividualTurns : 0;
+  if(p.__infTurnKey !== key){ p.__infTurnKey = key; p.__infPlays = 0; }
+  if(!card || !isInfiniteCard(card)) return true;   // 무한 카드가 아니면 제한 없음
+  p.__infPlays = (p.__infPlays||0) + 1;
+  if(p.__infPlays < INFINITE_PLAYS_PER_TURN) return true;
+  log('sys', `♾️ 무한 사용 카드는 한 턴에 <b>${INFINITE_PLAYS_PER_TURN}장</b>까지만 낼 수 있습니다. ${J(p.name,'의','의')} 턴이 넘어갑니다.`);
+  return false;
+}
+/* [Ver 9.14] 조광일 — "한 턴에 2장"이므로 개인 턴마다 딱 1회만 추가 사용을 준다. */
+function doubleCastAllow(p, card){
+  if(!p) return false;
+  if(!infiniteChainAllow(p, card)) return false;
   const key = (typeof totalIndividualTurns !== 'undefined') ? totalIndividualTurns : 0;
   if(p.__dcTurnKey !== key){ p.__dcTurnKey = key; p.__dcUsed = 0; }
   if((p.__dcUsed||0) >= 1) return false;
   p.__dcUsed = (p.__dcUsed||0) + 1;
   return true;
 }
-const LAMBO_MAX_CHAIN = 20;
-function lamboAllowMore(p){
-  if(!p) return false;
-  // 개인 턴이 바뀌면 카운터를 새로 시작한다 (totalIndividualTurns = 절대 개인턴 번호)
-  const key = (typeof totalIndividualTurns !== 'undefined') ? totalIndividualTurns : 0;
-  if(p.__lamboTurnKey !== key){ p.__lamboTurnKey = key; p.__lamboChain = 0; }
-  p.__lamboChain = (p.__lamboChain||0) + 1;
-  if(p.__lamboChain < LAMBO_MAX_CHAIN) return true;
-  log('sys', `🏎 ${J(p.name,'의','의')} 람보르기니가 과열되어 이번 턴은 여기서 끝납니다. (연속 ${LAMBO_MAX_CHAIN}장)`);
-  return false;
-}
+function lamboAllowMore(p, card){ return infiniteChainAllow(p, card); }
 
 /* shared "what happens after an effect resolves" step, used by both the normal path and the
    NO U mirrored path so the chain/mark-pick/advance-turn logic isn't duplicated */
@@ -29916,17 +29933,17 @@ function continueAfterEffect(caster, card, chainInfo, drewCard){
     const restartIdx = turnOrder.findIndex(idx=>players[idx] && players[idx].id===caster.id);
     if(restartIdx !== -1) currentTurnIdx = restartIdx;
     setTimeout(runTurnStart, 900);
-  } else if(caster && caster.alive && caster.lamboUnlimited && caster.hand.length > 1 && !drewCard && lamboAllowMore(caster)){
+  } else if(caster && caster.alive && caster.lamboUnlimited && caster.hand.length > 1 && !drewCard && lamboAllowMore(caster, card)){
     // v4.25 람보르기니: 손패가 2장 이상 남아있고, 이번 카드로 드로우가 발생하지 않았다면 턴이 넘어가지 않는다.
     log('sys', `${J(caster.name,'이','가')} "람보르기니"로 속도가 붙어 계속 카드를 낼 수 있습니다! (남은 카드 ${caster.hand.length}장)`);
     renderBoard(); renderHand();
     if(caster.isBot){ setTimeout(()=> botPlay(), 500); }
-  } else if(caster && caster.alive && caster.doubleCastAura && caster.hand.length > 0 && !drewCard && doubleCastAllow(caster)){
+  } else if(caster && caster.alive && caster.doubleCastAura && caster.hand.length > 0 && !drewCard && doubleCastAllow(caster, card)){
     // [Ver 9.14] 조광일 — 속사포. 자기 턴마다 카드를 2장까지 낼 수 있다.
     log('sys', `🔫 ${J(caster.name,'이','가')} "조광일"의 속사포로 한 장 더 낼 수 있습니다! (남은 카드 ${caster.hand.length}장)`);
     renderBoard(); renderHand();
     if(caster.isBot){ setTimeout(()=> botPlay(), 500); }
-  } else if(caster && caster.alive && (caster.evoExtraCard||0) > 0 && caster.hand.length > 0 && !drewCard){
+  } else if(caster && caster.alive && (caster.evoExtraCard||0) > 0 && caster.hand.length > 0 && !drewCard && infiniteChainAllow(caster, card)){
     // [Ver 9.13.1] CCTV+ — 이번 턴에 카드를 한 번 더 낼 수 있다. 여분 1회를 소모하고 턴을 유지한다.
     caster.evoExtraCard -= 1;
     log('sys', `📹 ${J(caster.name,'이','가')} "CCTV+"로 이번 턴에 카드를 한 번 더 낼 수 있습니다! (남은 카드 ${caster.hand.length}장)`);
@@ -31109,6 +31126,9 @@ function openReactionWindow(caster, card, targetId, onResolve){
     const liveIdx = reactor.hand.findIndex(c=>c.uid===rc.uid);
     if(liveIdx===-1) return;
     reactor.hand.splice(liveIdx,1);
+    /* [Ver 9.14 이스터에그] 개쉐끼가 된 사람에게 "조용히 해라"를 들이대면 오히려 반응자가 물려 죽는다.
+       원래 카드의 무효화도 일어나지 않는다 — 완전히 역효과다. */
+    if(madDogBackfire(reactor, caster, rc)){ renderHand(); finish({}); return; }
     reactor.nullifyNext = true; // 원래 받으려던 카드의 효과는 무효화
     log('highlight', `${J(reactor.name,'이','가')} ${rc.name}! ${card.name}의 효과를 무효화하고 ${J(caster.name,'을','를')} 그 자리에서 보내버립니다!`);
     try{ if(rc.sfx) cardAudioTriggerKey('sfx', rc.sfx, reactor.id); }catch(e){} // [Ver 7.3] 보여주기 발동 시 효과음
@@ -31766,14 +31786,6 @@ function resolveCardEffect(caster, card, targetId, onDone){
      지금 카드를 내는 사람이 누구인지 여기서 표시해두고, grantGold가 그 사람일 때만 배수를 건다.
      (바퀴 수입처럼 카드와 무관한 수입까지 2배가 되지 않도록 continueAfterEffect에서 반드시 지운다) */
   window.__petGoldCardCaster = caster ? caster.id : null;
-
-  /* [Ver 9.14 이스터에그] 개쉐끼 랩터를 "조용히 시키려" 든 카드는 시전자를 죽인다. */
-  try{
-    if(targetId){
-      const __mdT = players.find(p=>p.id===targetId);
-      if(__mdT && madDogBackfire(caster, __mdT, card)){ onDone({}); return; }
-    }
-  }catch(e){}
 
   // [Ver 6.8] ABYSSAL HUNTER — 시전 시 화면이 잠시 바닷속으로 잠긴다.
   if(card.name === 'ABYSSAL HUNTER'){ try{ triggerAbyssalFlash(); }catch(e){} }
@@ -37277,9 +37289,8 @@ function resolveCardEffect(caster, card, targetId, onDone){
       if(card.flatReduce){ caster.permaFlatReduce = (caster.permaFlatReduce||0) + card.flatReduce; msgs.push(`받는 피해 -${card.flatReduce}(고정)`); }
       if(card.maxHpAdd){ caster.maxHp += card.maxHpAdd; msgs.push(`MaxHP +${card.maxHpAdd}`); }
       if(card.hpAdd){ caster.hp = Math.min(caster.maxHp, caster.hp + card.hpAdd); msgs.push(`HP +${card.hpAdd}`); }
-      // [Ver 9.14] 코 — 쉴드 획득 / 주는 피해 감소
+      // [Ver 9.14] 코 — 쉴드 획득 (공격력 증감은 위의 atkPct가 그대로 처리한다)
       if(card.shieldAdd){ grantShield(caster, card.shieldAdd, card.name); msgs.push(`쉴드 +${card.shieldAdd}`); }
-      if(card.outDmgPct){ caster.outDamagePct = (caster.outDamagePct||0) + card.outDmgPct; msgs.push(`주는 피해 ${card.outDmgPct>0?'+':''}${card.outDmgPct}%`); }
       log('sys', `${J(caster.name,'이','가')} "${card.name}"을(를) 발동! ${msgs.join(', ')} (영구)`);
       renderBoard(); onDone({}); break;
     }
@@ -40820,7 +40831,6 @@ function getTotalAtkPctBonus(caster){
   if(caster.matrixId != null && caster.matrixAtkMod) pct += caster.matrixAtkMod;
   if(caster.unconsciousActive) pct += 250; // 기존 3.5배(=100%+250%)와 동일한 결과
   if(caster.poisoned) pct -= 15;
-  if(caster.outDamagePct) pct += caster.outDamagePct;   // [Ver 9.14] 코 — 주는 피해 감소(-30)
   /* [Ver 9.7 정리] 9.6에서 폐지된 "돈 재단 Lv2 = 보유 돈 비례 공격력"의 잔재(fdnGoldAtkPct 호출)를 제거.
      항상 0을 더하던 빈 호출이라 계산 결과는 그대로다. Lv2는 이제 매 턴 고정 수입이다. */
   // [Ver 8.2] 공격력 "감소"는 아무리 겹쳐도 최대 95%까지만 (증가 방향은 상한 없음)
