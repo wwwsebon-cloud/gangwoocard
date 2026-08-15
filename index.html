@@ -1388,6 +1388,58 @@
     .djv-ball{ font-size:11px; top:1px; right:3px; }
     .djv-ring{ opacity:.75; }
   }
+  /* [Ver 10.3] 베팅 — 단체 이벤트 오버레이 안의 조작부 */
+  .grp-bet-ctl{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    margin:14px 0 16px; flex-wrap:wrap;
+  }
+  .grp-bet-mine{
+    min-width:120px; text-align:center; font-family:'JetBrains Mono',monospace;
+    font-size:22px; font-weight:900; color:#ffd75e;
+    padding:4px 14px; border:2px solid #ffd75e; border-radius:10px;
+  }
+  .grp-bet-val{
+    font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:800;
+    color:#ffd75e; margin-top:3px;
+  }
+  /* [Ver 10.4] 포탈 · 퀴즈쇼 */
+  .grp-yes{ color:#6bdc93; }
+  .grp-no{ color:#ff7b7b; }
+  .grp-wait{ color:rgba(255,255,255,0.45); font-weight:400; }
+  .grp-quiz-hint{
+    text-align:center; font-family:'JetBrains Mono',monospace;
+    font-size:38px; font-weight:900; letter-spacing:10px; color:#ffd75e;
+    margin:12px 0 14px; text-shadow:0 0 18px rgba(255,215,94,0.35);
+  }
+  /* 퀴즈 입력창 — 공유 오버레이 밖에 각 기기가 따로 만든다 (글자가 날아가지 않도록) */
+  .grp-quiz-box{
+    position:fixed; left:50%; bottom:38px; transform:translateX(-50%);
+    z-index:10000; display:flex; align-items:center; gap:8px;
+    padding:10px 12px; border-radius:14px;
+    background:rgba(12,12,16,0.94); border:2px solid #ffd75e;
+    box-shadow:0 8px 28px rgba(0,0,0,0.5);
+  }
+  .grp-quiz-box .input{
+    width:min(58vw, 300px); font-size:15px; padding:9px 12px;
+    border-radius:9px; border:1px solid var(--line);
+    background:rgba(255,255,255,0.06); color:#fff;
+  }
+  .grp-quiz-box .input:disabled{ opacity:.4; }
+  .grp-quiz-left{ font-size:12px; font-weight:800; color:rgba(255,255,255,0.6); white-space:nowrap; }
+  .grp-quiz-left.ok{ color:#6bdc93; }
+  .grp-quiz-left.out{ color:#ff7b7b; }
+  @media (max-width: 560px){
+    .grp-quiz-box{ bottom:14px; padding:8px 10px; gap:6px; }
+    .grp-quiz-box .input{ width:46vw; font-size:14px; }
+  }
+  /* [Ver 10.2] 턴 제한시간 — ▶ TURN 배지 안에 붙는 남은 초 */
+  .lan-turn-clock{
+    font-style:normal; margin-left:5px; padding:0 5px;
+    border-radius:8px; background:rgba(0,0,0,0.30); font-variant-numeric:tabular-nums;
+  }
+  .lan-turn-clock.urgent{ background:#c0392b; color:#fff; animation:lanClockPulse .6s ease-in-out infinite; }
+  @keyframes lanClockPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.45; } }
+  @media (prefers-reduced-motion: reduce){ .lan-turn-clock.urgent{ animation:none; } }
   .turn-now-badge {
     position:absolute; top:-8px; left:50%; transform:translateX(-50%);
     background:#ffb84f; color:#1a1200; font-family:'JetBrains Mono',monospace;
@@ -8679,7 +8731,7 @@ body.mobile-mode .hitman-panel{ font-size:8px; padding:2px 8px; top:-11px; }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 10.1</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 10.4.1</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -10394,8 +10446,33 @@ function cardAudioStopEverything(){
 const AMBIENT_BGM_VOL = 0.15;
 let ambientBgmEl = null;
 let ambientBgmKey = null;
+/* [Ver 10.5] 지금 DJ가 틀어놓은 곡의 키. 없으면 null. */
+function djActiveTrackKey(){
+  try{
+    if(typeof gameActive === 'undefined' || !gameActive) return null;
+    const dj = (Array.isArray(players) ? players : []).find(x=> x && x.__djTrackKey && hasPet(x,'dj'));
+    return dj ? dj.__djTrackKey : null;
+  }catch(e){ return null; }
+}
 function ambientBgmPlay(key){
   if(window.__gsyAudioLock && key!=='universalcollapse') return; // [Ver 8.5] 강서윤 암전 중엔 배경음 재생 금지
+  /* ==========================================================================
+     [Ver 10.5] DJ 선곡은 **모든 배경음보다 우선**한다
+     --------------------------------------------------------------------------
+     ▶ 왜 여기서 막나
+       10.1에서 restoreScreenBgm()만 고쳤는데 여전히 끊겼다. 배경음을 트는 곳이
+       그 함수 하나가 아니기 때문이다 — 상점·랩터마트·화면 전환·카드 효과가 저마다
+       ambientBgmPlay()를 직접 부른다. 그 모두를 찾아다니는 대신, **관문 하나**인
+       이 함수에서 한 번에 막는다.
+     ▶ DJ 곡이 흐르는 동안 다른 배경음 요청이 들어오면 **DJ 곡으로 돌려버린다.**
+       (무시가 아니라 치환이다. 그래야 아무것도 안 나오는 순간이 생기지 않는다)
+     ▶ DJ가 곡을 바꾸는 경우는 djResolveTrack이 __djTrackKey를 **먼저** 새 키로
+       바꿔놓고 부르므로 key === dk 가 되어 그대로 통과한다. 따로 예외가 필요 없다.
+     ========================================================================== */
+  try{
+    const dk = djActiveTrackKey();
+    if(dk && key !== dk) key = dk;
+  }catch(e){}
   if(ambientBgmKey === key && ambientBgmEl) return; // 이미 같은 곡이면 그대로 둔다(끊김 방지)
   ambientBgmStop();
   const src = cardAudioSrc(key); if(!src) return;
@@ -11117,6 +11194,19 @@ function draftAuctionPickCard(gradeFilter){
      · 골드 뭉치 (12%) — 200~500골드. 골드가 유일한 경매 재원이므로 가끔 골드 자체가 매물로 나온다. */
 const YACHA_BUNDLE_GRADES = ['E','D','C','B','A','S'];
 function draftAuctionPickItem(){
+  /* [Ver 10.3] 잡상인 이벤트 — 매물을 **A등급 이상 카드 3장 묶음**으로 고정한다.
+     경매 시스템 자체(입찰·타이머·랜서버 동기화)는 저점매수와 완전히 동일하게 재사용한다. */
+  if(window.__peddlerMode){
+    const cards = []; const used = new Set(); let g = 0;
+    while(cards.length < 3 && g < 200){
+      g++;
+      const c = draftAuctionPickCard(['A','S','SR','SSR','UR','LR']);
+      if(!c) break;
+      if(used.has(c.name)) continue;
+      used.add(c.name); cards.push(c);
+    }
+    if(cards.length) return { kind:'bundle', cards, gold:0, label:`🎒 잡상인의 물건 ${cards.length}장 (A등급 이상)` };
+  }
   const roll = Math.random();
   if(roll < 0.12){
     const amount = (1 + Math.floor(Math.random()*20)) * 10; // 10~200, 10단위
@@ -13263,6 +13353,44 @@ function enterReadyPhase(p, opts={}){
 let __lanTurnTimer = null;
 const LAN_TURN_LIMIT_MS = 60000;
 function lanClearTurnTimer(){ if(__lanTurnTimer){ clearTimeout(__lanTurnTimer); __lanTurnTimer=null; } }
+
+/* ==========================================================================
+   [Ver 10.2 신규] 턴 제한시간 표시 — 모든 참가자 화면에
+   --------------------------------------------------------------------------
+   ▶ 실제 강제 진행은 호스트의 lanStartTurnTimer()가 한다. 여기는 **보여주기 전용**이다.
+   ▶ 남은 시간을 스냅샷에 실어 보내지 않는다. 그러면 값이 매초 달라져
+     "안 바뀌면 안 보낸다"(10.0.2) 최적화가 통째로 무너지고, 초당 전송이 되살아난다.
+     대신 각 기기가 **턴 번호(totalIndividualTurns)가 바뀐 순간부터** 스스로 센다.
+     네트워크 지연만큼(1초 미만) 어긋날 수 있지만 표시용으로는 충분하다.
+   ▶ 봇 턴에는 띄우지 않는다. 봇은 제한시간 대상이 아니다.
+   ========================================================================== */
+let __lanClockState = { turn:-1, at:0, timer:null };
+function lanTurnClockStop(){
+  if(__lanClockState.timer){ clearInterval(__lanClockState.timer); __lanClockState.timer = null; }
+  __lanClockState.turn = -1;
+}
+function lanTurnClockPaint(){
+  const el = document.getElementById('lanTurnClock');
+  if(!el) return;                       // 지금 화면에 배지가 없으면 그릴 것도 없다
+  const left = Math.max(0, LAN_TURN_LIMIT_MS - (Date.now() - __lanClockState.at));
+  const sec = Math.ceil(left / 1000);
+  el.textContent = String(sec);
+  el.classList.toggle('urgent', sec <= 10);
+}
+/* renderBoard가 끝날 때마다 불린다 — 턴이 바뀌었으면 시계를 다시 건다. */
+function lanTurnClockSync(){
+  try{
+    if(!lanMode || !gameActive){ lanTurnClockStop(); return; }
+    const cur = (typeof currentPlayer === 'function') ? currentPlayer() : null;
+    if(!cur || cur.isBot || !cur.alive){ lanTurnClockStop(); return; }
+    if(__lanClockState.turn !== totalIndividualTurns){
+      __lanClockState.turn = totalIndividualTurns;
+      __lanClockState.at = Date.now();
+    }
+    if(!__lanClockState.timer) __lanClockState.timer = setInterval(lanTurnClockPaint, 250);
+    lanTurnClockPaint();
+  }catch(e){}
+}
 function lanStartTurnTimer(p){
   lanClearTurnTimer();
   if(!p || !p.alive) return;
@@ -15655,6 +15783,81 @@ async function fbLookupRemoteCode(code){
    ########################################################################## */
 const BALANCE_PATCHES = [
   {
+    version: 'Ver 10.4', date: '2026-08-15',
+    groups: [
+      { title:'단체 랜덤 이벤트 5종', kind:'system', icon:'👥',
+        note:'한 사람에게만 걸리던 랜덤 이벤트와 달리, <b>전원이 각자 화면에서 참여</b>하는 이벤트가 생겼습니다. 다 끝나야 턴이 재개됩니다. Wi-fi·온라인에서도 각자 화면에 따로 뜹니다.',
+        rows:[
+          { name:'눈치 게임', icon:'🎁', rows:[
+            { label:'규칙', from:'—', to:'재화를 하나씩 선택 · 겹치면 고른 사람 전원 무득', dir:'neutral' },
+          ]},
+          { name:'잡상인', icon:'🎒', rows:[
+            { label:'규칙', from:'—', to:'전원 경매 · 매물은 A등급 이상 카드 3장 고정', dir:'neutral' },
+          ]},
+          { name:'베팅', icon:'🎰', rows:[
+            { label:'규칙',   from:'—', to:'50~500 중 하나를 걸고, 숨겨진 숫자에 가장 가까우면 건 만큼 획득', dir:'neutral' },
+            { label:'제한시간', from:'—', to:'10초 · 모두의 베팅은 공개',                     dir:'neutral' },
+          ]},
+          { name:'카드 포탈', icon:'🌀', rows:[
+            { label:'성공(50%)', from:'—', to:'넣은 카드 반환 + 같은 등급 3장 추가', dir:'up'   },
+            { label:'실패(50%)', from:'—', to:'넣은 카드 소멸',                    dir:'down' },
+          ]},
+          { name:'퀴즈쇼', icon:'🧠', rows:[
+            { label:'문제',   from:'—', to:'초성 퀴즈 3문제 (A등급 이상 · 한글 이름만)', dir:'neutral' },
+            { label:'기회',   from:'—', to:'문제당 20초 · 1인 5회 입력',              dir:'neutral' },
+            { label:'보상',   from:'—', to:'맞힌 사람 전원이 그 카드 획득',            dir:'up'      },
+          ]},
+        ]},
+    ]
+  },
+  {
+    version: 'Ver 10.2', date: '2026-08-15',
+    groups: [
+      { title:'카드 등장 확률', kind:'system', icon:'🎴',
+        note:'<b>S등급이 A와 똑같이 흔했습니다.</b> S에는 판을 뒤집는 카드가 많아 그대로 두기 어려웠습니다. 대신 <b>판이 길어질수록</b> 상위 등급이 조금씩 잘 나오게 해, 초반 한 방은 줄이고 후반에는 길을 열었습니다.',
+        rows:[
+          { name:'등급 곡선', icon:'📉', rows:[
+            { label:'E ~ A',   from:'동일',      to:'동일 (변경 없음)', dir:'neutral' },
+            { label:'S',       from:'A와 동일',  to:'×0.70',           dir:'down' },
+            { label:'SR 이상', from:'기존값',    to:'추가로 ×0.85~0.70', dir:'down' },
+          ]},
+          { name:'턴 진행 보정', icon:'📈', rows:[
+            { label:'S 이상 등장률', from:'판 내내 고정', to:'한 바퀴마다 +5% (최대 +70%)', dir:'up' },
+          ]},
+        ]},
+      { title:'랜덤 이벤트', kind:'system', icon:'🎲',
+        note:'몇 번째 이벤트든 확률표가 같아서, 판이 길어져도 <b>보통</b>만 계속 나왔습니다. 이제 이벤트가 터질수록 희귀한 쪽으로 무게가 옮겨갑니다. 또 <b>보통</b> 등급에 회복이 거의 없어 맞고 시작한 판이 그대로 굳는 경우가 많아, 음식 이벤트를 넣었습니다.',
+        rows:[
+          { name:'등급 확률', icon:'🎯', rows:[
+            { label:'보통',      from:'55% 고정', to:'이벤트마다 -6% (최저 30%)', dir:'down' },
+            { label:'매우 낮음', from:'14.5% 고정', to:'이벤트마다 +12%',        dir:'up'   },
+            { label:'극악',      from:'3% 고정',   to:'이벤트마다 +20%',        dir:'up'   },
+          ]},
+          { name:'신규 회복 이벤트', icon:'🍔', rows:[
+            { label:'피자 / 햄버거',       from:'—', to:'HP +700 / +600', dir:'up' },
+            { label:'마라탕 / 급식',       from:'—', to:'HP +500 / +450', dir:'up' },
+            { label:'아이스크림 / 지후',   from:'—', to:'HP +400 / +69',  dir:'up' },
+          ]},
+        ]},
+      { title:'봇 성격', kind:'system', icon:'🤖',
+        note:'일부 봇에게 <b>성격</b>이 하나씩 붙습니다. 기존 가중치 위에 곱하는 방식이라 <b>봇이 못 하던 행동을 새로 하지는 않습니다.</b> 화면에는 드러나지 않고, 판마다 봇들이 다르게 움직이는 것으로만 느껴집니다.',
+        rows:[
+          { name:'성격 7종', icon:'🎭', rows:[
+            { label:'공격적',      from:'—', to:'공격 카드 우선 사용·구매',              dir:'neutral' },
+            { label:'방어적',      from:'—', to:'회복·쉴드·보여주기 우선',               dir:'neutral' },
+            { label:'과감한 투자', from:'—', to:'상위 도박 선호 · 비싼 카드 선호',        dir:'neutral' },
+            { label:'서포터',      from:'—', to:'회복 중시',                            dir:'neutral' },
+            { label:'중립적',      from:'—', to:'도박을 거의 안 하고 드로우 선호',        dir:'neutral' },
+            { label:'랜덤적',      from:'—', to:'? 등급 선호',                          dir:'neutral' },
+            { label:'트롤',        from:'—', to:'가끔 E급 자해·폭파 카드를 실제로 냄 (드묾)', dir:'neutral' },
+          ]},
+          { name:'적용 범위', icon:'📊', rows:[
+            { label:'성격이 붙는 봇', from:'없음', to:'약 55% (나머지는 예전 그대로)', dir:'neutral' },
+          ]},
+        ]},
+    ]
+  },
+  {
     version: 'Ver 10.1', date: '2026-08-15',
     groups: [
       { title:'지후펫 리워크 4종', kind:'pet',
@@ -17680,6 +17883,51 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 10.4.1',
+    date: '2026-08-15',
+    items: [
+      '🎧 <b>[수정] DJ 선곡이 이제 모든 배경음보다 우선합니다</b> — 상점에 들어갔다 나오면 곡이 끊기던 문제입니다. 지난 버전에서 한 곳을 고쳤지만, 배경음을 트는 곳이 그 한 곳이 아니었습니다. <b>상점 · 암시장 · 랩터마트 · 화면 이동</b>이 저마다 자기 배경음을 틀고 있었습니다. 이제 DJ가 곡을 틀어둔 동안에는 <b>다른 배경음 요청이 전부 DJ 곡으로 바뀝니다.</b> 상점에 들어가도 곡이 그대로 이어집니다.'
+    ]
+  },
+  {
+    version: 'Ver 10.4',
+    date: '2026-08-15',
+    items: [
+      '🌀 <b>[신규 단체 이벤트] 카드 포탈</b> — 10초 안에 <b>넣을지 말지</b>만 고릅니다. 넣으면 손패에서 <b>무작위로 한 장</b>이 빨려 들어가, <b>50%는 그대로 사라지고 50%는 그 카드와 같은 등급 카드 3장</b>을 더 받습니다. 누가 넣었는지는 모두에게 공개됩니다.',
+      '🧠 <b>[신규 단체 이벤트] 퀴즈쇼</b> — <b>초성 퀴즈 3문제</b>가 차례로 나옵니다. A등급 이상이면서 이름이 한글로만 된 카드가 문제로 나오고, <b>등급과 초성</b>만 공개됩니다. 문제당 <b>20초</b>, 한 사람당 <b>5번</b>까지 답을 입력할 수 있으며, <b>맞힌 사람은 모두</b> 그 카드를 가져갑니다. (띄어쓰기는 틀려도 정답으로 칩니다)',
+      '👥 [단체 이벤트] 이로써 <b>눈치 게임 · 잡상인 · 베팅 · 카드 포탈 · 퀴즈쇼</b> 5종이 모두 갖춰졌습니다. 전부 Wi-fi·온라인에서 각자 화면에 따로 뜹니다.'
+    ]
+  },
+  {
+    version: 'Ver 10.3',
+    date: '2026-08-15',
+    items: [
+      '👥 <b>[신규] 단체 랜덤 이벤트</b> — 한 사람에게만 걸리던 랜덤 이벤트와 달리, <b>전원이 각자 화면에서 참여</b>하는 이벤트가 생겼습니다. 다 끝나야 턴이 재개됩니다. Wi-fi·온라인에서도 각자 화면에 따로 뜹니다.',
+      '🎁 <b>[신규 단체 이벤트] 눈치 게임</b> — 재화가 여러 개 놓이고 제한시간 안에 하나씩 고릅니다. <b>같은 것을 고른 사람은 모두 빈손</b>이 됩니다. (저점매수의 눈치 게임과 완전히 같은 규칙입니다)',
+      '🎒 <b>[신규 단체 이벤트] 잡상인 등장</b> — 전원이 참여하는 경매가 열립니다. 매물은 <b>A등급 이상 카드 3장 묶음</b>으로 고정입니다. (저점매수의 경매와 완전히 같은 방식입니다)',
+      '🎰 <b>[신규 단체 이벤트] 베팅</b> — <b>50~500</b> 사이의 숫자 하나가 비공개로 정해집니다. 전원이 10초 안에 숫자를 걸고, <b>가장 가까운 사람이 자기가 건 숫자만큼</b> 골드를 가져갑니다. 동률이면 모두 받습니다. 모두의 베팅은 진행 중에도 공개됩니다.'
+    ]
+  },
+  {
+    version: 'Ver 10.2',
+    date: '2026-08-15',
+    items: [
+      '🤖 <b>[신규] 봇 성격</b> — 이제 일부 봇에게 <b>성격</b>이 하나씩 붙습니다. <b>공격적</b>(공격 카드 우선) · <b>방어적</b>(회복·쉴드·보여주기 우선) · <b>과감한 투자</b>(상위 도박을 즐기고 좋은 카드를 노림) · <b>서포터</b>(회복 중시) · <b>중립적</b>(도박보다 드로우) · <b>랜덤적</b>(?등급 선호) · <b>트롤</b>(가끔 E급 자해 카드를 진짜로 냄)의 7종입니다. <b>성격은 화면에 드러나지 않습니다</b> — 판마다 봇들이 조금씩 다르게 움직이는 것으로만 느껴집니다. (트롤은 다른 성격보다 드물게 등장하고, 봇의 절반 정도는 예전 그대로입니다)',
+      '🎲 <b>[변경] 랜덤 이벤트가 거듭될수록 희귀한 것이 잘 나옵니다</b> — 예전에는 몇 번째든 확률이 똑같아서 판이 길어져도 \'보통\'만 계속 나왔습니다. 이제 이벤트가 터질 때마다 <b>매우 낮음 · 극악</b> 쪽으로 무게가 조금씩 옮겨갑니다.',
+      '🍔 <b>[신규 랜덤 이벤트 6종]</b> — <b>피자</b>(HP 700) · <b>햄버거</b>(600) · <b>마라탕</b>(500) · <b>우빈이가 먹다 남긴 급식</b>(450) · <b>아이스크림</b>(400) · <b>지후 발견</b>(69). \'보통\' 등급에 회복이 거의 없어서, 초반에 크게 맞으면 그대로 굳어버리는 판이 많았습니다.',
+      '📉 <b>[밸런스] 카드 등급 곡선 조정</b> — <b>E~A는 예전과 똑같이</b> 나옵니다. <b>S부터</b> 조금씩 덜 나오게 낮췄습니다. S는 판을 뒤집는 카드가 많은데 A와 똑같이 흔했습니다.',
+      '📈 <b>[밸런스] 턴이 진행될수록 상위 등급이 조금 더 잘 나옵니다</b> — 한 바퀴마다 조금씩 올라 최대 +70%까지입니다. 초반에 SSR이 튀어나와 판이 끝나버리는 일은 줄이고, 길어진 판에는 한 방을 열어줍니다.',
+      '⏱️ <b>[신규] 온라인·Wi-fi 턴 제한시간 표시</b> — 60초 동안 행동하지 않으면 턴이 자동으로 넘어가는데, 그 남은 시간이 어디에도 안 보였습니다. 이제 <b>▶ TURN 배지 안에 초가 함께</b> 뜨고, 10초 이하로 남으면 빨갛게 깜빡입니다. 모든 참가자 화면에 똑같이 보입니다.'
+    ]
+  },
+  {
+    version: 'Ver 10.1.1',
+    date: '2026-08-15',
+    items: [
+      '🐛 <b>[버그수정] 온라인 참가자에게 행동 버튼이 안 뜨던 문제</b> — <b>DJ 선곡 · 티밍 요청 · 백호 · 항복</b> 네 버튼이 참가자 화면에서는 아예 나타나지 않았습니다. 이 버튼들을 켜고 끄는 처리가 참가자의 화면 갱신 경로에서 빠져 있어, 처음의 "숨김" 상태 그대로 남아 있었습니다. 호스트 화면에서는 정상이라 <b>DJ 버튼만 안 보이는 문제</b>처럼 보였습니다.'
+    ]
+  },
   {
     version: 'Ver 10.1',
     date: '2026-08-15',
@@ -24712,6 +24960,7 @@ function actuallyStartGame(){
   window.__ubiniteAwardedThisGame = false; // [Ver 8.4] 판마다 우비나이트 1회 지급 가드 리셋
   window.__pickaxeAwardedThisGame = false; // [Ver 9.11] 판마다 곡괭이 1회 지급 가드 리셋
   window.__boxKeyAwardedThisGame = false;  // [Ver 9.16] 판마다 상자 열쇠 1회 지급 가드 리셋
+  reEventCount = 0;                        // [Ver 10.2] 랜덤 이벤트 희귀도 누적 리셋
   /* [Ver 10.0.2] DJ 쿨타임의 임시 바닥값·틱 정리 — 안 지우면 지난 판 값이 새 판까지 따라온다 */
   try{ __djLocalLastAt = 0; djStopTick(); }catch(e){}
   // [Ver 9.5] 랜덤 이벤트 — 판마다 초기화 (도뜨사 가산 확률·혼돈의 시대는 판 단위 상태다)
@@ -24863,6 +25112,7 @@ function actuallyStartGame(){
   const startHandCount = draftMode ? 3 : ((settings && settings.startWith8Cards) ? 8 : 5); // [Ver 6.11] 야차는 우빈권 3장으로 시작
   try{ applyEquippedPetToGame(); }catch(e){ console.error('[지후펫] 적용 오류', e); } // [Ver 9.10.2] 시작 돈·MaxHP 보정은 시작 패보다 먼저
   try{ assignBotPets(); }catch(e){ console.error('[지후펫/봇] 적용 오류', e); }        // [Ver 9.11] 봇도 30% 확률로 펫을 데려온다
+  try{ assignBotPersonas(); }catch(e){ console.error('[봇 페르소나] 적용 오류', e); }   // [Ver 10.2] 봇 성격 (유저에게는 보이지 않는다)
   try{ applyArtifactsToGame(); }catch(e){ console.error('[유물] 적용 오류', e); }       // [Ver 9.11] 유물 — 시작 골드·MaxHP·쉴드 보정
   resetVitalsSnapshot(); // [Ver 9.10.2] 새 판 — 이전 판의 돈·체력 기준치가 남아 엉뚱한 변화량이 뜨지 않게
   try{ resetGoldFlashBaseline(); }catch(e){} // [Ver 9.12.1] 골드 점멸 기준값도 함께 초기화
@@ -26111,7 +26361,34 @@ function mkPlayer(id,name,isBot){
 /* SR 이상(SR/SSR/UR/LR)은 고희귀 등급이라 너무 자주 나오면 안 되지만, 한 판에 아예 안 나오는 것도
    심심하므로 "이번 판에 총 몇 장까지 나올 수 있는지" 예산(1~3장)을 게임 시작 시 미리 굴려두고,
    그 예산을 다 쓰면 이후로는 SR 이상이 뽑히지 않게 한다 (srSeenCount/srBudgetTotal는 actuallyStartGame에서 리셋). */
-const RARITY_WEIGHT = { SR:0.55, SSR:0.48, UR:0.36, LR:0.24 }; // [FIX #9] SR/SSR 비슷하되 SSR이 조금 덜, 그 위는 계단식 감소
+/* ==========================================================================
+   [Ver 10.2] 등급 곡선 개편
+   --------------------------------------------------------------------------
+   ▶ E~A 는 예전 그대로 전부 같은 확률(가중치 1)이다. 손대지 않았다.
+   ▶ **S부터** 계단식으로 낮아진다. 예전에는 S가 A와 똑같이 흔했는데,
+     S는 판을 뒤집는 카드가 많아 흔하면 곤란하다.
+   ▶ ⚠ 예산(한 판에 몇 장) 제한은 **예전처럼 SR 이상에만** 걸린다.
+     S를 RARITY_WEIGHT에 그냥 넣어버리면 S도 예산을 갉아먹어 SR+가 거의 사라진다.
+     그래서 "가중치를 낮출 등급"과 "예산을 세는 등급"을 분리해 둔다.
+   ========================================================================== */
+const RARITY_WEIGHT = { SR:0.55, SSR:0.48, UR:0.36, LR:0.24 }; // [FIX #9] 예산 대상 = SR 이상
+/* [Ver 10.2] 예산과 무관하게 "등장 자체를 덜 되게" 만드는 등급별 배수.
+   S만 새로 들어왔고, SR 이상은 RARITY_WEIGHT 위에 한 번 더 곱해진다. */
+const GRADE_RARITY_MULT = { S:0.70, SR:0.85, SSR:0.80, UR:0.75, LR:0.70 };
+/* [Ver 10.2] 턴이 진행될수록 상위 등급이 조금씩 더 잘 나온다.
+   초반에 SSR이 튀어나와 판이 끝나는 일은 줄이고, 길어진 판에는 한 방을 열어준다.
+   한 바퀴마다 +5%, 최대 +70%. E~A 에는 걸리지 않는다(그쪽은 이미 흔하다). */
+function gradeTurnBoost(grade){
+  if(GRADE_RARITY_MULT[grade] == null) return 1;
+  const t = (typeof turnCount === 'number' && turnCount > 0) ? turnCount : 0;
+  return 1 + Math.min(0.70, t * 0.05);
+}
+/* 등급 하나의 최종 희귀도 배수 (계단 하향 × 턴 보정) */
+function gradeRarityMult(grade){
+  const base = GRADE_RARITY_MULT[grade];
+  if(base == null) return 1;                 // E~A 는 그대로
+  return base * gradeTurnBoost(grade);
+}
 let srBudgetTotal = 2;
 let srSeenCount = 0;
 /* [Ver 6.5] 카드 유형별 확률 보정 배율. 공격 카드와 회복/쉴드 카드가 그 외 유틸 카드에 비해
@@ -26133,9 +26410,10 @@ function cardWeight(c){
   // 운빨좋은날 등: 등급과 무관하게 카드 자체에 지정된 극저확률로 뽑힌다 (SR+ 예산 제한과 별개로 항상 적용)
   if(c.dropWeightOverride != null) return c.dropWeightOverride;
   const w = RARITY_WEIGHT[c.grade];
-  if(w == null) return categoryWeightMult(c);
+  // [Ver 10.2] S는 예산 대상이 아니지만 등장 자체는 덜 되게 한다 (턴 보정 포함)
+  if(w == null) return categoryWeightMult(c) * gradeRarityMult(c.grade);
   if(srSeenCount >= srBudgetTotal) return 0; // 이번 판의 SR+ 예산 소진 — 더 이상 나오지 않음
-  return w * categoryWeightMult(c);
+  return w * categoryWeightMult(c) * gradeRarityMult(c.grade);
 }
 /* ==========================================================================
    [Ver 9.12.1 밸런스] 카드 등장 편중 완화
@@ -26197,7 +26475,9 @@ function pickWeightedRandomCard(excludeNoShop){
   const budgetLeft = srSeenCount < srBudgetTotal;
   const baseWeight = budgetLeft
     ? cardWeight
-    : (c)=> (c.dropWeightOverride != null ? c.dropWeightOverride : (RARITY_WEIGHT[c.grade] != null ? RARITY_WEIGHT[c.grade] : 1) * categoryWeightMult(c));
+    : (c)=> (c.dropWeightOverride != null ? c.dropWeightOverride
+             : (RARITY_WEIGHT[c.grade] != null ? RARITY_WEIGHT[c.grade] : 1)
+               * categoryWeightMult(c) * gradeRarityMult(c.grade));   // [Ver 10.2] 예산 소진 뒤에도 등급 곡선은 유지
   // [Ver 9.12.1] 신선도 배수를 한 겹 얹는다 (직전 판에 나온 카드는 덜, 처음 보는 카드는 더)
   const weightOf = (c)=> baseWeight(c) * cardFreshnessMult(c);
   let total = pool.reduce((s,c)=> s+weightOf(c), 0);
@@ -29460,7 +29740,11 @@ function renderBoard(){
     const __isActiveNow = gameActive && __curPForTurn && __curPForTurn.id===p.id;
     const __isNextUp = gameActive && !__isActiveNow && __nextPForTurn && __nextPForTurn.id===p.id;
     card.innerHTML = `
-      ${__isActiveNow ? `<div class="turn-now-badge">▶ TURN</div>` : ''}
+      ${__isActiveNow ? `<div class="turn-now-badge">▶ TURN${
+          /* [Ver 10.2] 랜/온라인에서는 60초가 지나면 턴이 자동으로 넘어간다.
+             그 남은 시간을 이 배지 안에 같이 띄운다 — 모든 참가자 화면에 똑같이 보인다. */
+          (lanMode && !p.isBot) ? ` <i class="lan-turn-clock" id="lanTurnClock">60</i>` : ''
+        }</div>` : ''}
       ${__isNextUp ? `<div class="next-turn-badge">NEXT</div>` : ''}
       ${/* [Ver 9.12.1] 이름표를 누르면 그 사람의 상세 스탯·걸린 효과를 전부 볼 수 있다 */''}
       ${/* [Ver 9.14] 노래 재생 표시 — 이름 출렁임 대신 스탯창 위쪽의 아주 옅은 비주얼라이저 */''}
@@ -29506,6 +29790,7 @@ function renderBoard(){
   updateLaserBeams();
   flashVitalDeltas(); // [Ver 9.10.2] 직전 렌더와 비교해 돈·체력 변화량을 그 자리 위에 띄운다
   flashGoldChange();  // [Ver 9.12.1] 보유 골드 글씨를 0.3초 노랑(획득)/빨강(손실)으로 점멸
+  try{ lanTurnClockSync(); }catch(e){}  // [Ver 10.2] 랜/온라인 턴 제한시간 표시
   if(firstTurnTutorial.active) requestAnimationFrame(()=> drawFirstTurnTutorialGuide());
 }
 
@@ -44590,13 +44875,92 @@ function gradeWeight(g){
   if(w[g]!=null) return w[g];
   return 8; // SR/SSR/UR/LR 등 최상위 등급
 }
+/* ##########################################################################
+   [Ver 10.2 신규] 봇 페르소나
+   --------------------------------------------------------------------------
+   ▶ 무엇인가
+     일부 봇에게 "성격"을 하나 붙인다. 성격은 **카드를 고르는 취향**과
+     **상점·도박·드로우 중 무엇을 선호하는가**를 바꾼다.
+   ▶ 유저는 이걸 알 방법이 없다. 스탯창에도, 로그에도 드러나지 않는다.
+     그래서 판마다 봇들이 조금씩 다르게 굴러가는 것처럼만 느껴진다.
+   ▶ 판을 부수지 않도록 두 가지를 지켰다.
+     ① 성격은 **기존 가중치 위에 곱하는 배수**다. 새 행동을 만들지 않으므로
+        어떤 성격도 기존 AI가 못 하던 짓을 하지는 않는다.
+     ② 절반 정도의 봇은 성격이 없다(=예전 그대로). 전원이 개성을 가지면
+        오히려 산만해진다.
+   ▶ '트롤'은 판을 망칠 수 있어 등장 확률을 따로 낮게 잡았다.
+   ########################################################################## */
+const BOT_PERSONAS = [
+  /* w = 뽑힐 가중치 (트롤만 낮다) */
+  { key:'aggressive', w:18, label:'공격적',      atk:2.6, heal:0.35, shield:0.5,
+    shopAtk:2.6, shopHeal:0.4, gambleMult:1.0,  drawBias:0.9 },
+  { key:'defensive',  w:18, label:'방어적',      atk:0.8, heal:3.0,  shield:3.0,
+    shopAtk:0.7, shopHeal:3.0, gambleMult:0.7,  drawBias:1.1, revealPref:2.2 },
+  { key:'highroller', w:14, label:'과감한 투자',  atk:1.0, heal:1.0,  shield:1.0,
+    shopAtk:1.0, shopHeal:1.0, gambleMult:2.8,  drawBias:0.7, sellHappy:true, topTier:true },
+  { key:'supporter',  w:14, label:'서포터',      atk:0.9, heal:2.2,  shield:1.8,
+    shopAtk:0.8, shopHeal:2.2, gambleMult:0.8,  drawBias:1.0, teamLover:true, healAlly:true },
+  { key:'neutral',    w:16, label:'중립적',      atk:1.0, heal:1.0,  shield:1.0,
+    shopAtk:1.0, shopHeal:1.0, gambleMult:0.25, drawBias:2.2, shopShy:true },
+  { key:'chaotic',    w:12, label:'랜덤적',      atk:1.0, heal:1.0,  shield:1.0,
+    shopAtk:1.0, shopHeal:1.0, gambleMult:1.2,  drawBias:1.0, unknownLover:true },
+  { key:'troll',      w:5,  label:'트롤',        atk:1.0, heal:0.7,  shield:0.7,
+    shopAtk:1.0, shopHeal:0.7, gambleMult:1.5,  drawBias:1.0, trolly:true },
+];
+/* 성격이 붙을 확률. 나머지는 예전 그대로 굴러간다. */
+const BOT_PERSONA_CHANCE = 0.55;
+function rollBotPersona(){
+  if(Math.random() >= BOT_PERSONA_CHANCE) return null;
+  const total = BOT_PERSONAS.reduce((s,p)=> s + p.w, 0);
+  let r = Math.random() * total;
+  for(const p of BOT_PERSONAS){ r -= p.w; if(r <= 0) return p.key; }
+  return null;
+}
+function botPersona(bot){
+  if(!bot || !bot.__persona) return null;
+  return BOT_PERSONAS.find(p=> p.key === bot.__persona) || null;
+}
+/* 판 시작 시 봇들에게 성격을 하나씩 굴려 붙인다. */
+function assignBotPersonas(){
+  try{
+    (Array.isArray(players)?players:[]).forEach(p=>{
+      if(p && p.isBot && !p.__persona) p.__persona = rollBotPersona();
+    });
+  }catch(e){}
+}
+/* 카드 한 장이 어떤 성격에 맞는지 — 손패/상점 양쪽에서 공용으로 쓴다. */
+function botCardFlavor(card){
+  const t = card && card.type;
+  if(!t) return 'other';
+  try{
+    if(typeof isRevealCard === 'function' && isRevealCard(card)) return 'reveal';
+    if(HEAL_CARD_TYPES.includes(t) || SHIELD_HEAL_BONUS_TYPES.includes(t)) return 'heal';
+    if(ATK_LIKE_TYPES.includes(t) || ATK_BONUS_TYPES.includes(t) || ATK_HEAL_HYBRID_TYPES.includes(t)) return 'atk';
+  }catch(e){}
+  return 'other';
+}
+/* 성격이 카드 한 장에 주는 배수. 성격이 없으면 1이라 예전과 완전히 같다. */
+function botPersonaCardMult(bot, card){
+  const P = botPersona(bot);
+  if(!P || !card) return 1;
+  let m = 1;
+  const f = botCardFlavor(card);
+  if(f === 'atk')    m *= (P.atk || 1);
+  if(f === 'heal')   m *= (P.heal || 1);
+  if(f === 'reveal') m *= (P.revealPref || 1);
+  // 랜덤적 — ?등급을 좋아한다
+  if(P.unknownLover && card.grade === '?') m *= 4.0;
+  // 트롤 — E등급 자해·판 폭파류를 가끔 진짜로 낸다 (평소 봇은 절대 안 낸다)
+  if(P.trolly && card.grade === 'E') m *= 6.0;
+  return m;
+}
 /* 카드 한 장의 봇 선택 가중치. "도박"(카드 자체, X등급 — 33%로 즉시 승리하지만 66% 확률로 자멸)은
    등급과 무관하게 목숨을 거는 카드이므로 봇은 정말 급할 때가 아니면 거의 내지 않는다. */
-function botCardWeight(card){
-  if(card.type==='GAMBLE') return 0.3;
+function botCardWeight(card, bot){
+  if(card.type==='GAMBLE') return 0.3 * (botPersona(bot) && botPersona(bot).gambleMult || 1);
   if(card.type==='PROPHET_WIN') return 0.02; // 내면 그냥 사라지는 카드라 봇은 웬만하면 계속 들고 있어야 함
   if(card.type==='UNCONSCIOUS_LASTSTAND') return 14;
-  return Math.pow(gradeWeight(card.grade)+1, 2);
+  return Math.pow(gradeWeight(card.grade)+1, 2) * botPersonaCardMult(bot, card);
 }
 /* E급이거나 목숨을 거는 도박 카드처럼, "웬만하면 피하고 싶은" 카드인지 */
 function isJunkCard(card){
@@ -44618,9 +44982,21 @@ function botPickCardIndex(bot){
     return cardHasAnyValidTarget(bot, c);
   });
   if(idxs.length===0) return -1;
-  const nonJunk = idxs.filter(i=> !isJunkCard(bot.hand[i]));
+  let nonJunk = idxs.filter(i=> !isJunkCard(bot.hand[i]));
+  /* [Ver 10.2] 트롤 성격 — 가끔(18%) junk(E급 자해·판 폭파류)도 후보에 넣는다.
+     평소 봇은 쓸만한 카드가 하나라도 있으면 junk를 아예 안 보므로, 여기서만 문을 연다. */
+  try{
+    const P = botPersona(bot);
+    if(P && P.trolly && nonJunk.length > 0 && Math.random() < 0.18) nonJunk = [];
+  }catch(e){}
   const pool = nonJunk.length>0 ? nonJunk : idxs;
-  const scored = pool.map(i=> ({ i, score: botScoreCard(bot, bot.hand[i]) })).sort((a,b)=> b.score-a.score);
+  /* [Ver 10.2] 성격 배수를 점수에 곱한다. 성격이 없으면 1이라 예전과 완전히 같다. */
+  const scored = pool.map(i=> ({
+    i,
+    score: botScoreCard(bot, bot.hand[i]) * (function(){
+      try{ return botPersonaCardMult(bot, bot.hand[i]); }catch(e){ return 1; }
+    })()
+  })).sort((a,b)=> b.score-a.score);
   // [BOT AI ★] 최고점이 아주 높으면(강력한 자체 버프·확정 킬·첫턴 견적필살 등) 무조건 그 카드 사용
   if(scored.length > 0 && scored[0].score >= 12) return scored[0].i;
   // 대부분(85%)은 최적수 선택. 나머지 15%만 상위권 랜덤으로 약간의 변주.
@@ -44716,7 +45092,27 @@ function botPickShopSlotIndex(bot){
   // 없으면 기피 타입만 제외(E등급은 여전히 피한다 — 예전 while 루프의 취향 유지).
   if(pref.length===0) pref = affordable.filter(idx=> !isBotAvoidCardType(list[idx].card.type) && list[idx].card.grade !== 'E');
   if(pref.length===0) return -1; // 살 만한 게 E/기피뿐이면 이번 턴은 구매 안 함
-  return pref[Math.floor(Math.random()*pref.length)];
+  /* [Ver 10.2] 성격에 따라 무엇을 살지 취향이 갈린다.
+     공격적은 공격 카드를, 방어적·서포터는 회복·쉴드·보여주기 카드를 선호한다.
+     성격이 없으면 전부 1이라 예전처럼 균등 무작위가 된다. */
+  const P = botPersona(bot);
+  if(!P) return pref[Math.floor(Math.random()*pref.length)];
+  const wOf = (idx)=>{
+    const c = list[idx].card;
+    const f = botCardFlavor(c);
+    let w = 1;
+    if(f === 'atk')    w *= (P.shopAtk  || 1);
+    if(f === 'heal')   w *= (P.shopHeal || 1);
+    if(f === 'reveal') w *= (P.revealPref || 1);
+    if(P.unknownLover && c.grade === '?') w *= 4.0;
+    /* 과감한 투자 — 비싼(=좋은) 카드를 선호한다 */
+    if(P.topTier) w *= 1 + (gradeWeight(c.grade) * 0.35);
+    return Math.max(0.05, w);
+  };
+  const total = pref.reduce((s,i)=> s + wOf(i), 0);
+  let r = Math.random() * total;
+  for(const idx of pref){ r -= wOf(idx); if(r <= 0) return idx; }
+  return pref[pref.length-1];
 }
 /* [Ver 5.6 / Ver 8.7] 봇의 암시장 이용 — 한 번에 한 가지 행동만 한다.
    먼저 A등급 이상 카드를 한 장씩 사고(살 때마다 'bought' 반환 → 호출부가 약 2초 뒤 다시 부름),
@@ -45163,7 +45559,10 @@ function botPlay(){
 
     /* [Ver 10.1 버그수정] 폐업(shopClosedForever) 검사가 빠져 있었다.
        사람은 상점이 폐업하면 도박 탭 자체에 못 들어가는데, 봇만 계속 굴렸다. */
-    const wantsGamble = !bot.gambleUsedThisTurn && bot.gold >= 10 && Math.random() < 0.18
+    /* [Ver 10.2] 성격에 따라 도박 성향이 달라진다.
+       과감한 투자 ×2.8 / 트롤 ×1.5 / 방어적 ×0.7 / 중립적 ×0.25 (드로우를 선호) */
+    const __gm = (function(){ try{ const P = botPersona(bot); return P ? (P.gambleMult||1) : 1; }catch(e){ return 1; } })();
+    const wantsGamble = !bot.gambleUsedThisTurn && bot.gold >= 10 && Math.random() < (0.18 * __gm)
       && !shopClosedForever
       && !(shopLockOwnerId && shopLockOwnerId !== bot.id) && !bot.shopBanned
       && !((bot.shopBlockDueRound||0) > turnCount) && (bot.hp / Math.max(1,bot.maxHp)) > 0.3;
@@ -45886,8 +46285,544 @@ function reGrantByName(p, name){
    [Ver 9.7] desc는 분위기용 한 줄, eff는 "규칙상 무슨 일이 일어나는지"를 정확히 적은 설명이다.
      결과 팝업이 desc 아래에 eff를 함께 띄우고, 그 밑에 실제로 바뀐 값(돈·카드·체력)까지 보여준다.
      ⚠ 효과 수치를 고칠 때는 apply와 eff를 반드시 함께 고칠 것 — 둘이 어긋나면 안내문구가 거짓말이 된다. */
+/* ##########################################################################
+   [Ver 10.3 신규] 단체 랜덤 이벤트
+   --------------------------------------------------------------------------
+   ▶ 보통 랜덤 이벤트는 "한 사람에게 효과 하나"다. 단체 이벤트는 **전원이 각자
+     화면에서 참여**하고, 다 끝나야 턴이 재개된다.
+   ▶ ⚠ 랜서버·온라인에서 반드시 돌아가야 한다. 그래서 **새 동기화 통로를 만들지 않고**,
+     이미 검증된 저점매수의 오버레이 동기화 방식을 그대로 탄다:
+       · 호스트가 오버레이를 만들고 그 innerHTML을 스냅샷(auction/goods)에 실어 보낸다
+       · 참가자는 lanClientSyncOverlay가 그대로 복제한다
+       · 참가자가 버튼을 누르면 onclick이 to_host로 호스트에 전달된다
+     즉 눈치게임·잡상인은 **배선만** 하면 랜/온라인이 저절로 따라온다.
+   ▶ 이벤트 정의에 group:'키' 를 달면 startRandomEvent가 안내 연출을 끝낸 뒤
+     reRunGroupEvent()로 넘긴다. apply()는 아무것도 하지 않는다.
+   ########################################################################## */
+/* ==========================================================================
+   [Ver 10.3] 베팅 — 범용 단체 이벤트 슬롯(groupEventOverlay)의 첫 사례
+   --------------------------------------------------------------------------
+   ▶ 10초 동안 비공개의 임의 수(50~500)가 정해져 있고, 전원이 숫자 하나를 건다.
+     가장 가까운 사람이 **자기가 건 숫자만큼** 골드를 가져간다. 동률이면 모두 받는다.
+   ▶ ⚠ 숫자를 텍스트 입력으로 받지 않는다. 참가자 화면은 호스트 HTML로 통째로
+     갈아끼워지므로 입력창에 친 글자가 매번 날아간다. 경매와 같은 이유로 **+/- 버튼**을 쓴다.
+   ▶ 호스트만 판정한다. 참가자의 조작은 to_host(action:'grpBet')로 호스트에 전달된다.
+   ========================================================================== */
+const GRP_BET_SECONDS = 10;
+const GRP_BET_MIN = 50, GRP_BET_MAX = 500;
+function grpBetMyId(){
+  try{ return (typeof draftScreenMeId === 'function') ? draftScreenMeId() : myPlayerId(); }
+  catch(e){ return 'p0'; }
+}
+/* 참가자·호스트 공용 진입점 — 참가자는 요청만 보낸다 */
+function grpBetAdjust(delta){
+  if(typeof lanIsRemoteClient==='function' && lanIsRemoteClient()){
+    lanSend({ t:'to_host', payload:{ action:'grpBet', delta } });
+    return;
+  }
+  grpBetApply(grpBetMyId(), delta);
+}
+/* 호스트 판정부 — 참가자 요청도 여기로 모인다 */
+function grpBetApply(pid, delta){
+  const G = window.__grp;
+  if(!G || G.kind !== 'bet' || G.settled) return;
+  if(!G.bets.hasOwnProperty(pid)) return;
+  const p = players.find(x=> x && x.id===pid);
+  if(!p || !p.alive) return;
+  const cur = G.bets[pid];
+  const next = Math.max(GRP_BET_MIN, Math.min(GRP_BET_MAX, cur + delta));
+  G.bets[pid] = next;
+  grpBetRender();
+  try{ if(typeof lanHostBroadcast==='function') lanHostBroadcast(); }catch(e){}
+}
+function grpBetRender(){
+  const G = window.__grp;
+  if(!G || G.kind !== 'bet') return;
+  const ov = document.getElementById('groupEventOverlay');
+  if(!ov) return;
+  const meId = grpBetMyId();
+  const left = Math.max(0, GRP_BET_SECONDS*1000 - (Date.now() - G.startedAt));
+  const pct = Math.max(0, Math.min(100, left / (GRP_BET_SECONDS*1000) * 100));
+  const rows = G.order.map(pid=>{
+    const p = players.find(x=> x && x.id===pid);
+    if(!p) return '';
+    const mine = pid === meId;
+    return `<div class="goods-player${mine?' me':''}">
+        <div class="goods-player-chip">${mine?'나':escapeHtml(p.name)}</div>
+        <div class="grp-bet-val">${fmtWon(G.bets[pid]||0)}</div>
+      </div>`;
+  }).join('');
+  const meAlive = (function(){ const m = players.find(x=> x && x.id===meId); return !!(m && m.alive && G.bets.hasOwnProperty(meId)); })();
+  ov.innerHTML = `
+    <div class="auction-panel">
+      <div class="auction-title">🎰 베팅</div>
+      <div class="auction-subtitle">
+        비공개의 숫자 하나가 <b>${GRP_BET_MIN}~${GRP_BET_MAX}</b> 사이에 정해져 있습니다.<br>
+        <b>${GRP_BET_SECONDS}초</b> 안에 숫자를 거세요. 가장 가까운 사람이 <b>자기가 건 숫자만큼</b> 골드를 가져갑니다.<br>
+        동률이면 모두 받습니다. 모두의 베팅은 <b>공개</b>됩니다.
+      </div>
+      ${meAlive ? `<div class="grp-bet-ctl">
+        <button class="btn btn-sm" onclick="grpBetAdjust(-50)">-50</button>
+        <button class="btn btn-sm" onclick="grpBetAdjust(-10)">-10</button>
+        <div class="grp-bet-mine">${fmtWon(G.bets[meId]||0)}</div>
+        <button class="btn btn-sm" onclick="grpBetAdjust(10)">+10</button>
+        <button class="btn btn-sm" onclick="grpBetAdjust(50)">+50</button>
+      </div>` : `<div class="grp-bet-ctl"><span style="opacity:.6;">관전 중</span></div>`}
+      <div class="goods-players">${rows}</div>
+      <div class="auction-timer-bar"><div class="auction-timer-fill" style="width:${pct}%"></div></div>
+    </div>`;
+}
+function grpBetSettle(){
+  const G = window.__grp;
+  if(!G || G.settled) return;
+  G.settled = true;
+  try{ (G.timers||[]).forEach(t=>{ clearInterval(t); clearTimeout(t); }); }catch(e){}
+  const secret = G.secret;
+  let best = Infinity;
+  G.order.forEach(pid=>{
+    const d = Math.abs((G.bets[pid]||0) - secret);
+    if(d < best) best = d;
+  });
+  const winners = G.order.filter(pid=> Math.abs((G.bets[pid]||0) - secret) === best);
+  log('highlight', `🎰 베팅 — 숨겨진 숫자는 <b>${fmtWon(secret)}</b>이었습니다!`);
+  winners.forEach(pid=>{
+    const p = players.find(x=> x && x.id===pid);
+    if(!p) return;
+    const amt = G.bets[pid]||0;
+    grantGold(p, amt);
+    log('gold', `🎰 ${J(p.name,'이','가')} ${fmtWon(amt)}을(를) 걸어 가장 가까웠습니다 — ${fmtWon(amt)} 획득!`);
+  });
+  try{ document.getElementById('groupEventOverlay')?.remove(); }catch(e){}
+  try{ document.getElementById('grpQuizBox')?.remove(); }catch(e){}   // [Ver 10.4] 퀴즈 입력창도 함께 정리
+  try{ renderBoard(); }catch(e){}
+  try{ if(typeof lanHostBroadcast==='function') lanHostBroadcast(); }catch(e){}
+  const cb = G.onDone; window.__grp = null;
+  try{ cb && cb(); }catch(e){}
+}
+function startGroupBet(onDone){
+  const parts = alivePlayers();
+  if(parts.length < 2 || !gameActive){ if(onDone) onDone(); return; }
+  const bets = {};
+  parts.forEach(p=>{ bets[p.id] = Math.round((GRP_BET_MIN + GRP_BET_MAX) / 2); });
+  window.__grp = {
+    kind:'bet', settled:false, onDone: onDone || null,
+    startedAt: Date.now(), timers: [],
+    order: parts.map(p=>p.id), bets,
+    secret: GRP_BET_MIN + Math.floor(Math.random() * (GRP_BET_MAX - GRP_BET_MIN + 1))
+  };
+  log('highlight', `🎰 베팅 개시! ${GRP_BET_SECONDS}초 안에 숫자를 거세요. (${GRP_BET_MIN}~${GRP_BET_MAX})`);
+  let ov = document.getElementById('groupEventOverlay');
+  if(!ov){
+    ov = document.createElement('div');
+    ov.id = 'groupEventOverlay';
+    ov.className = 'auction-overlay';
+    document.body.appendChild(ov);
+  }
+  requestAnimationFrame(()=> requestAnimationFrame(()=> ov.classList.add('active')));
+  grpBetRender();
+  /* 봇은 대충 아무 데나 건다 — 사람처럼 보이도록 시간차를 둔다 */
+  parts.filter(p=>p.isBot).forEach(b=>{
+    const t = setTimeout(()=>{
+      const G = window.__grp;
+      if(!G || G.settled) return;
+      G.bets[b.id] = GRP_BET_MIN + Math.floor(Math.random() * (GRP_BET_MAX - GRP_BET_MIN + 1));
+      grpBetRender();
+      try{ if(typeof lanHostBroadcast==='function') lanHostBroadcast(); }catch(e){}
+    }, 1200 + Math.random() * (GRP_BET_SECONDS - 3) * 1000);
+    window.__grp.timers.push(t);
+  });
+  window.__grp.timers.push(setInterval(grpBetRender, 250));
+  window.__grp.timers.push(setTimeout(grpBetSettle, GRP_BET_SECONDS * 1000));
+}
+
+/* ==========================================================================
+   [Ver 10.4] 카드 포탈
+   --------------------------------------------------------------------------
+   ▶ 10초 안에 "넣는다 / 안 넣는다"만 고른다. **어떤 카드를 넣을지는 고르지 않는다** —
+     공유 오버레이 하나를 전원이 함께 보는 구조라, 카드를 고르게 만들면 남의 손패가
+     그대로 노출된다. 넣기로 한 사람의 손패에서 무작위로 한 장이 빨려 들어간다.
+   ▶ 50%는 소멸, 50%는 그 카드 + 같은 등급 카드 3장을 더 받는다.
+   ▶ 누가 무엇을 골랐는지는 오버레이에 공개된다.
+   ========================================================================== */
+const GRP_PORTAL_SECONDS = 10;
+function grpPortalChoose(v){
+  if(typeof lanIsRemoteClient==='function' && lanIsRemoteClient()){
+    lanSend({ t:'to_host', payload:{ action:'grpPortal', v } });
+    return;
+  }
+  grpPortalApply(grpBetMyId(), v);
+}
+function grpPortalApply(pid, v){
+  const G = window.__grp;
+  if(!G || G.kind !== 'portal' || G.settled) return;
+  if(!G.choice.hasOwnProperty(pid)) return;
+  const p = players.find(x=> x && x.id===pid);
+  if(!p || !p.alive) return;
+  G.choice[pid] = (v === 'in') ? 'in' : 'out';
+  grpPortalRender();
+  try{ if(typeof lanHostBroadcast==='function') lanHostBroadcast(); }catch(e){}
+}
+function grpPortalRender(){
+  const G = window.__grp;
+  if(!G || G.kind !== 'portal') return;
+  const ov = document.getElementById('groupEventOverlay'); if(!ov) return;
+  const meId = grpBetMyId();
+  const left = Math.max(0, GRP_PORTAL_SECONDS*1000 - (Date.now() - G.startedAt));
+  const pct = Math.max(0, Math.min(100, left / (GRP_PORTAL_SECONDS*1000) * 100));
+  const rows = G.order.map(pid=>{
+    const p = players.find(x=> x && x.id===pid); if(!p) return '';
+    const c = G.choice[pid];
+    const tag = c === 'in' ? '<span class="grp-yes">넣음</span>'
+              : c === 'out' ? '<span class="grp-no">안 넣음</span>'
+              : '<span class="grp-wait">고민 중…</span>';
+    return `<div class="goods-player${pid===meId?' me':''}">
+        <div class="goods-player-chip">${pid===meId?'나':escapeHtml(p.name)}</div>
+        <div class="grp-bet-val">${tag}</div>
+      </div>`;
+  }).join('');
+  const me = players.find(x=> x && x.id===meId);
+  const canPick = !!(me && me.alive && G.choice.hasOwnProperty(meId) && (me.hand||[]).length > 0);
+  ov.innerHTML = `
+    <div class="auction-panel">
+      <div class="auction-title">🌀 카드 포탈</div>
+      <div class="auction-subtitle">
+        수상한 포탈이 열렸습니다. <b>${GRP_PORTAL_SECONDS}초</b> 안에 넣을지 정하세요.<br>
+        넣으면 손패에서 <b>무작위로 한 장</b>이 빨려 들어갑니다.<br>
+        <b>50%</b>는 그대로 사라지고, <b>50%</b>는 그 카드와 <b>같은 등급 카드 3장</b>을 더 받습니다.
+      </div>
+      ${canPick ? `<div class="grp-bet-ctl">
+        <button class="btn btn-sm ${G.choice[meId]==='in'?'btn-solid':''}" onclick="grpPortalChoose('in')">🌀 넣는다</button>
+        <button class="btn btn-sm ${G.choice[meId]==='out'?'btn-solid':''}" onclick="grpPortalChoose('out')">✋ 안 넣는다</button>
+      </div>` : `<div class="grp-bet-ctl"><span style="opacity:.6;">${me && me.alive ? '넣을 카드가 없습니다' : '관전 중'}</span></div>`}
+      <div class="goods-players">${rows}</div>
+      <div class="auction-timer-bar"><div class="auction-timer-fill" style="width:${pct}%"></div></div>
+    </div>`;
+}
+function grpPortalSettle(){
+  const G = window.__grp;
+  if(!G || G.settled) return;
+  G.settled = true;
+  try{ (G.timers||[]).forEach(t=>{ clearInterval(t); clearTimeout(t); }); }catch(e){}
+  G.order.forEach(pid=>{
+    if(G.choice[pid] !== 'in') return;
+    const p = players.find(x=> x && x.id===pid);
+    if(!p || !p.alive || !(p.hand||[]).length) return;
+    const idx = Math.floor(Math.random() * p.hand.length);
+    const card = p.hand[idx];
+    p.hand.splice(idx, 1);
+    if(Math.random() < 0.5){
+      log('sys', `🌀 ${J(p.name,'의','의')} "${escapeHtml(card.name)}"이(가) 포탈 속으로 사라졌습니다.`);
+      return;
+    }
+    grantCardToPlayer(p, mkUidCard(card), '포탈');
+    let got = 0;
+    for(let k=0; k<3; k++){
+      let c = null;
+      for(let t=0; t<120; t++){ const x = randomShopCard(); if(x && x.grade === card.grade){ c = x; break; } }
+      if(!c) c = randomShopCard();
+      if(c){ grantCardToPlayer(p, mkUidCard(c), '포탈'); got++; }
+    }
+    log('highlight', `🌀 ${J(p.name,'이','가')} 포탈에서 "${escapeHtml(card.name)}"을(를) 되찾고 <b>${card.grade}등급 ${got}장</b>을 더 얻었습니다!`);
+  });
+  try{ document.getElementById('groupEventOverlay')?.remove(); }catch(e){}
+  try{ document.getElementById('grpQuizBox')?.remove(); }catch(e){}   // [Ver 10.4] 퀴즈 입력창도 함께 정리
+  try{ renderBoard(); renderHand(); }catch(e){}
+  try{ if(typeof lanHostBroadcast==='function') lanHostBroadcast(); }catch(e){}
+  const cb = G.onDone; window.__grp = null;
+  try{ cb && cb(); }catch(e){}
+}
+function startGroupPortal(onDone){
+  const parts = alivePlayers();
+  if(parts.length < 1 || !gameActive){ if(onDone) onDone(); return; }
+  const choice = {};
+  parts.forEach(p=>{ choice[p.id] = null; });
+  window.__grp = { kind:'portal', settled:false, onDone:onDone||null, startedAt:Date.now(),
+                   timers:[], order: parts.map(p=>p.id), choice };
+  log('highlight', `🌀 카드 포탈 개시! ${GRP_PORTAL_SECONDS}초 안에 넣을지 정하세요.`);
+  let ov = document.getElementById('groupEventOverlay');
+  if(!ov){ ov = document.createElement('div'); ov.id='groupEventOverlay'; ov.className='auction-overlay'; document.body.appendChild(ov); }
+  requestAnimationFrame(()=> requestAnimationFrame(()=> ov.classList.add('active')));
+  grpPortalRender();
+  parts.filter(p=>p.isBot).forEach(b=>{
+    window.__grp.timers.push(setTimeout(()=>{
+      const G = window.__grp; if(!G || G.settled) return;
+      G.choice[b.id] = Math.random() < 0.45 ? 'in' : 'out';   // 봇은 45%만 건다
+      grpPortalRender();
+      try{ if(typeof lanHostBroadcast==='function') lanHostBroadcast(); }catch(e){}
+    }, 1000 + Math.random() * (GRP_PORTAL_SECONDS - 3) * 1000));
+  });
+  window.__grp.timers.push(setInterval(grpPortalRender, 250));
+  window.__grp.timers.push(setTimeout(grpPortalSettle, GRP_PORTAL_SECONDS * 1000));
+}
+
+/* ==========================================================================
+   [Ver 10.4] 퀴즈쇼 — 초성 퀴즈 3문제
+   --------------------------------------------------------------------------
+   ▶ A등급 이상 · 이름이 **한글로만** 된 카드가 문제로 나온다. 등급과 초성만 공개된다.
+   ▶ 문제당 20초, 한 사람당 5번까지 고를 수 있다. 맞힌 사람은 **모두** 그 카드를 받는다.
+   ▶ ⚠ 정답을 글자로 입력받지 않는다. 공유 오버레이는 호스트 HTML로 통째로 갈아끼워져
+     입력창의 글자가 매번 날아간다(경매가 +/- 버튼을 쓰는 것과 같은 이유).
+     그래서 **후보 8개 중 고르는 방식**으로 냈다. 초성은 그 후보를 좁히는 힌트가 된다.
+   ========================================================================== */
+const GRP_QUIZ_SECONDS = 20, GRP_QUIZ_ROUNDS = 3, GRP_QUIZ_TRIES = 5;
+const HANGUL_CHO = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+function chosungOf(s){
+  return Array.from(String(s||'')).map(ch=>{
+    const c = ch.charCodeAt(0);
+    if(c >= 0xAC00 && c <= 0xD7A3) return HANGUL_CHO[Math.floor((c - 0xAC00) / 588)];
+    return ch === ' ' ? ' ' : ch;
+  }).join('');
+}
+function grpQuizPool(){
+  const ok = /^[가-힣\s]+$/;
+  const hi = { A:1, S:1, SR:1, SSR:1, UR:1, LR:1 };
+  try{
+    return getRandomDrawPool().filter(c=> c && hi[c.grade] && ok.test(c.name));
+  }catch(e){ return []; }
+}
+/* 정답 비교 — 띄어쓰기·대소문자는 무시한다 */
+function grpQuizNorm(s){ return String(s||'').replace(/\s+/g,'').toLowerCase(); }
+/* 참가자·호스트 공용 진입점 — 각자 자기 화면의 입력창에서 부른다 */
+function grpQuizAnswer(){
+  const inp = document.getElementById('grpQuizInput');
+  const txt = inp ? String(inp.value||'').trim() : '';
+  if(!txt) return;
+  if(inp) inp.value = '';
+  if(typeof lanIsRemoteClient==='function' && lanIsRemoteClient()){
+    lanSend({ t:'to_host', payload:{ action:'grpQuiz', txt } });
+    return;
+  }
+  grpQuizApply(grpBetMyId(), txt);
+}
+function grpQuizApply(pid, txt){
+  const G = window.__grp;
+  if(!G || G.kind !== 'quiz' || G.settled || !G.round) return;
+  const R = G.round;
+  if(R.done[pid]) return;                            // 이미 맞혔다
+  if((R.tries[pid]||0) >= GRP_QUIZ_TRIES) return;    // 기회 소진
+  const p = players.find(x=> x && x.id===pid);
+  if(!p || !p.alive) return;
+  const guess = grpQuizNorm(txt);
+  if(!guess) return;
+  R.tries[pid] = (R.tries[pid]||0) + 1;
+  if(guess === grpQuizNorm(R.card.name)){
+    R.done[pid] = true;
+    grantCardToPlayer(p, mkUidCard(R.card), '퀴즈쇼');
+    log('highlight', `🧠 ${J(p.name,'이','가')} 정답을 맞혀 "${escapeHtml(R.card.name)}"을(를) 획득했습니다!`);
+  }
+  grpQuizRender();
+  try{ if(typeof lanHostBroadcast==='function') lanHostBroadcast(); }catch(e){}
+}
+function grpQuizRender(){
+  const G = window.__grp;
+  if(!G || G.kind !== 'quiz' || !G.round) return;
+  const ov = document.getElementById('groupEventOverlay'); if(!ov) return;
+  const R = G.round, meId = grpBetMyId();
+  const left = Math.max(0, GRP_QUIZ_SECONDS*1000 - (Date.now() - R.startedAt));
+  const pct = Math.max(0, Math.min(100, left / (GRP_QUIZ_SECONDS*1000) * 100));
+  /* [Ver 10.4] 각 기기가 자기 입력창 상태를 읽어갈 수 있도록 참가자별 상태를 심어둔다.
+     (오버레이 HTML은 그대로 복제되지만, 입력창 자체는 각 기기가 따로 만든다) */
+  const stateAttr = escapeHtml(JSON.stringify((function(){
+    const o = {};
+    G.order.forEach(pid=>{
+      const p = players.find(x=> x && x.id===pid);
+      if(!p || !p.alive || p.isBot) return;
+      o[pid] = { t: R.tries[pid]||0, d: R.done[pid] ? 1 : 0 };
+    });
+    return o;
+  })()));
+  const rows = G.order.map(pid=>{
+    const p = players.find(x=> x && x.id===pid); if(!p) return '';
+    const st = R.done[pid] ? '<span class="grp-yes">정답!</span>'
+             : ((R.tries[pid]||0) >= GRP_QUIZ_TRIES ? '<span class="grp-no">기회 소진</span>'
+             : `<span class="grp-wait">${GRP_QUIZ_TRIES - (R.tries[pid]||0)}회 남음</span>`);
+    return `<div class="goods-player${pid===meId?' me':''}">
+        <div class="goods-player-chip">${pid===meId?'나':escapeHtml(p.name)}</div>
+        <div class="grp-bet-val">${st}</div>
+      </div>`;
+  }).join('');
+  ov.innerHTML = `
+    <div class="auction-panel" data-quiz-state="${stateAttr}">
+      <div class="auction-title">🧠 퀴즈쇼 <span style="font-size:13px;opacity:.7;">${R.no} / ${GRP_QUIZ_ROUNDS}</span></div>
+      <div class="auction-subtitle">
+        <b>${escapeHtml(R.card.grade)}</b>등급 카드입니다. 초성을 보고 <b>${GRP_QUIZ_SECONDS}초</b> 안에 <b>카드 이름을 입력</b>하세요.<br>
+        한 사람당 <b>${GRP_QUIZ_TRIES}번</b>까지 답할 수 있고, <b>맞힌 사람은 모두</b> 그 카드를 가져갑니다.<br>
+        <span style="opacity:.7;font-size:12px;">띄어쓰기는 틀려도 정답으로 칩니다.</span>
+      </div>
+      <div class="grp-quiz-hint">${escapeHtml(chosungOf(R.card.name))}</div>
+      <div class="goods-players">${rows}</div>
+      <div class="auction-timer-bar"><div class="auction-timer-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  try{ grpQuizLocalSync(); }catch(e){}
+}
+
+/* ==========================================================================
+   [Ver 10.4] 퀴즈 입력창은 **오버레이 바깥**에 따로 만든다
+   --------------------------------------------------------------------------
+   공유 오버레이(#groupEventOverlay)는 호스트 HTML로 통째로 갈아끼워지므로,
+   그 안에 입력창을 두면 갱신될 때마다 치던 글자가 날아간다.
+   그런데 입력창은 **남에게 보여줄 이유가 없다** — 각자 자기 화면에서 치고
+   제출만 호스트로 보내면 된다. 그래서 각 기기가 스스로 만드는 별도 요소로 뺐다.
+   내 남은 기회·정답 여부는 호스트가 심어준 data-quiz-state 에서 읽는다.
+   ========================================================================== */
+function grpQuizLocalSync(){
+  try{
+    const panel = document.querySelector('#groupEventOverlay [data-quiz-state]');
+    let box = document.getElementById('grpQuizBox');
+    if(!panel){ if(box) box.remove(); return; }
+    let st = {};
+    try{ st = JSON.parse(panel.getAttribute('data-quiz-state') || '{}'); }catch(e){ st = {}; }
+    const me = st[grpBetMyId()];
+    if(!me){ if(box) box.remove(); return; }   // 관전자·봇 자리 — 입력창을 주지 않는다
+    if(!box){
+      box = document.createElement('div');
+      box.id = 'grpQuizBox';
+      box.className = 'grp-quiz-box';
+      box.innerHTML = `
+        <input id="grpQuizInput" class="input" maxlength="40" placeholder="카드 이름을 입력하세요"
+               autocomplete="off" onkeydown="if(event.key==='Enter'){ event.preventDefault(); grpQuizAnswer(); }">
+        <button class="btn btn-solid" onclick="grpQuizAnswer()">제출</button>
+        <span class="grp-quiz-left" id="grpQuizLeft"></span>`;
+      document.body.appendChild(box);
+      try{ document.getElementById('grpQuizInput').focus(); }catch(e){}
+    }
+    const leftEl = document.getElementById('grpQuizLeft');
+    const inp = document.getElementById('grpQuizInput');
+    const btn = box.querySelector('button');
+    const over = !!me.d || me.t >= GRP_QUIZ_TRIES;
+    if(leftEl){
+      leftEl.textContent = me.d ? '정답!' : (me.t >= GRP_QUIZ_TRIES ? '기회 소진' : `${GRP_QUIZ_TRIES - me.t}회 남음`);
+      leftEl.className = 'grp-quiz-left' + (me.d ? ' ok' : (me.t >= GRP_QUIZ_TRIES ? ' out' : ''));
+    }
+    if(inp){ inp.disabled = over; if(over) inp.value = ''; }
+    if(btn) btn.disabled = over;
+  }catch(e){}
+}
+function grpQuizEndRound(){
+  const G = window.__grp;
+  if(!G || G.settled || !G.round) return;
+  const R = G.round;
+  try{ (R.timers||[]).forEach(t=>{ clearInterval(t); clearTimeout(t); }); }catch(e){}
+  const none = G.order.every(pid=> !R.done[pid]);
+  log('sys', `🧠 ${R.no}번 문제 정답 — <b>${escapeHtml(R.card.name)}</b>${none ? ' (아무도 맞히지 못했습니다)' : ''}`);
+  G.round = null;
+  if(R.no >= GRP_QUIZ_ROUNDS){ grpQuizFinish(); return; }
+  G.timers.push(setTimeout(()=> grpQuizStartRound(R.no + 1), 1200));
+}
+function grpQuizStartRound(no){
+  const G = window.__grp;
+  if(!G || G.settled) return;
+  const pool = G.pool;
+  const card = pool[Math.floor(Math.random()*pool.length)];
+  G.round = { no, card, startedAt:Date.now(), tries:{}, done:{}, timers:[] };
+  log('sys', `🧠 ${no}번 문제 — ${card.grade}등급 · 초성 <b>${escapeHtml(chosungOf(card.name))}</b>`);
+  grpQuizRender();
+  /* 봇 — 35% 확률로 정답을 안다. 모르면 엉뚱한 카드 이름을 한 번 대고 만다. */
+  G.order.forEach(pid=>{
+    const b = players.find(x=> x && x.id===pid);
+    if(!b || !b.isBot) return;
+    G.round.timers.push(setTimeout(()=>{
+      const GG = window.__grp;
+      if(!GG || GG.settled || !GG.round || GG.round.no !== no) return;
+      const hit = Math.random() < 0.35;
+      let txt = GG.round.card.name;
+      if(!hit){
+        const others = GG.pool.filter(c=> c.name !== GG.round.card.name);
+        txt = others.length ? others[Math.floor(Math.random()*others.length)].name : '???';
+      }
+      grpQuizApply(pid, txt);
+    }, 2500 + Math.random() * (GRP_QUIZ_SECONDS - 6) * 1000));
+  });
+  G.round.timers.push(setInterval(grpQuizRender, 250));
+  G.round.timers.push(setTimeout(grpQuizEndRound, GRP_QUIZ_SECONDS * 1000));
+}
+function grpQuizFinish(){
+  const G = window.__grp;
+  if(!G || G.settled) return;
+  G.settled = true;
+  try{ (G.timers||[]).forEach(t=>{ clearInterval(t); clearTimeout(t); }); }catch(e){}
+  try{ document.getElementById('groupEventOverlay')?.remove(); }catch(e){}
+  try{ document.getElementById('grpQuizBox')?.remove(); }catch(e){}   // [Ver 10.4] 퀴즈 입력창도 함께 정리
+  try{ renderBoard(); renderHand(); }catch(e){}
+  try{ if(typeof lanHostBroadcast==='function') lanHostBroadcast(); }catch(e){}
+  const cb = G.onDone; window.__grp = null;
+  try{ cb && cb(); }catch(e){}
+}
+function startGroupQuiz(onDone){
+  const parts = alivePlayers();
+  const pool = grpQuizPool();
+  /* 후보를 채울 만큼 카드가 없으면 이 이벤트는 조용히 넘긴다 */
+  if(parts.length < 1 || !gameActive || pool.length < 3){ if(onDone) onDone(); return; }
+  window.__grp = { kind:'quiz', settled:false, onDone:onDone||null, timers:[],
+                   order: parts.map(p=>p.id), pool, round:null };
+  log('highlight', `🧠 퀴즈쇼 개시! 초성 퀴즈 ${GRP_QUIZ_ROUNDS}문제가 나갑니다.`);
+  let ov = document.getElementById('groupEventOverlay');
+  if(!ov){ ov = document.createElement('div'); ov.id='groupEventOverlay'; ov.className='auction-overlay'; document.body.appendChild(ov); }
+  requestAnimationFrame(()=> requestAnimationFrame(()=> ov.classList.add('active')));
+  grpQuizStartRound(1);
+}
+
+function reRunGroupEvent(kind, onDone){
+  /* onDone은 무슨 일이 있어도 정확히 한 번만 — 안 그러면 턴이 멈추거나 두 번 넘어간다 */
+  let fired = false;
+  const done = ()=>{ if(fired) return; fired = true; try{ onDone && onDone(); }catch(e){} };
+  /* 최후의 안전장치 — 어떤 이유로든 체인이 끊겨도 턴은 재개된다 */
+  const guard = setTimeout(done, 90000);
+  const finish = ()=>{ clearTimeout(guard); done(); };
+  try{
+    if(kind === 'goods'){                       // 눈치게임 — 저점매수 것을 그대로 쓴다
+      startYachaGoodsGame(finish); return;
+    }
+    if(kind === 'peddler'){                     // 잡상인 — 경매를 A등급 이상 3장으로 열어준다
+      window.__peddlerMode = true;
+      startDraftAuction(()=>{ window.__peddlerMode = false; finish(); });
+      return;
+    }
+    if(kind === 'bet'){                         // 베팅 — 범용 슬롯을 쓰는 신규 이벤트
+      startGroupBet(finish); return;
+    }
+    if(kind === 'portal'){ startGroupPortal(finish); return; }   // 카드 포탈
+    if(kind === 'quiz'){   startGroupQuiz(finish);   return; }   // 퀴즈쇼
+  }catch(e){
+    console.error('[단체 이벤트] 실행 오류', kind, e);
+    try{ window.__peddlerMode = false; }catch(e2){}
+  }
+  finish();
+}
+
+/* [Ver 10.2] 음식 발견 계열 이벤트가 공통으로 쓰는 회복 처리.
+   ▶ healAmountFor()를 지나므로 회복 감소(훈발롬 등)·회복 금지 상태가 그대로 존중된다.
+   ▶ 최대 체력을 넘겨 회복되지 않는다. */
+function reEat(p, amount){
+  if(!p) return;
+  try{
+    if(typeof noHealReviveExceptId !== 'undefined' && noHealReviveExceptId && noHealReviveExceptId !== p.id) return;
+  }catch(e){}
+  const heal = (typeof healAmountFor === 'function') ? healAmountFor(p, amount) : amount;
+  const actual = Math.min(heal, Math.max(0, p.maxHp - p.hp));
+  if(actual <= 0) return;
+  p.hp += actual;
+  try{ showFloatNumber(p.id, '+'+actual.toLocaleString(), 'heal'); }catch(e){}
+}
+
 const RANDOM_EVENTS = [
   /* ===== 보통 ===== */
+  /* [Ver 10.2 신규] 음식 발견 6종 — 순수 회복 이벤트.
+     '보통' 등급에 회복이 거의 없어서, 맞고 시작한 판이 그대로 굳는 경우가 많았다. */
+  { id:'burger',    rarity:'common', icon:'🍔', name:'햄버거 발견',       desc:'햄버거를 발견했습니다',                                  eff:'HP를 600 회복합니다.',     good:true,  apply:p=> reEat(p, 600) },
+  { id:'pizza',     rarity:'common', icon:'🍕', name:'피자 발견',         desc:'피자를 발견했습니다',                                    eff:'HP를 700 회복합니다.',     good:true,  apply:p=> reEat(p, 700) },
+  { id:'malatang',  rarity:'common', icon:'🍲', name:'마라탕 발견',       desc:'마라탕을 발견했습니다',                                  eff:'HP를 500 회복합니다.',     good:true,  apply:p=> reEat(p, 500) },
+  { id:'schoolmeal',rarity:'common', icon:'🍱', name:'우빈이가 먹다 남긴 급식 발견', desc:'우빈이가 먹다 남긴 급식을 발견했습니다',        eff:'HP를 450 회복합니다.',     good:true,  apply:p=> reEat(p, 450) },
+  { id:'icecream',  rarity:'common', icon:'🍦', name:'아이스크림 발견',   desc:'아이스크림을 발견했습니다',                              eff:'HP를 400 회복합니다.',     good:true,  apply:p=> reEat(p, 400) },
+  { id:'findjihoo', rarity:'common', icon:'🧑', name:'지후 발견',         desc:'지후를 발견했습니다',                                    eff:'HP를 69 회복합니다.',      good:true,  apply:p=> reEat(p, 69) },
+
+  /* [Ver 10.3 신규] 단체 이벤트 — 안내 연출이 끝나면 전원이 참여하는 화면이 따로 열린다.
+     apply()는 아무것도 하지 않는다. 실제 진행은 group 키가 가리키는 시스템이 맡는다. */
+  { id:'grp_goods',   rarity:'common', icon:'🎁', name:'눈치 게임',   desc:'재화가 눈앞에 놓였습니다',                 eff:'전원이 참여합니다. 제한시간 안에 재화를 하나씩 고르되, 같은 것을 고른 사람은 모두 빈손이 됩니다.', good:null, group:'goods',   apply:()=>{} },
+  { id:'grp_peddler', rarity:'common', icon:'🎒', name:'잡상인 등장', desc:'수상한 잡상인이 물건을 펼쳤습니다',         eff:'전원이 참여하는 경매가 열립니다. 매물은 <b>A등급 이상 카드 3장</b>입니다.',                    good:null, group:'peddler', apply:()=>{} },
+  { id:'grp_bet',     rarity:'common', icon:'🎰', name:'베팅',        desc:'수상한 판이 벌어졌습니다',                   eff:'전원이 50~500 사이의 숫자를 겁니다. 숨겨진 숫자에 가장 가까운 사람이 <b>자기가 건 만큼</b> 골드를 가져갑니다.', good:null, group:'bet', apply:()=>{} },
+  { id:'grp_portal',  rarity:'common', icon:'🌀', name:'카드 포탈',   desc:'수상한 포탈이 열렸습니다',                   eff:'카드를 넣을지 고릅니다. 넣으면 무작위 한 장이 빨려 들어가 <b>50%는 소멸</b>, <b>50%는 같은 등급 3장을 추가로</b> 받습니다.', good:null, group:'portal', apply:()=>{} },
+  { id:'grp_quiz',    rarity:'common', icon:'🧠', name:'퀴즈쇼',      desc:'퀴즈쇼가 시작되었습니다',                     eff:'초성 퀴즈 3문제가 나옵니다. 맞힌 사람은 <b>모두</b> 그 카드를 가져갑니다.',                        good:null, group:'quiz', apply:()=>{} },
   { id:'salary',    rarity:'common', icon:'💼', name:'월급날',            desc:'월급을 받았습니다',                                    eff:'돈 35골드를 받습니다.',    good:true,  apply:p=> reGive(p, 3500) },
   { id:'findcash',  rarity:'common', icon:'💵', name:'땅에서 돈을 줍다',  desc:'땅에서 돈을 주웠습니다',                                eff:'돈 18골드를 받습니다.',    good:true,  apply:p=> reGive(p, 1800) },
   { id:'scratch',   rarity:'common', icon:'🎟️', name:'즉석 복권 당첨',    desc:'즉석 복권에 당첨 되었습니다',                            eff:'돈 27.77골드를 받습니다.',    good:true,  apply:p=> reGive(p, 2777) },
@@ -46153,13 +47088,32 @@ function reDiffLines(before){
   return out;
 }
 
-/* 등급 가중치 — 혼돈의 시대면 순서를 뒤집는다 */
+/* ==========================================================================
+   [Ver 10.2] 이벤트가 거듭될수록 희귀한 등급이 잘 뜬다
+   --------------------------------------------------------------------------
+   예전에는 몇 번째 이벤트든 확률표가 똑같아서, 판이 길어져도 '보통'만 계속 나왔다.
+   이제 이벤트가 한 번 터질 때마다 희귀 등급 쪽으로 무게가 조금씩 옮겨간다.
+     · 보통      : 한 번마다 -6%씩 (최저 30%까지만 줄어든다)
+     · 낮음      : 그대로
+     · 매우 낮음 : 한 번마다 +12%
+     · 극악      : 한 번마다 +20%
+   판마다 초기화된다(actuallyStartGame). '혼돈의 시대'로 순서를 뒤집는 건 그 뒤에 적용된다.
+   ========================================================================== */
+let reEventCount = 0;
 function reRarityWeights(){
-  const w = RE_RARITY.map(r=> r.weight);
+  const n = Math.max(0, reEventCount);
+  const w = RE_RARITY.map(r=>{
+    let v = r.weight;
+    if(r.key === 'common')          v *= Math.max(0.30, 1 - n * 0.06);
+    else if(r.key === 'superrare')  v *= 1 + n * 0.12;
+    else if(r.key === 'phenomenal') v *= 1 + n * 0.20;
+    return v;
+  });
   return reChaosMode ? w.slice().reverse() : w;
 }
 /* 이벤트 하나를 뽑는다. forceGood이 'good'/'bad'면 그 성향의 이벤트로 제한한다(<축복>/<저주>). */
 function rePickEvent(forceGood){
+  reEventCount++;   // [Ver 10.2] 이번 판에서 몇 번째 이벤트인지 — 다음 추첨의 희귀도를 끌어올린다
   let pool = RANDOM_EVENTS;
   if(forceGood === 'good') pool = RANDOM_EVENTS.filter(e=> e.good === true);
   else if(forceGood === 'bad') pool = RANDOM_EVENTS.filter(e=> e.good === false);
@@ -46440,6 +47394,13 @@ function startRandomEvent(onDone){
         if(randomEventState === myState) randomEventState = null; // 이미 다음 이벤트로 넘어갔다면 그건 건드리지 않는다
         if(safetyTimerId != null) clearTimeout(safetyTimerId); // [버그수정/9.7.8] 정상 종료했으니 뒤늦게 터질 안전장치를 바로 없앤다
         reFlushVictory();     // 미뤄둔 결과 화면이 있으면 지금 띄운다
+        /* [Ver 10.3] 단체 이벤트 — 안내 연출이 끝난 지금 전원 참여 화면을 연다.
+           그게 끝나야 턴이 재개되므로 finishOnce를 그쪽에 넘긴다.
+           (위에서 safetyTimerId를 이미 껐으므로 턴이 두 번 넘어갈 일은 없다) */
+        if(ev && ev.group){
+          try{ reRunGroupEvent(ev.group, finishOnce); return; }
+          catch(e){ console.error('[단체 이벤트] 시작 실패', ev.group, e); }
+        }
         finishOnce();
       }
     });
@@ -52540,6 +53501,15 @@ function lanHostSnapshot(){
       if(!ov || !yachaGoods || yachaGoods.settled) return null;
       return { html: ov.innerHTML, picks: (yachaGoods.picks||{}) };
     })(),
+    /* [Ver 10.3] 단체 이벤트 전용 범용 슬롯 — 경매·눈치게임과 똑같은 방식(오버레이 HTML 복제)으로
+       참가자 화면에 그대로 재현된다. 새 이벤트마다 스냅샷을 늘리지 않으려고 하나로 묶었다.
+       ⚠ 참가자 화면은 이 HTML로 통째로 갈아끼워진다. 그래서 **입력 상태가 남아야 하는 요소
+         (텍스트 입력창 등)를 여기 두면 안 된다.** 숫자는 +/- 버튼으로 조정한다(경매와 같은 이유). */
+    groupOv: (function(){
+      const ov = document.getElementById('groupEventOverlay');
+      if(!ov || !window.__grp || window.__grp.settled) return null;
+      return { html: ov.innerHTML };
+    })(),
     /* [Ver 9.5] 랜덤 이벤트 — HTML을 통째로 실어보내지 않고 파라미터만 보낸다.
        클라이언트도 같은 RANDOM_EVENTS 테이블을 갖고 있으므로 로컬에서 같은 연출을 재생한다.
        (호스트 innerHTML을 400ms 하트비트로 샘플링하면 스핀이 뚝뚝 끊겨 보인다 — 경매 오버레이의 알려진 한계) */
@@ -52578,6 +53548,11 @@ function lanHostHandleInput(slot, payload){
        proxy_modal — 선택 창을 띄워둔 채 사망하는 경우가 있다. 여기서 버리면 그 판이 60초간 멈춘다.
      (예전에는 둘 다 `!p.alive` 검사 뒤에 있어서 조용히 유실됐다) */
   if(payload.action === 'pet'){ lanHostAcceptPet(pid, payload.pet, payload.artifacts); return; }
+  /* [Ver 10.3] 단체 이벤트(베팅) — 죽은 사람도 아닌 "참가자 목록"만 보므로
+     아래의 !p.alive 검사보다 먼저 받는다. 판정은 grpBetApply가 다시 한 번 한다. */
+  if(payload.action === 'grpBet'){    try{ grpBetApply(pid, payload.delta|0); }catch(e){} return; }
+  if(payload.action === 'grpPortal'){ try{ grpPortalApply(pid, payload.v); }catch(e){} return; }
+  if(payload.action === 'grpQuiz'){   try{ grpQuizApply(pid, String(payload.txt||'').slice(0,40)); }catch(e){} return; }
   if(payload.action === 'proxy_modal'){
     if(__lanPm && __lanPm.pid === pid) lanPmRun(payload.token, payload.idx, payload.vals, !!payload.footer);
     lanHostBroadcast();
@@ -53297,6 +54272,17 @@ function lanClientApplyState(snap){
       });
       if(LAN.__handSig !== __handSig){ LAN.__handSig = __handSig; renderHand(); }
     }catch(e){ renderHand(); }
+    /* ======================================================================
+       [Ver 10.1.1 버그수정] 참가자 화면에 행동 버튼이 하나도 안 뜨던 문제
+       ----------------------------------------------------------------------
+       updateTeamButton()은 이름과 달리 **티밍 · 백호 · DJ 선곡 · 항복** 네 버튼을
+       한꺼번에 관리한다. 그런데 참가자의 렌더 경로(여기)에서 이 함수를 부르지 않아,
+       네 버튼이 처음 상태인 display:none 그대로 영원히 남아 있었다.
+       호스트는 renderBoard 계열 곳곳에서 이 함수를 부르므로 멀쩡했고,
+       그래서 "온라인에서 DJ 버튼이 안 보인다"로만 드러났다.
+       DOM만 만지고 스냅샷으로 받은 값만 읽으므로 참가자 쪽에서 불러도 안전하다.
+       ====================================================================== */
+    try{ updateTeamButton(); }catch(e){}
     // [Ver 7.1.9] 중앙에 낸 카드 더미 반영 — 통째 교체 대신 카드 단위 diff.
     //   기존엔 0.4초 하트비트마다 innerHTML을 통째로 갈아끼워, 카드가 뚝뚝 나타나거나 여러 장이
     //   한꺼번에 겹쳐 보이고 등장 애니메이션이 매번 재시작되어 부자연스러웠다.
@@ -53326,6 +54312,8 @@ function lanClientApplyState(snap){
     }
     lanClientSyncOverlay('draftAuctionOverlay', 'auction-overlay', snap.auction);
     lanClientSyncOverlay('yachaGoodsOverlay', 'auction-overlay', snap.goods);
+    lanClientSyncOverlay('groupEventOverlay', 'auction-overlay', snap.groupOv);  // [Ver 10.3] 단체 이벤트
+    try{ grpQuizLocalSync(); }catch(e){}   // [Ver 10.4] 퀴즈 입력창은 각 기기가 따로 만든다
     try{ lanClientSyncRandomEvent(snap.randomEvent); }catch(e){} // [Ver 9.5] 랜덤 이벤트 — 파라미터로 받아 로컬 재생
     try{ brClientSyncRec(snap.rec); }catch(e){}                  // [Ver 9.9] 전투 기록(기보) 이어붙이기
     lanClientSyncCenterPile(snap.centerPileHtml, snap.centerPileLabelHtml);
