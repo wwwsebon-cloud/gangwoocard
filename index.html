@@ -1324,19 +1324,23 @@
     position:absolute; inset:0; pointer-events:none; z-index:0;
     border-radius:inherit; overflow:hidden;
   }
-  /* 무지개 링 — 카드 둘레만 물들이고 가운데는 비운다(글자를 안 가리려고) */
+  /* 테두리 — [Ver 10.1 개편] 예전에는 conic-gradient 사각형을 통째로 회전시켰다.
+     그런데 사각형이 도는 게 눈에 그대로 보여서(모서리가 휙휙 지나간다) 어색했다.
+     이제 **돌리지 않고 색만 흐른다.** 테두리를 따라 무지개가 미끄러지듯 지나간다. */
   .djv-ring{
     position:absolute; inset:-2px; border-radius:inherit; padding:2px;
-    background:conic-gradient(from 0deg,
-      #ff4d4d,#ff9f1a,#ffe14d,#4dff88,#4dd2ff,#8b5cff,#ff4dd2,#ff4d4d);
+    background:linear-gradient(100deg,
+      #ff4d4d,#ff9f1a,#ffe14d,#4dff88,#4dd2ff,#8b5cff,#ff4dd2,
+      #ff4d4d,#ff9f1a,#ffe14d,#4dff88,#4dd2ff,#8b5cff,#ff4dd2);
+    background-size:400% 100%;
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
             mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
             mask-composite: exclude;
-    animation: djvSpin 2.6s linear infinite;
-    opacity:.95;
+    animation: djvFlow 3.2s linear infinite;
+    opacity:.9;
   }
-  @keyframes djvSpin{ to{ transform: rotate(360deg); } }
+  @keyframes djvFlow{ from{ background-position:0% 50%; } to{ background-position:400% 50%; } }
   /* 조명 — 위에서 아래로 뻗는 빛줄기가 좌우로 흔들린다 */
   .djv-beams{ position:absolute; inset:0; overflow:hidden; border-radius:inherit; }
   .djv-beams i{
@@ -1378,6 +1382,11 @@
   @media (prefers-reduced-motion: reduce){
     .djv-ring, .djv-beams i, .djv-ball, .p-card.dj-vibe{ animation:none; }
     .djv-beams{ display:none; }
+  }
+  /* 좁은 화면에서는 테두리·미러볼을 조금 줄여 카드 안 정보를 방해하지 않게 한다 */
+  @media (max-width: 640px){
+    .djv-ball{ font-size:11px; top:1px; right:3px; }
+    .djv-ring{ opacity:.75; }
   }
   .turn-now-badge {
     position:absolute; top:-8px; left:50%; transform:translateX(-50%);
@@ -8670,7 +8679,7 @@ body.mobile-mode .hitman-panel{ font-size:8px; padding:2px 8px; top:-11px; }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 10.0.3</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 10.1</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -13397,7 +13406,12 @@ function loadSavedGame(){
    loadSampleCards()의 samples 배열에서 항목을 지워도, 이미 브라우저에 저장된 localStorage 캐시엔
    옛 카드가 그대로 남아있고 mergeMissing 로직은 "누락분 추가"만 하지 "제거"는 안 했기 때문에
    삭제한 카드가 계속 게임에 등장하는 버그가 있었다. 여기 이름을 넣어두면 로드 시점에 강제로 걸러진다. */
-const REMOVED_CARD_NAMES = ['만수르','체력버그','패러렐유니버스쉬프터','탱크보이전두광',"'일타' 강사"]; // [Ver 8.2] 패러렐유니버스쉬프터 삭제 / [Ver 8.9] "'일타' 강사" → "한석원"으로 개명(옛 이름 정리)
+const REMOVED_CARD_NAMES = ['만수르','체력버그','패러렐유니버스쉬프터','탱크보이전두광',"'일타' 강사",
+  /* [Ver 10.1] 공유기(SSR) 삭제 — "모두의 손패를 함께 쓰고 상대는 자기 카드를 못 낸다"는
+     효과가 손패·턴·반응창 어디에나 끼어들어 버그가 끊이지 않았다. 카드 하나 때문에
+     생기는 예외가 너무 많아 유지 대신 삭제를 택한다.
+     (효과 처리 코드는 남겨둔다 — 옛 세이브·전투 기록에 이 카드가 남아 있을 수 있다) */
+  '공유기'];
 /* 밸런스 조정(수치 변경)이 있었지만 카드 자체는 안 지워진 경우를 위한 강제 동기화 목록.
    loadSampleCards(true)의 "누락분만 보충" 병합 로직은 이미 존재하는 카드는 안 건드리기 때문에,
    localStorage에 옛 수치로 캐시된 카드(예: COMBO 기본 데미지 10)가 patch 이후에도 계속 옛 수치로 남는 버그가 있었다.
@@ -13892,13 +13906,13 @@ const PET_DEFS = [
     detail:[{h:'발동 시점',b:'자신의 턴 시작마다 + 월급 지급 시'}, {h:'용돈',b:'매 턴 <b>(자신을 뺀 생존자 전원의 돈 합계)의 10%</b>를 받습니다. 남들이 부자일수록 많이 받습니다.'}, {h:'지출',b:'매 턴 <b>5골드</b>를 잃습니다.'}, {h:'월급 없음',b:'바퀴 월급은 받지 않습니다. 수입이 전적으로 남들의 자산에 달려 있습니다.'}] },
   { key:'rich', price:1000,     name:'부자 지후',       emoji:'💰', img:null,
     short:'돈으로 행복을 살 수 없는 이유는 그만큼의 돈이 없기 때문이다',
-    desc:'시작 돈이 <b>250골드</b>로 시작합니다. 대신 <b>랜덤 이벤트로 잃는 돈이 2배</b>가 됩니다.',
-    fx:[{k:'good',t:'시작 돈 250골드'}, {k:'bad',t:'이벤트로 잃는 돈 2배'}],
+    desc:'시작 돈이 <b>500골드</b>로 시작합니다. 대신 <b>랜덤 이벤트로 잃는 돈이 2.5배</b>가 됩니다.',
+    fx:[{k:'good',t:'시작 돈 500골드'}, {k:'bad',t:'이벤트로 잃는 돈 2.5배'}],
     detail:[{h:'발동 시점',b:'판 시작 시 1회 + 랜덤 이벤트로 돈을 잃을 때마다'}, {h:'시작 자금',b:'평소 50골드 대신 <b>250골드</b>로 시작합니다. 초반 상점·도박을 여유롭게 굴릴 수 있습니다. <span style="opacity:.7;">(9.13.1에서 200 → 250 상향)</span>'}, {h:'손실 2배',b:'랜덤 이벤트로 <b>잃는</b> 돈이 2배가 됩니다. (보이스피싱·기부왕 등)'}, {h:'주의',b:'이벤트로 <b>버는</b> 돈은 그대로입니다. 손해만 커집니다.'}] },
   { key:'doctor', price:500,   name:'의사 지후',       emoji:'🩺', img:null,
     short:'이보세요.',
-    desc:'자신의 턴마다 <b>자신을 포함한</b> 무작위 한 사람의 HP를 <b>300</b> 회복시킵니다.',
-    fx:[{k:'good',t:'매 턴 무작위 1인 HP +300'}],
+    desc:'자신의 턴마다 <b>자신을 포함한</b> 무작위 한 사람의 HP를 <b>300</b> 회복시킵니다. <b>남을 치료하면 치료비로 50골드를 받아냅니다.</b> (상대가 돈이 없어도 치료는 됩니다)',
+    fx:[{k:'good',t:'매 턴 무작위 1인 HP +300'}, {k:'good',t:'남을 치료하면 치료비 50골드 징수'}],
     detail:[{h:'발동 시점',b:'자신의 턴 시작마다'}, {h:'치료',b:'<b>자신을 포함한</b> 생존자 중 무작위 한 명의 HP를 <b>300</b> 회복시킵니다.'}, {h:'주의',b:'대상이 이미 풀피면 회복이 일어나지 않고 그 턴은 넘어갑니다. 적을 살릴 수도 있습니다.'}, {h:'궁합',b:'체력이 잘 깎이는 장기전일수록 값어치가 큽니다.'}] },
   { key:'usedcard', price:750, name:'중고차 딜러 지후', emoji:'🏷️', img:null,
     short:'한번 타보시죠',
@@ -13934,8 +13948,8 @@ const PET_DEFS = [
     detail:[{h:'발동 시점',b:'자신이 공격받아 피해를 입을 때마다'}, {h:'보복',b:'공격한 사람에게 <b>150 피해</b>를 되돌려줍니다. (쉴드 적용)'}, {h:'대가',b:'자신도 <b>150 추가 피해</b>를 입습니다. 본래 피해에 더해집니다.'}, {h:'주의',b:'그 공격으로 자신이 사망하면 보복은 일어나지 않습니다. 광역 공격에도 매번 발동합니다.'}] },
   { key:'dealer', price:2500,   name:'카지노딜러 지후', emoji:'🎴', img:null,
     short:'하우스는 반드시 승리한다니까요?',
-    desc:'다른 사람이 도박할 때마다 <b>그 도박 비용만큼</b> 돈을 받습니다. 대신 <b>자신의 도박가가 50% 증가</b>합니다.',
-    fx:[{k:'good',t:'남의 도박 비용만큼 수령'}, {k:'bad',t:'내 도박가 +50%'}],
+    desc:'다른 사람이 <b>도박하거나 카드를 살 때마다</b> 그 값만큼 돈을 받습니다. 대신 <b>자신의 도박가가 80% 증가</b>합니다.',
+    fx:[{k:'good',t:'남의 도박 비용만큼 수령'}, {k:'good',t:'남의 카드 구매가만큼 수령'}, {k:'bad',t:'내 도박가 +80%'}],
     detail:[{h:'발동 시점',b:'<b>다른 사람</b>이 도박을 시작할 때마다'}, {h:'하우스 수익',b:'그 사람이 지불한 <b>도박 비용과 같은 금액</b>을 받습니다. 봇이 도박해도 똑같이 들어옵니다.'}, {h:'대가',b:'<b>자신의</b> 도박 가격이 50% 비싸집니다. (올림 처리)'}, {h:'주의',b:'자기 자신이 하는 도박으로는 수익이 생기지 않습니다.'}] },
   { key:'assassin', price:3000, name:'어쌔신 지후',     emoji:'🗡️', img:null,
     short:'내가 보였다면 이미 늦은것이다',
@@ -14008,8 +14022,8 @@ const PET_DEFS = [
             {h:'주의',b:'리액션은 고를 수 없습니다. 넷 중 하나가 무작위로 나옵니다.'}] },
   { key:'dj', price:12000, name:'DJ 지후',          emoji:'🎧', img:null,
     short:'다음 곡 갑니다',
-    desc:'인게임에서 <b>원하는 BGM을 직접 고를</b> 수 있습니다. 곡을 바꿀 때마다 <b>모두의 공격력이 각각 1~10%</b> 무작위로 증가합니다. (곡 변경 쿨타임 60초)',
-    fx:[{k:'good',t:'BGM 직접 선곡'}, {k:'neutral',t:'곡을 바꿀 때마다 전원 공격력 +1~10%'}],
+    desc:'인게임에서 <b>원하는 BGM을 직접 고를</b> 수 있습니다. 곡을 바꿀 때마다 <b>자신을 뺀 나머지 전원</b>의 공격력이 각각 <b>1~10%</b> 무작위로 증가합니다. 대신 <b>디제이패스</b>로 자신만 상점 구매가가 <b>35% 할인</b>됩니다. (곡 변경 쿨타임 60초 · DJ가 여럿이면 공용)',
+    fx:[{k:'good',t:'BGM 직접 선곡'}, {k:'good',t:'디제이패스 — 내 상점 구매가 -35%'}, {k:'bad',t:'선곡 버프를 자신은 못 받음'}, {k:'neutral',t:'곡을 바꿀 때마다 나머지 전원 공격력 +1~10%'}],
     detail:[{h:'발동 시점',b:'자신이 곡을 바꿀 때마다'}, {h:'선곡',b:'인게임 우측의 <b>🎧 DJ</b> 버튼으로 선곡 창이 열립니다. <b>쿨타임 60초</b>.'}, {h:'분위기',b:'곡이 바뀌면 <b>생존자 전원</b>이 각각 따로 굴린 <b>1~10%</b>만큼 공격력을 얻습니다. 자신에게만 오는 이득이 아닙니다. <span style="opacity:.7;">(9.15.1 — 0~100%에서 크게 하향. 60초마다 전원이 최대 100%씩 얻어 판이 망가졌습니다)</span>'}, {h:'중복',b:'판에 DJ 지후가 여럿이어도 <b>효과는 한 번만</b> 적용됩니다.'}, {h:'주의',b:'남까지 세지므로, 이미 강한 사람이 있는 판에서는 오히려 손해일 수 있습니다.'}] },
   { key:'dust', price:3000, name:'흙먼지후',       emoji:'🌫️', img:null,
     short:'아 눈에 뭐 들어갔어',
@@ -14238,7 +14252,20 @@ function applyArtifactsToGame(){
     } else if(isMyPlayer(p)){
       p.artifacts = artMyLevels();
     } else if(!p.artifacts){
-      p.artifacts = {};   // 랜서버 참가자 — 본인이 알려주면 그때 채워진다
+      /* ====================================================================
+         [Ver 10.1 버그수정] 원격 참가자의 유물이 통째로 죽던 문제
+         --------------------------------------------------------------------
+         참가자의 유물 목록은 본인 기기에만 있어, 판이 열린 뒤 0.9초쯤 지나
+         호스트에 도착한다. 그런데 예전에는 여기서 빈 목록으로 두고 곧바로
+         applyArtifactGameStart(p) 를 불렀다. 그 함수는 __artInit 로 잠기므로,
+         **나중에 진짜 유물이 도착해도 시작 보정이 두 번 다시 걸리지 않았다.**
+         (지갑=시작 골드 · 패딩=MaxHP · 단단한 머리=시작 쉴드 전부 무효)
+         그래서 참가자는 "유물이 안 써진다"고 느낀다.
+         이제 목록이 비어 있으면 **보정을 미룬다.** lanHostFlushPets()가
+         진짜 목록을 넣으면서 그때 __artInit 가 없는 걸 보고 정상적으로 건다.
+         ==================================================================== */
+      p.artifacts = {};
+      return;   // 시작 보정을 걸지 않는다 (= __artInit 를 세우지 않는다)
     }
     applyArtifactGameStart(p);
   });
@@ -14639,6 +14666,21 @@ let raptorMartTab = 'pet';
 const RAPTOR_MART_BGMS = ['martshop1','martshop2','martshop3'];
 function restoreScreenBgm(){
   try{
+    /* ======================================================================
+       [Ver 10.1 버그수정] DJ가 튼 곡이 상점을 다녀오면 끊기던 문제
+       ----------------------------------------------------------------------
+       상점·랩터마트는 열 때 자기 BGM을 틀고, 닫을 때 이 함수로 "화면 기본곡"을
+       되돌린다. 그런데 이 함수는 화면 종류만 보고 판단해서, DJ가 골라둔 곡을
+       모르고 인게임 기본곡(calltoadventure)으로 덮어썼다.
+       DJ 선곡이 살아 있으면 그걸 우선해 되돌린다.
+       ====================================================================== */
+    const djKey = (function(){
+      try{
+        const dj = (Array.isArray(players) ? players : []).find(x=> x && x.__djTrackKey && hasPet(x,'dj'));
+        return dj ? dj.__djTrackKey : null;
+      }catch(e){ return null; }
+    })();
+    if(djKey && typeof gameActive !== 'undefined' && gameActive){ ambientBgmPlay(djKey); return; }
     const scr = getComputedScreen();
     if(scr === 'screen-battle'){ if(!draftMode) ambientBgmPlay('calltoadventure'); else ambientBgmStop(); }
     else if(scr === 'screen-gacha') ambientBgmPlay('doughv');
@@ -15217,6 +15259,14 @@ function invalidatePersistentCaches(){
   try{ EVOLVED_CARDS = null; }catch(e){}
   try{ MAILBOX = null; }catch(e){}
   try{ REDEEMED_CODES = null; }catch(e){}
+  /* [Ver 10.0.4 버그수정] 아래 둘이 빠져 있었다.
+     · OWNED_PETS  — 보유 지후펫. 복원 뒤에도 옛 목록이 메모리에 남아 있다가
+       펫을 사거나 장착하는 순간 savePets()가 **복원된 목록을 옛 것으로 덮어썼다.**
+     · playerProfile — 닉네임. 복원해도 화면 이름이 안 바뀌고, 닉네임을 건드리면
+       옛 이름이 다시 저장됐다.
+     (equippedTitle은 getEquippedTitle()이 매번 localStorage를 직접 읽어 캐시가 없다 — 안전) */
+  try{ OWNED_PETS = null; }catch(e){}
+  try{ loadPlayerProfileFromStorage(); }catch(e){}
   /* ② 시작할 때 한 번만 읽는 스칼라 — 직접 다시 읽어준다 */
   try{ const v = parseInt(localStorage.getItem(STORAGE_KEYS.evoClaws),10);     if(Number.isFinite(v)) evoClaws = Math.max(0, v); }catch(e){}
   try{ const v = parseInt(localStorage.getItem(STORAGE_KEYS.gachaTickets),10); if(Number.isFinite(v)) gachaTickets = Math.max(0, v); }catch(e){}
@@ -15234,9 +15284,30 @@ function invalidatePersistentCaches(){
 }
 function applyBackupPayload(p){
   if(!p || !p.data) throw new Error('백업 데이터가 올바르지 않습니다.');
-  Object.keys(p.data).forEach(k=>{ try{ localStorage.setItem(k, p.data[k]); }catch(e){} });
+  /* ==========================================================================
+     [Ver 10.0.4 버그수정] 쓰기 실패를 삼키지 않는다
+     --------------------------------------------------------------------------
+     예전에는 키마다 try{...}catch(e){} 로 감싸고 **아무 말 없이 넘어갔다.**
+     저장 공간이 꽉 차면(QuotaExceededError) 일부만 써지고 나머지는 조용히 실패했는데,
+     화면에는 "복원 완료"가 떴다. 그래서 새로고침하면 절반만 복원된 것처럼 보였고,
+     운이 나쁘면 아무것도 안 바뀐 것처럼 보였다 — "가끔 불러오기가 안 된다"의 정체다.
+     이제 실패한 키를 모아 예외로 올린다. 호출부가 그대로 실패 창을 띄운다.
+     ========================================================================== */
+  const failed = [];
+  Object.keys(p.data).forEach(k=>{
+    try{ localStorage.setItem(k, p.data[k]); }
+    catch(e){ failed.push(k); }
+  });
   /* ⚠ 이 한 줄이 없으면 복원한 값이 옛 메모리 값으로 되돌아간다. 절대 빼지 말 것. */
   try{ invalidatePersistentCaches(); }catch(e){ console.error('[복원] 캐시 무효화 실패', e); }
+  if(failed.length){
+    console.error('[복원] 저장 실패한 항목', failed);
+    throw new Error(
+      `저장 공간이 부족해 ${failed.length}개 항목을 쓰지 못했습니다.\n` +
+      `(${failed.join(', ')})\n\n` +
+      `브라우저 저장 공간이 꽉 찼을 수 있습니다. 다른 탭을 닫거나 브라우저를 다시 켠 뒤 다시 시도해주세요.`
+    );
+  }
   return Object.keys(p.data).length;
 }
 /* ##########################################################################
@@ -15266,18 +15337,49 @@ function autoBackupAfterGame(){
     const now = Date.now();
     if(now - __lastAutoBackupAt < AUTO_BACKUP_MIN_GAP_MS) return;
     __lastAutoBackupAt = now;
-    /* await 하지 않는다 — 결과 화면이 백업을 기다리게 두지 않는다 */
-    fbBackupNow().catch(()=>{ __lastAutoBackupAt = 0; });  // 실패하면 다음 판에 다시 시도
+    /* await 하지 않는다 — 결과 화면이 백업을 기다리게 두지 않는다.
+       [Ver 10.0.4] 다만 **조용히 삼키지는 않는다.** 자동 백업이 계속 실패하는데 아무도 모르면,
+       나중에 복원했을 때 한참 옛날 것이 나와 "불러오기가 안 된다"가 된다.
+       연달아 실패하면 우편함으로 한 번 알려준다. */
+    fbBackupNow().then(()=>{
+      window.__autoBackupFails = 0;
+    }).catch(err=>{
+      __lastAutoBackupAt = 0;                       // 다음 판에 다시 시도
+      console.warn('[자동 백업] 실패', err);
+      const n = (window.__autoBackupFails || 0) + 1;
+      window.__autoBackupFails = n;
+      if(n === 3 && !window.__autoBackupWarned){
+        window.__autoBackupWarned = true;
+        try{
+          addMail('⚠ 자동 백업이 되지 않고 있습니다',
+            '진행도를 클라우드에 저장하지 못하고 있습니다. 이 상태로 브라우저 데이터가 지워지면 진행도를 되찾을 수 없습니다.\n\n' +
+            '메뉴 → 온라인 → 백업·복원에서 [지금 백업하기]를 눌러 어떤 오류가 나는지 확인해주세요.',
+            null, { noExpire:true });
+          updateMailboxBadge();
+        }catch(e){}
+      }
+    });
   }catch(e){}
 }
 
+/* Firestore 문서 하나의 상한은 1MB다. 진행도가 불어나 이 선을 넘으면 setDoc이 통째로
+   거부되는데, 그러면 **백업이 조용히 멈춘 채** 복원할 때 한참 옛날 것이 딸려온다.
+   ("불러왔는데 옛날 상태더라"의 원인) 그래서 올리기 전에 크기를 먼저 재고 분명히 알린다. */
+const FB_DOC_SAFE_BYTES = 900000;   // 필드 이름·메타 여유를 둔 실질 상한
 async function fbBackupNow(){
   await fbInit();
   const { doc, setDoc } = FB.mod;
   const payload = buildBackupPayload();
+  const body = JSON.stringify(payload.data);   // 통째로 문자열 한 칸에 담는다
+  if(body.length > FB_DOC_SAFE_BYTES){
+    throw new Error(
+      `진행도가 너무 커서 백업할 수 없습니다. (${(body.length/1024).toFixed(0)}KB / 한도 ${(FB_DOC_SAFE_BYTES/1024).toFixed(0)}KB)\n` +
+      `개발자에게 알려주세요 — 백업 대상을 줄여야 합니다.`
+    );
+  }
   await setDoc(doc(FB.db, 'backups', FB.uid), {
-    code: payload.code, at: payload.at, v: payload.v,
-    payload: JSON.stringify(payload.data)   // 통째로 문자열 한 칸에 담는다 (문서 1MB 제한 내)
+    code: payload.code, at: payload.at, v: payload.v, size: body.length,
+    payload: body
   });
   return payload;
 }
@@ -15552,6 +15654,38 @@ async function fbLookupRemoteCode(code){
    새 패치를 넣을 땐 BALANCE_PATCHES 맨 앞에 한 덩어리를 추가하면 된다.
    ########################################################################## */
 const BALANCE_PATCHES = [
+  {
+    version: 'Ver 10.1', date: '2026-08-15',
+    groups: [
+      { title:'지후펫 리워크 4종', kind:'pet',
+        note:'돈을 만지는 펫들의 성격을 더 뚜렷하게 갈랐습니다. <b>카지노딜러</b>는 남이 쓰는 돈 전반에서 걷고, <b>DJ</b>는 남을 띄우는 대신 자기는 싸게 사고, <b>부자</b>는 초반이 세지는 만큼 이벤트 위험이 커지고, <b>의사</b>는 공짜 치료사에서 벗어납니다.',
+        rows:[
+          { key:'dealer', rows:[
+            { label:'수입원',   from:'남의 도박 비용',   to:'남의 도박 비용 + 카드 구매가', dir:'up' },
+            { label:'내 도박가', from:'×1.5',           to:'×1.8',                      dir:'down' },
+          ]},
+          { key:'dj', rows:[
+            { label:'선곡 버프 대상', from:'자신 포함 전원', to:'자신을 뺀 전원',   dir:'down' },
+            { label:'디제이패스',    from:'—',            to:'내 상점가 -35%',   dir:'up'   },
+          ]},
+          { key:'rich', rows:[
+            { label:'시작 골드',        from:'250', to:'500',  dir:'up'   },
+            { label:'이벤트로 잃는 돈', from:'×2',  to:'×2.5', dir:'down' },
+          ]},
+          { key:'doctor', rows:[
+            { label:'치료비', from:'무료', to:'남을 치료 시 50골드 징수', dir:'up' },
+            { label:'상대가 무일푼일 때', from:'—', to:'치료는 되고 징수만 실패', dir:'neutral' },
+          ]},
+        ]},
+      { title:'카드 삭제', kind:'system', icon:'🗑️',
+        note:'효과가 손패·턴·반응창 곳곳에 끼어들어 버그가 끊이지 않았습니다.',
+        rows:[
+          { name:'공유기', icon:'📶', rows:[
+            { label:'상태', from:'SSR · 모두의 손패 공유', to:'카드풀에서 삭제', dir:'down' },
+          ]},
+        ]},
+    ]
+  },
   {
     version: 'Ver 10.0.3', date: '2026-08-15',
     groups: [
@@ -17546,6 +17680,33 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 10.1',
+    date: '2026-08-15',
+    items: [
+      '🎴 <b>[리워크] 카지노딜러 지후</b> — 이제 남이 <b>카드를 살 때도</b> 그 값만큼 받습니다. 도박은 자주 일어나지 않아 하우스가 놀고 있는 시간이 길었는데, 상점은 매 턴 돌아가니 수입이 훨씬 꾸준해집니다. 대신 자기 도박가가 <b>+50% → +80%</b>로 올랐습니다.',
+      '🎧 <b>[리워크] DJ 지후</b> — 선곡 버프를 <b>자신은 받지 못합니다.</b> 대신 <b>디제이패스</b>로 자신만 상점 구매가가 <b>35% 할인</b>됩니다. 남을 강하게 만드는 대가로 자기는 싸게 사서 굴리는 펫이 되었습니다.',
+      '💰 <b>[리워크] 부자 지후</b> — 시작 골드 <b>250 → 500</b>. 대신 랜덤 이벤트로 잃는 돈이 <b>2배 → 2.5배</b>가 됩니다. 초반이 훨씬 강해지는 만큼 이벤트 한 방의 위험도 커집니다.',
+      '🩺 <b>[리워크] 의사 지후</b> — 남을 치료하면 <b>치료비로 50골드를 받아냅니다.</b> 상대가 돈이 없어도 치료는 되고, 있는 만큼만 걷습니다. 자기 자신을 치료할 때는 받지 않습니다.',
+      '🗑️ <b>[삭제] 공유기 (SSR)</b> — "모두의 손패를 함께 쓰고 상대는 자기 카드를 못 낸다"는 효과가 손패·턴·반응창 곳곳에 끼어들어 버그가 끊이지 않았습니다. 카드 하나 때문에 생기는 예외가 너무 많아 삭제합니다.',
+      '🐛 <b>[버그수정] 상점이 폐업했는데 봇만 도박하던 문제</b> — 사람은 폐업하면 도박 탭에 못 들어가는데, 봇 쪽에는 폐업 검사가 통째로 빠져 있었습니다. 재단 업그레이드도 마찬가지였습니다.',
+      '🐛 <b>[버그수정] DJ가 튼 곡이 상점을 다녀오면 끊기던 문제</b> — 상점을 닫을 때 "화면 기본곡"으로 되돌리는데, 그 판단이 DJ 선곡을 몰라서 인게임 기본곡으로 덮어썼습니다. 이제 DJ 선곡이 살아 있으면 그걸 우선합니다.',
+      '🪩 <b>[개편] DJ 스탯창 이펙트</b> — 무지개 사각형이 통째로 <b>회전하던</b> 것이 어색해서, 이제 <b>돌지 않고 색만 테두리를 따라 흐릅니다.</b> 조명과 미러볼은 그대로입니다.',
+      '🌐 <b>[버그수정] 온라인에서 남의 손패가 보이던 문제</b> — 방에 들어갈 때 <b>빈 자리를 읽고 → 고르고 → 쓰는</b> 방식이라, 두 사람이 거의 동시에 들어오면 <b>같은 자리를 배정받았습니다.</b> 그러면 둘이 같은 사람으로 취급돼 서로의 손패가 보이고 입력이 엉뚱하게 붙었습니다. 이제 자리 배정이 한 덩어리로 처리됩니다.',
+      '🌐 <b>[버그수정] 온라인 참가자에게 유물이 안 먹던 문제</b> — 참가자의 유물 목록은 판이 열린 뒤에야 호스트에 도착하는데, 그 전에 <b>빈 목록으로 시작 보정을 걸어버려</b> 나중에 진짜 목록이 와도 다시 걸리지 않았습니다. 지갑(시작 골드) · 패딩(MaxHP) · 단단한 머리(시작 쉴드)가 전부 무효였습니다.',
+      '🌐 <b>[변경] 온라인 방 정원 4명 → 6명</b> — 자리가 4개로 막혀 있어 팀전(3v3)은 온라인으로 아예 불가능했습니다.'
+    ]
+  },
+  {
+    version: 'Ver 10.0.4',
+    date: '2026-08-15',
+    items: [
+      '🐛 <b>[버그수정] 계정 불러오기가 제대로 안 되던 문제</b> — 복원한 뒤에도 <b>지후펫과 닉네임이 옛것으로 되돌아가던</b> 문제를 고쳤습니다. 복원은 저장소를 덮어쓰는데, 이 둘만 <b>게임이 기억하고 있던 옛 값</b>을 다시 쓰지 않아서, 펫을 사거나 장착하는 순간 복원한 펫 목록이 통째로 옛것으로 덮어써졌습니다.',
+      '🐛 <b>[버그수정] 복원이 실패해도 "복원 완료"라고 뜨던 문제</b> — 브라우저 저장 공간이 부족하면 일부 항목만 저장되고 나머지는 <b>아무 말 없이 실패</b>했는데, 화면에는 성공했다고 떴습니다. 그래서 새로고침하면 절반만 복원되거나 아예 그대로였습니다. 이제 <b>어떤 항목이 실패했는지 정확히 알려줍니다.</b>',
+      '🐛 <b>[버그수정] 자동 백업이 조용히 멈추던 문제</b> — 백업이 실패해도 아무 표시가 없어서, 나중에 복원하면 <b>한참 옛날 상태</b>가 딸려왔습니다. 이제 연달아 실패하면 우편함으로 알려주고, 진행도가 백업 한도를 넘었을 때도 분명히 안내합니다.',
+      '💡 [안내] 복원 직후에는 <b>1.5초 뒤 자동으로 새로고침</b>됩니다. 이건 정상 동작입니다 — 복원한 내용과 화면에 남아 있던 옛 내용이 섞이지 않게 하려는 것입니다.'
+    ]
+  },
   {
     version: 'Ver 10.0.3',
     date: '2026-08-15',
@@ -24036,7 +24197,6 @@ function loadSampleCards(mergeMissing=false){
     {grade:'A', name:'무적', type:'INVINCIBLE_AURA', power:0, pierce:'NONE', desc:'1바퀴동안 무적이 된다. 무적 상태에서는 모든 공격과 효과(버프·디버프)를 무시하며, 상태창에 배리어 UI가 표시되고, 자신을 카드 지목 대상으로 설정할 수 없으며, AOE 피해도 전혀 받지 않는다.', flavor:''},
     {grade:'SR', name:'이방원', type:'FORCED_ALLY_THEN_BETRAY', power:1600, maxUses:2, pierce:'NONE', desc:'2번 낼 수 있다. 첫 번째로 낼 시 상대와 강제로 아군이 된다. 두 번째로 낼 시 아군을 끊고 상대에게 1600 데미지를 입힌다.', flavor:''},
     {grade:'S', name:'강태공', type:'FISHING_ROD_BAIT', power:500, reactPower:600, pierce:'NONE', desc:'무한 사용 가능. 대상에게 낚싯대를 던져 ATK 500을 주며 [미끼] 디버프를 준다(중첩 X). 또한 이 카드는 언제든지 반응시간 내 보여줄 수 있다. 보여줄 시 [미끼] 디버프가 있는 사람에게 전부 600 데미지를 입히고 [미끼] 디버프를 해제시킨다.', flavor:''},
-    {grade:'SSR', name:'공유기', type:'ROUTER_SHARE_ALL', power:0, pierce:'NONE', desc:'모든 상대의 카드를 자신과 공유한다. 상대는 자신의 카드를 사용할 수 없다.', flavor:''},
     /* ===================== [Ver 6.4.2] 신규 카드 ===================== */
     {grade:'D', name:'랜덤뽑기 RPG', type:'BLIND_GAMBLE_AURA', power:0, pierce:'NONE', desc:'(패시브) 낸 이후 영구적으로, 앞으로 아무도 도박 도중 무슨 카드가 나왔는지 알 수 없게 된다. (전부 ???로 표기)', flavor:''},
     {grade:'E', name:'간첩', type:'SPY_EXPOSURE_DEATH', power:0, pierce:'NONE', desc:'(패시브) 이 카드를 가지고 있는 사실이 패 열람 등에 의해 발각되거나, 누군가가 이 카드를 강탈해가면 그 즉시 자신은 사망한다.', flavor:'안타까운 청년'},
@@ -24780,7 +24940,7 @@ function applyPetGameStart(p){
   if(!def) return;
   switch(p.pet){
     case 'beggar':  p.gold = -50; break;                       // 시작 돈 음수
-    case 'rich':    p.gold = 250; break;                       // [Ver 9.13.1] 200 → 250
+    case 'rich':    p.gold = 500; break;                       // [Ver 10.1] 250 → 500
     case 'vampire': p.maxHp = Math.max(1, p.maxHp - 300); p.hp = Math.min(p.hp, p.maxHp); break;
     case 'assassin':p.maxHp = Math.max(1, p.maxHp - 400); p.hp = Math.min(p.hp, p.maxHp); break;
     case 'politician': p.petApproval = 50; break;              // 지지율 게이지
@@ -24795,10 +24955,11 @@ function applyPetGameStart(p){
 /* ---- 돈 배수 ---- */
 /* 거지 지후 — 카드로 얻는 돈 2배. grantGold의 "카드 획득" 경로에서만 쓴다. */
 function petCardGoldMult(p){ return hasPet(p,'beggar') ? 2 : 1; }
-/* 랜덤 이벤트로 오가는 돈 배수 — 거지는 버는 쪽, 부자는 잃는 쪽이 2배. */
+/* 랜덤 이벤트로 오가는 돈 배수 — 거지는 버는 쪽, 부자는 잃는 쪽이 커진다.
+   [Ver 10.1] 부자의 시작 골드를 250 → 500으로 크게 올린 대신, 잃는 쪽도 2 → 2.5배로 함께 올렸다. */
 function petEventGoldMult(p, amount){
   if(amount >= 0) return hasPet(p,'beggar') ? 2 : 1;
-  return hasPet(p,'rich') ? 2 : 1;
+  return hasPet(p,'rich') ? 2.5 : 1;
 }
 
 /* ---- 세무사 ---- */
@@ -24890,13 +25051,16 @@ function petThiefPoliceRoll(caster){
 }
 
 /* ---- 도박 관련 ---- */
-/* 카지노딜러 지후 — 남이 도박할 때마다 그 비용만큼 챙긴다. (자기 도박에는 적용되지 않는다) */
-function petDealerCollect(gambler, cost){
-  if(!gambler || !(cost > 0)) return;
+/* 카지노딜러 지후 — 남이 돈을 쓸 때마다 그만큼 챙긴다. (자기 지출에는 적용되지 않는다)
+   [Ver 10.1] 도박뿐 아니라 **상점에서 카드를 살 때도** 같은 금액이 들어온다.
+   what = '도박 비용' / '카드 구매' 처럼 로그에 그대로 찍히는 이름. */
+function petDealerCollect(spender, cost, what){
+  if(!spender || !(cost > 0)) return;
+  const label = what || '도박 비용';
   petHolders('dealer').forEach(d=>{
-    if(d.id === gambler.id) return;
+    if(d.id === spender.id) return;
     grantGold(d, cost);
-    log('gold', `🎴 카지노딜러 ${J(d.name,'이','가')} ${gambler.name}의 도박 비용 ${fmtWon(cost)}을(를) 하우스 수익으로 챙겼습니다.`);
+    log('gold', `🎴 카지노딜러 ${J(d.name,'이','가')} ${spender.name}의 ${label} ${fmtWon(cost)}을(를) 하우스 수익으로 챙겼습니다.`);
   });
 }
 /* 타짜 지후 — 도뜨사 면역. 기존 축복 패키지(dottusaImmune)와 같은 자리에서 판정된다. */
@@ -25073,6 +25237,20 @@ function petDoctorTurn(p){
   t.hp += actual;
   showFloatNumber(t.id, '+'+actual.toLocaleString(), 'heal');
   log('sys', `🩺 의사 ${J(p.name,'이','가')} ${t.name}의 HP를 ${actual.toLocaleString()} 회복시켰습니다.`);
+  /* [Ver 10.1] 치료비 — 남을 치료했으면 그 사람에게서 50골드를 받아낸다.
+     ▶ 자기 자신을 치료한 경우에는 받지 않는다.
+     ▶ 돈이 모자라도 치료는 이미 끝났다. 있는 만큼만 걷고, 없으면 외상으로 남기지 않는다.
+       (골드가 음수로 내려가는 펫은 거지·타짜뿐이라 여기서는 0에서 멈춘다) */
+  if(t.id !== p.id){
+    const fee = Math.min(50, Math.max(0, t.gold||0));
+    if(fee > 0){
+      t.gold -= fee;
+      p.gold = (p.gold||0) + fee;
+      log('gold', `💸 의사 ${J(p.name,'이','가')} ${t.name}에게 치료비 ${fmtWon(fee)}${fee < 50 ? ' (가진 돈 전부)' : ''}을(를) 청구했습니다.`);
+    } else {
+      log('sys', `💸 의사 ${J(p.name,'이','가')} 치료비를 청구했지만 ${J(t.name,'은','는')} 빈털터리였습니다.`);
+    }
+  }
 }
 /* 사기꾼 지후 — 자기 턴마다 무작위 대상에게 사기. 50%로 상대 돈 30~100% 강탈, 실패하면 내 돈이 털린다. */
 function petScammerTurn(p){
@@ -25647,6 +25825,9 @@ function djResolveTrack(dj, i){
   window.__djBuffBusy = true;
   try{
     alivePlayers().forEach(p=>{
+      /* [Ver 10.1] 곡을 튼 DJ 본인은 버프를 받지 않는다.
+         남을 강하게 만드는 대신 자기는 상점 할인(디제이패스)으로 먹고사는 펫이 됐다. */
+      if(p.id === dj.id) return;
       /* [Ver 9.15.1] 0~100% → 1~10%.
          쿨타임 60초마다 전원이 최대 100%씩 얻으니 몇 번만 돌려도 판이 통째로 망가졌다.
          이제 "분위기를 살짝 띄우는" 수준으로 낮춘다. */
@@ -44980,7 +45161,10 @@ function botPlay(){
     botAutoSellJunk(bot); // [BOT AI ★] 쓸모없어진 카드를 상점에 자동 판매
     if(!bot.alive){ botHandleDeathMidTurn(); return; }
 
+    /* [Ver 10.1 버그수정] 폐업(shopClosedForever) 검사가 빠져 있었다.
+       사람은 상점이 폐업하면 도박 탭 자체에 못 들어가는데, 봇만 계속 굴렸다. */
     const wantsGamble = !bot.gambleUsedThisTurn && bot.gold >= 10 && Math.random() < 0.18
+      && !shopClosedForever
       && !(shopLockOwnerId && shopLockOwnerId !== bot.id) && !bot.shopBanned
       && !((bot.shopBlockDueRound||0) > turnCount) && (bot.hp / Math.max(1,bot.maxHp)) > 0.3;
     if(wantsGamble){
@@ -46396,6 +46580,9 @@ function fdnShopBuyDiscountPct(p){
   let d = artOf(p, 'dad');         // [Ver 9.11] 유물 — 우빈 아빠 (상점 구매가 할인)
   if(fdnHas(p,'shop',1)) d += 5;   // Lv1
   if(fdnHas(p,'shop',5)) d += 15;  // Lv5 (누적 -20%)
+  /* [Ver 10.1] DJ 지후 — 디제이패스. 선곡 버프를 자기는 못 받는 대신 상점을 싸게 쓴다.
+     본인에게만 붙는 할인이라 다른 사람 가격에는 영향이 없다. */
+  if(hasPet(p,'dj')) d += 35;
   return Math.min(95, d);
 }
 function fdnShopRerollMax(p){ return SHOP_REROLL_MAX + (fdnHas(p,'shop',2) ? 1 : 0) + Math.floor(artOf(p,'regular')); } // [Ver 9.11] 유물 — 우빈이의 단골카드      // Lv2
@@ -46804,6 +46991,8 @@ function foundationOnTurnStart(p){
 const FDN_BOT_RESERVE = 80;
 function foundationBotMaybeUpgrade(p){
   if(!p || !p.isBot || !p.alive || !isFoundationModeActive()) return;
+  /* [Ver 10.1 버그수정] 업그레이드도 상점 기능이다. 폐업했으면 봇도 못 쓴다. */
+  if(typeof shopClosedForever !== 'undefined' && shopClosedForever) return;
   if(!p.foundations) p.foundations = mkFoundationState();
   if(!p.fdnBotPref) p.fdnBotPref = FOUNDATION_KEYS[Math.floor(Math.random()*FOUNDATION_KEYS.length)];
   if(Math.random() < 0.35) return; // 매 턴 꼬박꼬박 올리지는 않는다
@@ -46973,8 +47162,9 @@ function getEffectiveGambleTiers(p){
     const fdnDisc = fdnGambleDiscountPct(p, t.key);
     if(fdnDisc > 0 && nt.cost > 0) nt.cost = Math.max(0, Math.floor(nt.cost * (1 - fdnDisc/100)));
     if(fdnGambleIsFree(p, t.key)) nt.cost = 0;
-    // [Ver 9.10.2] 카지노딜러 지후 — 하우스를 굴리는 대가로 자기 도박가는 50% 비싸진다
-    if(hasPet(p,'dealer') && nt.cost > 0) nt.cost = Math.ceil(nt.cost * 1.5);
+    // [Ver 9.10.2] 카지노딜러 지후 — 하우스를 굴리는 대가로 자기 도박가가 비싸진다
+    // [Ver 10.1] 카드 구매 수수료까지 챙기게 된 만큼 ×1.5 → ×1.8
+    if(hasPet(p,'dealer') && nt.cost > 0) nt.cost = Math.ceil(nt.cost * 1.8);
     /* [Ver 9.10.6] 타짜 지후 — 도박 종류와 무관하게 등급 제한을 풀어준다.
        [Ver 9.14 너프] 다만 **싼 도박으로 SR 이상을 긁는 것**은 막는다.
          · 하급(10골드) · 중급(30골드) → 최대 S까지만
@@ -47779,6 +47969,8 @@ function buyShopSlot(i){
     me.goldSpent = (me.goldSpent||0) + price;
     if(isMyPlayer(me)) bumpStat('goldSpent', price); // [Ver 5.7.1] 통계: 소비한 골드가 집계되지 않던 문제 수정
     payShopOwner(me, price, '카드 구매'); // [Ver 5.8] 상점 인수: 매출을 인수자에게
+    // [Ver 10.1] 카지노딜러 지후 — 이제 남이 카드를 살 때도 그 값만큼 하우스가 챙긴다
+    try{ petDealerCollect(me, price, '카드 구매'); }catch(e){}
     const wasFree = me.freePurchase || raptorFree;
     /* [Ver 9.13.1] 사장님이 미쳤어요+ — 무료 구매 여분(freePurchaseCount)이 있으면 그걸 먼저 쓴다. */
     if(me.freePurchase && !raptorFree){
@@ -51659,6 +51851,8 @@ function lanRtRoomCode(len){
   return s;
 }
 
+/* [Ver 10.1] 온라인 방 정원 — 팀전(3v3)이 6자리라 6으로 연다. 예전엔 4로 막혀 있었다. */
+const LAN_RT_MAX_SLOTS = 6;
 /* 현재 방의 RTDB 참조. 방을 나가면 lanRtDetach()로 반드시 리스너를 해제한다. */
 function lanRtDetach(){
   try{ LAN.rt.listeners.forEach(off=>{ try{ off(); }catch(e){} }); }catch(e){}
@@ -51830,24 +52024,49 @@ function lanRtSend(obj){
       break;
     }
     case 'join': {
+      /* ======================================================================
+         [Ver 10.1 버그수정] 슬롯 배정을 트랜잭션으로 바꾼다
+         ----------------------------------------------------------------------
+         예전에는 "방을 읽고(get) → 빈 슬롯을 고르고 → 쓴다(set)" 였다.
+         두 사람이 거의 동시에 들어오면 **둘 다 같은 빈 슬롯을 읽어** 같은 번호를 쓴다.
+         uid 가 달라 덮어써지지도 않으므로 슬롯이 겹친 채로 판이 시작된다.
+         그러면 두 사람이 같은 pN 으로 취급돼
+           · 서로의 손패가 보이고
+           · 입력이 엉뚱한 사람에게 붙는다
+         "내 턴이 아닌데 남의 손패가 보인다"의 원인이다.
+         트랜잭션은 읽기와 쓰기가 한 덩어리라 이 틈이 없다.
+
+         [Ver 10.1] 정원도 4명(slot>3)에서 **6명**으로 연다 — 팀전 3v3 이 6자리다.
+         ====================================================================== */
       const joinCode = obj.code;
-      const roomRef = ref(FB.rtdb, 'rooms/' + joinCode);
-      get(roomRef).then(snap=>{
-        const v = snap.val();
-        if(!v){ lanOnMessage({ t:'error', msg:'존재하지 않는 방 코드입니다.' }); return; }
-        if(v.started){ lanOnMessage({ t:'error', msg:'이미 시작된 방입니다.' }); return; }
-        const usedSlots = v.players ? Object.values(v.players).map(p=>p.slot) : [];
-        let slot = 0; while(usedSlots.includes(slot)) slot++;
-        if(slot > 3){ lanOnMessage({ t:'error', msg:'방이 가득 찼습니다.' }); return; }
-        set(ref(FB.rtdb, 'rooms/' + joinCode + '/players/' + LAN.you), { name: obj.name||'플레이어', ready:false, slot }).then(()=>{
-          try{ onDisconnect(ref(FB.rtdb, 'rooms/' + joinCode + '/players/' + LAN.you)).remove(); }catch(e){}
-          LAN.room = { code:joinCode, players:[], hostId:v.hostId, started:false };
-          LAN.isHost = false;
-          LAN.mySlot = slot;
-          lanRtAttachRoom(joinCode);
-          lanOnMessage({ t:'joined', you:LAN.you });
-        }).catch(()=>{ lanOnMessage({ t:'error', msg:'방에 참여하지 못했습니다.' }); });
-      }).catch(()=>{ lanOnMessage({ t:'error', msg:'방을 찾지 못했습니다.' }); });
+      get(ref(FB.rtdb, 'rooms/' + joinCode + '/hostId')).then(hsnap=>{
+        if(!hsnap.exists()){ lanOnMessage({ t:'error', msg:'존재하지 않는 방 코드입니다.' }); return; }
+        return get(ref(FB.rtdb, 'rooms/' + joinCode + '/started')).then(ssnap=>{
+          if(ssnap.val()){ lanOnMessage({ t:'error', msg:'이미 시작된 방입니다.' }); return; }
+          const hostId = hsnap.val();
+          let mySlot = -1;
+          return runTransaction(ref(FB.rtdb, 'rooms/' + joinCode + '/players'), (cur)=>{
+            cur = cur || {};
+            if(cur[LAN.you]){ mySlot = cur[LAN.you].slot; return cur; }   // 이미 들어와 있다
+            const used = {};
+            Object.keys(cur).forEach(k=>{ if(cur[k]) used[cur[k].slot] = true; });
+            let s = -1;
+            for(let i=0;i<LAN_RT_MAX_SLOTS;i++){ if(!used[i]){ s = i; break; } }
+            if(s < 0) return;                                            // 자리 없음 = 트랜잭션 중단
+            mySlot = s;
+            cur[LAN.you] = { name: obj.name||'플레이어', ready:false, slot:s };
+            return cur;
+          }).then(res=>{
+            if(!res.committed || mySlot < 0){ lanOnMessage({ t:'error', msg:'방이 가득 찼습니다.' }); return; }
+            try{ onDisconnect(ref(FB.rtdb, 'rooms/' + joinCode + '/players/' + LAN.you)).remove(); }catch(e){}
+            LAN.room = { code:joinCode, players:[], hostId, started:false };
+            LAN.isHost = false;
+            LAN.mySlot = mySlot;
+            lanRtAttachRoom(joinCode);
+            lanOnMessage({ t:'joined', you:LAN.you });
+          });
+        });
+      }).catch(()=>{ lanOnMessage({ t:'error', msg:'방에 참여하지 못했습니다.' }); });
       break;
     }
     case 'ready': {
