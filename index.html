@@ -821,6 +821,82 @@
     background:linear-gradient(90deg,#ffe58a,#e5b915,#9c7a0a) !important; color:#3a2c00 !important; border-color:#fff2c0 !important;
   }
 
+  /* ===================== [Ver 10.5.1] 카드 설명서 ===================== */
+  .manual-fab .shop-fab-icon { filter: drop-shadow(0 0 4px rgba(255,215,120,.5)); }
+  .cm-overlay {
+    position:fixed; inset:0; z-index:9600;
+    display:flex; align-items:center; justify-content:center; padding:18px;
+    background:rgba(0,0,0,0); backdrop-filter:blur(0px);
+    opacity:0; pointer-events:none;
+    transition: background .22s ease, backdrop-filter .22s ease, opacity .22s ease;
+  }
+  .cm-overlay.show { background:rgba(0,0,0,.62); backdrop-filter:blur(3px); opacity:1; pointer-events:auto; }
+  .cm-panel {
+    width:min(560px, 100%); max-height:82vh; display:flex; flex-direction:column;
+    border-radius:16px; overflow:hidden;
+    background:var(--bg-1, #1b1b22); border:1px solid rgba(128,128,128,.3);
+    box-shadow:0 18px 50px rgba(0,0,0,.55);
+    /* 살짝 아래에서 올라오며 커진다 — 끝에서 아주 약간 튕기는 곡선 */
+    transform: translateY(18px) scale(.94); opacity:0;
+    transition: transform .26s cubic-bezier(.2,.9,.25,1.08), opacity .2s ease;
+  }
+  .cm-overlay.show .cm-panel { transform: translateY(0) scale(1); opacity:1; }
+  .cm-head { display:flex; align-items:center; gap:10px; padding:13px 15px;
+             border-bottom:1px solid rgba(128,128,128,.25); }
+  .cm-title { flex:1 1 auto; font-size:15px; font-weight:800; }
+  .cm-title small { font-size:11px; opacity:.55; font-weight:600; margin-left:5px; }
+  .cm-x { flex:0 0 auto; width:30px; height:30px; border-radius:8px; cursor:pointer;
+          border:1px solid rgba(128,128,128,.3); background:transparent; color:inherit; font-size:14px; }
+  .cm-x:hover { background:rgba(128,128,128,.18); }
+  .cm-scroll { overflow-y:auto; padding:13px 15px 16px; -webkit-overflow-scrolling:touch; }
+  .cm-note { font-size:11.5px; opacity:.6; margin-bottom:11px; line-height:1.6; }
+  .cm-empty { text-align:center; padding:28px 0; opacity:.5; font-size:13px; }
+  .cm-list { display:flex; flex-direction:column; gap:11px; }
+  .cm-item { display:flex; gap:12px; align-items:flex-start;
+             padding:11px; border-radius:12px;
+             background:rgba(128,128,128,.10); border:1px solid rgba(128,128,128,.2);
+             /* 목록이 하나씩 스며들어 온다 */
+             animation: cmIn .3s ease backwards; }
+  .cm-item:nth-child(1){animation-delay:.02s} .cm-item:nth-child(2){animation-delay:.05s}
+  .cm-item:nth-child(3){animation-delay:.08s} .cm-item:nth-child(4){animation-delay:.11s}
+  .cm-item:nth-child(5){animation-delay:.14s} .cm-item:nth-child(n+6){animation-delay:.17s}
+  @keyframes cmIn { from { opacity:0; transform:translateY(9px); } to { opacity:1; transform:none; } }
+  /* 왼쪽 미니 카드 — 인게임 손패와 같은 등급 글로우(card-fx-*)를 그대로 입는다.
+     ⚠ position:relative 금지 (card-fx-* 규약) */
+  .cm-card { position:static; flex:0 0 auto; width:62px; min-height:86px; border-radius:9px;
+             display:flex; flex-direction:column; align-items:center; justify-content:center;
+             gap:3px; padding:5px 4px; text-align:center; overflow:hidden; }
+  .cm-card.masked { background:rgba(128,128,128,.28); }
+  .cm-g { font-size:10px; font-weight:800; opacity:.85; }
+  .cm-n { font-size:8.5px; font-weight:700; line-height:1.15; word-break:keep-all; }
+  .cm-p { font-size:9px; font-weight:800; opacity:.9; }
+  .cm-body { flex:1 1 auto; min-width:0; }
+  .cm-name { display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+             font-size:14.5px; font-weight:800; margin-bottom:5px; word-break:keep-all; }
+  .cm-grade { font-size:10px; font-weight:800; padding:1px 6px; border-radius:999px;
+              background:rgba(128,128,128,.22); }
+  .cm-pw { font-size:12px; font-weight:700; opacity:.85; margin-bottom:5px; }
+  /* ★ 여기가 핵심 — 손패에서 잘리던 설명을 전부 편다 (말줄임·줄 수 제한 없음) */
+  .cm-desc { font-size:13px; line-height:1.75; word-break:keep-all;
+             white-space:normal; overflow:visible; text-overflow:clip; display:block; }
+  .cm-flavor { margin-top:7px; font-size:11.5px; font-style:italic; opacity:.55; word-break:keep-all; }
+  @media (max-width:520px){
+    .cm-panel { max-height:86vh; }
+    .cm-card { width:52px; min-height:72px; }
+    .cm-name { font-size:13.5px; }
+    .cm-desc { font-size:12.5px; }
+  }
+
+  /* ===================== [Ver 10.5] 친구 탭 ===================== */
+  .fr-list { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+  .fr-row { display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:9px;
+            background:rgba(128,128,128,.10); border:1px solid rgba(128,128,128,.18); }
+  .fr-dot { flex:0 0 auto; width:9px; height:9px; border-radius:50%; background:#7a7a7a; }
+  .fr-dot.on { background:#3fd07a; box-shadow:0 0 7px 2px rgba(63,208,122,.55); }
+  .fr-main { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; }
+  .fr-main b { font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .fr-main small { font-size:10.5px; opacity:.6; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
   /* ===================== [Ver 10.5] 리더보드 프로필 ===================== */
   .ol-row.ol-clickable { cursor:pointer; transition:background .12s, transform .12s; }
   .ol-row.ol-clickable:hover { background:rgba(128,128,128,.14); transform:translateX(2px); }
@@ -8883,7 +8959,7 @@ body.mobile-mode .hitman-panel{ font-size:8px; padding:2px 8px; top:-11px; }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 10.5</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 10.5.1</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -9570,6 +9646,13 @@ body.mobile-mode .hitman-panel{ font-size:8px; padding:2px 8px; top:-11px; }
           <button class="shop-fab" id="shopBtn" onclick="openShop()" title="상점">
             <span class="shop-fab-icon">🛒</span>
             <span class="shop-fab-label">상점</span>
+          </button>
+          <!-- [Ver 10.5.1] 카드 설명서 — 손패 카드의 이름과 설명을 잘리지 않게 본다.
+               손패 카드는 폭이 좁아 설명이 말줄임표로 잘리는데, 그걸 읽을 곳이 없었다.
+               상점과 달리 "내 턴"이 아니어도 볼 수 있다 — 정보만 보는 창이라 게임에 관여하지 않는다. -->
+          <button class="shop-fab manual-fab" id="manualBtn" onclick="openCardManual()" title="카드 설명서">
+            <span class="shop-fab-icon">📖</span>
+            <span class="shop-fab-label">설명서</span>
           </button>
           <!-- [Ver 9.11] 랩터 재단 버튼은 삭제됐다. 재단이 하던 역할은 "유물 광산"의 유물이 이어받는다. -->
           <!-- [Ver 9.10.1 신규] 카드 진화 — 상점 버튼 바로 아래에 더 작게 붙는다.
@@ -12329,7 +12412,9 @@ const STORAGE_KEYS = {
   exp: 'gang_card_exp_v1', // [Ver 8.0] 레벨/경험치
   ubinite: 'gang_card_ubinite_v1', // [Ver 8.4] 꾸미기 재화 '우비나이트'
   userCode: 'gang_card_user_code_v1', // [Ver 9.12.1] 기기마다 한 번 발급되는 고유 유저 코드
-  bio: 'gang_card_bio_v1' // [Ver 10.5] 상태메시지 — 리더보드 프로필에 함께 표시된다
+  bio: 'gang_card_bio_v1', // [Ver 10.5] 상태메시지 — 리더보드 프로필에 함께 표시된다
+  friendCode: 'gang_card_friend_code_v1', // [Ver 10.5] 친구 코드 (공개용 · 사용자가 마음대로 바꾼다)
+  friends: 'gang_card_friends_v1'         // [Ver 10.5] 친구 목록 (이 기기에만 저장)
 };
 
 /* ==========================================================================
@@ -12834,6 +12919,57 @@ function setPlayerBio(v){
   return true;
 }
 
+/* ##########################################################################
+   [Ver 10.5 신규] 친구 코드 · 친구 목록
+   --------------------------------------------------------------------------
+   ▶ 친구 코드는 유저 코드와 **완전히 다른 물건**이다. 반드시 구분할 것.
+       유저 코드 : 백업을 복원해 오는 **계정 열쇠**. 절대 공개하면 안 된다.
+       친구 코드 : 그냥 친구 찾기용 **공개 명함**. 남이 알아도 아무 일도 일어나지 않고,
+                   사용자가 마음대로 바꿔도 된다. 겹쳐도 상관없다(검색 결과가 여럿 나올 뿐).
+     ⚠ 이 둘을 한 화면에 나란히 두지 말 것. 헷갈려서 유저 코드를 공유하게 되는 순간
+       그 사람의 계정이 통째로 털린다.
+   ▶ 친구 목록은 **이 기기에만** 저장한다(localStorage).
+     상호 수락 같은 절차 없이 "내가 지켜볼 사람 목록"에 가깝다. 그래서 서버에
+     친구 관계 컬렉션을 따로 두지 않아도 되고, 규칙도 그만큼 단순해진다.
+     대신 기기를 옮기면 따라가야 하므로 백업 대상(BACKUP_KEYS)에 넣는다.
+   ########################################################################## */
+const FRIEND_CODE_MAX = 12;
+const FRIENDS_MAX = 30;
+function getFriendCode(){
+  let c = '';
+  try{ c = localStorage.getItem(STORAGE_KEYS.friendCode) || ''; }catch(e){}
+  if(!c){
+    /* 처음 한 번 자동 발급. 유저 코드와 눈으로 구분되도록 6자리로 뽑는다. */
+    const pick = ()=> USER_CODE_ALPHABET[Math.floor(Math.random()*USER_CODE_ALPHABET.length)];
+    c = Array.from({length:6}, pick).join('');
+    try{ localStorage.setItem(STORAGE_KEYS.friendCode, c); }catch(e){}
+  }
+  return c;
+}
+/* 사용자가 직접 고르는 값이라 모양만 검사한다(영문·숫자 4~12자). 중복은 허용한다. */
+function setFriendCode(v){
+  const c = String(v||'').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, FRIEND_CODE_MAX);
+  if(c.length < 4) return { ok:false, msg:'친구 코드는 영문·숫자 4~12자로 지어주세요.' };
+  try{ localStorage.setItem(STORAGE_KEYS.friendCode, c); }catch(e){ return { ok:false, msg:'저장하지 못했습니다.' }; }
+  return { ok:true, code:c };
+}
+function loadFriends(){
+  try{ const a = JSON.parse(localStorage.getItem(STORAGE_KEYS.friends) || '[]'); return Array.isArray(a) ? a : []; }
+  catch(e){ return []; }
+}
+function saveFriends(list){
+  try{ localStorage.setItem(STORAGE_KEYS.friends, JSON.stringify((list||[]).slice(0, FRIENDS_MAX))); }catch(e){}
+}
+function addFriendLocal(entry){
+  const list = loadFriends();
+  if(list.some(f=> f.uid === entry.uid)) return { ok:false, msg:'이미 친구 목록에 있습니다.' };
+  if(list.length >= FRIENDS_MAX) return { ok:false, msg:`친구는 최대 ${FRIENDS_MAX}명까지 추가할 수 있습니다.` };
+  list.push({ uid:entry.uid, nick:entry.nick||'', fcode:entry.fcode||'' });
+  saveFriends(list);
+  return { ok:true };
+}
+function removeFriendLocal(uid){ saveFriends(loadFriends().filter(f=> f.uid !== uid)); }
+
 function openNicknameEditor(){
   const cur = getPlayerNickname();
   const curBio = getPlayerBio();
@@ -12848,6 +12984,15 @@ function openNicknameEditor(){
      <input id="bioEditInput" maxlength="${BIO_MAX}" value="${escapeHtml(curBio)}" placeholder="예) 오늘도 갱차 당했습니다"
       style="${__inpStyle}"
       onkeydown="if(event.key==='Enter'){ event.preventDefault(); document.querySelector('.modal-box .mfoot .btn-solid').click(); }">
+     <!-- [Ver 10.5] 친구 코드 — 공개해도 되는 값이다. (유저 코드와 헷갈리지 않도록 설명을 붙인다) -->
+     <div style="font-size:11px;color:var(--fg-dim);margin:12px 0 5px;">친구 코드 <span style="opacity:.65;">(영문·숫자 4~12자 · 친구 추가에 쓰입니다)</span></div>
+     <input id="fcodeEditInput" maxlength="${FRIEND_CODE_MAX}" value="${escapeHtml(getFriendCode())}" placeholder="예) UBIN99"
+      style="${__inpStyle}text-transform:uppercase;"
+      onkeydown="if(event.key==='Enter'){ event.preventDefault(); document.querySelector('.modal-box .mfoot .btn-solid').click(); }">
+     <div style="font-size:11px;color:var(--fg-faint);line-height:1.6;margin-top:6px;">
+       친구 코드는 <b>공유해도 안전합니다.</b> 친구 찾기에만 쓰입니다.<br>
+       <b style="color:#d64545;">유저 코드(🆔)는 절대 공유하지 마세요.</b> 그 코드를 아는 사람은 여러분의 진행도를 통째로 가져갈 수 있습니다.
+     </div>
      <div style="font-size:11px;color:var(--fg-faint);line-height:1.6;margin-top:10px;">변경한 내용은 <b>[내 기록 올리기]</b>를 눌러야 리더보드에 반영됩니다.</div>`,
     [
       { label:'저장', solid:true, action: ()=>{
@@ -12856,6 +13001,12 @@ function openNicknameEditor(){
           if(setPlayerNickname(v)) log('sys', `닉네임을 "${escapeHtml(getPlayerNickname())}"(으)로 변경했습니다.`);
           const bioIn = document.getElementById('bioEditInput');
           if(bioIn){ setPlayerBio(bioIn.value); }
+          const fcIn = document.getElementById('fcodeEditInput');
+          if(fcIn && fcIn.value.trim()){
+            const r2 = setFriendCode(fcIn.value);
+            if(!r2.ok) log('sys', `친구 코드를 바꾸지 못했습니다 — ${r2.msg}`);
+            else { log('sys', `친구 코드를 "${escapeHtml(r2.code)}"로 변경했습니다.`); try{ fbPresenceBeat(true); }catch(e){} }
+          }
           openUserStatPanel(usbCurrentTab); // [Ver 8.1.1] 저장 후 "내 정보" 패널로 자연스럽게 복귀
         } },
       { label:'취소', action: ()=>{ openUserStatPanel(usbCurrentTab); } }
@@ -13629,7 +13780,10 @@ function enterReadyPhase(p, opts={}){
 /* [Ver 7.1.9] LAN 개인 턴 제한시간(60초) 관리.
    호스트에서만 동작한다. 현재 턴 플레이어가 60초 내에 행동하지 않으면 lanAutoPlayForPlayer로 강제 진행한다. */
 let __lanTurnTimer = null;
-const LAN_TURN_LIMIT_MS = 60000;
+/* [Ver 10.5.1] 온라인 턴 제한 60초 → 180초.
+   카드가 늘면서 손패를 읽고 대상을 고르는 데 60초는 너무 짧았다. 특히 상점·도박까지
+   들르는 턴은 시간에 쫓겨 자동 넘김으로 날아가는 일이 잦았다. */
+const LAN_TURN_LIMIT_MS = 180000;
 function lanClearTurnTimer(){ if(__lanTurnTimer){ clearTimeout(__lanTurnTimer); __lanTurnTimer=null; } }
 
 /* ==========================================================================
@@ -14312,9 +14466,9 @@ const PET_DEFS = [
     detail:[{h:'발동 시점',b:'자신의 턴 시작마다 + 월급 지급 시'}, {h:'용돈',b:'매 턴 <b>(자신을 뺀 생존자 전원의 돈 합계)의 10%</b>를 받습니다. 남들이 부자일수록 많이 받습니다.'}, {h:'지출',b:'매 턴 <b>5골드</b>를 잃습니다.'}, {h:'월급 없음',b:'바퀴 월급은 받지 않습니다. 수입이 전적으로 남들의 자산에 달려 있습니다.'}] },
   { key:'rich', price:1000,     name:'부자 지후',       emoji:'💰', img:null,
     short:'돈으로 행복을 살 수 없는 이유는 그만큼의 돈이 없기 때문이다',
-    desc:'시작 돈이 <b>500골드</b>로 시작합니다. 대신 <b>랜덤 이벤트로 잃는 돈이 2.5배</b>가 됩니다. <b>야차(저점 매수)에서는 500 대신 기본 시작금의 2.5배</b>만 받습니다.',
-    fx:[{k:'good',t:'시작 돈 500골드'}, {k:'bad',t:'이벤트로 잃는 돈 2.5배'}, {k:'neutral',t:'야차에서는 2.5배만 (상점이 잠긴 모드라서)'}],
-    detail:[{h:'발동 시점',b:'판 시작 시 1회 + 랜덤 이벤트로 돈을 잃을 때마다'}, {h:'시작 자금',b:'평소 50골드 대신 <b>500골드</b>로 시작합니다. 초반 상점·도박을 여유롭게 굴릴 수 있습니다. <span style="opacity:.7;">(10.1에서 250 → 500 상향)</span>'}, {h:'[Ver 10.5] 야차 예외',b:'야차(저점 매수)는 <b>상점이 아예 잠겨 있어</b> 돈 쓸 곳이 경매와 눈치게임뿐입니다. 여기서 500골드는 개막 경매를 독식해 판을 시작부터 기울여버려, 이 모드에서만 <b>기본 시작금의 2.5배</b>(=125골드)로 낮췄습니다.'}, {h:'손실 2배',b:'랜덤 이벤트로 <b>잃는</b> 돈이 2배가 됩니다. (보이스피싱·기부왕 등)'}, {h:'주의',b:'이벤트로 <b>버는</b> 돈은 그대로입니다. 손해만 커집니다.'}] },
+    desc:'시작 돈이 <b>200골드</b>로 시작합니다. 대신 <b>랜덤 이벤트로 잃는 돈이 2.5배</b>가 됩니다.',
+    fx:[{k:'good',t:'시작 돈 200골드'}, {k:'bad',t:'이벤트로 잃는 돈 2.5배'}],
+    detail:[{h:'발동 시점',b:'판 시작 시 1회 + 랜덤 이벤트로 돈을 잃을 때마다'}, {h:'시작 자금',b:'평소 50골드 대신 <b>200골드</b>로 시작합니다. 초반 상점·도박을 여유롭게 굴릴 수 있습니다. <span style="opacity:.7;">(10.5.1에서 500 → 200 하향)</span>'}, {h:'[Ver 10.5.1] 일반전 전용',b:'지후펫 능력은 이제 <b>일반전에서만</b> 작동합니다. 야차·팀전·배틀로얄·사이비·핫시트에서는 펫을 데리고 나가도 능력이 걸리지 않습니다. (10.5에서 야차만 따로 잡았던 예외는 이 규칙에 흡수되었습니다)'}, {h:'손실 2배',b:'랜덤 이벤트로 <b>잃는</b> 돈이 2배가 됩니다. (보이스피싱·기부왕 등)'}, {h:'주의',b:'이벤트로 <b>버는</b> 돈은 그대로입니다. 손해만 커집니다.'}] },
   { key:'doctor', price:500,   name:'의사 지후',       emoji:'🩺', img:null,
     short:'이보세요.',
     desc:'자신의 턴마다 <b>자신을 포함한</b> 무작위 한 사람의 HP를 <b>300</b> 회복시킵니다. <b>남을 치료하면 치료비로 50골드를 받아냅니다.</b> (상대가 돈이 없어도 치료는 됩니다)',
@@ -14626,7 +14780,19 @@ function upgradeArtifact(key){
 /* ---------- 인게임 적용 ----------
    플레이어 객체에 p.artifacts = { key: lv } 를 심어두고, 모든 효과는 artLvOf()로 조회한다.
    (랜서버 스냅샷에 그대로 실려 참가자 화면에서도 같은 값이 보인다) */
+/* ==========================================================================
+   [Ver 10.5.1] "유물 없는 판" — 온라인 방에서 호스트가 켤 수 있는 규칙
+   --------------------------------------------------------------------------
+   ▶ 유물을 **지우지 않는다.** 저장된 유물을 실제로 삭제하면 되돌릴 수 없고,
+     그 판 하나 때문에 몇 시간 캔 유물이 날아간다. 그래서 "이 판 동안만 효과를 끈다".
+   ▶ 펫과 같은 방식이다 — 인게임 유물 효과는 전부 artLvOf()를 지나므로
+     여기 한 곳만 막으면 개별 유물 코드를 건드리지 않고 전부 잠긴다.
+   ⚠ artMine()은 막지 않는다. 그쪽은 경험치·우비나이트·뽑기처럼 **판 밖에서** 쓰는
+     효과라, 판 규칙과 무관하게 굴러가야 한다.
+   ========================================================================== */
+let noArtifactsMatch = false;
 function artLvOf(p, key){
+  if(noArtifactsMatch) return 0;
   try{ return (p && p.artifacts && p.artifacts[key]) || 0; }catch(e){ return 0; }
 }
 /* 그 플레이어의 유물 효과 수치. 안 갖고 있으면 0. */
@@ -14882,9 +15048,31 @@ function spendBoxKeys(n){
   return true;
 }
 /* 이 플레이어가 그 펫을 장착하고 있는가 — 모든 펫 효과 훅이 이 한 줄로 분기한다. */
-function hasPet(p, key){ return !!(p && p.pet === key); }
+/* ==========================================================================
+   [Ver 10.5.1] 지후펫 능력은 **일반전에서만** 작동한다
+   --------------------------------------------------------------------------
+   ▶ 왜 막았나
+     펫은 일반전 기준으로 설계·조정된 능력이다. 야차·팀전·배틀로얄·사이비·핫시트는
+     자원과 승리 조건이 전혀 달라서, 같은 능력이 그대로 들어가면 판을 통째로 기울인다.
+     (10.5에서 야차 부자 지후가 개막 경매를 독식하던 게 그 대표 사례다 — 그때는 그 펫
+      하나만 따로 잡았지만, 같은 문제가 다른 펫에도 얼마든지 남아 있었다)
+   ▶ 어떻게 막았나
+     펫 효과는 예외 없이 hasPet() 또는 petHolders() 를 지나간다(호출부 57곳).
+     그래서 **이 두 함수에서만** 막으면 개별 펫 코드를 하나도 건드리지 않고 전부 잠긴다.
+     새 펫을 추가해도 같은 관문을 쓰는 한 자동으로 이 규칙을 따른다.
+   ▶ 판정은 isFoundationModeActive() 를 그대로 쓴다 — "일반 모드(+ LAN 일반모드)"를
+     가리키는 기존 함수라, 모드 판정이 두 벌로 갈라지지 않는다.
+   ⚠ 스탯창의 펫 아이콘·칭호는 그대로 보인다(꾸미기 요소). 대신 판 시작 로그에
+     "이 모드에서는 능력이 작동하지 않는다"고 한 줄 남겨 오해를 막는다.
+   ========================================================================== */
+function petsActive(){
+  try{ return (typeof isFoundationModeActive === 'function') ? isFoundationModeActive() : true; }
+  catch(e){ return true; }
+}
+function hasPet(p, key){ return !!(petsActive() && p && p.pet === key); }
 /* 지금 판에서 그 펫을 낀 생존자 목록 (카지노딜러·세무사처럼 "남의 행동"에 반응하는 펫용) */
 function petHolders(key){
+  if(!petsActive()) return [];
   try{ return alivePlayers().filter(p=> p.pet === key); }catch(e){ return []; }
 }
 /* [Ver 9.10.2] 펫 효과 목록 — 구매 전에도 장단점이 한눈에 들어오도록 색으로 구분한다.
@@ -15684,7 +15872,7 @@ async function fbFetchTop(boardKey, n){
 const BACKUP_KEYS = ['stats','achievements','cardDex','cardMastery','masteryRank','evolved','titles',
                      'equippedTitle','artifacts','pickaxe','goldPickaxe','boxKeys','gachaTickets','pets','equippedPet',
                      'evoStones','evoClaws','evoPicks','profile','exp','ubinite','redeemed','mailbox',
-                     'bio'];   // [Ver 10.5] 상태메시지
+                     'bio','friendCode','friends'];   // [Ver 10.5] 상태메시지 · 친구 코드 · 친구 목록
 /* [Ver 9.14] 백업을 뜨기 전에 메모리에만 있는 값을 전부 localStorage로 내려쓴다.
    백업은 localStorage를 읽어가므로, 아직 저장되지 않은 최신 진행도가 있으면 그대로 누락된다.
    (예: STATS는 10초 간격 타이머로만 저장돼, 직전 판의 기록이 빠질 수 있었다) */
@@ -15904,6 +16092,98 @@ async function fbFindBackupByCode(code){
     if(!found || (x.at||0) > (found.at||0)) found = x;
   });
   return found;
+}
+
+/* ##########################################################################
+   [Ver 10.5 신규] 접속 상태(presence) · 친구 찾기 · 게임 요청
+   --------------------------------------------------------------------------
+   ▶ 왜 players 문서에 얹지 않고 컬렉션을 따로 뒀나
+     players는 "내 기록 올리기"를 눌러야만 갱신되는 **리더보드 문서**다. 여기에 접속
+     시각을 얹으면 하트비트를 쓸 때마다 점수까지 같이 올라가버려 그 규칙이 깨진다.
+     또 players 규칙은 검증 항목이 많아, 하트비트 한 줄 때문에 전체 검증을 매번 통과시켜야 한다.
+     그래서 가볍고 자주 쓰는 값만 담는 presence 컬렉션을 따로 만들었다.
+   ▶ 요금 — 하트비트는 **화면이 보이는 동안 3분에 한 번**만 쓴다. 친구 상태는 친구 탭을
+     열거나 새로고침을 누를 때만 읽는다(자동 폴링 없음). 무료 한도에서 충분히 돈다.
+   ########################################################################## */
+const PRESENCE_BEAT_MS   = 3 * 60 * 1000;   // 하트비트 최소 간격
+const PRESENCE_ONLINE_MS = 5 * 60 * 1000;   // 이 시간 안에 신호가 있으면 "온라인"
+let __lastPresenceAt = 0;
+
+/* 내 접속 상태를 올린다. force가 아니면 최소 간격을 지킨다. 실패해도 조용히 넘어간다. */
+async function fbPresenceBeat(force){
+  if(!fbAvailable()) return false;
+  const now = Date.now();
+  if(!force && (now - __lastPresenceAt) < PRESENCE_BEAT_MS) return false;
+  __lastPresenceAt = now;
+  try{
+    await fbInit();
+    const { doc, setDoc } = FB.mod;
+    await setDoc(doc(FB.db, 'presence', FB.uid), {
+      nick:  String(getPlayerNickname() || '이름없음').slice(0, 16),
+      fcode: String(getFriendCode() || '').slice(0, 12),
+      at:    now
+    });
+    return true;
+  }catch(e){ __lastPresenceAt = 0; return false; }
+}
+/* 닉네임 또는 친구 코드로 사람을 찾는다. 둘 다 정확히 일치해야 잡힌다(부분 검색은 색인이 필요하다). */
+async function fbFindPeople(qRaw){
+  await fbInit();
+  const { collection, query, where, limit, getDocs } = FB.mod;
+  const q0 = String(qRaw||'').trim();
+  if(!q0) return [];
+  const out = new Map();
+  const runQ = async (field, val)=>{
+    try{
+      const snap = await getDocs(query(collection(FB.db,'presence'), where(field,'==',val), limit(10)));
+      snap.forEach(d=>{ if(d.id !== FB.uid) out.set(d.id, { uid:d.id, ...d.data() }); });
+    }catch(e){}
+  };
+  await runQ('fcode', q0.toUpperCase());
+  await runQ('nick',  q0);
+  return Array.from(out.values());
+}
+/* 친구들의 현재 상태를 한 번에 읽어온다. 친구가 30명 이하라 개별 조회로 충분하다. */
+async function fbFetchFriendStates(uids){
+  await fbInit();
+  const { doc, getDoc } = FB.mod;
+  const res = {};
+  await Promise.all((uids||[]).map(async uid=>{
+    try{
+      const s = await getDoc(doc(FB.db, 'presence', uid));
+      if(s.exists()) res[uid] = s.data();
+    }catch(e){}
+  }));
+  return res;
+}
+/* 게임 요청 보내기 — invites/{받는사람}/from/{나} 에 내 문서 하나만 쓴다.
+   내 uid로 경로가 고정돼 있어, 남의 이름을 사칭하거나 한 사람에게 여러 개를 쌓을 수 없다. */
+async function fbSendInvite(toUid){
+  await fbInit();
+  const { doc, setDoc } = FB.mod;
+  let room = '';
+  try{ if(typeof LAN!=='undefined' && LAN.room && LAN.room.code) room = String(LAN.room.code).slice(0,12); }catch(e){}
+  await setDoc(doc(FB.db, 'invites', toUid, 'from', FB.uid), {
+    nick: String(getPlayerNickname() || '이름없음').slice(0, 16),
+    at:   Date.now(),
+    room: room
+  });
+  return true;
+}
+async function fbFetchInvites(){
+  await fbInit();
+  const { collection, getDocs, limit, query } = FB.mod;
+  const snap = await getDocs(query(collection(FB.db, 'invites', FB.uid, 'from'), limit(20)));
+  const out = [];
+  snap.forEach(d=> out.push({ uid:d.id, ...d.data() }));
+  out.sort((a,b)=> (b.at||0) - (a.at||0));
+  return out;
+}
+async function fbDeleteInvite(fromUid){
+  await fbInit();
+  const { doc, deleteDoc } = FB.mod;
+  try{ await deleteDoc(doc(FB.db, 'invites', FB.uid, 'from', fromUid)); }catch(e){}
+  return true;
 }
 
 /* ---------- 글로벌 통계 ---------- */
@@ -16689,6 +16969,7 @@ const BALANCE_PATCHES = [
 /* ---------- 온라인 화면 ---------- */
 const ONLINE_TABS = [
   { key:'rank',   label:'🏅 랭킹' },
+  { key:'friend', label:'👥 친구' },   // [Ver 10.5]
   { key:'sync',   label:'☁️ 계정' },
   { key:'global', label:'📊 통계' },
   { key:'notice', label:'📢 공지' },
@@ -16737,6 +17018,7 @@ function olError(e){
 function renderOnlineTab(){
   if(olBlocked()) return;
   if(onlineTab === 'rank')   return renderOnlineRank();
+  if(onlineTab === 'friend') return renderOnlineFriends();
   if(onlineTab === 'sync')   return renderOnlineSync();
   if(onlineTab === 'global') return renderOnlineGlobal();
   if(onlineTab === 'notice') return renderOnlineNotice();
@@ -16853,6 +17135,126 @@ function doSubmitScore(){
   olBusy('기록을 올리는 중...');
   fbSubmitScore().then(()=>{ renderOnlineRank(); }).catch(olError);
 }
+/* ==========================================================================
+   [Ver 10.5] 친구 탭
+   ▶ 목록은 로컬에 있고, 접속 상태만 서버에서 읽어 덧입힌다.
+   ▶ 자동 새로고침을 하지 않는다 — 열 때 한 번, 그리고 [새로고침]을 누를 때만 읽는다.
+     (친구 수만큼 읽기가 나가므로, 계속 폴링하면 무료 한도를 금방 먹는다)
+   ========================================================================== */
+function fmtSeenAgo(at){
+  if(!at) return '기록 없음';
+  const diff = Date.now() - at;
+  if(diff < PRESENCE_ONLINE_MS) return '접속 중';
+  const m = Math.floor(diff / 60000);
+  if(m < 60)   return `${m}분 전`;
+  const h = Math.floor(m / 60);
+  if(h < 24)   return `${h}시간 전`;
+  const d = Math.floor(h / 24);
+  return d < 30 ? `${d}일 전` : '오래 전';
+}
+function renderOnlineFriends(){
+  olBusy('친구 목록을 불러오는 중...');
+  const friends = loadFriends();
+  Promise.all([
+    fbPresenceBeat(true),                                   // 내 상태부터 갱신
+    fbFetchFriendStates(friends.map(f=> f.uid)),
+    fbFetchInvites().catch(()=> [])
+  ]).then(([, states, invites])=>{
+    const w = document.getElementById('onlineWrap'); if(!w) return;
+
+    const invHtml = invites.length ? `
+      <div class="ol-sec">
+        <div class="ol-sec-t">📨 받은 게임 요청 <b>${invites.length}</b></div>
+        ${invites.map(v=> `
+          <div class="fr-row">
+            <span class="fr-dot on"></span>
+            <span class="fr-main">
+              <b>${escapeHtml(v.nick||'이름없음')}</b>
+              <small>같이 하자고 합니다 · ${fmtSeenAgo(v.at)}${v.room?` · 방 코드 <b>${escapeHtml(v.room)}</b>`:''}</small>
+            </span>
+            <button class="btn btn-sm" onclick="dismissInvite('${escapeHtml(v.uid)}')">확인</button>
+          </div>`).join('')}
+      </div>` : '';
+
+    const rows = friends.map(f=>{
+      const st = states[f.uid] || null;
+      const at = st ? (st.at||0) : 0;
+      const online = at && (Date.now() - at) < PRESENCE_ONLINE_MS;
+      const nick = (st && st.nick) || f.nick || '이름없음';
+      return `<div class="fr-row">
+        <span class="fr-dot ${online?'on':''}"></span>
+        <span class="fr-main">
+          <b>${escapeHtml(nick)}</b>
+          <small>${escapeHtml(fmtSeenAgo(at))}${(st&&st.fcode)?` · ${escapeHtml(st.fcode)}`:''}</small>
+        </span>
+        <button class="btn btn-sm btn-solid" onclick="inviteFriend('${escapeHtml(f.uid)}')" title="같이 하자고 알립니다">🎮</button>
+        <button class="btn btn-sm btn-ghost" onclick="dropFriend('${escapeHtml(f.uid)}')" title="친구 삭제">✕</button>
+      </div>`;
+    }).join('');
+
+    w.innerHTML = `
+      ${invHtml}
+      <div class="ol-sec">
+        <div class="ol-sec-t">🪪 내 친구 코드</div>
+        <div class="ol-mycode-big">${escapeHtml(getFriendCode())}</div>
+        <div class="ol-sec-d">이 코드는 <b>공유해도 안전합니다.</b> 친구 찾기에만 쓰입니다.<br>
+          바꾸려면 시작 화면의 <b>내 정보 변경</b>에서 수정하세요.<br>
+          <b style="color:#d64545;">계정 열쇠인 유저 코드(🆔)와는 다른 값입니다. 유저 코드는 절대 공유하지 마세요.</b></div>
+      </div>
+      <div class="ol-sec">
+        <div class="ol-sec-t">➕ 친구 추가</div>
+        <div class="ol-sec-d"><b>닉네임</b> 또는 <b>친구 코드</b>를 정확히 입력하세요.</div>
+        <div class="ol-row-in">
+          <input id="frAddInput" class="input" maxlength="16" placeholder="닉네임 또는 친구 코드"
+            onkeydown="if(event.key==='Enter'){ event.preventDefault(); doFriendSearch(); }">
+          <button class="btn" onclick="doFriendSearch()">찾기</button>
+        </div>
+        <div class="ol-msg" id="frMsg"></div>
+      </div>
+      <div class="ol-sec">
+        <div class="ol-sec-t">👥 친구 <b>${friends.length}</b> / ${FRIENDS_MAX}
+          <button class="btn btn-sm btn-ghost" style="float:right;" onclick="renderOnlineFriends()">새로고침</button></div>
+        ${friends.length ? `<div class="fr-list">${rows}</div>`
+                         : `<div class="ol-empty">아직 친구가 없습니다. 위에서 <b>닉네임이나 친구 코드</b>로 추가해보세요.</div>`}
+      </div>
+      <div class="ol-note">접속 상태는 이 탭을 열거나 <b>새로고침</b>을 누를 때만 갱신됩니다.</div>`;
+  }).catch(olError);
+}
+function doFriendSearch(){
+  const inp = document.getElementById('frAddInput');
+  const m = document.getElementById('frMsg');
+  const q = (inp && inp.value || '').trim();
+  if(!q){ if(m) m.textContent = '닉네임이나 친구 코드를 입력하세요.'; return; }
+  if(m) m.textContent = '찾는 중...';
+  fbFindPeople(q).then(list=>{
+    if(!list.length){ if(m) m.innerHTML = `<b style="color:#d64545;">찾지 못했습니다.</b> 닉네임·친구 코드가 정확한지 확인해주세요. (한 번도 접속한 적 없는 사람은 검색되지 않습니다)`; return; }
+    if(m) m.innerHTML = list.map(p=> `
+      <div class="fr-row">
+        <span class="fr-dot ${(p.at && Date.now()-p.at < PRESENCE_ONLINE_MS)?'on':''}"></span>
+        <span class="fr-main"><b>${escapeHtml(p.nick||'이름없음')}</b><small>${escapeHtml(p.fcode||'')} · ${escapeHtml(fmtSeenAgo(p.at))}</small></span>
+        <button class="btn btn-sm btn-solid" onclick="doFriendAdd('${escapeHtml(p.uid)}','${escapeHtml(p.nick||'')}','${escapeHtml(p.fcode||'')}')">추가</button>
+      </div>`).join('');
+  }).catch(e=>{ if(m) m.innerHTML = `<b style="color:#d64545;">실패</b> — ${escapeHtml(e.message||String(e))}`; });
+}
+function doFriendAdd(uid, nick, fcode){
+  const r = addFriendLocal({ uid, nick, fcode });
+  const m = document.getElementById('frMsg');
+  if(!r.ok){ if(m) m.innerHTML = `<b style="color:#d64545;">${escapeHtml(r.msg)}</b>`; return; }
+  renderOnlineFriends();
+}
+function dropFriend(uid){
+  showModal('친구 삭제', '이 친구를 목록에서 지울까요?', [
+    { label:'취소' },
+    { label:'삭제', solid:true, action:()=>{ removeFriendLocal(uid); renderOnlineFriends(); } }
+  ]);
+}
+function inviteFriend(uid){
+  fbSendInvite(uid)
+    .then(()=> showModal('🎮 게임 요청', '같이 하자고 알렸습니다. 상대가 <b>친구 탭</b>을 열면 확인할 수 있습니다.', [{label:'확인', solid:true}]))
+    .catch(e=> showModal('실패', escapeHtml(e.message||String(e)), [{label:'확인', solid:true}]));
+}
+function dismissInvite(uid){ fbDeleteInvite(uid).then(()=> renderOnlineFriends()); }
+
 function renderOnlineSync(){
   const w = document.getElementById('onlineWrap'); if(!w) return;
   w.innerHTML = `
@@ -18196,6 +18598,13 @@ function initPersistentSystems(){
     if(!document.hidden && gameActive){ bumpStat('playMs', now - window.__playClock); saveStats(); }
     window.__playClock = now;
   }, 10000);
+  /* [Ver 10.5] 접속 상태 — 켤 때 한 번, 이후 화면이 보이는 동안 주기적으로.
+     탭이 숨겨져 있으면 쓰지 않는다(요금 절약 + "접속 중"의 의미도 그게 맞다). */
+  try{
+    fbPresenceBeat(true);
+    setInterval(()=>{ if(!document.hidden) fbPresenceBeat(false); }, 60000);
+    document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) fbPresenceBeat(false); });
+  }catch(e){}
   setRandomMenuHero();
   startMenuTicker();
   openDefaultMenuFolder();
@@ -18497,6 +18906,19 @@ function exitPlaygroundBar(){
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
   {
+    version: 'Ver 10.5.1',
+    date: '2026-08-16',
+    items: [
+      '📖 <b>[신규] 카드 설명서</b> — 손패 카드는 폭이 좁아 설명이 잘리는데, 그 잘린 설명을 끝까지 읽을 곳이 없었습니다. 이제 <b>상점 버튼 옆 📖 설명서</b>로 손패 전체의 이름·능력·플레이버를 <b>잘리지 않게</b> 볼 수 있습니다.',
+      '📖 <b>[신규] 카드를 길게 누르면 설명이 열립니다</b> — 손패 카드를 <b>길게 누르면</b>(약 0.4초) 그 카드 설명만 바로 펼쳐집니다. 손가락을 움직이면 취소되므로 드래그해서 내는 조작은 그대로입니다. 정보만 보는 창이라 <b>내 턴이 아니어도</b> 열립니다.',
+      '⏱️ <b>[온라인] 턴 제한 60초 → 180초</b> — 카드가 늘면서 손패를 읽고 대상을 고르는 데 60초는 너무 짧았습니다. 특히 상점·도박까지 들르는 턴은 시간에 쫓겨 자동 넘김으로 날아가는 일이 잦았습니다.',
+      '⛏️ <b>[온라인 신규] 유물 없는 판</b> — 온라인 방을 열면 시작 직전에 <b>유물 사용 / 유물 없이 시작</b>을 고릅니다. 유물 없이 고르면 그 판 동안 <b>모두의 유물 효과가 꺼집니다.</b> <b>저장된 유물은 지워지지 않고</b> 다음 판부터 그대로 돌아옵니다 — 판 하나 때문에 몇 시간 캔 유물이 날아가면 안 되니까요. 고른 값은 기억되어 다음 방에서도 기본값이 됩니다.',
+      '💰 <b>[너프] 부자 지후</b> — 시작 돈 <b>500 → 200골드</b>',
+      '🐾 <b>[변경] 지후펫 능력이 일반전에서만 작동합니다</b> — 펫은 일반전 기준으로 설계·조정된 능력입니다. <b>야차 · 팀전 · 배틀로얄 · 사이비 · 핫시트</b>는 자원과 승리 조건이 전혀 달라서, 같은 능력이 그대로 들어가면 판을 통째로 기울입니다. (10.5의 <b>야차 부자 지후</b>가 그 대표 사례였고, 같은 문제가 다른 펫에도 남아 있었습니다) 이제 이 모드들에서는 펫을 데리고 나가도 능력이 걸리지 않으며, 판 시작 로그로 알려드립니다. <b>시작 보정(시작 돈·MaxHP·지지율 등)도 함께 걸리지 않습니다.</b> 스탯창의 펫 아이콘은 꾸미기 요소라 그대로 보입니다.',
+      '💰 [정리] 10.5에서 야차에만 걸었던 <b>부자 지후 예외</b>는 위 규칙에 흡수되어 삭제했습니다. 일반전 시작금은 그대로 500골드입니다.'
+    ]
+  },
+  {
     version: 'Ver 10.5',
     date: '2026-08-16',
     items: [
@@ -18521,6 +18943,9 @@ const CHANGELOG = [
       '🎲 [개발자] 랜덤 이벤트 강제 버튼을 <b>인게임 버튼바(항복 옆)</b>로 옮겼습니다. 시작 화면 메뉴에만 있으면 "게임 진행 중에만 예약 가능"이라 영영 쓸 수 없었습니다. 보라색이라 눈에 잘 띕니다.',
       '🎟️ [코드] 버그 제보 보상 코드가 발급되었습니다. <b>특정 유저 코드 전용 코드</b>를 만들 수 있게 되었습니다(onlyCode).',
       '🚪 <b>[수정] 승부가 나기 전에 나가면 패배로 기록됩니다</b> — 연승을 0으로 되돌리는 곳이 <b>결과 화면 한 군데뿐</b>이었습니다. 결과 화면은 승부가 끝나야 뜨므로, <b>지고 있을 때 [게임 종료]를 누르면 패배가 기록되지 않고 연승이 그대로 남았습니다.</b> 불리한 판마다 나가버리면 연승이 끝없이 쌓입니다. 이제 승부 전에 판을 떠나면 그 자리에서 <b>1패 + 연승 초기화</b>로 집계되며, 종료 확인창이 미리 알려줍니다. 티어 점수는 원래도 4등으로 처리하고 있었으니 통계를 같은 기준으로 맞춘 셈입니다. <b>창을 닫거나 새로고침하는 것도 같게 처리</b>합니다 — 그러지 않으면 "새로고침으로 나가면 그만"이 되어 막는 의미가 없습니다.',
+      '👥 <b>[신규] 친구</b> — 온라인 메뉴에 <b>👥 친구</b> 탭이 생겼습니다. <b>닉네임이나 친구 코드</b>로 친구를 추가하면 <b>접속 중인지</b>, 아니면 <b>몇 분 전에 접속했는지</b> 보입니다. 🎮 버튼으로 <b>같이 하자고 요청</b>할 수도 있습니다. (요청을 보낼 때 랜서버 방을 열어둔 상태라면 방 코드도 함께 전달됩니다)',
+      '🪪 <b>[신규] 친구 코드</b> — <b>공유해도 안전한</b> 공개용 코드입니다. 시작 화면 <b>내 정보 변경</b>에서 원하는 대로 바꿀 수 있습니다(영문·숫자 4~12자). <b style="color:#d64545;">계정 열쇠인 유저 코드(🆔)와는 전혀 다른 값입니다 — 유저 코드는 그 코드를 아는 사람이 여러분의 진행도를 통째로 가져갈 수 있으니 절대 공유하지 마세요.</b>',
+      '👥 [친구] 친구 목록은 <b>이 기기에 저장</b>되며 백업·복원 대상에 포함됩니다. 접속 상태는 탭을 열거나 <b>새로고침</b>을 누를 때만 갱신됩니다(계속 조회하면 서버 사용량만 늘기 때문입니다).',
       '🪪 <b>[신규] 리더보드 프로필</b> — 리더보드에서 <b>이름을 누르면</b> 그 사람의 기록이 한 장으로 펼쳐집니다. 승률 · 총 판 수(승부 전 이탈 판 수까지) · 최대 연승 · 한 방 최대 · 플레이 시간 · <b>얻은 카드 종수</b> · <b>진화 카드 종수</b> · <b>유물 레벨 총합</b> · <b>가장 애용하는 지후펫</b> · <b>가장 애용하는 카드</b>를 봅니다. 펫과 카드는 실제 일러스트·등급 글로우로 그려집니다. (추가 조회가 없어 아무리 열어봐도 서버 요금이 늘지 않습니다)',
       '✍️ <b>[신규] 상태메시지</b> — 메뉴의 <b>닉네임 변경</b>이 <b>내 정보 변경</b>으로 바뀌고, 그 안에서 <b>상태메시지(최대 40자)</b>를 쓸 수 있습니다. 리더보드 목록과 프로필에 함께 표시됩니다. 바꾼 내용은 <b>[내 기록 올리기]</b>를 눌러야 반영됩니다.',
       '🐾 [기록] 판을 시작할 때 데리고 나온 지후펫을 집계하기 시작했습니다. "가장 애용하는 펫"은 이 기록으로 뽑히므로, <b>10.5부터 쌓인 것만</b> 반영됩니다.',
@@ -25804,6 +26229,10 @@ function actuallyStartGame(){
   /* [Ver 10.5] 판 전체에 걸리는 신규 효과 초기화 — 다음 판으로 새어나가지 않게 한다. */
   greenbeltIdx = -1; greenbeltOwnerId = null; greenbeltCardName = '';
   shopPermaMonopolyId = null; dmzActive = false; lastPileGrade = null;
+  /* [Ver 10.5.1] 유물 없는 판은 랜서버 호스트가 켤 때만 유지된다.
+     혼자 하는 판으로 넘어올 때 규칙이 새어나가지 않도록 여기서 항상 내린다.
+     (랜 호스트는 lanHostStartGame이 이 뒤에 다시 세운다) */
+  if(!(typeof lanMode!=='undefined' && lanMode)) noArtifactsMatch = false;
   window.__reaperDeathChance = 0;
   /* [Ver 9.7] 발동 주기(1~3턴)와 결과 화면 지연 플래그도 판마다 새로 잡는다.
      reVictoryHold가 이전 판에서 켜진 채 남으면 다음 판의 결과 화면이 영영 안 뜬다. */
@@ -26028,18 +26457,18 @@ function applyPetGameStart(p){
   p.__petInit = true;
   const def = petDefOf(p.pet);
   if(!def) return;
+  /* [Ver 10.5.1] 일반전이 아니면 시작 보정(시작 돈·MaxHP·지지율 등)도 걸지 않는다.
+     여기는 hasPet()을 지나지 않고 p.pet을 직접 보는 유일한 자리라 따로 막아야 한다. */
+  if(!petsActive()){
+    try{ if(isMyPlayer(p)) bumpStatMap('petUse', p.pet); }catch(e){}
+    log('sys', `🐾 ${J(p.name,'이','가')} 지후펫 <b>${def.name}</b>${Jp(def.name,'을','를')} 데리고 나왔지만, <b>이 모드에서는 지후펫 능력이 작동하지 않습니다.</b> (일반전 전용)`);
+    return;
+  }
   switch(p.pet){
     case 'beggar':  p.gold = -50; break;                       // 시작 돈 음수
-    /* [Ver 10.5 너프] 야차(저점 매수)에서만 따로 잡는다.
-       ▶ 왜 야차에서만 문제였나 — 야차는 **상점이 아예 잠겨 있어** 돈 쓸 곳이 경매와 눈치게임뿐이다.
-         일반 모드에서는 500골드가 그냥 "상점을 좀 여유롭게 굴리는" 정도지만,
-         야차에서는 그 돈이 곧바로 개막 경매 독식으로 이어져 판이 시작하자마자 기울었다.
-         (기본 시작금의 10배다)
-       ▶ 그래서 야차에서는 고정 500 대신 **기본 시작금의 2.5배**만 준다.
-         기본값이 바뀌어도 배수는 그대로 따라가도록 곱셈으로 둔다. */
-    case 'rich':
-      p.gold = (typeof draftMode!=='undefined' && draftMode) ? Math.round((p.gold||50) * 2.5) : 500;
-      break;
+    /* [Ver 10.5.1] 야차 예외 분기를 걷어냈다 — 위에서 이미 "일반전이 아니면 통째로 잠금"이
+       걸리므로, 이 case는 일반전에서만 실행된다. 조건을 두 군데 두면 나중에 어긋난다. */
+    case 'rich':    p.gold = 200; break;                       // [Ver 10.5.1 너프] 500 → 200
     case 'vampire': p.maxHp = Math.max(1, p.maxHp - 300); p.hp = Math.min(p.hp, p.maxHp); break;
     case 'assassin':p.maxHp = Math.max(1, p.maxHp - 400); p.hp = Math.min(p.hp, p.maxHp); break;
     case 'politician': p.petApproval = 50; break;              // 지지율 게이지
@@ -31317,6 +31746,123 @@ function statusText(p){
   return tags.join(' · ');
 }
 
+/* ##########################################################################
+   [Ver 10.5.1 신규] 카드 설명서
+   --------------------------------------------------------------------------
+   ▶ 왜 만들었나
+     손패 카드는 폭이 좁아 desc가 말줄임표로 잘린다. 그런데 잘린 설명을 끝까지 읽을
+     곳이 어디에도 없었다("설명이 너무 잘린다"는 제보의 정체).
+   ▶ 범위는 **내 손패뿐**이다. 전체 카드 도감은 이미 인벤토리·신규 카드 탭이 맡고 있고,
+     지금 필요한 건 "지금 내 손에 있는 이 카드가 정확히 뭘 하는가"다.
+   ▶ 두 갈래로 연다
+     ① 상점 옆 📖 버튼 — 손패 전체를 목록으로
+     ② 손패 카드를 **길게 누르기** — 그 카드 하나만 바로
+   ⚠ 정보만 보는 창이다. 여기서 카드를 내거나 고를 수 없고, 내 턴이 아니어도 열린다.
+     (게임 상태를 건드리지 않으므로 랜서버에서도 각자 알아서 열면 그만이다)
+   ########################################################################## */
+const CARD_LONGPRESS_MS = 420;   // 이보다 오래 누르고 있으면 설명이 열린다
+const CARD_LONGPRESS_SLOP = 10;  // 이만큼 움직이면 "누른 게 아니라 끄는 것"으로 보고 취소
+
+/* 손패 카드 한 장에 길게 누르기를 붙인다.
+   ⚠ 기존 클릭(카드 내기)·드래그를 절대 방해하면 안 된다.
+      · 손가락/마우스가 움직이면 즉시 취소 → 드래그는 그대로 산다
+      · 길게 눌러 창이 열렸으면 뒤따라오는 click 한 번을 삼킨다 → 카드가 잘못 나가지 않는다 */
+function bindCardLongPress(el, card){
+  if(!el || !card) return;
+  let timer = null, sx = 0, sy = 0, fired = false;
+  const clear = ()=>{ if(timer){ clearTimeout(timer); timer = null; } };
+  el.addEventListener('pointerdown', (ev)=>{
+    if(ev.button != null && ev.button !== 0) return;   // 오른쪽 버튼 등은 무시
+    fired = false; sx = ev.clientX; sy = ev.clientY;
+    clear();
+    timer = setTimeout(()=>{
+      fired = true;
+      try{ if(navigator.vibrate) navigator.vibrate(12); }catch(e){}   // 폰에서 "열렸다"는 촉감
+      openCardDetail(card);
+    }, CARD_LONGPRESS_MS);
+  });
+  el.addEventListener('pointermove', (ev)=>{
+    if(!timer) return;
+    if(Math.abs(ev.clientX - sx) > CARD_LONGPRESS_SLOP || Math.abs(ev.clientY - sy) > CARD_LONGPRESS_SLOP) clear();
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(k=> el.addEventListener(k, clear));
+  el.addEventListener('dragstart', clear);
+  /* 길게 눌러 창이 떴다면 그 직후의 click은 없던 일로 한다(캡처 단계에서 가로챈다). */
+  el.addEventListener('click', (ev)=>{
+    if(!fired) return;
+    fired = false;
+    ev.preventDefault(); ev.stopPropagation();
+  }, true);
+}
+
+/* 카드 한 장을 설명서용 HTML로. 손패에서 잘리는 것들을 전부 펼쳐 보여준다. */
+function cardManualEntryHtml(c){
+  if(!c) return '';
+  if(c.__masked){
+    return `<div class="cm-item">
+      <div class="cm-card masked"><span class="cm-g">?</span><span class="cm-n">???</span></div>
+      <div class="cm-body">
+        <div class="cm-name">???</div>
+        <div class="cm-desc">이 카드를 내기 전까지는 정체를 알 수 없습니다.</div>
+      </div></div>`;
+  }
+  const pw = (typeof powerLine === 'function') ? (powerLine(c) || '') : '';
+  const evo = (typeof evoBonusHtml === 'function') ? (evoBonusHtml(c) || '') : '';
+  const tags = (typeof cardExtraTagsHTML === 'function') ? (cardExtraTagsHTML(c) || '') : '';
+  return `<div class="cm-item">
+    <div class="cm-card ${(typeof cardVisualClass==='function')?cardVisualClass(c):''}">
+      <span class="cm-g">${escapeHtml(displayGrade(c))}</span>
+      <span class="cm-n"${c.nameColor?` style="color:${c.nameColor};"`:''}>${escapeHtml(c.name)}</span>
+      ${c.power?`<span class="cm-p">${c.power.toLocaleString()}</span>`:''}
+    </div>
+    <div class="cm-body">
+      <div class="cm-name">${escapeHtml(c.name)}<span class="cm-grade">${escapeHtml(displayGrade(c))}</span>${tags}</div>
+      ${pw?`<div class="cm-pw">${pw}</div>`:''}
+      <div class="cm-desc">${escapeHtml(c.desc||'설명 없음')}${evo}</div>
+      ${c.flavor?`<div class="cm-flavor">“${escapeHtml(c.flavor)}”</div>`:''}
+    </div></div>`;
+}
+
+/* 공용 오버레이 — showModal 대신 직접 만든다. 열림/닫힘 연출을 직접 잡아야 하고,
+   목록이 길어지면 스크롤이 필요해서다. */
+function cmOpen(title, innerHtml){
+  cmClose(true);
+  const ov = document.createElement('div');
+  ov.className = 'cm-overlay';
+  ov.id = 'cardManualOverlay';
+  ov.innerHTML = `<div class="cm-panel">
+      <div class="cm-head">
+        <div class="cm-title">${title}</div>
+        <button class="cm-x" onclick="cmClose()" aria-label="닫기">✕</button>
+      </div>
+      <div class="cm-scroll">${innerHtml}</div>
+    </div>`;
+  /* 배경을 누르면 닫힌다. 패널 안쪽 클릭은 통과시키지 않는다. */
+  ov.addEventListener('click', (ev)=>{ if(ev.target === ov) cmClose(); });
+  document.body.appendChild(ov);
+  requestAnimationFrame(()=> requestAnimationFrame(()=> ov.classList.add('show')));
+}
+function cmClose(instant){
+  const ov = document.getElementById('cardManualOverlay');
+  if(!ov) return;
+  if(instant){ ov.remove(); return; }
+  ov.classList.remove('show');
+  setTimeout(()=>{ if(ov.parentNode) ov.remove(); }, 200);   // 사라지는 연출이 끝난 뒤 치운다
+}
+function openCardManual(){
+  const me = (typeof viewer === 'function') ? viewer() : null;
+  const hand = (me && Array.isArray(me.hand)) ? me.hand : [];
+  const body = hand.length
+    ? `<div class="cm-list">${hand.map(cardManualEntryHtml).join('')}</div>`
+    : `<div class="cm-empty">손에 든 카드가 없습니다.</div>`;
+  cmOpen(`📖 카드 설명서 <small>${hand.length}장</small>`,
+    `<div class="cm-note">손패 카드를 <b>길게 누르면</b> 그 카드만 바로 볼 수 있습니다.</div>${body}`);
+}
+function openCardDetail(card){
+  if(!card) return;
+  cmOpen('📖 카드 설명', cardManualEntryHtml(card));
+}
+
 function renderHand(){
   const me = viewer();
   const area = document.getElementById('handArea');
@@ -31382,6 +31928,7 @@ function renderHand(){
       el.style.setProperty('--deal-delay', (i*0.09)+'s');
       el.addEventListener('animationend', ()=> el.classList.remove('deal-in'), {once:true});
     }
+    bindCardLongPress(el, c);   // [Ver 10.5.1] 길게 누르면 그 카드 설명이 열린다
     el.innerHTML = `
       <div class="hc-grade">${c.__masked ? '???' : `${displayGrade(c)}${cardExtraTagsHTML(c)}`}</div>
       ${(c.type==='COMBO' && c.comboCount>0 && !c.__masked) ? `<div class="combo-count-badge ${comboTierClass(c.comboCount)}">${c.comboCount}COMBO</div>` : ''}
@@ -55029,6 +55576,12 @@ function lanRenderQR(box, url){
 function lanIsRemoteClient(){ return !!(LAN.inGame && !LAN.isHost); }
 function lanIsHostGame(){ return !!(LAN.inGame && LAN.isHost); }
 
+/* [Ver 10.5.1] "유물 없이 시작" 설정 — 호스트가 마지막에 고른 값을 기억한다.
+   매번 같은 걸 고르게 하면 성가시므로 기본값으로 남겨두고, 시작할 때 한 번 확인만 받는다. */
+const LAN_NOART_KEY = 'gang_card_lan_noart_v1';
+function lanGetNoArtifacts(){ try{ return localStorage.getItem(LAN_NOART_KEY) === '1'; }catch(e){ return false; } }
+function lanSetNoArtifacts(v){ try{ localStorage.setItem(LAN_NOART_KEY, v ? '1' : '0'); }catch(e){} }
+
 /* ---------- 게임 시작 분기 ---------- */
 function lanBeginGame(room){
   closeLanLobby();
@@ -55140,6 +55693,21 @@ function lanHideGameBadge(){ const b=document.getElementById('lanGameBadge'); if
 let __lanStateTimer = null;
 function lanHostStartGame(room){
   try{ lanLobbyBgmStop(); }catch(e){}
+  /* [Ver 10.5.1] 유물 없는 판 — 방을 연 사람이 시작 직전에 고른다.
+     ⚠ 유물을 지우는 게 아니라 **이 판 동안만 효과를 끄는** 규칙이다. 저장된 유물은 그대로다.
+        (실제로 지우면 되돌릴 수 없어서, 판 하나 때문에 몇 시간 캔 유물이 날아간다) */
+  noArtifactsMatch = lanGetNoArtifacts();
+  try{
+    showModal('⛏️ 유물 규칙', `<div style="line-height:1.85;">
+        이번 판을 <b>유물 없이</b> 진행할까요?<br>
+        <small style="color:var(--fg-dim);">모두의 유물 효과가 이 판 동안만 꺼집니다.
+        <b>저장된 유물은 지워지지 않습니다.</b> 다음 판부터는 그대로 돌아옵니다.</small><br><br>
+        현재 설정 — <b>${noArtifactsMatch ? '유물 없이' : '유물 사용'}</b>
+      </div>`, [
+      { label:'유물 사용',      action:()=>{ noArtifactsMatch = false; lanSetNoArtifacts(false); log('sys', '⛏️ 이번 판은 유물을 사용합니다.'); } },
+      { label:'유물 없이 시작', solid:true, action:()=>{ noArtifactsMatch = true;  lanSetNoArtifacts(true);  log('highlight', '⛏️ <b>유물 없는 판</b>입니다. 이 판 동안 모두의 유물 효과가 꺼집니다. (저장된 유물은 그대로입니다)'); } }
+    ]);
+  }catch(e){}
   try{
     lanMode = true;
     hotseatMode = false; cultMode=false; teamBattleMode=false; draftMode=false; battleRoyaleMode=false;
@@ -55296,7 +55864,9 @@ function lanHostSnapshot(){
        cardUnusableReason()은 **각자의 기기에서** 돌아 손패를 회색 처리하므로,
        이 둘이 동기화되지 않으면 참가자 화면에서만 DMZ가 없는 것처럼 보인다. */
     rules105: { dmz: (typeof dmzActive!=='undefined')?!!dmzActive:false,
-                pileGrade: (typeof lastPileGrade!=='undefined')?(lastPileGrade||null):null },
+                pileGrade: (typeof lastPileGrade!=='undefined')?(lastPileGrade||null):null,
+                // [Ver 10.5.1] 유물 없는 판 — 참가자도 같은 규칙으로 화면을 그려야 한다
+                noArt: (typeof noArtifactsMatch!=='undefined')?!!noArtifactsMatch:false },
     auction: (function(){
       const ov = document.getElementById('draftAuctionOverlay');
       if(!ov || !draftAuction || draftAuction.settled) return null;
@@ -56071,6 +56641,7 @@ function lanClientApplyState(snap){
     if(snap.rules105){
       dmzActive = !!snap.rules105.dmz;
       lastPileGrade = snap.rules105.pileGrade || null;
+      noArtifactsMatch = !!snap.rules105.noArt;   // [Ver 10.5.1]
     }
     gameActive = snap.gameActive; awaitingReaction = snap.awaitingReaction;
     if(typeof eliminationOrder!=='undefined') eliminationOrder = snap.eliminationOrder||[];
