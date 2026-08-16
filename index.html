@@ -821,6 +821,37 @@
     background:linear-gradient(90deg,#ffe58a,#e5b915,#9c7a0a) !important; color:#3a2c00 !important; border-color:#fff2c0 !important;
   }
 
+  /* ===================== [Ver 10.5] 리더보드 프로필 ===================== */
+  .ol-row.ol-clickable { cursor:pointer; transition:background .12s, transform .12s; }
+  .ol-row.ol-clickable:hover { background:rgba(128,128,128,.14); transform:translateX(2px); }
+  .ol-bio { display:block; font-size:10.5px; opacity:.6; font-style:italic; margin-top:2px;
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  .pp-wrap { line-height:1.7; }
+  .pp-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap;
+             padding-bottom:9px; border-bottom:1px solid rgba(128,128,128,.28); }
+  .pp-nick { font-size:17px; font-weight:800; word-break:break-all; }
+  .pp-nick i { font-size:10px; font-style:normal; padding:1px 5px; border-radius:999px;
+               background:#4a7dff; color:#fff; vertical-align:middle; margin-left:4px; }
+  .pp-lv { font-size:13px; font-weight:700; opacity:.9; white-space:nowrap; }
+  .pp-lv small { font-size:11px; opacity:.6; font-weight:600; }
+  .pp-bio { margin-top:9px; padding:8px 11px; border-radius:8px; font-size:12.5px; font-style:italic;
+            background:rgba(128,128,128,.12); word-break:break-all; }
+  .pp-sec { margin:14px 0 5px; font-size:11px; font-weight:800; letter-spacing:.6px; opacity:.55; }
+  .pp-row { display:flex; align-items:center; justify-content:space-between; gap:10px;
+            padding:5px 0; border-bottom:1px dashed rgba(128,128,128,.18); font-size:12.5px; }
+  .pp-l { opacity:.68; white-space:nowrap; }
+  .pp-v { text-align:right; display:flex; align-items:center; gap:6px; justify-content:flex-end; flex-wrap:wrap; }
+  .pp-v small { opacity:.55; font-size:11px; }
+  .pp-none { opacity:.35; }
+  .pp-pet-img { width:20px; height:20px; border-radius:5px; object-fit:cover; }
+  .pp-pet-em { font-size:15px; }
+  .pp-card { position:static; display:inline-flex; align-items:center; justify-content:center;
+             min-width:26px; height:20px; padding:0 5px; border-radius:5px; font-size:10px; font-weight:800; }
+  .pp-foot { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+             margin-top:13px; padding-top:9px; border-top:1px solid rgba(128,128,128,.28);
+             font-size:11px; opacity:.6; }
+  .pp-when { font-size:10.5px; opacity:.45; margin-top:4px; }
+
   /* ===================== [Ver 10.5] 신규 카드 탭 ===================== */
   .nc-list { display:flex; flex-direction:column; gap:10px; }
   .nc-item {
@@ -9426,6 +9457,10 @@ body.mobile-mode .hitman-panel{ font-size:8px; padding:2px 8px; top:-11px; }
         <button class="btn btn-sm" id="whiteTigerBtn" onclick="useWhiteTiger()" style="display:none;">🐯 백호</button>
         <!-- [Ver 9.14] DJ 지후 — 선곡 창 (DJ 지후를 장착한 사람에게만 보인다) -->
         <button class="btn btn-sm" id="djBtn" onclick="openDjPicker()" style="display:none;">🎧 DJ</button>
+        <!-- [Ver 10.5] 개발자 모드 전용 — 랜덤 이벤트 강제 발동.
+             ⚠ 시작 화면 메뉴에만 두면 "게임이 진행 중일 때만 예약 가능"이라 영영 못 쓴다.
+                실제로 쓰는 자리는 인게임이므로 여기 눈에 띄게 둔다. -->
+        <button class="btn btn-sm" id="devEventBtnGame" onclick="openDevEventForce()" style="display:none;background:#7c3aed;color:#fff;font-weight:800;">🎲 이벤트 강제</button>
         <button class="btn btn-sm btn-ghost" id="surrenderBtn" onclick="confirmSurrender()">항복</button>
         <button class="btn btn-sm btn-ghost" onclick="confirmExitGame()">종료</button>
       </div>
@@ -12293,7 +12328,8 @@ const STORAGE_KEYS = {
   profile: 'gang_card_profile_v1', // [Ver 8.0] 닉네임
   exp: 'gang_card_exp_v1', // [Ver 8.0] 레벨/경험치
   ubinite: 'gang_card_ubinite_v1', // [Ver 8.4] 꾸미기 재화 '우비나이트'
-  userCode: 'gang_card_user_code_v1' // [Ver 9.12.1] 기기마다 한 번 발급되는 고유 유저 코드
+  userCode: 'gang_card_user_code_v1', // [Ver 9.12.1] 기기마다 한 번 발급되는 고유 유저 코드
+  bio: 'gang_card_bio_v1' // [Ver 10.5] 상태메시지 — 리더보드 프로필에 함께 표시된다
 };
 
 /* ==========================================================================
@@ -12780,17 +12816,46 @@ function buildUserStatTabHtml(tab){
   }catch(e){ return '<div style="font-size:12px;color:var(--fg-dim);">불러오는 중 오류가 발생했습니다.</div>'; }
 }
 
+/* ==========================================================================
+   [Ver 10.5 신규] 상태메시지
+   --------------------------------------------------------------------------
+   리더보드에서 남의 프로필을 열면 함께 보이는 한 줄이다. 게임 로직에는 전혀 관여하지 않는다.
+   ⚠ 남에게 보이는 글이므로 길이를 자르고, 표시할 때는 반드시 escapeHtml을 거친다.
+      (여기서 새는 순간 남의 화면에 임의 HTML을 심을 수 있게 된다)
+   ========================================================================== */
+const BIO_MAX = 40;
+function getPlayerBio(){
+  try{ return String(localStorage.getItem(STORAGE_KEYS.bio) || '').slice(0, BIO_MAX); }catch(e){ return ''; }
+}
+function setPlayerBio(v){
+  /* 줄바꿈은 한 줄 표시를 깨뜨리므로 공백으로 눕힌다. */
+  const clean = String(v||'').replace(/[\r\n\t]+/g, ' ').trim().slice(0, BIO_MAX);
+  try{ localStorage.setItem(STORAGE_KEYS.bio, clean); }catch(e){ return false; }
+  return true;
+}
+
 function openNicknameEditor(){
   const cur = getPlayerNickname();
-  showModal('닉네임 변경',
-    `<input id="nicknameEditInput" maxlength="10" value="${escapeHtml(cur)}" placeholder="닉네임 (최대 10자)"
-      style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--fg);font-family:'JetBrains Mono',monospace;font-size:14px;"
-      onkeydown="if(event.key==='Enter'){ event.preventDefault(); document.querySelector('.modal-box .mfoot .btn-solid').click(); }">`,
+  const curBio = getPlayerBio();
+  const __inpStyle = "width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--fg);font-family:'JetBrains Mono',monospace;font-size:14px;";
+  showModal('내 정보 변경',
+    `<div style="font-size:11px;color:var(--fg-dim);margin-bottom:5px;">닉네임 (최대 10자)</div>
+     <input id="nicknameEditInput" maxlength="10" value="${escapeHtml(cur)}" placeholder="닉네임"
+      style="${__inpStyle}"
+      onkeydown="if(event.key==='Enter'){ event.preventDefault(); document.querySelector('.modal-box .mfoot .btn-solid').click(); }">
+     <!-- [Ver 10.5] 상태메시지 — 리더보드에서 내 이름을 누른 사람에게 보인다 -->
+     <div style="font-size:11px;color:var(--fg-dim);margin:12px 0 5px;">상태메시지 <span style="opacity:.65;">(최대 ${BIO_MAX}자 · 리더보드 프로필에 표시됩니다)</span></div>
+     <input id="bioEditInput" maxlength="${BIO_MAX}" value="${escapeHtml(curBio)}" placeholder="예) 오늘도 갱차 당했습니다"
+      style="${__inpStyle}"
+      onkeydown="if(event.key==='Enter'){ event.preventDefault(); document.querySelector('.modal-box .mfoot .btn-solid').click(); }">
+     <div style="font-size:11px;color:var(--fg-faint);line-height:1.6;margin-top:10px;">변경한 내용은 <b>[내 기록 올리기]</b>를 눌러야 리더보드에 반영됩니다.</div>`,
     [
       { label:'저장', solid:true, action: ()=>{
           const input = document.getElementById('nicknameEditInput');
           const v = input ? input.value : '';
           if(setPlayerNickname(v)) log('sys', `닉네임을 "${escapeHtml(getPlayerNickname())}"(으)로 변경했습니다.`);
+          const bioIn = document.getElementById('bioEditInput');
+          if(bioIn){ setPlayerBio(bioIn.value); }
           openUserStatPanel(usbCurrentTab); // [Ver 8.1.1] 저장 후 "내 정보" 패널로 자연스럽게 복귀
         } },
       { label:'취소', action: ()=>{ openUserStatPanel(usbCurrentTab); } }
@@ -14247,9 +14312,9 @@ const PET_DEFS = [
     detail:[{h:'발동 시점',b:'자신의 턴 시작마다 + 월급 지급 시'}, {h:'용돈',b:'매 턴 <b>(자신을 뺀 생존자 전원의 돈 합계)의 10%</b>를 받습니다. 남들이 부자일수록 많이 받습니다.'}, {h:'지출',b:'매 턴 <b>5골드</b>를 잃습니다.'}, {h:'월급 없음',b:'바퀴 월급은 받지 않습니다. 수입이 전적으로 남들의 자산에 달려 있습니다.'}] },
   { key:'rich', price:1000,     name:'부자 지후',       emoji:'💰', img:null,
     short:'돈으로 행복을 살 수 없는 이유는 그만큼의 돈이 없기 때문이다',
-    desc:'시작 돈이 <b>500골드</b>로 시작합니다. 대신 <b>랜덤 이벤트로 잃는 돈이 2.5배</b>가 됩니다.',
-    fx:[{k:'good',t:'시작 돈 500골드'}, {k:'bad',t:'이벤트로 잃는 돈 2.5배'}],
-    detail:[{h:'발동 시점',b:'판 시작 시 1회 + 랜덤 이벤트로 돈을 잃을 때마다'}, {h:'시작 자금',b:'평소 50골드 대신 <b>250골드</b>로 시작합니다. 초반 상점·도박을 여유롭게 굴릴 수 있습니다. <span style="opacity:.7;">(9.13.1에서 200 → 250 상향)</span>'}, {h:'손실 2배',b:'랜덤 이벤트로 <b>잃는</b> 돈이 2배가 됩니다. (보이스피싱·기부왕 등)'}, {h:'주의',b:'이벤트로 <b>버는</b> 돈은 그대로입니다. 손해만 커집니다.'}] },
+    desc:'시작 돈이 <b>500골드</b>로 시작합니다. 대신 <b>랜덤 이벤트로 잃는 돈이 2.5배</b>가 됩니다. <b>야차(저점 매수)에서는 500 대신 기본 시작금의 2.5배</b>만 받습니다.',
+    fx:[{k:'good',t:'시작 돈 500골드'}, {k:'bad',t:'이벤트로 잃는 돈 2.5배'}, {k:'neutral',t:'야차에서는 2.5배만 (상점이 잠긴 모드라서)'}],
+    detail:[{h:'발동 시점',b:'판 시작 시 1회 + 랜덤 이벤트로 돈을 잃을 때마다'}, {h:'시작 자금',b:'평소 50골드 대신 <b>500골드</b>로 시작합니다. 초반 상점·도박을 여유롭게 굴릴 수 있습니다. <span style="opacity:.7;">(10.1에서 250 → 500 상향)</span>'}, {h:'[Ver 10.5] 야차 예외',b:'야차(저점 매수)는 <b>상점이 아예 잠겨 있어</b> 돈 쓸 곳이 경매와 눈치게임뿐입니다. 여기서 500골드는 개막 경매를 독식해 판을 시작부터 기울여버려, 이 모드에서만 <b>기본 시작금의 2.5배</b>(=125골드)로 낮췄습니다.'}, {h:'손실 2배',b:'랜덤 이벤트로 <b>잃는</b> 돈이 2배가 됩니다. (보이스피싱·기부왕 등)'}, {h:'주의',b:'이벤트로 <b>버는</b> 돈은 그대로입니다. 손해만 커집니다.'}] },
   { key:'doctor', price:500,   name:'의사 지후',       emoji:'🩺', img:null,
     short:'이보세요.',
     desc:'자신의 턴마다 <b>자신을 포함한</b> 무작위 한 사람의 HP를 <b>300</b> 회복시킵니다. <b>남을 치료하면 치료비로 50골드를 받아냅니다.</b> (상대가 돈이 없어도 치료는 됩니다)',
@@ -14331,9 +14396,9 @@ const PET_DEFS = [
     detail:[{h:'발동 시점',b:'자신의 턴 시작마다'}, {h:'유혹 성공',b:'<b>50% 확률</b>로 무작위 상대 한 명을 홀려, <b>1바퀴 동안 그 사람이 자신을 지목할 수 없게</b> 만듭니다.'}, {h:'유혹 실패',b:'실패하면 다시 <b>50% 확률</b>로 자신이 <b>1바퀴 탄핵</b>당합니다. (탄핵 면역이면 무시)'}, {h:'주의',b:'유혹은 그 한 사람만 막습니다. 광역 공격이나 다른 사람의 지목은 그대로 들어옵니다.'}] },
   { key:'politician', price:4000, name:'정치인 지후',   emoji:'🎩', img:null,
     short:'다 먹고 살자고 이러는거 아니겠습니까?',
-    desc:'<b>다른 사람이 돈을 얻을 때마다</b> 그 금액의 <b>60%</b>를 자신도 함께 받습니다. 대신 <b>지지율</b> 게이지가 생겨 50%에서 시작하고, 모든 사람의 턴마다 <b>+0~7% / -0~10%</b>씩 움직입니다. 지지율이 <b>40% 미만</b>이 되는 순간 즉사합니다.',
-    fx:[{k:'good',t:'남이 버는 돈의 60%를 함께 획득'}, {k:'bad',t:'지지율 40% 미만이면 즉사'}, {k:'neutral',t:'매 턴 +0~7% / -0~10%'}],
-    detail:[{h:'발동 시점',b:'<b>누구든</b> 돈을 얻을 때마다 + <b>모든 사람</b>의 턴마다'}, {h:'정치자금',b:'다른 사람이 돈을 얻으면 그 금액의 <b>60%</b>가 자신에게도 들어옵니다. <b>빼앗는 게 아니라</b> 별도로 생기는 돈이라 상대의 수입은 줄지 않습니다.'}, {h:'자기 수입',b:'<b>자신이</b> 얻는 돈에는 붙지 않습니다. (월급·카드·도박 등 자기 수입은 그대로)'}, {h:'[Ver 9.13.1] 변경점',b:'<b>월급 150%가 삭제</b>되고 그 자리에 이 효과가 들어왔습니다. 남들이 돈을 많이 굴리는 판일수록 강해집니다.'}, {h:'지지율',b:'<b>50%</b>에서 시작해, 누구의 턴이든 넘어갈 때마다 <b>+0~7%</b> 오르거나 <b>-0~10%</b> 떨어집니다. 하락 폭이 더 큽니다.'}, {h:'즉사',b:'지지율이 <b>40% 미만</b>이 되는 순간 그 자리에서 사망합니다. 부활·방어 효과로 막을 수 없습니다.'}, {h:'표시',b:'스탯창에 지지율 게이지가 뜨고, 40% 즉사선이 붉은 눈금으로 그어집니다.'}] },
+    desc:'<b>다른 사람이 돈을 얻을 때마다</b> 그 금액의 <b>25%</b>를 자신도 함께 받습니다. 대신 <b>지지율</b> 게이지가 생겨 50%에서 시작하고, 모든 사람의 턴마다 <b>+0~7% / -0~10%</b>씩 움직입니다. 지지율이 <b>40% 미만</b>이 되는 순간 즉사합니다.',
+    fx:[{k:'good',t:'남이 버는 돈의 25%를 함께 획득'}, {k:'bad',t:'지지율 40% 미만이면 즉사'}, {k:'neutral',t:'매 턴 +0~7% / -0~10%'}],
+    detail:[{h:'발동 시점',b:'<b>누구든</b> 돈을 얻을 때마다 + <b>모든 사람</b>의 턴마다'}, {h:'정치자금',b:'다른 사람이 돈을 얻으면 그 금액의 <b>25%</b>가 자신에게도 들어옵니다. <span style="opacity:.7;">(10.5에서 60% → 25% 하향)</span> <b>빼앗는 게 아니라</b> 별도로 생기는 돈이라 상대의 수입은 줄지 않습니다.'}, {h:'자기 수입',b:'<b>자신이</b> 얻는 돈에는 붙지 않습니다. (월급·카드·도박 등 자기 수입은 그대로)'}, {h:'[Ver 9.13.1] 변경점',b:'<b>월급 150%가 삭제</b>되고 그 자리에 이 효과가 들어왔습니다. 남들이 돈을 많이 굴리는 판일수록 강해집니다.'}, {h:'지지율',b:'<b>50%</b>에서 시작해, 누구의 턴이든 넘어갈 때마다 <b>+0~7%</b> 오르거나 <b>-0~10%</b> 떨어집니다. 하락 폭이 더 큽니다.'}, {h:'즉사',b:'지지율이 <b>40% 미만</b>이 되는 순간 그 자리에서 사망합니다. 부활·방어 효과로 막을 수 없습니다.'}, {h:'표시',b:'스탯창에 지지율 게이지가 뜨고, 40% 즉사선이 붉은 눈금으로 그어집니다.'}] },
   { key:'hitman', price:5000,   name:'청부업자 지후',   emoji:'🎯', img:null,
     short:'자네가 이길 수 없는 싸움이었어.',
     desc:'자신의 턴마다 의뢰가 <b>최대 3건</b>까지 쌓입니다. 상대 카드의 <b>첫 글자와 끝 글자</b>만 주어지며, 카드 이름을 맞히면 그 대상에게 <b>200 피해</b>. 틀리면 <b>자신이 200 피해</b>를 입습니다. <b>한 바퀴 동안 하나도 처리하지 못하면</b> 자신이 200 피해를 입습니다.',
@@ -15252,6 +15317,9 @@ function updateDevMenuButtons(){
   if(b) b.style.display = devMode ? '' : 'none';
   const e = document.getElementById('devEventBtn');
   if(e) e.style.display = devMode ? '' : 'none';
+  // [Ver 10.5] 인게임 버튼바 쪽 — 실제로 쓰는 자리는 이쪽이다
+  const g = document.getElementById('devEventBtnGame');
+  if(g) g.style.display = devMode ? '' : 'none';
 }
 
 /* ##########################################################################
@@ -15566,6 +15634,28 @@ function fbBuildMyDoc(){
     /* [Ver 9.13.1] 플레이 시간(ms). 상한은 10년치 — 규칙에서도 같은 값으로 막는다.
        ⚠ 이 필드를 새로 올리므로 Firestore 규칙의 hasOnly 목록에 'playMs'를 추가해야 쓰기가 통과한다. */
     playMs: Math.max(0, Math.min(315360000000, Math.floor(s.playMs||0))),
+    /* ======================================================================
+       [Ver 10.5] 프로필 카드용 필드
+       ----------------------------------------------------------------------
+       리더보드에서 이름을 누르면 뜨는 프로필에 쓰인다. 전부 로컬 진행도에서 뽑는다.
+       ⚠ 여기에 필드를 더하면 firestore.rules 의 hasOnly 목록도 **반드시 같이 고쳐**
+         콘솔에 다시 게시해야 한다. 한쪽만 고치면 기록 올리기가 통째로 거부된다.
+       ⚠ 문자열은 전부 길이를 자른다 — 남의 화면에 뜨는 값이라 길이를 믿으면 안 된다.
+       ====================================================================== */
+    bio:   String(getPlayerBio() || '').slice(0, 40),
+    pet:   String((statsTopEntry('petUse')  || {}).name || '').slice(0, 24),
+    card:  String((statsTopEntry('cardUse') || {}).name || '').slice(0, 24),
+    dexN:  Math.max(0, Math.min(99999, Object.keys(loadCardDex()  || {}).length)),
+    evoN:  Math.max(0, Math.min(99999, Object.keys(loadEvolved()  || {}).length)),
+    artLv: (function(){
+      /* 유물 레벨 총합 — 값이 숫자가 아닌 항목이 섞여 있어도 안전하게 더한다. */
+      try{
+        const A = loadArtifacts() || {};
+        let sum = 0;
+        Object.keys(A).forEach(k=>{ const v = Number(A[k]); if(Number.isFinite(v) && v > 0) sum += Math.floor(v); });
+        return Math.max(0, Math.min(99999, sum));
+      }catch(e){ return 0; }
+    })(),
     ver: (CHANGELOG[0] && CHANGELOG[0].version) || '',
     updatedAt: Date.now()
   };
@@ -15593,7 +15683,8 @@ async function fbFetchTop(boardKey, n){
 /* 백업 대상 — 진행도만 담는다. 카드 목록은 내장 정의의 사본이라 담지 않는다. */
 const BACKUP_KEYS = ['stats','achievements','cardDex','cardMastery','masteryRank','evolved','titles',
                      'equippedTitle','artifacts','pickaxe','goldPickaxe','boxKeys','gachaTickets','pets','equippedPet',
-                     'evoStones','evoClaws','evoPicks','profile','exp','ubinite','redeemed','mailbox'];
+                     'evoStones','evoClaws','evoPicks','profile','exp','ubinite','redeemed','mailbox',
+                     'bio'];   // [Ver 10.5] 상태메시지
 /* [Ver 9.14] 백업을 뜨기 전에 메모리에만 있는 값을 전부 localStorage로 내려쓴다.
    백업은 localStorage를 읽어가므로, 아직 저장되지 않은 최신 진행도가 있으면 그대로 누락된다.
    (예: STATS는 10초 간격 타이머로만 저장돼, 직전 판의 기록이 빠질 수 있었다) */
@@ -16657,12 +16748,15 @@ function renderOnlineRank(){
     const w = document.getElementById('onlineWrap'); if(!w) return;
     const myCode = getUserCode();
     const myIdx = rows.findIndex(r=> r.code === myCode);
+    /* [Ver 10.5] 행을 눌러 프로필을 연다. 프로필에 필요한 값은 이미 이 문서 안에 다 있으므로
+       추가 조회 없이 그대로 넘긴다(읽기 요금이 늘지 않는다). */
+    window.__olRows = rows;
     const list = rows.map((r,i)=>{
       const mine = (r.code === myCode);
       const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
-      return `<div class="ol-row${mine?' mine':''}">
+      return `<div class="ol-row${mine?' mine':''} ol-clickable" onclick="openPlayerProfile(${i})" title="눌러서 프로필 보기">
         <span class="ol-rank ${i<3?'top':''}">${medal}</span>
-        <span class="ol-nick">${escapeHtml(r.nick||'이름없음')}${mine?' <i>나</i>':''}</span>
+        <span class="ol-nick">${escapeHtml(r.nick||'이름없음')}${mine?' <i>나</i>':''}${r.bio?`<small class="ol-bio">${escapeHtml(r.bio)}</small>`:''}</span>
         <span class="ol-val">${escapeHtml(b.fmt(r).replace(/<[^>]+>/g,''))}</span>
       </div>`;
     }).join('');
@@ -16675,9 +16769,82 @@ function renderOnlineRank(){
       </div>
       ${rows.length ? `<div class="ol-list">${list}</div>`
                     : `<div class="ol-empty">아직 등록된 기록이 없습니다. <b>내 기록 올리기</b>를 눌러 첫 주자가 되어보세요.</div>`}
-      <div class="ol-note">기록은 <b>내 기록 올리기</b>를 누를 때만 갱신됩니다.</div>`;
+      <div class="ol-note">기록은 <b>내 기록 올리기</b>를 누를 때만 갱신됩니다. 이름을 누르면 그 사람의 <b>프로필</b>이 열립니다.</div>`;
   }).catch(olError);
 }
+/* ##########################################################################
+   [Ver 10.5 신규] 리더보드 프로필 카드
+   --------------------------------------------------------------------------
+   리더보드에서 이름을 누르면 그 사람의 기록을 한 장에 모아 보여준다.
+   ▶ 추가 네트워크 요청이 없다 — 필요한 값이 이미 리더보드 문서 안에 전부 들어 있다.
+     (그래서 프로필을 아무리 열어봐도 Firestore 읽기 요금이 늘지 않는다)
+   ▶ 펫·카드는 **이름만** 저장돼 있고, 그림과 설명은 각자의 클라이언트가 자기 테이블에서 찾는다.
+     그래서 상대가 옛 버전이라 없는 펫을 올려도 이름만 그대로 보이고 깨지지 않는다.
+   ▶ 옛 버전(10.5 이전)이 올린 기록에는 프로필 필드가 없다. 그 경우 "-"로 비워 보여준다.
+   ########################################################################## */
+function openPlayerProfile(idx){
+  const rows = window.__olRows || [];
+  const r = rows[idx|0];
+  if(!r) return;
+  const mine = (r.code === getUserCode());
+
+  const decided = (r.wins||0) + (r.losses||0);
+  const winRate = decided ? Math.round((r.wins||0) / decided * 100) : 0;
+  const abandoned = Math.max(0, (r.games||0) - decided);
+
+  /* 펫 — 저장된 건 key뿐이라 그림·이름은 내 테이블에서 찾는다. 못 찾으면 key를 그대로 보여준다. */
+  let petHtml = '<span class="pp-none">-</span>';
+  if(r.pet){
+    const d = (typeof petDefOf === 'function') ? petDefOf(r.pet) : null;
+    const art = d ? ((typeof petImgOf==='function' && petImgOf(d)) ? `<img class="pp-pet-img" src="${petImgOf(d)}" alt="">` : `<span class="pp-pet-em">${d.emoji||'🐾'}</span>`) : '<span class="pp-pet-em">🐾</span>';
+    petHtml = `${art}<b>${escapeHtml(d ? d.name : r.pet)}</b>`;
+  }
+  /* 카드 — 인게임 손패와 같은 등급 글로우로 그린다. 내 카드 목록에 없는 이름이면 이름만. */
+  let cardHtml = '<span class="pp-none">-</span>';
+  if(r.card){
+    const c = (typeof cards!=='undefined') ? cards.find(x=> x && x.name === r.card) : null;
+    cardHtml = c
+      ? `<span class="pp-card ${cardVisualClass(c)}"><b>${escapeHtml(displayGrade(c))}</b></span><b>${escapeHtml(r.card)}</b>`
+      : `<b>${escapeHtml(r.card)}</b>`;
+  }
+
+  const row = (label, value, sub)=> `<div class="pp-row">
+      <span class="pp-l">${label}</span>
+      <span class="pp-v">${value}${sub?`<small>${sub}</small>`:''}</span>
+    </div>`;
+
+  showModal(`${mine?'🪪 내 프로필':'🪪 프로필'}`, `
+    <div class="pp-wrap">
+      <div class="pp-head">
+        <div class="pp-nick">${escapeHtml(r.nick||'이름없음')}${mine?' <i>나</i>':''}</div>
+        <div class="pp-lv">Lv.${(r.level||1).toLocaleString()} <small>${(r.exp||0).toLocaleString()} Exp</small></div>
+      </div>
+      ${r.bio ? `<div class="pp-bio">“${escapeHtml(r.bio)}”</div>` : ''}
+
+      <div class="pp-sec">전적</div>
+      ${row('승률', `<b>${winRate}%</b>`, `${(r.wins||0).toLocaleString()}승 ${(r.losses||0).toLocaleString()}패`)}
+      ${row('총 판 수', `${(r.games||0).toLocaleString()}판`, abandoned>0 ? `승부 전 이탈 ${abandoned.toLocaleString()}판` : '')}
+      ${row('최대 연승', `${(r.bestStreak||0).toLocaleString()}연승`)}
+      ${row('한 방 최대', `${(r.maxHit||0).toLocaleString()}`, r.maxHitCard ? escapeHtml(r.maxHitCard) : '')}
+      ${row('플레이 시간', (typeof fmtPlayMs==='function') ? fmtPlayMs(r.playMs||0) : `${r.playMs||0}ms`)}
+
+      <div class="pp-sec">수집</div>
+      ${row('얻은 카드', r.dexN!=null ? `${(r.dexN).toLocaleString()}종` : '<span class="pp-none">-</span>')}
+      ${row('진화 카드', r.evoN!=null ? `${(r.evoN).toLocaleString()}종` : '<span class="pp-none">-</span>')}
+      ${row('유물 레벨 총합', r.artLv!=null ? `Lv.${(r.artLv).toLocaleString()}` : '<span class="pp-none">-</span>')}
+
+      <div class="pp-sec">취향</div>
+      ${row('애용 지후펫', petHtml)}
+      ${row('애용 카드', cardHtml)}
+
+      <div class="pp-foot">
+        <span>유저 코드 <b>${escapeHtml(r.code||'?')}</b></span>
+        <span>${escapeHtml(r.ver||'')}</span>
+      </div>
+      <div class="pp-when">최근 갱신 — ${r.updatedAt ? new Date(r.updatedAt).toLocaleString('ko-KR') : '-'}</div>
+    </div>`, [{ label:'닫기', solid:true }]);
+}
+
 function doSubmitScore(){
   olBusy('기록을 올리는 중...');
   fbSubmitScore().then(()=>{ renderOnlineRank(); }).catch(olError);
@@ -18343,7 +18510,16 @@ const CHANGELOG = [
       '🎲 <b>[개발자 전용] 랜덤 이벤트 강제 발동</b> — 개발자 모드를 켜면 메뉴에 생깁니다. 원하는 이벤트를 원하는 사람에게 <b>다음 턴</b> 터지도록 예약합니다. 이벤트 하나 확인하려고 몇 판씩 돌릴 필요가 없습니다.',
       '💥 <b>[연출] 연타 카드의 피해 숫자가 하나씩 터집니다</b> — ATK 240 x3 같은 카드는 세 숫자가 <b>같은 자리에 완전히 겹쳐 떠서</b> 한 번 때린 것과 구분이 안 됐습니다. 이제 0.11초 간격으로 <b>따다닥</b> 올라옵니다. 최대 <b>15개</b>까지만 띄우고, 그보다 타수가 많으면 마지막 숫자에 <b>×총타수</b> 꼬리표가 붙습니다. (이색빔 999타가 화면을 몇 초씩 도배하지 않도록)',
       '💩 <b>[긴급 너프] SHITFARD</b> — MaxHP 증가를 <b>삭제</b>했습니다. 최대 체력 자체가 올라가면 상한이 사라져 사실상 무적이 됐습니다. 이제 <b>회복만</b> 하며, 기존 최대 체력이 그대로 상한이라 "가득 채운다"에 그칩니다. 공격력은 그대로입니다.',
+      '💰 <b>[너프] 부자 지후 — 야차(저점 매수) 한정</b> — 야차는 <b>상점이 아예 잠겨 있어</b> 돈 쓸 곳이 경매와 눈치게임뿐입니다. 그래서 시작금 500골드(기본의 10배)가 곧바로 <b>개막 경매 독식</b>으로 이어져 판이 시작부터 기울었습니다. 야차에서만 <b>기본 시작금의 2.5배</b>로 낮췄습니다. 일반 모드는 그대로 500입니다.',
+      '🎩 <b>[너프] 정치인 지후</b> — 남이 돈을 얻을 때 함께 받는 몫이 <b>60% → 25%</b>로 내려갔습니다.',
+      '🎴 <b>[버그수정] 카지노딜러 지후가 남의 카드 구매에서 돈을 못 챙기던 문제</b> — 사람이 살 때의 처리는 10.1에 들어갔는데 <b>봇이 살 때가 빠져 있었습니다.</b> 실제로 남이 사는 상황은 대부분 봇이라 체감상 버프 전과 똑같았습니다.',
+      '🪧 <b>[버그수정] 폐업한 상점에서 봇만 장을 보던 문제</b> — 도박 쪽에는 폐업 검사가 있었지만 <b>카드 구매 쪽에는 없었습니다.</b> 사람은 못 들어가는데 봇은 멀쩡히 사고 있었습니다. 상점 영구 점거도 이제 봇에게 똑같이 적용됩니다.',
+      '🎲 [개발자] 랜덤 이벤트 강제 버튼을 <b>인게임 버튼바(항복 옆)</b>로 옮겼습니다. 시작 화면 메뉴에만 있으면 "게임 진행 중에만 예약 가능"이라 영영 쓸 수 없었습니다. 보라색이라 눈에 잘 띕니다.',
+      '🎟️ [코드] 버그 제보 보상 코드가 발급되었습니다. <b>특정 유저 코드 전용 코드</b>를 만들 수 있게 되었습니다(onlyCode).',
       '🚪 <b>[수정] 승부가 나기 전에 나가면 패배로 기록됩니다</b> — 연승을 0으로 되돌리는 곳이 <b>결과 화면 한 군데뿐</b>이었습니다. 결과 화면은 승부가 끝나야 뜨므로, <b>지고 있을 때 [게임 종료]를 누르면 패배가 기록되지 않고 연승이 그대로 남았습니다.</b> 불리한 판마다 나가버리면 연승이 끝없이 쌓입니다. 이제 승부 전에 판을 떠나면 그 자리에서 <b>1패 + 연승 초기화</b>로 집계되며, 종료 확인창이 미리 알려줍니다. 티어 점수는 원래도 4등으로 처리하고 있었으니 통계를 같은 기준으로 맞춘 셈입니다. <b>창을 닫거나 새로고침하는 것도 같게 처리</b>합니다 — 그러지 않으면 "새로고침으로 나가면 그만"이 되어 막는 의미가 없습니다.',
+      '🪪 <b>[신규] 리더보드 프로필</b> — 리더보드에서 <b>이름을 누르면</b> 그 사람의 기록이 한 장으로 펼쳐집니다. 승률 · 총 판 수(승부 전 이탈 판 수까지) · 최대 연승 · 한 방 최대 · 플레이 시간 · <b>얻은 카드 종수</b> · <b>진화 카드 종수</b> · <b>유물 레벨 총합</b> · <b>가장 애용하는 지후펫</b> · <b>가장 애용하는 카드</b>를 봅니다. 펫과 카드는 실제 일러스트·등급 글로우로 그려집니다. (추가 조회가 없어 아무리 열어봐도 서버 요금이 늘지 않습니다)',
+      '✍️ <b>[신규] 상태메시지</b> — 메뉴의 <b>닉네임 변경</b>이 <b>내 정보 변경</b>으로 바뀌고, 그 안에서 <b>상태메시지(최대 40자)</b>를 쓸 수 있습니다. 리더보드 목록과 프로필에 함께 표시됩니다. 바꾼 내용은 <b>[내 기록 올리기]</b>를 눌러야 반영됩니다.',
+      '🐾 [기록] 판을 시작할 때 데리고 나온 지후펫을 집계하기 시작했습니다. "가장 애용하는 펫"은 이 기록으로 뽑히므로, <b>10.5부터 쌓인 것만</b> 반영됩니다.',
       '🏆 <b>[수정] 놀이터·튜토리얼이 리더보드에 반영되지 않습니다</b> — 두 모드 모두 일반 게임과 같은 경로로 시작하고 끝나서, <b>판 수·승패·연승·플레이 시간·한 방 최대가 전부 그대로 집계</b>되고 있었습니다. 허수아비만 두들겨도 순위가 올라갔습니다. 이제 이 판들에서는 리더보드에 실리는 항목이 올라가지 않습니다. (업적·도감·카드 사용 통계처럼 리더보드와 무관한 기록은 그대로 쌓입니다)',
       '🌐 <b>[온라인] 신규 카드의 랜서버 동기화</b> — 플레이어 상태는 스냅샷에 통째로 실려 저절로 맞춰지지만 <b>전역 변수는 아닙니다.</b> 그래서 <b>그린벨트 · 상점 영구 점거 · DMZ · 더미 맨 위 등급</b>을 스냅샷에 새로 실었습니다. 이게 없으면 규칙 자체는 호스트가 지켜도, 참가자 화면에서는 그린벨트 표시가 안 뜨고 DMZ가 손패를 회색 처리하지 않아 <b>눌러도 아무 일도 안 일어나는 버튼</b>이 됩니다.',
       '💍 [온라인] 연인(프러포즈) 하트 이펙트가 <b>참가자 화면에도</b> 뜹니다. 카드를 낸 순간 한 번 뿌리는 방식이면 그 코드가 호스트에서만 돌아 호스트 화면에만 보이므로, <b>렌더할 때마다 각자 자기 기기에서</b> 연인 관계를 보고 직접 그리도록 했습니다.',
@@ -23055,6 +23231,9 @@ const REDEEM_CODES = {
   'WELCOMEGIFT':              { title:'환영 선물',  desc:'갱갱갱 우빈랩터 카드게임에 오신 걸 환영합니다!', reward:{ tickets:5 }, once:true, noExpire:true },
   // [Ver 9.12] 지후펫 전량 회수 보상
   'BYEBYEPET':                { title:'지후펫 회수 보상', desc:'지후펫 가격 개편으로 보유 펫이 회수되었습니다. 그동안 함께해준 지후펫들에게 작별 인사를.', reward:{ ubinite:3000 }, once:true, noExpire:true },
+  /* [Ver 10.5] 버그 제보 보상 — 야차 부자 지후 사기 / 카지노딜러 미작동 / 폐업 상점 봇 이용 제보.
+     onlyCode로 제보자 본인(EMGVA)만 쓸 수 있게 묶어둔다. */
+  'THXMENEW':                 { title:'버그 제보 감사', desc:'야차 모드 부자 지후 밸런스 · 카지노딜러 지후 미작동 · 폐업 상점 봇 이용을 제보해주셔서 감사합니다. 덕분에 10.5에서 전부 고쳤습니다.', reward:{ ubinite:3000 }, once:true, noExpire:true, onlyCode:'EMGVA' },
   // [Ver 9.12.1] 버그 제보자 감사 코드
   'MAJOBUG':                  { title:'버그 제보 감사', desc:'버그를 제보해주셔서 감사합니다!', reward:{ ubinite:500 }, once:true, noExpire:true },
   // [Ver 9.13.1] 서버를 파이어베이스로 옮기며 전 유저 데이터가 초기화된 것에 대한 보상
@@ -23078,6 +23257,16 @@ function redeemCode(raw){
   if(!code) return { ok:false, msg:'코드를 입력해주세요.' };
   const def = REDEEM_CODES[code];
   if(!def) return { ok:false, msg:'존재하지 않는 코드입니다. 대소문자와 띄어쓰기를 확인해주세요.' };
+  /* [Ver 10.5] onlyCode — 특정 유저 코드에게만 주는 코드(버그 제보 보상 등).
+     유저 코드는 클라이언트가 가진 값이라 마음만 먹으면 바꿀 수 있다. 즉 이건
+     **부정을 막는 자물쇠가 아니라 "네 것이 아니다"라고 알려주는 안내**에 가깝다.
+     진짜로 막으려면 서버에서 발급·검증해야 한다(remoteCodes 쪽). */
+  if(def.onlyCode){
+    const mine = String((typeof getUserCode==='function' ? getUserCode() : '') || '').toUpperCase();
+    if(mine !== String(def.onlyCode).toUpperCase()){
+      return { ok:false, msg:`이 코드는 특정 유저 전용입니다. (내 유저 코드: <b>${escapeHtml(mine||'?')}</b>)` };
+    }
+  }
   const used = loadRedeemed();
   if(def.once && used.includes(code)) return { ok:false, msg:'이미 사용한 코드입니다.' };
   used.push(code); saveRedeemed();
@@ -25837,7 +26026,16 @@ function applyPetGameStart(p){
   if(!def) return;
   switch(p.pet){
     case 'beggar':  p.gold = -50; break;                       // 시작 돈 음수
-    case 'rich':    p.gold = 500; break;                       // [Ver 10.1] 250 → 500
+    /* [Ver 10.5 너프] 야차(저점 매수)에서만 따로 잡는다.
+       ▶ 왜 야차에서만 문제였나 — 야차는 **상점이 아예 잠겨 있어** 돈 쓸 곳이 경매와 눈치게임뿐이다.
+         일반 모드에서는 500골드가 그냥 "상점을 좀 여유롭게 굴리는" 정도지만,
+         야차에서는 그 돈이 곧바로 개막 경매 독식으로 이어져 판이 시작하자마자 기울었다.
+         (기본 시작금의 10배다)
+       ▶ 그래서 야차에서는 고정 500 대신 **기본 시작금의 2.5배**만 준다.
+         기본값이 바뀌어도 배수는 그대로 따라가도록 곱셈으로 둔다. */
+    case 'rich':
+      p.gold = (typeof draftMode!=='undefined' && draftMode) ? Math.round((p.gold||50) * 2.5) : 500;
+      break;
     case 'vampire': p.maxHp = Math.max(1, p.maxHp - 300); p.hp = Math.min(p.hp, p.maxHp); break;
     case 'assassin':p.maxHp = Math.max(1, p.maxHp - 400); p.hp = Math.min(p.hp, p.maxHp); break;
     case 'politician': p.petApproval = 50; break;              // 지지율 게이지
@@ -25846,6 +26044,9 @@ function applyPetGameStart(p){
        petInvestPhase가 null이면 아직 시작 전이고, 자기 턴이 처음 오는 순간 투자로 첫 발을 뗀다. */
     case 'investor':p.petInvestPhase = null; p.petInvested = 0; break;
   }
+  /* [Ver 10.5] "가장 애용하는 펫"을 뽑기 위한 집계. 판을 시작할 때 데리고 나온 펫을 1회 센다.
+     (놀이터·튜토리얼도 함께 세지만, 리더보드 순위와 무관한 취향 정보라 굳이 가르지 않는다) */
+  try{ if(isMyPlayer(p)) bumpStatMap('petUse', p.pet); }catch(e){}
   log('sys', `🐾 ${J(p.name,'이','가')} 지후펫 <b>${def.name}</b>${Jp(def.name,'을','를')} 데리고 나왔습니다.`);
 }
 
@@ -25891,7 +26092,7 @@ function petTaxOnGain(receiver, amount){
    ⚠ 자기 자신의 수입에는 붙지 않는다. (붙이면 자기 수입이 늘 1.6배가 되어 성격이 달라진다)
    ⚠ 정치인이 여럿이면 서로의 몫을 물고 물어 무한히 불어날 수 있으므로,
      세무사와 같은 방식으로 재귀 플래그 하나를 걸어 **한 단계만** 돈다. */
-const POLITICIAN_CUT = 0.60;
+const POLITICIAN_CUT = 0.25;   // [Ver 10.5 너프] 0.60 → 0.25
 function petPoliticianOnGain(receiver, amount){
   if(!receiver || amount <= 0) return;
   if(window.__petPolitician) return;
@@ -46542,6 +46743,13 @@ function botPickCardIndex(bot){
      'dead'   — 구매 도중 사망 처리가 필요하다 */
 function botShopBuyStep(bot){
   if(bot.kleptoDebt){ if(!resolveKleptoDebt(bot)) return 'done'; }
+  /* [Ver 10.5 버그수정] 폐업한 상점에서 봇만 계속 카드를 사고 있었다.
+     도박 쪽에는 이미 shopClosedForever 검사가 있었는데 구매 쪽에는 없어서,
+     "사람은 못 들어가는데 봇은 멀쩡히 장을 보는" 상태였다.
+     암시장도 이 함수를 거쳐 들어가므로 여기 한 줄이면 두 경로가 함께 막힌다. */
+  if(shopClosedForever) return 'done';
+  /* [Ver 10.5 버그수정] 상점 영구 점거도 사람과 같은 기준으로 막는다. */
+  if(typeof shopPermaMonopolyId!=='undefined' && shopPermaMonopolyId && shopPermaMonopolyId !== bot.id) return 'done';
   if(shopLockOwnerId && shopLockOwnerId !== bot.id) return 'done';
   if(draftMode) return 'done'; // [Ver 6.11] 야차 모드는 상점 비활성화
   if(bot.shopBanned) return 'done';
@@ -46584,6 +46792,10 @@ function botShopBuyStep(bot){
     bot.gold += price;
     log('gold', `${J(bot.name,'이','가')} 환급 효과로 지불한 ${fmtWon(price)}를 전액 환급받았습니다!`);
   }
+  /* [Ver 10.5 버그수정] 카지노딜러 지후가 "남이 카드를 살 때" 수익을 못 챙기던 문제.
+     사람 경로(buyShopSlot)에는 10.1에서 넣었는데 **봇 경로에는 빠져 있었다.**
+     실제로 남이 사는 상황은 대부분 봇이라, 체감상 버프 전과 똑같았다. */
+  try{ petDealerCollect(bot, price, '카드 구매'); }catch(e){}
   markShopSlotSold(bot, i, false); // 산 칸은 재입고 대기(매진)로 — 개인 매물이면 그쪽을 매진 처리
   bot.__shopBuysThisTurn = already + 1;
   renderHand(); renderBoard();
@@ -46656,6 +46868,9 @@ function botUseBlackMarketStep(bot){
       if(bot.gold >= price){
         bot.gold -= price; bot.goldSpent = (bot.goldSpent||0) + price;
         grantCardToPlayer(bot, mkUidCard(card), '봇 암시장 구매');
+        /* [Ver 10.5 버그수정] 카지노딜러 — 봇 암시장 구매도 하우스 수익 대상이다.
+           사람은 암시장도 buyShopSlot을 지나 이미 챙기고 있었는데, 봇 암시장만 별도 함수라 빠져 있었다. */
+        try{ petDealerCollect(bot, price, '암시장 구매'); }catch(e){}
         log('gold', `${J(bot.name,'이','가')} 암시장에서 ${J(card.name,'을','를')} ${fmtWon(price)}에 구매했습니다.`);
         bot.__shopBuysThisTurn = already + 1;
         renderHand(); renderBoard();
