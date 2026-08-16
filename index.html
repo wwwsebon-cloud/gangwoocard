@@ -16837,8 +16837,12 @@ function openPlayerProfile(idx){
       ${row('애용 지후펫', petHtml)}
       ${row('애용 카드', cardHtml)}
 
+      <!-- ⚠ [Ver 10.5 긴급수정] 남의 유저 코드는 절대 여기 찍으면 안 된다.
+           유저 코드는 "그 코드만 알면 그 사람의 백업을 복원해 올 수 있는" 계정 열쇠다.
+           (10.5부터는 복원하면 유저 코드까지 물려받으므로, 남의 코드를 아는 순간
+            그 계정을 통째로 가져갈 수 있다) 본인 프로필에서만 보여준다. -->
       <div class="pp-foot">
-        <span>유저 코드 <b>${escapeHtml(r.code||'?')}</b></span>
+        <span>${mine ? `유저 코드 <b>${escapeHtml(r.code||'?')}</b>` : ''}</span>
         <span>${escapeHtml(r.ver||'')}</span>
       </div>
       <div class="pp-when">최근 갱신 — ${r.updatedAt ? new Date(r.updatedAt).toLocaleString('ko-KR') : '-'}</div>
