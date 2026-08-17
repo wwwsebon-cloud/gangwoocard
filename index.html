@@ -1412,6 +1412,8 @@
     .stalk-fab { right:138px; }
     /* [Ver 5.8.4 버그수정] 이 미디어쿼리에도 solemn-fab 오버라이드가 없어 상점 버튼과 겹치던 문제 수정 */
     .solemn-fab { right:206px; }
+    /* [Ver 10.5.2 버그수정] manual-fab도 같은 이유로 겹쳐 있었다 (68px 간격 유지) */
+    .manual-fab { right:274px; }
   }
 
   /* 세로 공간이 부족한 기기(가로모드 폰, 낮은 해상도 태블릿 등)를 위한 컴팩트 레이아웃 —
@@ -1482,6 +1484,8 @@
      body.mobile-mode .shop-fab(right:60px)에 specificity로 밀려 상점 버튼과 완전히 겹쳐버리고,
      그 뒤(z-index 동일, DOM 순서상 뒤)에 깔려 탭이 안 먹히던 문제. stalk-fab보다 한 칸 더 왼쪽에 배치한다. */
   body.mobile-mode .solemn-fab { right:180px; }
+  /* [Ver 10.5.2 버그수정] manual-fab도 같은 이유로 겹쳐 있었다 (60px 간격 유지) */
+  body.mobile-mode .manual-fab { right:240px; }
   body.mobile-mode .hand-card { width:80px; height:108px; padding:6px; margin-left:-18px; }
   body.mobile-mode .hc-name { font-size:10.5px; }
   body.mobile-mode .hc-desc { font-size:8px; }
@@ -2647,6 +2651,11 @@
   @media (hover:hover) and (pointer:fine) {
     .stalk-fab:hover { background:var(--fg); color:var(--bg); border-color:var(--fg); }
   }
+
+  /* [Ver 10.5.2 버그수정] 카드 설명서 버튼(.manual-fab)이 위치 오버라이드 없이
+     .shop-fab 기본값(right:88px)을 그대로 써서, 상점 버튼(#shopBtn)과 완전히 같은 자리에
+     겹쳐 있었다. 모드(276px) 왼쪽으로 한 칸(94px 간격) 더 배치한다. */
+  .manual-fab { right:370px; }
 
   /* 사용 가능(자신의 턴)할 때: 눈에 띄는 은은한 발광 펄스로 유도 */
   .shop-fab.available {
@@ -8959,7 +8968,7 @@ body.mobile-mode .hitman-panel{ font-size:8px; padding:2px 8px; top:-11px; }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 10.5.1</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 10.5.2</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -18905,6 +18914,13 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 10.5.2',
+    date: '2026-08-17',
+    items: [
+      '🐛 <b>[버그수정] 카드 설명서 버튼이 상점 버튼과 겹쳐 있던 문제</b> — 10.5.1에서 추가된 📖 설명서 버튼이 화면 위치를 따로 지정받지 못해, 🛒 상점 버튼과 완전히 같은 자리에 포개져 있었습니다. 둘 중 나중에 그려지는 쪽이 항상 위에 깔려 반대쪽 탭을 가로챘습니다. 이제 모드 전환 버튼 왼쪽에 자기 자리를 받아 상점 · 스토킹 · 모드 · 설명서가 나란히 보이고 각각 눌립니다. (PC · 좁은 화면 · 모바일 모드 전부 반영)'
+    ]
+  },
   {
     version: 'Ver 10.5.1',
     date: '2026-08-16',
