@@ -9427,7 +9427,7 @@ body.mobile-mode .hitman-panel{ font-size:8px; padding:2px 8px; top:-11px; }
         <button class="gm-card" onclick="pickGameMode('quiz')">
           <span class="gm-ic">🧠</span>
           <b>퀴즈 모드 <em>NEW</em></b>
-          <small>카드게임 아님 · 초성 퀴즈로 카드 이름 맞히기 (10~30문제)</small>
+          <small>카드게임 아님 · 초성 퀴즈 10문제 · 봇 난이도 선택 가능</small>
         </button>
         <button class="gm-card" onclick="pickGameMode('tutorial')">
           <span class="gm-ic">💡</span>
@@ -18397,6 +18397,8 @@ function doOpenBox(count){
     boxBusy = false;
     renderBoxScreen();
     showBoxResult(rolls);
+    /* [Ver 11.4] 상자 개봉 직후 자동 백업 — 뽑기와 동일한 훅. */
+    try{ autoBackupAfterGame(); }catch(e){}
   });
 }
 const BOX_OPEN_MS = 1600;
@@ -18547,6 +18549,9 @@ function doGacha(count, payWith){
 
   results.forEach(applyGachaResult);
   renderGachaScreen();
+  /* [Ver 11.4] 뽑기 직후 진행도를 조용히 백업한다 — autoBackupAfterGame과 같은 3분 최소
+     간격·실패 시 게임 흐름을 막지 않는 규칙을 그대로 재사용한다. */
+  try{ autoBackupAfterGame(); }catch(e){}
   playGachaReveals(results, ()=>{ gachaBusy = false; });
 }
 /* [Ver 9.13.1] 등급 확정 진화석 뽑기권 — 한 장을 쓰면 그 등급의 진화석이 반드시 나온다.
@@ -18575,6 +18580,8 @@ function doEvoPick(tierKey){
   res = convertDupeStone(res);
   applyGachaResult(res);
   renderGachaScreen();
+  /* [Ver 11.4] 확정 뽑기권 사용 직후에도 동일하게 자동 백업한다. */
+  try{ autoBackupAfterGame(); }catch(e){}
   playGachaReveals([res], ()=>{ gachaBusy = false; renderGachaScreen(); });
 }
 
@@ -19262,6 +19269,15 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 11.3',
+    date: '2026-08-18',
+    items: [
+      '🤖 <b>[퀴즈 모드] 봇 난이도 선택</b> — 시작 전 확인창의 문제 수 선택을 없애고, 그 자리에 <b>봇 난이도(쉬움 / 보통 / 어려움 / 사기)</b>를 추가했습니다. 문제 수는 다시 <b>10문제 고정</b>입니다.',
+      '🔥 <b>[퀴즈 모드] 사기 난이도</b> — 봇 전원이 <b>3초 안에 반드시</b> 정답을 맞힙니다.',
+      '(참고) 마지막으로 고른 난이도는 다음에도 기억됩니다.'
+    ]
+  },
   {
     version: 'Ver 11.2',
     date: '2026-08-18',
@@ -26437,14 +26453,29 @@ function startBattleRoyale(){
      지원하지 않는다(각 원격 참가자의 화면 상태를 실시간으로 맞추려면 별도의 LAN 스냅샷 설계가
      필요해 이번 범위에서는 보류했다).
    ========================================================================== */
-/* [Ver 11.2] 퀴즈 모드 설정 — 문제 수(10/15/20/25/30)를 시작 전에 고른다.
-   기본값 10문제. localStorage에 저장해 다음에도 마지막 선택을 기억한다. */
-const QM_ROUNDS_KEY = 'ubin_qm_rounds';
-const QM_ROUNDS_OPTIONS = [10, 15, 20, 25, 30];
-let qmRoundsSetting = 10;
+/* [Ver 11.3] 퀴즈 모드 설정 — 문제 수 선택은 삭제하고, 대신 봇 난이도(쉬움/보통/어려움/사기)를
+   시작 전에 고른다. 문제 수는 다시 10문제 고정. localStorage에 저장해 다음에도 마지막 선택을 기억한다. */
+const QM_ROUNDS = 10;
+const QM_DIFF_KEY = 'ubin_qm_diff';
+/* knowsEarly: 힌트 뜨기 전에 정답을 아는 확률. knowsAfterHint: 그렇지 않은 봇 중 힌트를 보고 맞히는 확률.
+   맞히는 시점(초)은 qmStartRound에서 이 범위를 문제별 제한시간에 맞춰 스케일한다.
+   cheat(사기)만 예외 — 힌트와 무관하게 전원이 반드시 QM_CHEAT_MAX_MS(7초) 안에 맞힌다.
+   [Ver 11.4] 어려움 난이도가 "사기"와 체감 차이가 거의 없다는 피드백으로 확률을 대폭 상향했다
+   (0.55/0.70 → 0.85/0.92). 쉬움·보통은 그대로 두고 어려움만 사기 바로 아래 단계로 끌어올린 것이다. */
+const QM_DIFFICULTIES = {
+  easy:   { label:'쉬움',  knowsEarly:0.12, knowsAfterHint:0.30, cheat:false },
+  normal: { label:'보통',  knowsEarly:0.30, knowsAfterHint:0.45, cheat:false },
+  hard:   { label:'어려움', knowsEarly:0.85, knowsAfterHint:0.92, cheat:false },
+  cheat:  { label:'사기',  knowsEarly:1.00, knowsAfterHint:1.00, cheat:true }
+};
+/* [Ver 11.4] 사기 난이도 — 봇 전원이 이 시간(ms) 안에 무조건 정답을 맞힌다.
+   기존엔 최대 3초였는데 너무 어렵다는 피드백으로 7초까지 늘렸다. */
+const QM_CHEAT_MIN_MS = 500, QM_CHEAT_MAX_MS = 7000;
+let qmDifficulty = 'normal';
+let __lanQmRoundDiff = null;   // [Ver 11.4] 온라인 퀴즈 판에서만 쓰는 난이도 — 전역 qmDifficulty(로컬용)와 분리
 try{
-  const saved = parseInt(localStorage.getItem(QM_ROUNDS_KEY), 10);
-  if(QM_ROUNDS_OPTIONS.indexOf(saved) !== -1) qmRoundsSetting = saved;
+  const savedDiff = localStorage.getItem(QM_DIFF_KEY);
+  if(QM_DIFFICULTIES[savedDiff]) qmDifficulty = savedDiff;
 }catch(e){}
 
 const QM_SECONDS_SHORT = 20, QM_SECONDS_LONG = 30;   // [Ver 11.2] 4글자 이상이면 30초, 아니면 20초
@@ -26572,28 +26603,29 @@ function openQuizModeSetup(){
     showModal('시작할 수 없습니다', '퀴즈로 낼 수 있는 카드(이름이 한글로만 된 카드)가 부족합니다.', [{label:'확인',solid:true}]);
     return;
   }
-  const render = (n)=>{
+  const render = (diff)=>{
     const body = `
-      <div style="margin-bottom:10px;font-size:13px;color:var(--fg-dim);">나 포함 4인이 초성 퀴즈로 카드 이름을 맞히는 미니게임입니다. 등급 상관없이 모든 카드가 문제로 나옵니다.</div>
-      <div style="margin-bottom:6px;font-size:12.5px;color:var(--fg-dim);">문제 수</div>
+      <div style="margin-bottom:10px;font-size:13px;color:var(--fg-dim);">나 포함 4인이 초성 퀴즈로 카드 이름을 맞히는 미니게임입니다. 등급 상관없이 모든 카드가 문제로 나옵니다. (총 ${QM_ROUNDS}문제)</div>
+      <div style="margin-bottom:6px;font-size:12.5px;color:var(--fg-dim);">봇 난이도</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        ${QM_ROUNDS_OPTIONS.map(v=>`<button class="btn btn-sm ${v===n?'btn-solid':''}" onclick="window.__qmSetRounds(${v})">${v}문제</button>`).join('')}
-      </div>`;
+        ${Object.keys(QM_DIFFICULTIES).map(k=>`<button class="btn btn-sm ${k===diff?'btn-solid':''}" onclick="window.__qmSetDiff('${k}')">${QM_DIFFICULTIES[k].label}</button>`).join('')}
+      </div>
+      <div style="margin-top:8px;font-size:11.5px;color:var(--fg-faint);">${diff==='cheat' ? '봇 전원이 <b>7초 안에</b> 반드시 정답을 맞힙니다.' : '봇이 정답을 알아채는 확률과 속도가 난이도에 따라 달라집니다.'}</div>`;
     showModal('퀴즈 모드', body, [
       { label:'취소' },
-      { label:'시작', solid:true, action:()=> startQuizMode(n) }
+      { label:'시작', solid:true, action:()=> startQuizMode() }
     ]);
   };
-  window.__qmSetRounds = (n)=>{ qmRoundsSetting = n; try{ localStorage.setItem(QM_ROUNDS_KEY, String(n)); }catch(e){} render(n); };
-  render(qmRoundsSetting);
+  window.__qmSetDiff = (k)=>{ if(!QM_DIFFICULTIES[k]) return; qmDifficulty = k; try{ localStorage.setItem(QM_DIFF_KEY, k); }catch(e){} render(k); };
+  render(qmDifficulty);
 }
 
-function startQuizMode(roundCount){
+function startQuizMode(){
   if(cards.length === 0){
     showModal('시작할 수 없습니다', '카드가 1장 이상 등록되어야 합니다.', [{label:'확인',solid:true}]);
     return;
   }
-  const rounds = QM_ROUNDS_OPTIONS.indexOf(roundCount) !== -1 ? roundCount : qmRoundsSetting;
+  const rounds = QM_ROUNDS;
   const pool = qmQuizPool();   // [Ver 11.2] 등급 상관없이 전체 카드 (이름이 한글로만 된 카드)
   if(pool.length < 4){
     showModal('시작할 수 없습니다', '퀴즈로 낼 수 있는 카드(이름이 한글로만 된 카드)가 부족합니다.', [{label:'확인',solid:true}]);
@@ -26652,11 +26684,20 @@ function qmStartRound(no){
   const hint2Delay = QM_HINT_TRIGGER_2 * 1000;
   if(hint1Delay < seconds*1000) G.round.timers.push(setTimeout(()=> qmRevealHint(1), hint1Delay));
   if(hint2Delay < seconds*1000) G.round.timers.push(setTimeout(()=> qmRevealHint(2), hint2Delay));
-  /* 봇 — 30%는 힌트가 뜨기 전에 답을 알고, 나머지 중 45%는 글자 힌트를 보고서야 맞힌다.
-     둘 다 아니면 그 문제는 그냥 넘어간다(오답 연출은 생략 — 화면엔 어차피 안 보인다). */
+  /* [Ver 11.3] 봇 난이도 — 쉬움/보통/어려움은 "힌트 전에 아는 확률·힌트 보고 아는 확률"을
+     난이도별로 높여가고, 사기는 예외적으로 전원이 0.5~3초 안에 무조건 맞힌다. */
+  const diff = QM_DIFFICULTIES[(G.online && __lanQmRoundDiff) ? __lanQmRoundDiff : qmDifficulty] || QM_DIFFICULTIES.normal;
   G.players.filter(p=>p.isBot).forEach(b=>{
-    const knowsEarly = Math.random() < 0.30;
-    const knowsAfterHint = !knowsEarly && Math.random() < 0.45;
+    if(diff.cheat){
+      // [Ver 11.4] 0.5~3초 → 0.5~7초 — "사기" 난이도가 너무 매몰차다는 피드백으로 여유를 늘렸다.
+      // 단, 문제 제한시간(seconds)보다 길게 잡히지 않도록 여유 있게 캡을 씌운다.
+      const cap = Math.max(QM_CHEAT_MIN_MS + 200, seconds*1000 - 800);
+      const t = QM_CHEAT_MIN_MS + Math.random() * Math.max(200, Math.min(QM_CHEAT_MAX_MS, cap) - QM_CHEAT_MIN_MS);
+      G.round.timers.push(setTimeout(()=> qmBotAnswer(b.id), t));
+      return;
+    }
+    const knowsEarly = Math.random() < diff.knowsEarly;
+    const knowsAfterHint = !knowsEarly && Math.random() < diff.knowsAfterHint;
     if(knowsEarly){
       const span = Math.max(1500, (seconds - 4) * 1000);
       const t = 1200 + Math.random() * span;
@@ -26670,18 +26711,38 @@ function qmStartRound(no){
   });
   G.round.timers.push(setInterval(qmTick, 200));
   G.round.timers.push(setTimeout(qmEndRound, seconds * 1000));
+  // [Ver 11.4] 온라인 모드 · 새 라운드가 열렸음을 즉시 참가자들에게 알린다.
+  if(G.online && G.isHost){
+    try{ lanQmBroadcast(); }catch(e){}
+    G.round.timers.push(setInterval(()=>{ try{ lanQmBroadcast(); }catch(e){} }, 500));
+  }
 }
 
+/* [Ver 11.4] "나"에 해당하는 참가자 id.
+   로컬 모드: 항상 players[0] (기존 그대로).
+   온라인 모드: G.meId에 내 슬롯이 매핑돼 있다(qmOnlineBuildPlayers에서 채운다). */
+function qmMyId(){
+  const G = window.__qm; if(!G) return null;
+  if(G.online && G.meId) return G.meId;
+  return G.players[0] ? G.players[0].id : null;
+}
 function qmBotAnswer(pid){
   const G = window.__qm; if(!G || G.phase !== 'playing' || !G.round) return;
   qmApplyAnswer(pid, G.round.card.name);
 }
 
-/* 참가자·호스트 구분 없이 로컬 4인이 한 화면에서 진행되는 모드라, LAN 동기화 없이
-   바로 채점한다(퀴즈쇼 이벤트와 달리 이 모드는 온라인/Wi-fi를 지원하지 않는다). */
+/* 참가자·호스트 구분 없이 로컬 4인이 한 화면에서 진행되는 모드라면 바로 채점한다.
+   [Ver 11.4] 온라인 모드의 참가자(호스트가 아닌 쪽)는 채점 권한이 없다 — 실제 판정은
+   항상 호스트에서만 일어나야 조작을 막을 수 있으므로, 자기 입력을 호스트로 전송만 하고
+   여기서 곧바로 끝낸다(로컬 tries/done을 건드리지 않는다 — 호스트 스냅샷이 다시 채워준다). */
 function qmApplyAnswer(pid, text){
   const G = window.__qm;
   if(!G || G.phase !== 'playing' || !G.round) return;
+  if(G.online && !G.isHost){
+    if(pid !== qmMyId()) return;   // 참가자는 자기 자신의 정답만 보낼 수 있다
+    try{ lanSend({ t:'to_host', payload:{ action:'qmAnswer', txt: text } }); }catch(e){}
+    return;
+  }
   const R = G.round;
   if(R.done[pid]) return;
   if((R.tries[pid]||0) >= QM_TRIES) return;
@@ -26689,7 +26750,7 @@ function qmApplyAnswer(pid, text){
   const guess = grpQuizNorm(text);
   if(!guess) return;
   R.tries[pid] = (R.tries[pid]||0) + 1;
-  const isMe = (pid === G.players[0].id);
+  const isMe = (pid === qmMyId());
   if(guess === grpQuizNorm(R.card.name)){
     const msLeft = Math.max(0, R.seconds*1000 - (Date.now() - R.startedAt));
     const gained = qmScoreFor(msLeft, R.seconds*1000, R.card);
@@ -26702,6 +26763,8 @@ function qmApplyAnswer(pid, text){
     qmFlash('no');
   }
   qmTick();
+  // [Ver 11.4] 온라인 모드 · 호스트 쪽에서 채점이 바뀔 때마다 참가자들에게 즉시 반영한다.
+  if(G.online && G.isHost){ try{ lanQmBroadcast(); }catch(e){} }
 }
 
 /* 힌트 — 정답의 글자(공백 제외) 중 하나를 무작위로 골라 초성 대신 실제 글자로 보여준다.
@@ -26736,7 +26799,7 @@ function qmHintDisplay(R){
 function qmScoreboardHtml(){
   const G = window.__qm; if(!G) return '';
   const R = G.round;
-  const meId = G.players[0].id;
+  const meId = qmMyId();
   return [...G.players].sort((a,b)=> b.score - a.score).map(p=>{
     let st;
     if(R && R.done[p.id]) st = `<span class="grp-yes">+${R.done[p.id].gained}</span>`;
@@ -26766,12 +26829,12 @@ function qmTick(){
   if(hintEl) hintEl.innerHTML = qmHintDisplay(R);
   const board = document.getElementById('qmScoreboard');
   if(board) board.innerHTML = qmScoreboardHtml();
-  const me = G.players[0];
-  const done = !!R.done[me.id];
-  const outOfTries = (R.tries[me.id]||0) >= QM_TRIES;
+  const meId = qmMyId();
+  const done = !!R.done[meId];
+  const outOfTries = (R.tries[meId]||0) >= QM_TRIES;
   const triesEl = document.getElementById('qmTriesLabel');
   if(triesEl){
-    triesEl.textContent = done ? '정답!' : (outOfTries ? '기회 소진' : `${QM_TRIES - (R.tries[me.id]||0)}회 남음`);
+    triesEl.textContent = done ? '정답!' : (outOfTries ? '기회 소진' : `${QM_TRIES - (R.tries[meId]||0)}회 남음`);
     triesEl.className = 'qm-tries' + (done ? ' ok' : (outOfTries ? ' out' : ''));
   }
   const inp = document.getElementById('qmInput');
@@ -26787,7 +26850,7 @@ function qmSubmitAnswer(){
   if(!txt) return;
   if(inp) inp.value = '';
   const G = window.__qm; if(!G) return;
-  qmApplyAnswer(G.players[0].id, txt);
+  qmApplyAnswer(qmMyId(), txt);
 }
 
 function qmLog(msg){
@@ -26830,6 +26893,7 @@ function qmEndRound(){
   try{ (R.timers||[]).forEach(t=>{ clearInterval(t); clearTimeout(t); }); }catch(e){}
   G.phase = 'reveal';
   qmRenderReveal();
+  if(G.online && G.isHost){ try{ lanQmBroadcast(); }catch(e){} }
   const t = setTimeout(()=>{
     if(R.no >= G.totalRounds) qmFinish();
     else qmStartRound(R.no + 1);
@@ -26856,6 +26920,7 @@ function qmFinish(){
   try{ (G.timers||[]).forEach(t=>{ clearInterval(t); clearTimeout(t); }); }catch(e){}
   qmBgmStop();
   qmRenderFinal();
+  if(G.online && G.isHost){ try{ lanQmBroadcast(); }catch(e){} }
 }
 
 function qmRenderFinal(){
@@ -26865,7 +26930,7 @@ function qmRenderFinal(){
   const body = document.getElementById('qmBody'); if(!body) return;
   const ranked = [...G.players].sort((a,b)=> b.score - a.score);
   const medals = ['🥇','🥈','🥉'];
-  const meId = G.players[0].id;
+  const meId = qmMyId();
   const rows = ranked.map((p,i)=> `
     <div class="qm-final-row${i===0?' first':''}">
       <div class="qm-final-rank">${medals[i] || ((i+1)+'위')}</div>
@@ -26877,8 +26942,8 @@ function qmRenderFinal(){
       <div class="qm-final-title">🏆 퀴즈 모드 결과</div>
       <div class="qm-final-list">${rows}</div>
       <div class="qm-final-btns">
-        <button class="btn btn-solid" onclick="openQuizModeSetup()">다시하기</button>
-        <button class="btn btn-ghost qm-ghost-btn" onclick="qmExit()">메인으로</button>
+        ${G.online ? '' : '<button class="btn btn-solid" onclick="openQuizModeSetup()">다시하기</button>'}
+        <button class="btn btn-ghost qm-ghost-btn" onclick="qmExit()">${G.online ? '로비로' : '메인으로'}</button>
       </div>
     </div>`;
 }
@@ -26893,6 +26958,8 @@ function qmConfirmExit(){
 }
 function qmExit(){
   const G = window.__qm;
+  // [Ver 11.4] 온라인 퀴즈 모드였다면 카드게임과 동일하게 방을 나가는 절차를 탄다.
+  const wasOnline = !!(G && G.online);
   try{
     if(G){
       (G.timers||[]).forEach(t=>{ clearInterval(t); clearTimeout(t); });
@@ -26901,6 +26968,9 @@ function qmExit(){
   }catch(e){}
   window.__qm = null;
   qmBgmStop();
+  if(wasOnline){
+    try{ lanLeaveGame(); return; }catch(e){}
+  }
   showScreen('screen-start');
 }
 
@@ -56141,7 +56211,7 @@ function lanRtRebuildRoom(code){
     if(LAN.rt.startFired) return;
     LAN.rt.startFired = true;
     LAN.rt.headcount = arr.length;               // 이 인원이 줄면 즉시 종료
-    lanOnMessage({ t:'start', room, fillBots: meta.fillBots, gameMode: meta.gameMode });
+    lanOnMessage({ t:'start', room, fillBots: meta.fillBots, gameMode: meta.gameMode, qmDifficulty: meta.qmDifficulty });
     return;
   }
   lanOnMessage({ t:'room', room });
@@ -56185,6 +56255,7 @@ function lanRtAttachRoom(code){
   bind('hostId');
   bind('started', v=> !!v);
   bind('gameMode');
+  bind('qmDifficulty');
   bind('fillBots', v=> !!v);
 
   const offPlayers = onValue(ref(FB.rtdb, 'rooms/' + code + '/players'), (snap)=>{
@@ -56329,7 +56400,7 @@ function lanRtSend(obj){
     }
     case 'start': {
       if(!code || !LAN.isHost) return;
-      update(ref(FB.rtdb, 'rooms/' + code), { started:true, fillBots: !!obj.fillBots, gameMode: obj.gameMode||'normal' });
+      update(ref(FB.rtdb, 'rooms/' + code), { started:true, fillBots: !!obj.fillBots, gameMode: obj.gameMode||'normal', qmDifficulty: obj.qmDifficulty||'normal' });
       break;
     }
     case 'chat': {
@@ -56381,7 +56452,7 @@ function lanOnMessage(m){
     case 'host_changed': if(LAN.room){ LAN.room.hostId = m.hostId; LAN.isHost = (m.hostId===LAN.you); } if(!LAN.inGame) lanRenderLobby(); break;
     case 'host_left_reset': LAN.inGame=false; lanToast('호스트가 나가 게임이 종료되었습니다. 로비로 돌아갑니다.'); try{ goToStart(); }catch(e){} openLanLobby(null, LAN.mode); break;
     case 'error': lanToast(m.msg); lanRenderLobby(m.msg); break;
-    case 'start': LAN.room = m.room; LAN.inGame = true; if(typeof m.fillBots==='boolean') LAN.fillBots = m.fillBots; if(m.gameMode) LAN.gameMode = m.gameMode; lanBeginGame(m.room); break;
+    case 'start': LAN.room = m.room; LAN.inGame = true; if(typeof m.fillBots==='boolean') LAN.fillBots = m.fillBots; if(m.gameMode) LAN.gameMode = m.gameMode; if(m.qmDifficulty) LAN.qmDifficulty = m.qmDifficulty; lanBeginGame(m.room); break;
     case 'chat': LAN.chat.push({name:m.name, msg:m.msg}); if(LAN.chat.length>60) LAN.chat.shift(); lanRenderChat(); try{ const __g=document.getElementById('lanGameChat'); if(__g && __g.classList.contains('collapsed')) __lanGChatUnread++; lanRenderGameChat(); }catch(e){} break;
     case 'state': lanClientApplyState(m.payload); break;      // 클라이언트: 호스트가 보낸 공개 상태 적용
     case 'input': lanHostHandleInput(m.slot, m.payload); break; // 호스트: 클라이언트 입력 수신
@@ -56438,7 +56509,13 @@ function lanRenderLobby(errMsg){
         <div class="lan-mode ${(LAN.gameMode||'normal')==='normal'?'active':''}" onclick="lanSetGameMode('normal')">일반<small>4인 개인전</small></div>
         <div class="lan-mode ${LAN.gameMode==='team'?'active':''}" onclick="lanSetGameMode('team')">팀전<small>3 vs 3</small></div>
         <div class="lan-mode ${LAN.gameMode==='draft'?'active':''}" onclick="lanSetGameMode('draft')">저점매수<small>경매전</small></div>
-      </div>` : ''}
+        <div class="lan-mode ${LAN.gameMode==='quiz'?'active':''}" onclick="lanSetGameMode('quiz')">퀴즈<small>초성 맞히기</small></div>
+      </div>
+      ${LAN.gameMode==='quiz' ? `
+      <div class="lan-status" style="margin-top:10px;margin-bottom:6px;">봇 난이도 (빈 자리를 채울 봇)</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        ${Object.keys(QM_DIFFICULTIES).map(k=>`<button class="btn btn-sm ${k===(LAN.qmDifficulty||qmDifficulty)?'btn-solid':''}" onclick="lanSetQmDiff('${k}')">${QM_DIFFICULTIES[k].label}</button>`).join('')}
+      </div>` : ''}` : ''}
     ${LAN.isHost ? `<label class="lan-botopt"><input type="checkbox" id="lanBotToggle" ${LAN.fillBots?'checked':''} onchange="lanSetFillBots(this.checked)"> 빈 자리를 봇으로 채우기 <small>(끄면 접속한 사람끼리만, 최소 2명)</small></label>` : ''}
     ${LAN.isHost
       ? `<button class="lan-btn" onclick="lanDoStart()" ${canStart?'':'disabled'}>게임 시작${canStart?'':' (전원 준비 대기)'}</button>`
@@ -56453,7 +56530,14 @@ function lanRenderLobby(errMsg){
 /* [Ver 8.2] 호스트 게임 모드 선택 — 일반 / 팀전(3v3) / 저점매수 */
 function lanSetGameMode(mode){
   if(!LAN.isHost) return;
-  LAN.gameMode = (mode==='team'||mode==='draft') ? mode : 'normal';
+  LAN.gameMode = (mode==='team'||mode==='draft'||mode==='quiz') ? mode : 'normal';
+  lanRenderLobby();
+}
+/* [Ver 11.4] 온라인 퀴즈 모드 — 호스트가 로비에서 봇 난이도를 미리 고른다.
+   실제 시작 시 LAN.qmDifficulty를 room.qmDifficulty로 실어 보낸다(lanDoStart). */
+function lanSetQmDiff(k){
+  if(!LAN.isHost || !QM_DIFFICULTIES[k]) return;
+  LAN.qmDifficulty = k;
   lanRenderLobby();
 }
 /* [Ver 8.2] 방 코드 클릭 복사 */
@@ -56480,7 +56564,7 @@ function lanDoJoin(){
 function lanToggleReady(){ const me=(LAN.room.players.find(p=>p.id===LAN.you)||{}); lanSend({t:'ready', ready:!me.ready}); }
 function lanDoLeave(){ lanSend({t:'leave'}); LAN.room=null; lanRenderLobby(); }
 function lanSetFillBots(on){ LAN.fillBots = !!on; }
-function lanDoStart(){ lanSend({t:'start', fillBots: LAN.fillBots, gameMode: LAN.gameMode||'normal'}); }
+function lanDoStart(){ lanSend({t:'start', fillBots: LAN.fillBots, gameMode: LAN.gameMode||'normal', qmDifficulty: LAN.qmDifficulty||qmDifficulty}); }
 function lanSendChat(){ const inp=document.getElementById('lanChatInput'); if(!inp||!inp.value.trim())return; lanSend({t:'chat', msg:inp.value.trim()}); inp.value=''; }
 
 /* [Ver 7.1.2] LAN 초대 QR — 서버에서 공유 가능한 LAN 주소를 받아 QR로 그린다.
@@ -56630,6 +56714,10 @@ function lanHideGameBadge(){ const b=document.getElementById('lanGameBadge'); if
 /* ---------- 호스트: 실제 게임 시작 ---------- */
 let __lanStateTimer = null;
 function lanHostStartGame(room){
+  /* [Ver 11.4] 퀴즈 모드는 카드게임(HP·손패·덱)을 전혀 만들지 않는 완전히 다른 화면이라,
+     여기서 곧바로 온라인 퀴즈 전용 시작 경로로 분기하고 아래 카드게임 초기화는 타지 않는다. */
+  { const gm0 = (room && room.gameMode) || LAN.gameMode || 'normal';
+    if(gm0 === 'quiz'){ lanHostStartQuiz(room); return; } }
   try{ lanLobbyBgmStop(); }catch(e){}
   /* [Ver 10.5.1] 유물 없는 판 — 방을 연 사람이 시작 직전에 고른다.
      ⚠ 유물을 지우는 게 아니라 **이 판 동안만 효과를 끄는** 규칙이다. 저장된 유물은 그대로다.
@@ -56676,6 +56764,208 @@ function lanHostStartGame(room){
       lanHostBroadcastNow();
     });
   }catch(e){ console.error('[LAN] 호스트 시작 실패', e); }
+}
+
+/* ==========================================================================
+   [Ver 11.4 신규] 온라인 퀴즈 모드
+   --------------------------------------------------------------------------
+   ▶ 기존 로컬 전용 퀴즈 모드(window.__qm, qmStartRound 등)를 그대로 재사용하되,
+     "누가 실제로 라운드 타이머·봇 판정을 돌리는가"만 호스트로 한정한다.
+     · 호스트: 로컬 퀴즈 로직을 그대로 실행하면서, 상태가 바뀔 때마다(라운드 시작/틱/정답/
+       라운드 종료/게임 종료) lanQmBroadcast()로 스냅샷을 참가자 전원에게 뿌린다.
+     · 참가자: 로컬 타이머를 전혀 돌리지 않는다. 화면은 호스트가 보낸 스냅샷을
+       lanQmClientApplyState()가 그대로 옮겨 그린다. 자기 입력(정답 제출)만
+       'to_host'의 qmAnswer 액션으로 호스트에 보낸다(qmSubmitAnswer가 이미 온라인/로컬
+       분기 없이 qmApplyAnswer를 부르므로, 참가자 쪽 qmApplyAnswer를 "로컬 채점 대신 전송"으로
+       바꿔치기한다 — 아래 qmApplyAnswer 오버라이드 참고).
+   ▶ 카드게임 스냅샷(lanHostSnapshot)과는 완전히 분리된 별도 채널을 쓴다. 퀴즈 모드는
+     players/gameActive 등 카드게임 전역을 전혀 만들지 않기 때문이다.
+   ========================================================================== */
+
+/* 호스트: 참가자 슬롯을 퀴즈 참가자로 매핑해 window.__qm을 만든다.
+   room.players는 {id, slot, name, isHost, ready} 형태. 사람 자리는 그대로 두고,
+   fillBots가 켜져 있으면 남는 자리(최대 4인 기준)를 봇으로 채운다. */
+function lanQmBuildPlayers(room){
+  const humans = (room && room.players || []).slice().sort((a,b)=> a.slot-b.slot);
+  const seats = [];
+  humans.forEach(hp=>{
+    seats.push({ id:'q'+hp.slot, slot:hp.slot, name:hp.name, isBot:false, isHuman:true, score:0 });
+  });
+  // [Ver 11.4 버그수정] slot이 듬성듬성(예: 0,2,5)일 수 있어 humans.length가 아니라
+  // 실제 최대 slot 기준으로 seatCount를 잡아야 사람 자리를 봇으로 덮어쓰지 않는다.
+  const maxHumanSlot = humans.reduce((m,hp)=> Math.max(m, hp.slot), -1);
+  const seatCount = Math.max(4, maxHumanSlot + 1);
+  if(LAN.fillBots){
+    const picked = pickBotNamesForGame(Math.max(0, seatCount - humans.length));
+    let bi = 0;
+    for(let slot=0; slot<seatCount; slot++){
+      if(seats.some(s=> s.slot===slot)) continue;
+      seats.push({ id:'qb'+slot, slot, name:(picked.names[bi]||('참가자'+(slot+1))), isBot:true, isHuman:false, score:0 });
+      bi++;
+    }
+  }
+  seats.sort((a,b)=> a.slot-b.slot);
+  return seats;
+}
+
+/* 호스트: 온라인 퀴즈 시작 진입점. lanHostStartGame이 gameMode==='quiz'일 때 이리로 분기한다. */
+function lanHostStartQuiz(room){
+  try{ lanLobbyBgmStop(); }catch(e){}
+  try{
+    lanMode = true;
+    hotseatMode=false; cultMode=false; teamBattleMode=false; draftMode=false; battleRoyaleMode=false; gameActive=false;
+    // [Ver 11.4] 전역 qmDifficulty는 로컬 모드가 localStorage와 함께 쓰는 값이라 온라인 판
+    // 때문에 덮어쓰면 다음에 로컬 모드로 들어갔을 때 난이도가 뒤바뀐 채로 보인다.
+    // 그래서 온라인 전용 변수(__lanQmRoundDiff)에 따로 담아 qmStartRound에서 그쪽을 우선한다.
+    __lanQmRoundDiff = QM_DIFFICULTIES[LAN.qmDifficulty] ? LAN.qmDifficulty : 'normal';
+    const pool = qmQuizPool();
+    if(pool.length < 4){
+      showModal('시작할 수 없습니다', '퀴즈로 낼 수 있는 카드(이름이 한글로만 된 카드)가 부족합니다.', [{label:'확인',solid:true}]);
+      LAN.gameMode = 'normal';
+      return;
+    }
+    const qplayers = lanQmBuildPlayers(room);
+    const rounds = QM_ROUNDS;
+    let deck = [];
+    while(deck.length < rounds) deck = deck.concat([...pool].sort(()=> Math.random()-0.5));
+    deck = deck.slice(0, rounds);
+    const myId = 'q' + (LAN.mySlot||0);
+    window.__qm = { players: qplayers, deck, roundNo:0, round:null, phase:'idle', timers:[], totalRounds: rounds,
+                    online:true, isHost:true, meId: myId };
+    // [Ver 11.4] 로컬 퀴즈 모드(startQuizMode)와 동일하게 로딩 화면 없이 바로 진입한다 —
+    // 카드게임 로딩 연출(대기중 슬롯 등)은 퀴즈 모드에 맞지 않는다.
+    showScreen('screen-quiz');
+    qmBgmPlay();
+    lanQmStartHeartbeat();
+    qmShowIntro(()=> qmStartRound(1));
+  }catch(e){ console.error('[LAN] 온라인 퀴즈 호스트 시작 실패', e); }
+}
+
+/* 참가자: 온라인 퀴즈 진입점. lanClientEnterGame이 gameMode==='quiz'일 때 이리로 분기한다. */
+function lanClientEnterQuiz(room){
+  try{ lanLobbyBgmStop(); }catch(e){}
+  lanMode = true;
+  hotseatMode=false; cultMode=false; teamBattleMode=false; draftMode=false; battleRoyaleMode=false; gameActive=false;
+  LAN.myPid = 'q' + (LAN.mySlot||0);
+  LAN.__qmLastV = 0; LAN.__qmShellRound = null;
+  const myId = LAN.myPid;
+  // 첫 스냅샷이 오기 전까지 보여줄 임시 상태 — 호스트 스냅샷이 도착하면 곧바로 덮어써진다.
+  window.__qm = { players: lanQmBuildPlayers(room), deck:[], roundNo:0, round:null, phase:'idle', timers:[], totalRounds: QM_ROUNDS,
+                  online:true, isHost:false, meId: myId };
+  showScreen('screen-quiz');
+  qmBgmPlay();
+  const body = document.getElementById('qmBody');
+  if(body) body.innerHTML = `<div class="qm-panel"><div class="qm-grade">호스트의 상태를 불러오는 중...</div></div>`;
+  lanQmClientStartTick();
+}
+
+/* 호스트: 온라인 퀴즈용 하트비트. 카드게임의 lanStartHeartbeat와 같은 취지이되
+   퀴즈 전용 채널(lanQmBroadcast)로 보낸다 — 라운드가 없을 때도(인트로 중 등) 주기적으로 흘려보낸다. */
+let __lanQmStateTimer = null;
+function lanQmStartHeartbeat(){
+  if(__lanQmStateTimer) clearInterval(__lanQmStateTimer);
+  __lanQmStateTimer = setInterval(()=>{
+    const G = window.__qm;
+    if(!lanIsHostGame() || !G || !G.online || !G.isHost){ clearInterval(__lanQmStateTimer); __lanQmStateTimer=null; return; }
+    lanQmBroadcast();
+  }, 700);
+}
+
+/* 호스트: 현재 __qm 상태를 참가자가 그대로 그릴 수 있는 최소 스냅샷으로 직렬화해 보낸다.
+   round.timers처럼 함수/타이머 id가 섞인 필드는 절대 실어 보내지 않는다(직렬화 불가 + 참가자에게 무의미). */
+function lanQmSnapshot(){
+  const G = window.__qm; if(!G) return null;
+  const R = G.round;
+  return {
+    v: 0,
+    phase: G.phase,
+    totalRounds: G.totalRounds,
+    players: G.players.map(p=> ({ id:p.id, name:p.name, isBot:!!p.isBot, score:p.score })),
+    round: R ? {
+      no: R.no, seconds: R.seconds,
+      cardName: R.card.name, cardGrade: R.card.grade,
+      startedAt: R.startedAt,
+      tries: R.tries, done: R.done,
+      hint1Revealed: R.hint1Revealed, hint2Revealed: R.hint2Revealed,
+      hintIndex1: R.hintIndex1, hintIndex2: R.hintIndex2
+    } : null
+  };
+}
+let __lanQmLastSig = null;
+function lanQmBroadcast(){
+  if(!lanIsHostGame()) return;
+  const G = window.__qm; if(!G || !G.online || !G.isHost) return;
+  try{
+    const snap = lanQmSnapshot(); if(!snap) return;
+    snap.v = (LAN.__seq = (LAN.__seq||0)+1);
+    // [Ver 11.4] 카드게임 스냅샷과 같은 'state' 채널을 재사용한다 — 이미 검증된 전원 브로드캐스트
+    // 통로이고, 페이로드에 qm 필드가 있는지로 클라이언트가 분기하므로 서로 섞이지 않는다.
+    lanSend({ t:'state', payload: { qm: snap } });
+  }catch(e){}
+}
+
+/* 호스트: 참가자의 정답 제출을 받아 기존 로컬 채점 로직(qmApplyAnswer)에 그대로 넘긴다.
+   pid는 'q'+slot 형식이라 로컬 함수가 기대하는 형식과 동일하다. */
+function lanHostQmAnswer(hostPid, txt){
+  const G = window.__qm; if(!G || !G.online || !G.isHost) return;
+  // hostPid는 lanHostHandleInput이 넘긴 'p'+slot이므로 퀴즈 참가자 id 형식으로 바꿔준다.
+  const slot = parseInt(String(hostPid).replace(/^p/,''), 10);
+  const qid = 'q' + (isNaN(slot) ? 0 : slot);
+  qmApplyAnswer(qid, txt);
+}
+
+/* 참가자: 호스트가 보낸 퀴즈 스냅샷을 받아 화면을 갈아끼운다.
+   round.timers 등 함수 필드가 없는 "그리기 전용" 뼈대이므로, 기존 qmRender* 함수는 쓰지 않고
+   직접 그린다(그 함수들은 round 객체에 done/tries 외의 실제 필드—카드 객체 등—를 기대한다). */
+function lanQmClientApplyState(snap){
+  if(lanIsHostGame()) return;
+  const G = window.__qm; if(!G || !G.online) return;
+  if(LAN.__qmLastV && snap.v && snap.v <= LAN.__qmLastV) return;
+  LAN.__qmLastV = snap.v;
+  G.phase = snap.phase;
+  G.totalRounds = snap.totalRounds;
+  // 점수·이름은 스냅샷 players로 갈아끼우되, id는 그대로 유지해 qmMyId() 매칭이 깨지지 않게 한다.
+  G.players = snap.players;
+  const badge = document.getElementById('qmRoundBadge');
+  const body = document.getElementById('qmBody');
+  if(!body) return;
+  if(snap.phase === 'finished'){
+    if(badge) badge.textContent = '종료';
+    qmRenderFinal();
+    return;
+  }
+  if(!snap.round){
+    if(badge) badge.textContent = `- / ${snap.totalRounds}`;
+    body.innerHTML = `<div class="qm-panel"><div class="qm-grade">다음 문제를 준비하는 중...</div></div>`;
+    return;
+  }
+  const R = snap.round;
+  G.round = { no:R.no, seconds:R.seconds, startedAt:R.startedAt, tries:R.tries||{}, done:R.done||{},
+              hint1Revealed:R.hint1Revealed, hint2Revealed:R.hint2Revealed, hintIndex1:R.hintIndex1, hintIndex2:R.hintIndex2,
+              card:{ name:R.cardName, grade:R.cardGrade } };
+  if(badge) badge.textContent = `${R.no} / ${snap.totalRounds}`;
+  if(snap.phase === 'reveal'){
+    qmRenderReveal();
+    return;
+  }
+  // playing — 입력창 유지가 필요하니, 라운드 번호가 바뀔 때만 뼈대를 새로 그리고 이후엔 qmTick으로 갱신한다.
+  if(LAN.__qmShellRound !== R.no){
+    LAN.__qmShellRound = R.no;
+    qmRenderRoundShell();
+  } else {
+    qmTick();
+  }
+}
+
+/* 참가자: 매초 남은 시간을 스스로 계산해 타이머 바를 부드럽게 움직인다.
+   (호스트 스냅샷은 700ms 간격이라 그대로 쓰면 뚝뚝 끊겨 보인다 — qmTick 자체는 로컬에서 200ms로 계속 돈다) */
+let __lanQmClientTickTimer = null;
+function lanQmClientStartTick(){
+  if(__lanQmClientTickTimer) clearInterval(__lanQmClientTickTimer);
+  __lanQmClientTickTimer = setInterval(()=>{
+    if(lanIsHostGame() || !window.__qm || !window.__qm.online){ clearInterval(__lanQmClientTickTimer); __lanQmClientTickTimer=null; return; }
+    if(window.__qm.phase === 'playing') qmTick();
+  }, 200);
 }
 
 /* [Ver 7.1.1] 호스트 하트비트 — 게임 중 400ms마다 현재 상태를 전송한다.
@@ -56865,6 +57155,10 @@ function lanHostHandleInput(slot, payload){
        proxy_modal — 선택 창을 띄워둔 채 사망하는 경우가 있다. 여기서 버리면 그 판이 60초간 멈춘다.
      (예전에는 둘 다 `!p.alive` 검사 뒤에 있어서 조용히 유실됐다) */
   if(payload.action === 'pet'){ lanHostAcceptPet(pid, payload.pet, payload.artifacts); return; }
+  /* [Ver 11.4] 온라인 퀴즈 모드 — 참가자가 보낸 정답을 호스트가 채점한다.
+     퀴즈 모드는 players/gameActive를 쓰지 않으므로 아래의 !p.alive 등 카드게임 검사보다
+     먼저, 그리고 완전히 별도로 처리하고 빠져나간다. */
+  if(payload.action === 'qmAnswer'){ try{ lanHostQmAnswer(pid, String(payload.txt||'').slice(0,40)); }catch(e){} return; }
   /* [Ver 10.3] 단체 이벤트(베팅) — 죽은 사람도 아닌 "참가자 목록"만 보므로
      아래의 !p.alive 검사보다 먼저 받는다. 판정은 grpBetApply가 다시 한 번 한다. */
   if(payload.action === 'grpBet'){    try{ grpBetApply(pid, payload.delta|0); }catch(e){} return; }
@@ -57480,6 +57774,9 @@ function lanClientSendReact(uid){
 
 /* ---------- 클라이언트: 관전+조작 뷰 ---------- */
 function lanClientEnterGame(room){
+  /* [Ver 11.4] 퀴즈 모드는 참가자 쪽도 완전히 다른 진입 경로를 탄다. */
+  { const gm0 = LAN.gameMode || 'normal';
+    if(gm0 === 'quiz'){ lanClientEnterQuiz(room); return; } }
   try{ lanLobbyBgmStop(); }catch(e){}
   lanMode = true;
   hotseatMode = false; cultMode=false; teamBattleMode=false; draftMode=false; battleRoyaleMode=false;
@@ -57549,6 +57846,9 @@ function lanClientApplyLog(snap){
 }
 function lanClientApplyState(snap){
   if(lanIsHostGame()) return;
+  /* [Ver 11.4] 온라인 퀴즈 모드 — qm 필드가 있으면 카드게임 스냅샷이 아니라 퀴즈 스냅샷이다.
+     완전히 별도 경로로 처리하고 아래 카드게임 로직은 타지 않는다. */
+  if(snap && snap.qm){ try{ lanQmClientApplyState(snap.qm); }catch(e){} return; }
   if(!snap || snap.over){ lanClientGameOver(); return; }
   if(LAN.__lastV && snap.v && snap.v <= LAN.__lastV) return; // 오래된 스냅샷 무시
   LAN.__lastV = snap.v;
@@ -57900,6 +58200,11 @@ function lanLeaveGame(){
   try{ lanLobbyBgmStop(); }catch(e){}
   LAN.inGame=false; lanMode=false;
   if(__lanStateTimer){ clearInterval(__lanStateTimer); __lanStateTimer=null; }
+  // [Ver 11.4] 온라인 퀴즈 모드 타이머 정리
+  if(__lanQmStateTimer){ clearInterval(__lanQmStateTimer); __lanQmStateTimer=null; }
+  if(__lanQmClientTickTimer){ clearInterval(__lanQmClientTickTimer); __lanQmClientTickTimer=null; }
+  LAN.__qmLastV = 0; LAN.__qmShellRound = null;
+  try{ if(window.__qm && window.__qm.online){ (window.__qm.timers||[]).forEach(t=>{ clearInterval(t); clearTimeout(t); }); if(window.__qm.round) (window.__qm.round.timers||[]).forEach(t=>{ clearInterval(t); clearTimeout(t); }); window.__qm=null; qmBgmStop(); } }catch(e){}
   try{ clearInterval(LAN.__petTimer); }catch(e){} LAN.__petTimer=null; LAN.__pendingPets=null; // [Ver 9.10.7]
   // [Ver 9.10.7] 프록시 선택 창 정리
   try{ lanPmDestroy(); }catch(e){}
@@ -58078,4 +58383,4 @@ window.__AUD = {
 </script>
 
 </body>
-</html>v
+</html>
