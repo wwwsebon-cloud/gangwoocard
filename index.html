@@ -9427,7 +9427,7 @@ body.mobile-mode .hitman-panel{ font-size:8px; padding:2px 8px; top:-11px; }
         <button class="gm-card" onclick="pickGameMode('quiz')">
           <span class="gm-ic">🧠</span>
           <b>퀴즈 모드 <em>NEW</em></b>
-          <small>카드게임 아님 · 초성 퀴즈 10문제 · 봇 난이도 선택 가능</small>
+          <small>카드게임 아님 · 초성 퀴즈로 카드 이름 맞히기 (10~30문제)</small>
         </button>
         <button class="gm-card" onclick="pickGameMode('tutorial')">
           <span class="gm-ic">💡</span>
@@ -19263,15 +19263,6 @@ function exitPlaygroundBar(){
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
   {
-    version: 'Ver 11.3',
-    date: '2026-08-18',
-    items: [
-      '🤖 <b>[퀴즈 모드] 봇 난이도 선택</b> — 시작 전 확인창의 문제 수 선택을 없애고, 그 자리에 <b>봇 난이도(쉬움 / 보통 / 어려움 / 사기)</b>를 추가했습니다. 문제 수는 다시 <b>10문제 고정</b>입니다.',
-      '🔥 <b>[퀴즈 모드] 사기 난이도</b> — 봇 전원이 <b>3초 안에 반드시</b> 정답을 맞힙니다.',
-      '(참고) 마지막으로 고른 난이도는 다음에도 기억됩니다.'
-    ]
-  },
-  {
     version: 'Ver 11.2',
     date: '2026-08-18',
     items: [
@@ -26446,23 +26437,14 @@ function startBattleRoyale(){
      지원하지 않는다(각 원격 참가자의 화면 상태를 실시간으로 맞추려면 별도의 LAN 스냅샷 설계가
      필요해 이번 범위에서는 보류했다).
    ========================================================================== */
-/* [Ver 11.3] 퀴즈 모드 설정 — 문제 수 선택은 삭제하고, 대신 봇 난이도(쉬움/보통/어려움/사기)를
-   시작 전에 고른다. 문제 수는 다시 10문제 고정. localStorage에 저장해 다음에도 마지막 선택을 기억한다. */
-const QM_ROUNDS = 10;
-const QM_DIFF_KEY = 'ubin_qm_diff';
-/* knowsEarly: 힌트 뜨기 전에 정답을 아는 확률. knowsAfterHint: 그렇지 않은 봇 중 힌트를 보고 맞히는 확률.
-   맞히는 시점(초)은 qmStartRound에서 이 범위를 문제별 제한시간에 맞춰 스케일한다.
-   cheat(사기)만 예외 — 힌트와 무관하게 전원이 0.5~3초 안에 반드시 맞힌다. */
-const QM_DIFFICULTIES = {
-  easy:   { label:'쉬움',  knowsEarly:0.12, knowsAfterHint:0.30, cheat:false },
-  normal: { label:'보통',  knowsEarly:0.30, knowsAfterHint:0.45, cheat:false },
-  hard:   { label:'어려움', knowsEarly:0.55, knowsAfterHint:0.70, cheat:false },
-  cheat:  { label:'사기',  knowsEarly:1.00, knowsAfterHint:1.00, cheat:true }
-};
-let qmDifficulty = 'normal';
+/* [Ver 11.2] 퀴즈 모드 설정 — 문제 수(10/15/20/25/30)를 시작 전에 고른다.
+   기본값 10문제. localStorage에 저장해 다음에도 마지막 선택을 기억한다. */
+const QM_ROUNDS_KEY = 'ubin_qm_rounds';
+const QM_ROUNDS_OPTIONS = [10, 15, 20, 25, 30];
+let qmRoundsSetting = 10;
 try{
-  const savedDiff = localStorage.getItem(QM_DIFF_KEY);
-  if(QM_DIFFICULTIES[savedDiff]) qmDifficulty = savedDiff;
+  const saved = parseInt(localStorage.getItem(QM_ROUNDS_KEY), 10);
+  if(QM_ROUNDS_OPTIONS.indexOf(saved) !== -1) qmRoundsSetting = saved;
 }catch(e){}
 
 const QM_SECONDS_SHORT = 20, QM_SECONDS_LONG = 30;   // [Ver 11.2] 4글자 이상이면 30초, 아니면 20초
@@ -26590,29 +26572,28 @@ function openQuizModeSetup(){
     showModal('시작할 수 없습니다', '퀴즈로 낼 수 있는 카드(이름이 한글로만 된 카드)가 부족합니다.', [{label:'확인',solid:true}]);
     return;
   }
-  const render = (diff)=>{
+  const render = (n)=>{
     const body = `
-      <div style="margin-bottom:10px;font-size:13px;color:var(--fg-dim);">나 포함 4인이 초성 퀴즈로 카드 이름을 맞히는 미니게임입니다. 등급 상관없이 모든 카드가 문제로 나옵니다. (총 ${QM_ROUNDS}문제)</div>
-      <div style="margin-bottom:6px;font-size:12.5px;color:var(--fg-dim);">봇 난이도</div>
+      <div style="margin-bottom:10px;font-size:13px;color:var(--fg-dim);">나 포함 4인이 초성 퀴즈로 카드 이름을 맞히는 미니게임입니다. 등급 상관없이 모든 카드가 문제로 나옵니다.</div>
+      <div style="margin-bottom:6px;font-size:12.5px;color:var(--fg-dim);">문제 수</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        ${Object.keys(QM_DIFFICULTIES).map(k=>`<button class="btn btn-sm ${k===diff?'btn-solid':''}" onclick="window.__qmSetDiff('${k}')">${QM_DIFFICULTIES[k].label}</button>`).join('')}
-      </div>
-      <div style="margin-top:8px;font-size:11.5px;color:var(--fg-faint);">${diff==='cheat' ? '봇 전원이 <b>3초 안에</b> 반드시 정답을 맞힙니다.' : '봇이 정답을 알아채는 확률과 속도가 난이도에 따라 달라집니다.'}</div>`;
+        ${QM_ROUNDS_OPTIONS.map(v=>`<button class="btn btn-sm ${v===n?'btn-solid':''}" onclick="window.__qmSetRounds(${v})">${v}문제</button>`).join('')}
+      </div>`;
     showModal('퀴즈 모드', body, [
       { label:'취소' },
-      { label:'시작', solid:true, action:()=> startQuizMode() }
+      { label:'시작', solid:true, action:()=> startQuizMode(n) }
     ]);
   };
-  window.__qmSetDiff = (k)=>{ if(!QM_DIFFICULTIES[k]) return; qmDifficulty = k; try{ localStorage.setItem(QM_DIFF_KEY, k); }catch(e){} render(k); };
-  render(qmDifficulty);
+  window.__qmSetRounds = (n)=>{ qmRoundsSetting = n; try{ localStorage.setItem(QM_ROUNDS_KEY, String(n)); }catch(e){} render(n); };
+  render(qmRoundsSetting);
 }
 
-function startQuizMode(){
+function startQuizMode(roundCount){
   if(cards.length === 0){
     showModal('시작할 수 없습니다', '카드가 1장 이상 등록되어야 합니다.', [{label:'확인',solid:true}]);
     return;
   }
-  const rounds = QM_ROUNDS;
+  const rounds = QM_ROUNDS_OPTIONS.indexOf(roundCount) !== -1 ? roundCount : qmRoundsSetting;
   const pool = qmQuizPool();   // [Ver 11.2] 등급 상관없이 전체 카드 (이름이 한글로만 된 카드)
   if(pool.length < 4){
     showModal('시작할 수 없습니다', '퀴즈로 낼 수 있는 카드(이름이 한글로만 된 카드)가 부족합니다.', [{label:'확인',solid:true}]);
@@ -26671,17 +26652,11 @@ function qmStartRound(no){
   const hint2Delay = QM_HINT_TRIGGER_2 * 1000;
   if(hint1Delay < seconds*1000) G.round.timers.push(setTimeout(()=> qmRevealHint(1), hint1Delay));
   if(hint2Delay < seconds*1000) G.round.timers.push(setTimeout(()=> qmRevealHint(2), hint2Delay));
-  /* [Ver 11.3] 봇 난이도 — 쉬움/보통/어려움은 "힌트 전에 아는 확률·힌트 보고 아는 확률"을
-     난이도별로 높여가고, 사기는 예외적으로 전원이 0.5~3초 안에 무조건 맞힌다. */
-  const diff = QM_DIFFICULTIES[qmDifficulty] || QM_DIFFICULTIES.normal;
+  /* 봇 — 30%는 힌트가 뜨기 전에 답을 알고, 나머지 중 45%는 글자 힌트를 보고서야 맞힌다.
+     둘 다 아니면 그 문제는 그냥 넘어간다(오답 연출은 생략 — 화면엔 어차피 안 보인다). */
   G.players.filter(p=>p.isBot).forEach(b=>{
-    if(diff.cheat){
-      const t = 500 + Math.random() * 2500;   // 0.5~3초 — "사기" 난이도는 무조건 이 안에 맞힌다
-      G.round.timers.push(setTimeout(()=> qmBotAnswer(b.id), t));
-      return;
-    }
-    const knowsEarly = Math.random() < diff.knowsEarly;
-    const knowsAfterHint = !knowsEarly && Math.random() < diff.knowsAfterHint;
+    const knowsEarly = Math.random() < 0.30;
+    const knowsAfterHint = !knowsEarly && Math.random() < 0.45;
     if(knowsEarly){
       const span = Math.max(1500, (seconds - 4) * 1000);
       const t = 1200 + Math.random() * span;
@@ -58103,4 +58078,4 @@ window.__AUD = {
 </script>
 
 </body>
-</html>
+</html>v
