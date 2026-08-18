@@ -8816,7 +8816,7 @@ body.mobile-mode .p-card .p-name{ padding-right: 28px; }
 body.mobile-mode .p-title{ font-size: 8.5px; }
 
 /* ==========================================================================
-   [Ver 9.14] 모바일 전투 UI 안정화 (→ [Ver 11.3.1]에서 근본 재작업)
+   [Ver 9.14] 모바일 전투 UI 안정화 (→ [Ver 11.3.1] 가로 스크롤 → [Ver 11.3.2] 줄바꿈으로 재작업)
    --------------------------------------------------------------------------
    제보된 문제 (11.5 기준):
      ① 이름이 길면 글자가 **세로로** 쌓였다 → 한 줄 고정 + 말줄임
@@ -8826,48 +8826,42 @@ body.mobile-mode .p-title{ font-size: 8.5px; }
           overflow:hidden으로 가로 넘침만 감췄는데, 정작 카드 세로 내용(이름+HP+실드+
           상태칩)이 눌린 높이 안에 다 못 들어가 아래가 잘리는 문제가 그대로 남아 있었고,
           균등폭이 화면폭보다 좁아지면 마지막 칸도 다시 시각적으로 짓눌렸다.
+        → [Ver 11.3.1]은 균등폭 대신 최소 폭(112px)을 보장하고 행을 가로 스크롤 가능하게
+          바꿨는데, 실제로는 화면폭이 좁을 때 세 번째 칸이 스크롤해야만 보이는 위치에
+          놓이면서 처음 렌더링 시점엔 여전히 "잘린 것처럼" 보이는 문제가 남았다(제보 재발).
      ④ 이름을 누르면 상세창이 떠 **지목이 어려웠다** → 모바일에선 클릭 자체를 제거(JS)
-   ▶ [Ver 11.3.1] 근본 해결: 균등폭으로 눌러 담는 대신, 각 상대 카드에 읽을 수 있는
-     최소 폭(112px)을 보장하고 행 자체를 가로 스크롤 가능하게 바꾼다. 3명 모두 화면에
-     한 번에 안 들어가도 옆으로 슬쩍 밀어보면 되고, 카드 내용은 절대 압축·잘림 없이
-     항상 완전한 높이로 표시된다.
-   ========================================================================== */
+   ▶ [Ver 11.3.2] 진짜 근본 해결: 가로 스크롤을 요구하는 대신 행 자체가 줄바꿈되게 한다.
+     한 줄에 못 들어가는 카드는 스와이프 없이 자동으로 다음 줄로 내려가므로, 스크롤을
+     "해야만" 보이는 카드가 아예 없어진다. .zone-bots는 세로로 더 늘어나고, 그래도
+     화면이 부족하면 (많은 인원수 모드에서) 세로 스크롤로만 처리한다 — 가로 스크롤은
+     제거. */
 body.mobile-mode .zone-bots-row{
   display: flex !important;
   flex-direction: row !important;
-  flex-wrap: nowrap !important;
+  flex-wrap: wrap !important;              /* [Ver 11.3.2] nowrap+가로스크롤 → wrap */
   align-items: stretch;
+  justify-content: flex-start;
   gap: 6px !important;
   padding: 6px !important;
-  overflow-x: auto !important;   /* [Ver 11.3.1] 잘리는 대신 가로로 스크롤 */
+  overflow-x: visible !important;          /* [Ver 11.3.2] 더 이상 가로로 잘리거나 스크롤하지 않는다 */
   overflow-y: visible !important;
-  -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x proximity;
 }
 body.mobile-mode .zone-bots-row .seat{
-  flex: 1 1 112px !important;   /* [Ver 11.3.1] 균등폭 강제 대신 최소 112px을 보장 — 넘치면 스크롤 */
+  flex: 1 1 112px !important;   /* 한 줄에 못 들어가면 자동으로 다음 줄로 줄바꿈된다 */
   min-width: 112px !important;
   max-width: 156px !important;
-  scroll-snap-align: start;
 }
 body.mobile-mode .zone-bots-row .seat .p-card{
-  width: 100%; min-width: 0; overflow: visible;  /* [Ver 11.3.1] 카드 내용은 더 이상 가로/세로로 잘리지 않는다 */
+  width: 100%; min-width: 0; overflow: visible;  /* 카드 내용은 가로/세로로 잘리지 않는다 */
   padding: 6px 6px 5px !important; gap: 3px !important;
 }
-/* [Ver 11.3.1] 세로 내용(이름·HP·실드·상태칩)이 잘리지 않도록 zone-bots 자체가
-   내용 높이만큼 늘어날 수 있게 한다. 화면이 정말 부족한 경우에만 세로 스크롤로 전환. */
+/* [Ver 11.3.2] 줄바꿈으로 행이 여러 줄이 될 수 있으니, 세로 공간을 넉넉히 늘렸다.
+   그래도 인원이 아주 많은 모드(사이비·배틀로얄 등)에서 넘치면 세로 스크롤로 처리한다. */
 body.mobile-mode .zone-bots{
   min-height: 0;
-  max-height: 190px;
+  max-height: 320px;
   overflow-y: auto !important;
-}
-/* [Ver 11.3.1] 가로로 더 있다는 걸 알 수 있도록 오른쪽 끝에 옅은 페이드 힌트.
-   .zone-bots 배경은 테마별로 --bg를 따르므로(투명 처리됨) 하드코딩 색 대신 --bg를 사용. */
-body.mobile-mode .zone-bots{ position: relative; }
-body.mobile-mode .zone-bots::after{
-  content:''; position:absolute; top:0; right:0; bottom:0; width:18px;
-  background: linear-gradient(to right, transparent, var(--bg) 92%);
-  pointer-events:none; z-index:2;
+  overflow-x: hidden !important;
 }
 /* ① 이름 — 한 줄로 고정. (min-width:0이 없으면 flex 안에서 글자가 세로로 쌓인다) */
 body.mobile-mode .p-name{
@@ -19345,6 +19339,14 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 11.3.2',
+    date: '2026-08-18',
+    items: [
+      '🔍 <b>[버그수정] 상대 스탯 자세히보기 — 손패 장수 노출</b> — 상대의 "자세히 보기"를 열면 본인처럼 상대의 손패 장수까지 그대로 보이던 문제입니다. 이제 손패 장수는 본인 것만 표시되고, 상대 카드 수는 보이지 않습니다.',
+      '📱 <b>[버그수정] 모바일 모드 — 인게임 상대(봇) 스탯창 잘림 (재발)</b> — 11.3.1에서 가로 스크롤로 바꿨지만, 화면폭이 좁으면 세 번째 스탯창이 스크롤을 해야만 보이는 위치에 걸쳐 있어 처음 렌더링 시점엔 여전히 잘린 것처럼 보였습니다. 이번엔 가로 스크롤 대신 <b>자동 줄바꿈</b>으로 바꿔, 한 줄에 못 들어가는 카드는 스와이프 없이 곧바로 다음 줄로 내려가도록 했습니다. 스크롤을 해야만 보이는 카드가 아예 없어집니다.'
+    ]
+  },
   {
     version: 'Ver 11.3.1',
     date: '2026-08-18',
@@ -32376,7 +32378,7 @@ function showPlayerStatDetail(pid){
   row('받는 피해', p.damageReductionPct ? (p.damageReductionPct>0?`-${p.damageReductionPct}%`:`+${-p.damageReductionPct}%`) : null, p.damageReductionPct>0?'good':'bad');
   row('받는 피해(고정)', p.permaFlatReduce ? `-${num(p.permaFlatReduce)}` : null, 'good');
   row('명중률', p.accuracyMod ? `${p.accuracyMod>0?'+':''}${p.accuracyMod}%` : null, p.accuracyMod>0?'good':'bad');
-  row('손패', isSelf ? `${(p.hand||[]).length}장` : `${(p.hand||[]).length}장`);
+  row('손패', isSelf ? `${(p.hand||[]).length}장` : null);
   row('보유 골드', blinded ? hidden : `${fmtWon(p.gold||0)}`, (p.gold||0)>=0?'':'bad');
   row('누적 소비', p.goldSpent ? fmtWon(p.goldSpent) : null);
   row('이번 판 진화', (typeof evolveUsesLeft==='function' && isSelf) ? `${evolveUsesLeft(p)}회 남음` : null);
