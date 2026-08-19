@@ -12729,7 +12729,8 @@ const STORAGE_KEYS = {
   classState: 'gang_card_class_v1',           // [Ver 11.5] 클래스 {cls, exp}
   seasonMigrated: 'gang_card_season_mig_v1',  // [Ver 11.5] 시즌/클래스 마이그레이션 완료 플래그
   seasonId: 'gang_card_season_id_v1',         // [Ver 11.5] 현재 시즌 id
-  genesisSeasonSnap: 'gang_card_genesis_snap_v1' // [Ver 11.5] 태초 시즌 스냅샷
+  genesisSeasonSnap: 'gang_card_genesis_snap_v1', // [Ver 11.5] 태초 시즌 스냅샷
+  seasonStats: 'gang_card_season_stats_v1' // [Ver 11.5] 시즌 전용 승/패/게임 수(리더보드 '승리' 보드용)
 };
 
 
@@ -12814,6 +12815,24 @@ const CLASS_EXP_GAIN_HI = { // class 19 (→20)
 let classState = { cls: 1, exp: 0 }; // cls 1~20, exp = 누적 경험치
 let lastClassSettlement = null;
 let classSettledThisGame = false;
+/* [Ver 11.5] 시즌 전용 승/패/게임 수 — STATS.wins 등은 게임 출시 이후 전체 누적이라
+   시즌이 바뀌어도 초기화되지 않는다. 리더보드 '승리' 보드는 이 시즌 값을 쓴다.
+   집계 대상은 클래스와 동일(isLocalNormalMatch, 일반전만). */
+let seasonStats = { wins: 0, losses: 0, games: 0 };
+function loadSeasonStats(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEYS.seasonStats);
+    if(raw){
+      const o = JSON.parse(raw);
+      if(o && typeof o === 'object'){
+        seasonStats = { wins: Math.max(0, o.wins|0), losses: Math.max(0, o.losses|0), games: Math.max(0, o.games|0) };
+      }
+    }
+  }catch(e){}
+}
+function saveSeasonStats(){
+  try{ localStorage.setItem(STORAGE_KEYS.seasonStats, JSON.stringify(seasonStats)); }catch(e){}
+}
 
 function classLabel(cls){
   const c = Math.max(1, Math.min(CLASS_MAX, cls|0));
@@ -12910,7 +12929,10 @@ function migrateToSeasonClassSystem(){
       legacyLevel: null,
       legacyExp: null,
       legacyTier: null,
-      legacyBestStreak: null
+      legacyBestStreak: null,
+      legacyWins: null,
+      legacyLosses: null,
+      legacyGames: null
     };
     try{
       const er = localStorage.getItem(STORAGE_KEYS.exp);
@@ -12923,6 +12945,9 @@ function migrateToSeasonClassSystem(){
     try{
       if(typeof STATS !== 'undefined' && STATS){
         snap.legacyBestStreak = STATS.bestStreak||0;
+        snap.legacyWins = STATS.wins||0;
+        snap.legacyLosses = STATS.losses||0;
+        snap.legacyGames = STATS.games||0;
         // 연승도 시즌 전환으로 초기화 (일반전만 반영 규칙과 맞춤)
         STATS.currentStreak = 0;
         STATS.bestStreak = 0;
@@ -12932,9 +12957,31 @@ function migrateToSeasonClassSystem(){
     localStorage.setItem(STORAGE_KEYS.genesisSeasonSnap, JSON.stringify(snap));
     classState = { cls: 1, exp: 0 };
     saveClassToStorage();
+    seasonStats = { wins: 0, losses: 0, games: 0 };
+    saveSeasonStats();
     localStorage.setItem(STORAGE_KEYS.seasonMigrated, '1');
     localStorage.setItem(STORAGE_KEYS.seasonId, String(SEASON_INFO.id));
   }catch(e){}
+}
+
+/* [Ver 11.5] 태초 시즌 스냅샷에서 예전 레벨/exp를 읽는다. 스냅샷이 없으면(신규 유저 등)
+   지금 expState를 그대로 쓴다 — 어차피 두 값이 같으므로 안전하다. */
+function legacyGenesisSnap(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEYS.genesisSeasonSnap);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return null;
+}
+function legacyGenesisLevel(){
+  const snap = legacyGenesisSnap();
+  if(snap && typeof snap.legacyLevel === 'number') return snap.legacyLevel;
+  return (typeof expState !== 'undefined' && expState) ? (expState.level||1) : 1;
+}
+function legacyGenesisExp(){
+  const snap = legacyGenesisSnap();
+  if(snap && typeof snap.legacyExp === 'number') return snap.legacyExp;
+  return (typeof expState !== 'undefined' && expState) ? (expState.exp||0) : 0;
 }
 
 function grantClassExp(delta){
@@ -13002,6 +13049,10 @@ function settleClassForHuman(placement){
   let finalGain = gained;
   try{ if(typeof artExpMult === 'function') finalGain = Math.round(gained * artExpMult()); }catch(e){}
   grantClassExp(finalGain);
+  // [Ver 11.5] 리더보드 '승리' 보드용 시즌 승/패 집계 — 클래스와 같은 조건(일반전)에서만
+  seasonStats.games++;
+  if(placement === 1) seasonStats.wins++; else seasonStats.losses++;
+  saveSeasonStats();
 }
 
 
@@ -16538,22 +16589,25 @@ function fbRtInit(){
 }
 
 /* ---------- 리더보드 ---------- */
-/* 순위 기준 4종. field = players 문서의 필드, dir = 정렬 방향 */
+/* [Ver 11.5] 순위 기준 2종 — 시즌 · 클래스 리더보드. field = players 문서의 필드, dir = 정렬 방향.
+   ⚠ 최대 연승·한 방 최대·플레이 시간 보드는 여기서 제거했다 — 랭킹에는 안 뜨지만
+     "내 정보 → 기록" 패널(buildStatsPanelHtml)에서는 계속 볼 수 있다.
+   ⚠ 예전 level/exp 필드는 지우지 않고 그대로 서버에 남겨, "태초 시즌 보기"에서
+     fbFetchLegacyTop()으로 따로 조회한다(GENESIS_LEADERBOARD 참고). */
 const LEADERBOARDS = [
-  { key:'level',  label:'레벨',        icon:'⭐', field:'level',      tie:'exp',
-    fmt:(d)=> `Lv.${d.level||1} · ${(d.exp||0).toLocaleString()} Exp` },
-  { key:'wins',   label:'승리',        icon:'🏆', field:'wins',       tie:'games',
-    fmt:(d)=> `${(d.wins||0).toLocaleString()}승 ${(d.losses||0).toLocaleString()}패 · 승률 ${winRateOf(d)}%` },
-  { key:'streak', label:'최대 연승',   icon:'🔥', field:'bestStreak', tie:'wins',
-    fmt:(d)=> `${(d.bestStreak||0).toLocaleString()}연승` },
-  { key:'hit',    label:'한 방 최대',  icon:'💥', field:'maxHit',     tie:'level',
-    fmt:(d)=> `${(d.maxHit||0).toLocaleString()}${d.maxHitCard?` · ${d.maxHitCard}`:''}` },
-  /* [Ver 9.13.1 신규] 플레이 시간 — STATS.playMs(판이 진행 중일 때만 쌓이는 순수 플레이 시간)를 올린다.
-     ⚠ 이 보드가 추가되면서 Firestore에 (playMs desc, games desc) 복합 색인이 하나 더 필요하다.
-       색인이 없으면 콘솔 오류 링크를 눌러 만들면 된다. */
-  { key:'play',   label:'플레이 시간', icon:'⏱️', field:'playMs',     tie:'games',
-    fmt:(d)=> `${fmtPlayMs(d.playMs||0)} · ${(d.games||0).toLocaleString()}판` },
+  { key:'cls',    label:'클래스',      icon:'🎖️', field:'sCls',  tie:'sExp',
+    fmt:(d)=> `${classLabel(d.sCls||1)}급 · 클래스 ${d.sCls||1} · ${(d.sExp||0).toLocaleString()} Exp` },
+  { key:'wins',   label:'승리',        icon:'🏆', field:'sWins', tie:'sGames',
+    fmt:(d)=> `${(d.sWins||0).toLocaleString()}승 ${(d.sLosses||0).toLocaleString()}패 · 승률 ${seasonWinRateOf(d)}%` },
 ];
+/* 태초 시즌(11.5 이전) 전용 리더보드 — level/exp 필드 기준. 랭킹 탭엔 안 나오고
+   "태초 시즌 보기" 화면에서만 이 정의를 참조한다. */
+const GENESIS_LEADERBOARD = { key:'level', label:'레벨', icon:'⭐', field:'level', tie:'exp',
+  fmt:(d)=> `Lv.${d.level||1} · ${(d.exp||0).toLocaleString()} Exp` };
+function seasonWinRateOf(d){
+  const decided = (d.sWins||0) + (d.sLosses||0);
+  return decided > 0 ? Math.round((d.sWins/decided)*100) : 0;
+}
 /* 리더보드용 플레이 시간 표기 — 시간 단위가 커도 한 줄에 들어가게 "N시간 M분"으로 끊는다. */
 function fmtPlayMs(ms){
   const total = Math.max(0, Math.floor((ms||0)/60000));
@@ -16572,9 +16626,12 @@ function fbBuildMyDoc(){
   return {
     code: getUserCode(),
     nick: String(getPlayerNickname() || '이름없음').slice(0, 16),
-    /* [Ver 11.5] 리더보드 level 필드는 클래스 번호로 사용. exp는 클래스 누적 exp */
-    level: Math.max(1, Math.min(20, (classState && classState.cls) || 1)),
-    exp: Math.max(0, (classState && classState.exp) || 0),
+    /* [Ver 11.5] level/exp는 태초 시즌(11.5 이전) 값 그대로 고정 — 마이그레이션 시점에
+       genesisSeasonSnap으로 로컬 보존한 값을 그대로 다시 올린다. 새로 갱신하지 않아야
+       "태초 시즌 보기"에서 예전 온라인 TOP50을 조회할 때 값이 안 변한다.
+       클래스는 sCls/sExp 등 별도 필드로 올린다(LEADERBOARDS 참고). */
+    level: Math.max(1, Math.min(999, legacyGenesisLevel())),
+    exp: Math.max(0, legacyGenesisExp()),
     wins: Math.max(0, s.wins|0),
     losses: Math.max(0, s.losses|0),
     games: Math.max(0, s.games|0),
@@ -16584,6 +16641,12 @@ function fbBuildMyDoc(){
     /* [Ver 9.13.1] 플레이 시간(ms). 상한은 10년치 — 규칙에서도 같은 값으로 막는다.
        ⚠ 이 필드를 새로 올리므로 Firestore 규칙의 hasOnly 목록에 'playMs'를 추가해야 쓰기가 통과한다. */
     playMs: Math.max(0, Math.min(315360000000, Math.floor(s.playMs||0))),
+    /* [Ver 11.5] 시즌 · 클래스 리더보드 필드 */
+    sCls:    Math.max(1, Math.min(20, (classState && classState.cls) || 1)),
+    sExp:    Math.max(0, (classState && classState.exp) || 0),
+    sWins:   Math.max(0, seasonStats.wins|0),
+    sLosses: Math.max(0, seasonStats.losses|0),
+    sGames:  Math.max(0, seasonStats.games|0),
     /* ======================================================================
        [Ver 10.5] 프로필 카드용 필드
        ----------------------------------------------------------------------
@@ -16650,7 +16713,10 @@ function dedupeLeaderboardRows(rows, n){
 }
 async function fbFetchTop(boardKey, n){
   await fbInit();
-  const b = LEADERBOARDS.find(x=> x.key===boardKey) || LEADERBOARDS[0];
+  // [Ver 11.5] 'level'은 시즌 리더보드 목록엔 없다 — 태초 시즌 조회 전용(GENESIS_LEADERBOARD)이라 따로 찾는다.
+  const b = LEADERBOARDS.find(x=> x.key===boardKey)
+    || (GENESIS_LEADERBOARD.key===boardKey ? GENESIS_LEADERBOARD : null)
+    || LEADERBOARDS[0];
   const { collection, query, orderBy, limit, getDocs } = FB.mod;
   const want = n || 50;
   // 계정 중복을 걸러내야 하므로, 중복 제거 후 want개를 채울 수 있도록 넉넉히 더 가져온다.
@@ -17838,7 +17904,8 @@ const ONLINE_TABS = [
   { key:'notice', label:'📢 공지' },
 ];
 let onlineTab = 'rank';
-let onlineBoard = 'level';
+let onlineBoard = 'cls';
+let onlineGenesisView = false; // [Ver 11.5] true면 랭킹 탭에서 태초 시즌(11.5 이전) 기록을 보여준다
 /* [Ver 9.13.1] tab을 주면 그 탭으로 바로 들어간다. (드로어의 온라인 폴더 4항목이 각각 넘긴다) */
 function openOnlineScreen(tab){
   closeMenuDrawer();
@@ -17853,7 +17920,7 @@ function renderOnlineTabs(){
     `<button class="ol-tab${onlineTab===t.key?' on':''}" onclick="switchOnlineTab('${t.key}')">${t.label}</button>`).join('');
 }
 function switchOnlineTab(k){ onlineTab = k; renderOnlineTabs(); renderOnlineTab(); }
-function setOnlineBoard(k){ onlineBoard = k; renderOnlineTab(); }
+function setOnlineBoard(k){ onlineBoard = k; onlineGenesisView = false; renderOnlineTab(); }
 function olBusy(msg){
   const w = document.getElementById('onlineWrap');
   if(w) w.innerHTML = `<div class="ol-busy"><div class="ol-spin"></div>${escapeHtml(msg||'불러오는 중...')}</div>`;
@@ -17886,9 +17953,16 @@ function renderOnlineTab(){
   if(onlineTab === 'global') return renderOnlineGlobal();
   if(onlineTab === 'notice') return renderOnlineNotice();
 }
+/* [Ver 11.5] 태초 시즌 보기 토글. 시즌 보드(cls/wins)에는 없는 값이라 켤 때 level 보드로 맞춰준다. */
+function setOnlineGenesisView(on){
+  onlineGenesisView = !!on;
+  if(onlineGenesisView) onlineBoard = 'level';
+  else if(onlineBoard === 'level') onlineBoard = 'cls';
+  renderOnlineTab();
+}
 function renderOnlineRank(){
   olBusy('랭킹을 불러오는 중...');
-  const b = LEADERBOARDS.find(x=> x.key===onlineBoard) || LEADERBOARDS[0];
+  const b = onlineGenesisView ? GENESIS_LEADERBOARD : (LEADERBOARDS.find(x=> x.key===onlineBoard) || LEADERBOARDS[0]);
   fbFetchTop(b.key, 50).then(rows=>{
     const w = document.getElementById('onlineWrap'); if(!w) return;
     const myCode = getUserCode();
@@ -17905,16 +17979,37 @@ function renderOnlineRank(){
         <span class="ol-val">${escapeHtml(b.fmt(r).replace(/<[^>]+>/g,''))}</span>
       </div>`;
     }).join('');
+    /* [Ver 11.5] 태초 시즌 보기일 땐 내 로컬 스냅샷(genesisSeasonSnap)도 함께 보여준다.
+       온라인 TOP50과 별개로, 이 기기의 예전 기록은 서버에 다시 물어볼 필요 없이 로컬에 있다. */
+    const genesisMineHtml = (()=>{
+      if(!onlineGenesisView) return '';
+      const snap = legacyGenesisSnap();
+      if(!snap) return `<div class="ol-note">이 기기에는 태초 시즌 이전 기록이 없습니다(11.5부터 시작한 계정).</div>`;
+      const decided = (snap.legacyWins||0) + (snap.legacyLosses||0);
+      const wr = decided>0 ? Math.round((snap.legacyWins/decided)*100) : 0;
+      return `<div class="ol-me" style="flex-direction:column;align-items:flex-start;gap:4px;">
+        <div><b>🏛️ 내 태초 시즌 기록 (이 기기)</b></div>
+        <div style="font-size:12.5px;color:var(--fg-dim);">
+          Lv.${snap.legacyLevel||1} · ${(snap.legacyExp||0).toLocaleString()} Exp
+          &nbsp;·&nbsp; ${(snap.legacyWins||0).toLocaleString()}승 ${(snap.legacyLosses||0).toLocaleString()}패 (승률 ${wr}%)
+          &nbsp;·&nbsp; 최대 연승 ${(snap.legacyBestStreak||0).toLocaleString()}
+        </div>
+      </div>`;
+    })();
     w.innerHTML = `
-      <div class="ol-boards">${LEADERBOARDS.map(x=>
-        `<button class="ol-board${onlineBoard===x.key?' on':''}" onclick="setOnlineBoard('${x.key}')">${x.icon} ${x.label}</button>`).join('')}</div>
+      <div class="ol-boards">
+        <button class="ol-board${onlineGenesisView?' on':''}" onclick="setOnlineGenesisView(${!onlineGenesisView})" title="11.5 이전 리더보드를 봅니다">🏛️ 태초 시즌${onlineGenesisView?' (보는 중)':''}</button>
+        ${onlineGenesisView ? '' : LEADERBOARDS.map(x=>
+        `<button class="ol-board${onlineBoard===x.key?' on':''}" onclick="setOnlineBoard('${x.key}')">${x.icon} ${x.label}</button>`).join('')}
+      </div>
+      ${genesisMineHtml}
       <div class="ol-me">
         <div>내 순위 — ${myIdx>=0 ? `<b>${myIdx+1}위</b>` : '<b>순위권 밖</b>'} <span class="ol-mycode">${escapeHtml(myCode)}</span></div>
-        <button class="btn btn-sm btn-solid" onclick="doSubmitScore()">내 기록 올리기</button>
+        ${onlineGenesisView ? '' : `<button class="btn btn-sm btn-solid" onclick="doSubmitScore()">내 기록 올리기</button>`}
       </div>
       ${rows.length ? `<div class="ol-list">${list}</div>`
-                    : `<div class="ol-empty">아직 등록된 기록이 없습니다. <b>내 기록 올리기</b>를 눌러 첫 주자가 되어보세요.</div>`}
-      <div class="ol-note">기록은 <b>내 기록 올리기</b>를 누를 때만 갱신됩니다. 이름을 누르면 그 사람의 <b>프로필</b>이 열립니다.</div>`;
+                    : `<div class="ol-empty">${onlineGenesisView ? '태초 시즌 온라인 기록이 없습니다.' : '아직 등록된 기록이 없습니다. <b>내 기록 올리기</b>를 눌러 첫 주자가 되어보세요.'}</div>`}
+      <div class="ol-note">${onlineGenesisView ? '태초 시즌(11.5 이전) 기록은 더 이상 갱신되지 않습니다 — 조회 전용입니다.' : '기록은 <b>내 기록 올리기</b>를 누를 때만 갱신됩니다. 이름을 누르면 그 사람의 <b>프로필</b>이 열립니다.'}</div>`;
   }).catch(olError);
 }
 /* ##########################################################################
@@ -19531,6 +19626,7 @@ function initPersistentSystems(){
   loadExpFromStorage();        // [Ver 8.0] 레벨/경험치 로드 (보관용)
   migrateToSeasonClassSystem(); // [Ver 11.5] 시즌·클래스 도입 — 전원 클래스 1 리셋
   loadClassFromStorage();      // [Ver 11.5] 클래스 로드
+  loadSeasonStats();           // [Ver 11.5] 시즌 승/패 로드 (리더보드 '승리' 보드용)
   loadPlayerProfileFromStorage(); // [Ver 8.0] 닉네임 로드
   renderUserStatBar();         // [Ver 8.0] 좌측 상단 유저스탯창 초기 렌더
   const cb = document.getElementById('mobileModeToggle');
@@ -19814,6 +19910,16 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 11.6',
+    date: '2026-08-19',
+    items: [
+      '🏛️ <b>[리더보드] 태초 시즌 조회 전용 버튼</b> — 랭킹 탭에 <b>🏛️ 태초 시즌</b> 버튼을 추가했습니다. 누르면 11.5 이전 온라인 리더보드(레벨·경험치 기준) TOP50과, 이 기기에 남아있는 내 태초 시즌 기록(레벨·승패·최대 연승)을 함께 볼 수 있습니다. 태초 시즌 기록은 더 이상 갱신되지 않는 조회 전용입니다.',
+      '🎖️ <b>[리더보드] 클래스 기준으로 개편</b> — 랭킹 탭의 순위표가 <b>클래스</b>·<b>승리</b> 2종으로 바뀝니다. 클래스 승급/강등 조건과 동일하게 일반전(봇 로컬) 결과만 반영되며, 시즌이 바뀌어도 이 순위는 계속 갱신됩니다.',
+      '🗑️ <b>[리더보드] 최대 연승 · 한 방 최대 · 플레이 시간 보드 삭제</b> — 랭킹 탭에서는 더 이상 볼 수 없습니다. 대신 <b>내 정보 → 기록</b> 패널에서 계속 확인할 수 있습니다(최대 연승 항목을 새로 추가했습니다. 한 방 최대·플레이 시간은 기존에도 있었습니다).',
+      '🔧 <b>[내부] Firestore 스키마 확장</b> — players 문서에 시즌 전용 필드(sCls·sExp·sWins·sLosses·sGames)를 추가했습니다. 예전 level·exp 필드는 지우지 않고 그대로 남겨 태초 시즌 조회에 씁니다. firestore.rules를 함께 갱신했으니 콘솔에 다시 게시해야 합니다.'
+    ]
+  },
   {
     version: 'Ver 11.5',
     date: '2026-08-19',
@@ -25246,6 +25352,7 @@ function buildStatsPanelHtml(){
       ['총 플레이 시간', fmtDuration(STATS.playMs)],
       ['플레이한 판 수', `${STATS.games}판`],
       ['승리 / 패배', decided>0 ? `${STATS.wins}승 ${STATS.losses}패 (승률 ${winRate}%)` : `${STATS.wins}승 ${STATS.losses}패 (기록 없음)`],
+      ['최대 연승', `${(STATS.bestStreak||0).toLocaleString()}연승`],
       ['항복한 횟수', `${STATS.surrenders}회`],
       ['처음 플레이', STATS.firstPlayedAt ? new Date(STATS.firstPlayedAt).toLocaleDateString('ko-KR') : '-'],
       ['마지막 플레이', STATS.lastPlayedAt ? new Date(STATS.lastPlayedAt).toLocaleDateString('ko-KR') : '-']
