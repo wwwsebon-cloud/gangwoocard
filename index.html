@@ -3404,11 +3404,18 @@
   .hand-card.react-glow {
     animation: reactGlowPulse 1s ease-in-out infinite;
     box-shadow: 0 0 0 3px #ffd23f, 0 0 22px 4px rgba(255,210,63,0.75), 0 4px 10px rgba(0,0,0,0.5);
-    z-index: 5;
+    transform: translateY(-22px) rotate(0deg) scale(1.14);
+    margin-left: -8px;
+    z-index: 9;
   }
   @keyframes reactGlowPulse {
-    0%,100% { box-shadow: 0 0 0 3px #ffd23f, 0 0 22px 4px rgba(255,210,63,0.75), 0 4px 10px rgba(0,0,0,0.5); }
-    50% { box-shadow: 0 0 0 3px #fff2b8, 0 0 32px 10px rgba(255,210,63,0.95), 0 4px 10px rgba(0,0,0,0.5); }
+    0%,100% { box-shadow: 0 0 0 3px #ffd23f, 0 0 22px 4px rgba(255,210,63,0.75), 0 4px 10px rgba(0,0,0,0.5); transform: translateY(-22px) rotate(0deg) scale(1.14); }
+    50% { box-shadow: 0 0 0 3px #fff2b8, 0 0 34px 11px rgba(255,210,63,0.95), 0 4px 10px rgba(0,0,0,0.5); transform: translateY(-26px) rotate(0deg) scale(1.18); }
+  }
+  /* [Ver 11.4.2] 반응 시간 중 사용 가능한 보여주기 카드를 더 크게 띄워, 어떤 카드를 낼 수 있는지
+     한눈에 보이도록 강조. hover 시에도 이 확대 상태를 유지(축소되어 다시 안 보이는 일이 없게). */
+  .hand-card.react-glow:hover {
+    transform: translateY(-26px) rotate(0deg) scale(1.18);
   }
   /* 대상 없이 즉시 발동되는 카드를 한 번 눌렀을 때: "한 번 더 누르면 발동" 확정 대기 상태 강조 */
   .hand-card.armed-confirm {
@@ -5534,6 +5541,32 @@
   .setting-switch input { width:18px; height:18px; }
   .settings-subnote { margin-top:14px; font-size:11px; color:var(--fg-dim); line-height:1.5; }
   .save-tools { display:flex; gap:8px; flex-wrap:wrap; margin-top:16px; }
+  .setting-vol-wrap {
+    display:flex; align-items:center; gap:10px; min-width:140px; flex-shrink:0;
+  }
+  .setting-vol-wrap input[type=range] {
+    -webkit-appearance:none; appearance:none;
+    width:110px; height:4px; border-radius:999px; cursor:pointer;
+    background:var(--line-soft); outline:none;
+  }
+  .setting-vol-wrap input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance:none; appearance:none;
+    width:14px; height:14px; border-radius:50%;
+    background:var(--fg); border:2px solid var(--bg-panel); cursor:pointer;
+  }
+  .setting-vol-wrap input[type=range]::-moz-range-thumb {
+    width:14px; height:14px; border-radius:50%;
+    background:var(--fg); border:2px solid var(--bg-panel); cursor:pointer;
+  }
+  .setting-vol-pct {
+    font-family:'JetBrains Mono',monospace; font-size:11px;
+    color:var(--fg-dim); min-width:36px; text-align:right;
+  }
+  .settings-audio-head {
+    margin:18px 0 8px; font-size:12px; font-weight:800;
+    letter-spacing:0.04em; color:var(--fg); opacity:0.85;
+    border-bottom:1px solid var(--line); padding-bottom:6px;
+  }
 
   .match-intro {
     position:fixed; inset:0; z-index:90; display:none; align-items:center; justify-content:center;
@@ -8010,6 +8043,19 @@ body.mobile-mode .evo-fab{ top:128px; right:6px; width:48px; min-height:34px; pa
 body.mobile-mode .evo-fab .shop-fab-icon{ font-size:12px; }
 body.mobile-mode .evo-fab .shop-fab-label{ font-size:6.5px; }
 
+/* [Ver 11.4] 파밍 모드 드로우 레벨업 FAB — 세로 스택 자리(재단/진화 버튼 아래)는 화면 높이에 따라
+   .zone-table 영역 밖으로 밀려 다른 요소에 가려지는 문제가 있었던 자리라(과거 SOLEMN 버튼 겹침 버그와
+   같은 계열), 대신 이미 검증된 가로 줄(상점 88·스토킹 182·모드 276)의 다음 칸(370)에 배치한다. */
+.farm-fab{ right:370px; border-color:#7a9b4e; color:#b9d98a; }
+.farm-fab.ready{
+  border-color:#a4d86b; color:#d4f0ae;
+  animation: shopFabPulse 1.6s ease-in-out infinite;
+}
+@media (hover:hover) and (pointer:fine){
+  .farm-fab:hover{ background:#a4d86b; color:#132008; border-color:#a4d86b; }
+}
+body.mobile-mode .farm-fab{ right:240px; }
+
 /* 진화 카드 고르기 모달 */
 .evop-note{ font-size:12.5px; color:var(--fg-dim); margin-bottom:12px; line-height:1.55; }
 .evop-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(128px,1fr)); gap:10px; }
@@ -9462,6 +9508,16 @@ body.mobile-mode .hitman-panel{ font-size:8px; padding:2px 8px; top:-11px; }
           <b>저점 매수</b>
           <small>4인 · 재화 눈치게임과 경매</small>
         </button>
+        <button class="gm-card" onclick="pickGameMode('farming')">
+          <span class="gm-ic">🌾</span>
+          <b>파밍 모드 <em>NEW</em></b>
+          <small>4인 · 상점 없이 드로우로만 · 첫 3바퀴는 파밍 시간</small>
+        </button>
+        <button class="gm-card" onclick="pickGameMode('classic')">
+          <span class="gm-ic">🃏</span>
+          <b>클래식 모드 <em>NEW</em></b>
+          <small>4인 · 일반전에서 상점·골드만 뺀 단순 버전</small>
+        </button>
         <button class="gm-card" onclick="pickGameMode('team')">
           <span class="gm-ic">🟥</span>
           <b>3:3 팀전 <em>BETA</em></b>
@@ -9875,6 +9931,11 @@ body.mobile-mode .hitman-panel{ font-size:8px; padding:2px 8px; top:-11px; }
           <button class="shop-fab evo-fab" id="evolveBtn" style="display:none;" onclick="openEvolvePicker()" title="카드 진화">
             <span class="shop-fab-icon">🧬</span>
             <span class="shop-fab-label" id="evolveFabLabel">진화 3</span>
+          </button>
+          <!-- [Ver 11.4 신규] 파밍 모드 전용 — 드로우 레벨업 버튼 (진화 버튼 바로 아래에 쌓임) -->
+          <button class="shop-fab farm-fab" id="farmLevelBtn" style="display:none;" onclick="openFarmDrawLevelUp()" title="드로우 레벨업">
+            <span class="shop-fab-icon">🌾</span>
+            <span class="shop-fab-label" id="farmLevelFabLabel">Lv 0</span>
           </button>
         </div>
       </div>
@@ -10948,7 +11009,27 @@ function cardAudioStopEverything(){
 }
 /* [Ver 8.1.1] 화면(메인메뉴/인게임/상점/암시장)별 기본 BGM. 카드 음원(cardBgmList)과는 완전히 별개 레이어로,
    음량은 항상 15% 고정이며 카드 BGM과 동시에 들린다. 화면이 바뀌면 이전 기본 BGM은 정지하고 새 곡만 튼다. */
-const AMBIENT_BGM_VOL = 0.15;
+/* [Ver 11.x] 메뉴/화면 배경음 음량 — 설정 탭에서 조절 (기본 15%) */
+const AMBIENT_BGM_VOL_KEY = 'gang_ambient_bgm_vol_v1';
+let AMBIENT_BGM_VOL = 0.15;
+try{
+  const _av = parseFloat(localStorage.getItem(AMBIENT_BGM_VOL_KEY));
+  if(Number.isFinite(_av)) AMBIENT_BGM_VOL = Math.max(0, Math.min(1, _av));
+}catch(e){}
+function ambientBgmSaveVol(){
+  try{ localStorage.setItem(AMBIENT_BGM_VOL_KEY, String(AMBIENT_BGM_VOL)); }catch(e){}
+}
+function ambientBgmSetVolume(pct){
+  AMBIENT_BGM_VOL = Math.max(0, Math.min(1, (parseFloat(pct)||0) / 100));
+  ambientBgmSaveVol();
+  try{
+    if(ambientBgmEl){
+      let mute = false;
+      try{ mute = !!(typeof rouletteMuting !== 'undefined' && rouletteMuting); }catch(e){}
+      ambientBgmEl.volume = mute ? 0 : AMBIENT_BGM_VOL;
+    }
+  }catch(e){}
+}
 let ambientBgmEl = null;
 let ambientBgmKey = null;
 /* [Ver 10.5] 지금 DJ가 틀어놓은 곡의 키. 없으면 null. */
@@ -11048,7 +11129,7 @@ function cardAudioPlaySfxKey(key, from){
     cardSfxList.push(el);
     el.addEventListener('ended', ()=>{ const i=cardSfxList.indexOf(el); if(i>=0) cardSfxList.splice(i,1); });
     if(cardSfxList.length > 24) { const old = cardSfxList.shift(); try{ old.pause(); }catch(e){} }
-    const p = el.play(); if(p && p.catch) p.catch(()=>{});
+    const p = el.play(); if(p && p.catch) p.catch(()=>{ try{ cardAudioArmUnlock(el); }catch(e){} });
   }catch(e){}
 }
 function cardAudioStartBgmKey(key, ownerId, isHeld, from){
@@ -11158,6 +11239,18 @@ function cardAudioSetVolume(v){
   cardAudioVol = Math.max(0, Math.min(1, (parseFloat(v)||0)/100));
   if(cardAudioVol > 0 && !cardAudioOn) cardAudioOn = true;
   cardAudioSaveSettings(); cardAudioSyncBgm(); cardAudioRenderCtl();
+}
+/* 설정 탭 전용 — 카드 음원 on/off (토글과 동일하게 저장) */
+function setCardAudioEnabled(on){
+  cardAudioOn = !!on;
+  cardAudioSaveSettings();
+  if(!cardAudioOn){
+    try{ cardAudioStopAll(); }catch(e){}
+    try{ cardAudioStopEverything(); }catch(e){}
+  } else {
+    try{ cardAudioSyncBgm(); }catch(e){}
+  }
+  try{ cardAudioRenderCtl(); }catch(e){}
 }
 /* 배틀 화면의 카드 음원 토글 + 음량 게이지 */
 function cardAudioRenderCtl(){
@@ -12897,6 +12990,13 @@ let isFriendlyMatch = true; // [구버전 호환] 항상 !isRankedMatch로 동�
 let battleRoyaleMode = false; // [Ver 6.7] 10인 난투전 여부 — true면 나(p0) + 봇 9명, 총 10명으로 게임을 구성한다
 // [Ver 6.19] 사이비 모드 — 8인전. 랜덤 1명이 교주(cult leader), 포교로 교주팀을 늘린다.
 let cultMode = false;
+/* [Ver 11.4] 파밍 모드 — 4인 개인전. 상점을 쓰지 않고 오직 드로우로만 카드를 모은다.
+   시작패는 랜덤 D급 5장, 첫 3바퀴는 공격 카드 금지("파밍 시간"), 드로우 확률은 각자의
+   "드로우 레벨"(0~12, 100골드로 1단계씩 구매)에 따라 개인별로 달라진다. */
+let farmingMode = false;
+/* [Ver 11.4] 클래식 모드 — 4인 개인전. 일반전에서 상점 기능과 골드 수입(월급)만 제거한 단순화 버전.
+   카드 효과로 골드를 주고받는 개별 카드들은 그대로 동작하지만, 쓸 곳(상점)도 버는 곳(월급)도 없다. */
+let classicMode = false;
 let cultLeaderId = null;      // 교주 player id (사망해도 유지 — 사망 여부는 확인 불가)
 const CULT_TEAM = 'CULT';     // 교주팀 team id
 const CULT_CIVIL = null;      // 일반인은 team 없음
@@ -13787,8 +13887,13 @@ function renderSettingsScreen(){
     { key:'dragMode', name:'드래그 모드 (BETA)', desc:'손패의 카드를 상대에게 끌어다 놓아 사용할 수 있습니다. 대상이 필요 없는 카드(회복 등)는 화면 중앙 디스카드 파일로 끌어다 놓으면 바로 발동됩니다.' },
     { key:'peacefulMode', name:'평화주의 모드', desc:'첫 턴에는 어떤 공격 카드도 낼 수 없도록 "불문율" 데미지 상한을 1로 낮춥니다. 더 여유롭게 시작하고 싶을 때 켜세요.' },
     { key:'startWith8Cards', name:'시작 카드 8장', desc:'기본 5장 대신 8장의 카드를 들고 게임을 시작합니다. (다음 게임 시작부터 적용)' },
-    { key:'menuBgm', name:'메뉴 배경음', desc:'메인 메뉴에서 흐르는 배경음("푸른 다뉴브")을 재생합니다. 끄면 즉시 멈추며, 카드 효과음과 인게임 배경음에는 영향을 주지 않습니다.' },
   ];
+  const menuBgmOn = !!settings.menuBgm;
+  const cardOn = (typeof cardAudioOn !== 'undefined') ? !!cardAudioOn : true;
+  const cardVolPct = Math.round(((typeof cardAudioVol !== 'undefined') ? cardAudioVol : 1) * 100);
+  const ambVolPct = Math.round(((typeof AMBIENT_BGM_VOL !== 'undefined') ? AMBIENT_BGM_VOL : 0.15) * 100);
+  const specialBgmOn = (typeof bgmOn !== 'undefined') ? !!bgmOn : true;
+  const specialBgmVolPct = Math.round(((typeof bgmVol !== 'undefined') ? bgmVol : 0.45) * 100);
   wrap.innerHTML = `
     <div class="settings-list">
       <div class="setting-row">
@@ -13822,11 +13927,83 @@ function renderSettingsScreen(){
             <span>${settings[r.key] ? 'ON' : 'OFF'}</span>
           </label>
         </div>`).join('')}
+
+      <div class="settings-audio-head">🔊 소리 설정</div>
+
+      <div class="setting-row">
+        <div class="setting-meta">
+          <div class="setting-name">메뉴 · 화면 배경음</div>
+          <div class="setting-desc">메인 메뉴·상점 등에서 흐르는 배경음입니다. 끄면 즉시 멈추며, 카드 효과음에는 영향이 없습니다.</div>
+        </div>
+        <label class="setting-switch">
+          <input type="checkbox" ${menuBgmOn ? 'checked' : ''} onchange="setSetting('menuBgm', this.checked)">
+          <span>${menuBgmOn ? 'ON' : 'OFF'}</span>
+        </label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-meta">
+          <div class="setting-name">메뉴 · 화면 배경음 음량</div>
+          <div class="setting-desc">메뉴/로비 배경음의 크기입니다. (기본 15%)</div>
+        </div>
+        <div class="setting-vol-wrap">
+          <input type="range" min="0" max="100" step="1" value="${ambVolPct}"
+            oninput="ambientBgmSetVolume(this.value); const p=this.parentElement.querySelector('.setting-vol-pct'); if(p) p.textContent=this.value+'%';"
+            title="메뉴 배경음 음량">
+          <span class="setting-vol-pct">${ambVolPct}%</span>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-meta">
+          <div class="setting-name">카드 효과음 · 카드 BGM</div>
+          <div class="setting-desc">카드를 낼 때 나는 효과음과 카드 전용 BGM입니다. <b>꺼두면 인게임 효과음이 전부 재생되지 않습니다.</b></div>
+        </div>
+        <label class="setting-switch">
+          <input type="checkbox" ${cardOn ? 'checked' : ''} onchange="setCardAudioEnabled(this.checked); renderSettingsScreen();">
+          <span>${cardOn ? 'ON' : 'OFF'}</span>
+        </label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-meta">
+          <div class="setting-name">카드 효과음 · 카드 BGM 음량</div>
+          <div class="setting-desc">카드 효과음과 카드 BGM의 마스터 음량입니다. 올리면 자동으로 켜집니다.</div>
+        </div>
+        <div class="setting-vol-wrap">
+          <input type="range" min="0" max="100" step="1" value="${cardVolPct}"
+            oninput="cardAudioSetVolume(this.value); const p=this.parentElement.querySelector('.setting-vol-pct'); if(p) p.textContent=this.value+'%';"
+            title="카드 음원 음량">
+          <span class="setting-vol-pct">${cardVolPct}%</span>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-meta">
+          <div class="setting-name">특수 모드 BGM (야차·경매 등)</div>
+          <div class="setting-desc">특정 모드에서만 쓰는 별도 BGM입니다. 일반 카드 게임에는 영향이 없습니다.</div>
+        </div>
+        <label class="setting-switch">
+          <input type="checkbox" ${specialBgmOn ? 'checked' : ''} onchange="if(typeof bgmToggle==='function'){ if(!!this.checked !== !!bgmOn) bgmToggle(); } renderSettingsScreen();">
+          <span>${specialBgmOn ? 'ON' : 'OFF'}</span>
+        </label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-meta">
+          <div class="setting-name">특수 모드 BGM 음량</div>
+          <div class="setting-desc">야차·경매 등 특수 모드 BGM 크기입니다.</div>
+        </div>
+        <div class="setting-vol-wrap">
+          <input type="range" min="0" max="100" step="1" value="${specialBgmVolPct}"
+            oninput="if(typeof bgmSetVolume==='function') bgmSetVolume(this.value); const p=this.parentElement.querySelector('.setting-vol-pct'); if(p) p.textContent=this.value+'%';"
+            title="특수 BGM 음량">
+          <span class="setting-vol-pct">${specialBgmVolPct}%</span>
+        </div>
+      </div>
     </div>
     <div class="save-tools">
       <button class="btn btn-sm btn-ghost" onclick="openBattleRecords()">⚔️ 전투 기록 보기</button>
+      <button class="btn btn-sm btn-ghost" onclick="try{cardAudioPlaySfxKey('baseball');}catch(e){}">효과음 테스트</button>
     </div>
-    <div class="settings-subnote">카드 목록과 환경설정은 localStorage에 항상 저장됩니다. [Ver 9.9] 게임 진행 저장(이어하기)은 폐지되었고, 대신 최근 ${BR_MAX_GAMES}판의 <b>전투 기록</b>(로그·기보)이 저장됩니다.</div>`;
+    <div class="settings-subnote">카드 목록과 환경설정·음량 설정은 localStorage에 저장됩니다. 카드 효과음이 안 들리면 위 <b>카드 효과음 · 카드 BGM</b>이 켜져 있는지 확인하세요. [Ver 9.9] 게임 진행 저장(이어하기)은 폐지되었고, 대신 최근 ${BR_MAX_GAMES}판의 <b>전투 기록</b>(로그·기보)이 저장됩니다.</div>`;
 }
 function goToSettings(){ showScreen('screen-settings'); renderSettingsScreen(); }
 function summarizeLogMessage(msg){
@@ -18932,7 +19109,9 @@ function pickGameMode(mode){
     br:       ()=> startBattleRoyale(),
     cult:     ()=> openCultSetup(),
     tutorial: ()=> startTutorial(),
-    quiz:     ()=> openQuizModeSetup()   // [Ver 11.1] 퀴즈 모드 · [Ver 11.2] 시작 전 문제 수 선택 추가
+    quiz:     ()=> openQuizModeSetup(),  // [Ver 11.1] 퀴즈 모드 · [Ver 11.2] 시작 전 문제 수 선택 추가
+    farming:  ()=> openFarmingSetup(),   // [Ver 11.4] 파밍 모드
+    classic:  ()=> openClassicSetup()    // [Ver 11.4] 클래식 모드
   }[mode];
   if(typeof go === 'function') go();
 }
@@ -19339,6 +19518,32 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 11.4.2',
+    date: '2026-08-19',
+    items: [
+      '🛡️ <b>[편의] 반응 시간 중 보여주기 카드 강조 강화</b> — 사용 가능한 보여주기 카드가 손패에서 잘 안 보인다는 의견이 많아, 테두리 발광만 있던 기존 강조를 카드가 위로 떠오르며 확대되는 연출로 바꿨습니다. 어떤 카드를 낼 수 있는지 한눈에 들어옵니다.',
+      '🔊 <b>[버그수정] NO U 발동 효과음이 안 나오던 문제</b> — NO U는 sfx(일반 발동음) 필드를 썼는데, 반사(mirrored) 처리 직후 openReactionWindow가 "원래 카드가 막혔다"고 판단해 cardAudioStopNow()를 호출하는 경로와 손패 클릭 시 미리 울리는 경로가 겹치며 재생이 불안정했습니다. ZEUS·타임머신 등 이미 고쳐진 4종과 동일하게 <b>sfxNow + cardAudioPlaySfxKey() 독립 재생 경로</b>로 옮겨서, 반사 여부와 무관하게 항상 끝까지 재생되도록 수정했습니다.'
+    ]
+  },
+  {
+    version: 'Ver 11.4.1',
+    date: '2026-08-19',
+    items: [
+      '🌾 <b>[버그수정] 파밍 모드 드로우 레벨업 버튼이 안 보이던 문제</b> — 새 버튼을 진화 버튼 아래에 세로로 쌓는 자리에 뒀는데, 이 자리가 화면 높이에 따라 테이블 영역 밖으로 밀려나 다른 요소에 가려질 수 있었습니다(과거 모바일 모드에서 SOLEMN 버튼이 겹쳤던 것과 같은 계열의 문제). 이미 검증된 가로 줄(상점·스토킹·모드 버튼 옆, 다음 칸)로 옮겼습니다.',
+      '🌾 <b>[파밍 모드] 시작 카드 조정</b> — 랜덤 D등급 5장 → <b>랜덤 B등급 3장</b>으로 변경했습니다.',
+      '🃏 <b>[클래식 모드] 랜덤 이벤트 비활성화</b> — 골드/상점을 아예 쓰지 않는 모드 취지에 맞춰, 이제 클래식 모드에서는 랜덤 이벤트가 전혀 발생하지 않습니다. (진화 등 다른 일반전 기능은 그대로입니다)'
+    ]
+  },
+  {
+    version: 'Ver 11.4',
+    date: '2026-08-19',
+    items: [
+      '🌾 <b>[신규 모드] 파밍 모드</b> — 4인 개인전. <b>상점을 전혀 쓰지 않고</b>, 카드는 오직 드로우로만 얻습니다. 전원 <b>랜덤 D등급 카드 5장</b>으로 시작하며, 처음 <b>3바퀴는 "파밍 시간"</b>이라 공격 카드를 낼 수 없습니다.',
+      '🌾 <b>[파밍 모드] 드로우 레벨 시스템</b> — 손패 옆 새 🌾 버튼으로 <b>100골드당 1단계씩(최대 12단계)</b> 드로우 레벨을 올릴 수 있습니다. 레벨이 높을수록 A등급 이상이 잘 나오며, 최고 레벨에서는 SR 8% · SSR 4%까지 오릅니다. 골드는 <b>유물</b>과 <b>월급</b>으로만 얻을 수 있습니다. (봇도 여유 골드가 있으면 알아서 레벨업합니다)',
+      '🃏 <b>[신규 모드] 클래식 모드</b> — 4인 개인전. 일반전과 전투 규칙은 완전히 같지만, <b>상점 기능과 월급(바퀴 수입)만 뺀</b> 더 단순한 버전입니다. 시작 골드도 0에서 출발합니다. (카드 효과로 골드를 주고받는 개별 카드들은 그대로 동작합니다)'
+    ]
+  },
   {
     version: 'Ver 11.3.2',
     date: '2026-08-18',
@@ -25506,7 +25711,7 @@ function loadSampleCards(mergeMissing=false){
     {grade:'S', name:'집행자', type:'EXECUTE_CHAIN', power:750, pierce:'NONE', desc:'처치 시 데미지 +100으로 재시전 가능.', flavor:''},
     {grade:'B', name:'뒷돈', type:'REACT_BUYOUT', power:0, pierce:'NONE', cost:80, sfxNow:'spiderman', desc:'80$를 내고 상대의 효과를 무효화한다.', flavor:''},
     {grade:'S', name:'데스노트', type:'ATK', power:9999, pierce:'NONE', desc:'', flavor:'설명이 필요없다.', bgm:'deathnote', bgmHeld:true},
-    {grade:'S', name:'NO U', type:'REACT_MIRROR', power:0, pierce:'NONE', cost:0, sfx:'nou', desc:'보여줄 시, 지금 받으려던 카드의 효과를 그대로 반사해 자신이 상대에게 시전한다. (예: 돈을 뺏으려던 카드라면 반대로 내가 상대의 돈을 뺏는다) 한 번 쓰면 다시 쓸 수 없다.', flavor:''},
+    {grade:'S', name:'NO U', type:'REACT_MIRROR', power:0, pierce:'NONE', cost:0, sfxNow:'nou', desc:'보여줄 시, 지금 받으려던 카드의 효과를 그대로 반사해 자신이 상대에게 시전한다. (예: 돈을 뺏으려던 카드라면 반대로 내가 상대의 돈을 뺏는다) 한 번 쓰면 다시 쓸 수 없다.', flavor:''},
     {grade:'SSR', name:'ZEUS', type:'REACT_ZEUS', power:2000, pierce:'NONE', cost:0, stunTurns:2, paralyzeTurns:5, rigidTurns:2, atkDebuffPct:15, sfxNow:'spiderman', desc:'공격 카드 뒤에 보여줄 시, 그 카드의 효과를 그대로 반사하고, 원래 그 카드를 낸 사람에게 2000의 피해를 입힌 뒤 2바퀴 스턴, 5바퀴 마비, 2바퀴 경직, 공격력 15% 감소 디버프를 건다.', flavor:''},
     {grade:'B', name:'CCTV', type:'VIEW_HAND', power:0, pierce:'NONE', desc:'지목한 상대의 카드 패를 전부 훔쳐본다.', flavor:''},
     {grade:'B', name:'절도', type:'CARD_STEAL_RANDOM', power:0, pierce:'NONE', desc:'지목한 상대의 랜덤한 카드 1장을 가져온다.', flavor:''},
@@ -26426,6 +26631,9 @@ function startGame(ranked){
   draftMode = false; currentTierMode = 'normal'; // [Ver 6.16] 일반 4인전 배점 // [Ver 5.3.4 batch6 / 6.7] 일반 게임은 항상 단일플레이 4인전(핫시트/난투전 잔류 방지)
   // [Ver 9.10.1] 놀이터에서 startPlaygroundGame()을 거치지 않고 들어온 경우를 대비해 여기서 내려둔다
   if(!window.__pgStarting) playgroundMode = false;
+  // [Ver 11.4] 파밍/클래식 모드도 같은 방식으로 지킨다 — 각자의 진입 함수를 거치지 않았다면 여기서 내린다.
+  if(!window.__farmingStarting) farmingMode = false;
+  if(!window.__classicStarting) classicMode = false;
   if(cards.length === 0){
     showModal('시작할 수 없습니다', '카드가 1장 이상 등록되어야 합니다.', [{label:'확인',solid:true}]);
     return;
@@ -26486,6 +26694,56 @@ function startPlaygroundGame(){
   playgroundMode = true;
   window.__pgStarting = true;   // startGame이 playgroundMode를 지우지 않도록
   try{ startGame(false); } finally { window.__pgStarting = false; }
+}
+
+/* ==========================================================================
+   [Ver 11.4 신규] 파밍 모드 — 4인 개인전. 상점을 쓰지 않고 오직 드로우로만 카드를 모은다.
+   일반전(startGame)의 전투 규칙은 그대로 재사용하고, farmingMode 플래그로 시작패·상점·
+   드로우 확률·초반 공격 제한만 갈아끼운다.
+   ========================================================================== */
+function openFarmingSetup(){
+  if(cards.length === 0){
+    showModal('시작할 수 없습니다', '카드가 1장 이상 등록되어야 합니다.', [{label:'확인',solid:true}]);
+    return;
+  }
+  showModal('🌾 파밍 모드',
+    '일반전과 규칙은 같지만, <b>상점을 전혀 사용하지 않습니다.</b> 카드는 오직 드로우로만 얻습니다.<br><br>'
+    + '· 전원 <b>랜덤 B등급 카드 3장</b>으로 시작합니다.<br>'
+    + '· 처음 <b>3바퀴는 "파밍 시간"</b>이며, 이 동안은 <b>공격 카드를 낼 수 없습니다.</b><br>'
+    + '· 드로우 확률은 각자의 <b>드로우 레벨</b>(0~12)에 따라 달라지며, <b>100골드</b>로 한 단계씩 올릴 수 있습니다. 레벨이 높을수록 A등급 이상이 잘 나오고, 최고 레벨(12)에서는 SR 8% · SSR 4%까지 오릅니다.<br>'
+    + '· 골드는 <b>유물</b>과 <b>월급</b>으로만 얻을 수 있습니다.',
+    [
+      { label:'시작', solid:true, action: ()=>{
+          farmingMode = true;
+          window.__farmingStarting = true;
+          try{ startGame(false); } finally { window.__farmingStarting = false; }
+        }},
+      { label:'취소' }
+    ]);
+}
+
+/* ==========================================================================
+   [Ver 11.4 신규] 클래식 모드 — 4인 개인전. 일반전에서 상점 기능과 골드 수입(월급)만 뺀
+   단순화 버전. 카드 효과로 골드를 주고받는 개별 카드 자체는 그대로 동작한다(재조정 없음).
+   ========================================================================== */
+function openClassicSetup(){
+  if(cards.length === 0){
+    showModal('시작할 수 없습니다', '카드가 1장 이상 등록되어야 합니다.', [{label:'확인',solid:true}]);
+    return;
+  }
+  showModal('🃏 클래식 모드',
+    '일반전에서 <b>상점 기능</b>과 <b>골드 시스템(월급)</b>만 뺀 더 단순한 버전입니다.<br><br>'
+    + '· 상점이 처음부터 폐업 상태로 시작합니다.<br>'
+    + '· 바퀴마다 들어오던 월급이 지급되지 않습니다.<br>'
+    + '· 그 외 전투 규칙과 카드는 일반전과 완전히 동일합니다.',
+    [
+      { label:'시작', solid:true, action: ()=>{
+          classicMode = true;
+          window.__classicStarting = true;
+          try{ startGame(false); } finally { window.__classicStarting = false; }
+        }},
+      { label:'취소' }
+    ]);
 }
 
 /* [Ver 6.7] 10인 난투전 (BETA) — 나(p0) + 봇 9명, 총 10명이 한 판에서 겨루는 대규모 모드.
@@ -27439,6 +27697,9 @@ function actuallyStartGame(){
   // [Ver 5.2] 판 단위 전역 상태 30필드를 명세에서 일괄 초기화한다.
   // (srBudgetTotal은 명세의 reset이 2~4 랜덤을 부여하며[FIX #9], initShopSlots()보다 먼저 실행되어야 하므로 이 위치를 유지한다.)
   resetPersistentGameState();
+  // [Ver 11.4] 파밍/클래식 모드 — 둘 다 상점을 쓰지 않으므로 판 시작부터 영구 폐업 상태로 둔다.
+  //   (resetPersistentGameState가 매번 false로 되돌리므로 반드시 그 뒤에 세워야 한다)
+  if(farmingMode || classicMode) shopClosedForever = true;
   // [Ver 5.3.4 batch6] 핫시트: 실제 플레이어 수에 맞게 turnOrder 재설정 (기본 [0,1,2,3]은 4인 전제)
   // [Ver 6.13] 3:3 팀전은 고정 교차 순서 — 레드1 → 블루1 → 블루2 → 레드2 → 레드3 → 블루3
   turnOrder = teamBattleMode ? [0,3,4,1,2,5] : players.map((_,i)=>i);
@@ -27452,6 +27713,13 @@ function actuallyStartGame(){
   try{ resetGoldFlashBaseline(); }catch(e){} // [Ver 9.12.1] 골드 점멸 기준값도 함께 초기화
   try{ rotateCardSeen(); }catch(e){}         // [Ver 9.12.1] 카드 등장 편중 완화 — 직전 판 목록으로 넘긴다
   players.forEach(p=>{
+    // [Ver 11.4] 파밍 모드 — 상점 대신 전원 랜덤 B등급 카드 3장으로 시작한다 (학원 운송차량 등 시작패 보정 미적용).
+    if(farmingMode){
+      for(let i=0;i<3;i++) grantCardToPlayer(p, mkUidCard(pickRandomGradeCard('B')), '시작 패(파밍)');
+      return;
+    }
+    // [Ver 11.4] 클래식 모드 — 골드 시스템을 쓰지 않으므로 시작 자금을 0으로 내린다.
+    if(classicMode) p.gold = 0;
     let n = startHandCount;
     /* [Ver 9.14] 유물 "우빈이의 학원 운송차량" — 확률로 시작 카드 한 장 더 */
     try{
@@ -27464,7 +27732,8 @@ function actuallyStartGame(){
     for(let i=0;i<n;i++) grantCardToPlayer(p, drawCardNoTrap(p), '시작 패');
   });
   // [Ver 6.9] 드래프트 모드에서는 상점을 아예 열지 않는다 (상점 카드를 뽑는 것 자체가 전략적 손해가 되도록)
-  if(draftMode) shopSlots = []; // [Ver 6.11] 야차: 상점 없음
+  // [Ver 11.4] 파밍/클래식 모드도 상점을 쓰지 않는다.
+  if(draftMode || farmingMode || classicMode) shopSlots = []; // [Ver 6.11] 야차: 상점 없음
   else initShopSlots();
 
   // clear stale DOM from any previous game
@@ -28476,6 +28745,7 @@ function petOnEveryTurn(){
 function mkPlayer(id,name,isBot){
   return {
     id, name, isBot, maxHp:2000, hp:2000, displayHp:2000, shield:0, gold:50, // 시작 자금 50골드
+    farmDrawLevel:0, // [Ver 11.4] 파밍 모드 전용 — 드로우 레벨 (0~12, 100골드로 1단계씩 구매)
     hand:[], alive:true, stunned:false, reflectNext:false, nullifyNext:false, guardNext:false,
     cardShareWith:null, // "아이폰17프로맥스": 이 id의 사람과 서로 손패를 공유해서 쓸 수 있음
     team:null, lastCard:null, lastActionText:'',
@@ -28871,18 +29141,96 @@ function pickWeightedRandomCard(excludeNoShop){
   return __last;
 }
 
+/* ==========================================================================
+   [Ver 11.4 신규] 파밍 모드 전용 드로우 확률 시스템
+   --------------------------------------------------------------------------
+   일반전의 등급별 가중치(RARITY_WEIGHT/gradeRarityMult 등)와는 완전히 별개로,
+   등급별 "확률(%)"을 직접 정의해서 그 확률대로 등급을 먼저 뽑고, 그 등급 안에서는
+   카드를 균등하게 고른다. 레벨 0·1은 명세값 그대로, 레벨 12는 SR 8%·SSR 4%로
+   명세된 값을 그대로 쓰고, 그 사이(레벨 1→12)와 A·S등급의 레벨 12 값은
+   자연스럽게 우상향하도록 선형 보간으로 채웠다. B등급은 전 레벨 20% 고정.
+   나머지 확률(C·D·E)은 그 판의 카드 풀에서 각 등급의 카드 수 비율대로 나눈다. */
+const FARM_DRAW_LEVEL_MAX = 12;
+const FARM_DRAW_LEVEL_COST = 100; // 골드
+const FARM_GRADE_CURVE = {
+  // [lv0, lv1, lv12] — lv0→lv1은 그대로, lv1→lv12는 선형 보간
+  B:   [20, 20, 20],
+  A:   [6,  10, 18],
+  S:   [1,  2,  7],
+  SR:  [0,  1,  8],
+  SSR: [0,  0.5,4]
+};
+function farmGradeProbs(lvl){
+  const l = Math.max(0, Math.min(FARM_DRAW_LEVEL_MAX, lvl||0));
+  const out = {};
+  Object.keys(FARM_GRADE_CURVE).forEach(g=>{
+    const [v0,v1,v12] = FARM_GRADE_CURVE[g];
+    if(l<=0) out[g]=v0;
+    else if(l>=FARM_DRAW_LEVEL_MAX) out[g]=v12;
+    else if(l<=1) out[g]=v0+(v1-v0)*l;
+    else out[g]=v1+(v12-v1)*(l-1)/(FARM_DRAW_LEVEL_MAX-1);
+  });
+  return out;
+}
+/* 파밍 모드 전용 카드 정의(def) 추첨 — pickWeightedRandomCard()와 동일한 반환 형태(카드 정의, uid 없음). */
+function farmPickWeightedRandomCard(forPlayer){
+  const pool = getRandomDrawPool();
+  const probs = farmGradeProbs(forPlayer ? (forPlayer.farmDrawLevel||0) : 0);
+  const countOf = {};
+  pool.forEach(c=>{ countOf[c.grade] = (countOf[c.grade]||0) + 1; });
+  const tiers = ['SSR','SR','S','A','B'];
+  const r = Math.random()*100;
+  let acc = 0, picked = null;
+  for(const g of tiers){
+    if(!countOf[g]) continue;
+    acc += probs[g];
+    if(r < acc){ picked = g; break; }
+  }
+  if(!picked){
+    // 나머지(C/D/E) — 판 카드 풀 내 등급별 장수 비율대로 분배
+    const lowGrades = ['C','D','E'].filter(g=>countOf[g]);
+    const totalLow = lowGrades.reduce((s,g)=>s+countOf[g],0);
+    if(totalLow>0){
+      let r2 = Math.random()*totalLow;
+      for(const g of lowGrades){ r2 -= countOf[g]; if(r2<=0){ picked=g; break; } }
+      if(!picked) picked = lowGrades[lowGrades.length-1];
+    }
+  }
+  if(!picked){
+    // 폴백: 등급 무관 풀 전체에서 무작위 하나 (극단적으로 좁은 카드 풀 대비)
+    const chosen = pool[Math.floor(Math.random()*pool.length)] || pool[0];
+    noteCardAppeared(chosen && chosen.name);
+    return chosen;
+  }
+  const candidates = pool.filter(c=>c.grade===picked);
+  const chosen = candidates[Math.floor(Math.random()*candidates.length)] || pool[Math.floor(Math.random()*pool.length)];
+  noteCardAppeared(chosen && chosen.name);
+  return chosen;
+}
+/* 파밍 모드 시작패용 — 지정 등급에서 균등 무작위 1장 (즉사 함정 카드 제외) */
+function pickRandomGradeCard(grade){
+  const pool = getRandomDrawPool().filter(c=> c.grade===grade && c.type!=='TRAP_INSTANT_DEATH');
+  if(pool.length===0){
+    // 해당 등급 카드가 하나도 없는 극단적 카드 풀이면 전체에서 무작위로 대체
+    const any = getRandomDrawPool().filter(c=> c.type!=='TRAP_INSTANT_DEATH');
+    return any[Math.floor(Math.random()*any.length)] || getRandomDrawPool()[0];
+  }
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
 let draftDrawOwner = null; // [Ver 6.9] 지금 카드를 뽑는 주체 — 드래프트 모드의 덱 풀 라우팅에 쓰인다
 function drawCard(forPlayer){
   deckDrawCounter++;
   const __prevOwner = draftDrawOwner;
   if(forPlayer) draftDrawOwner = forPlayer;
   try{
-  let def = pickWeightedRandomCard();
+  // [Ver 11.4] 파밍 모드는 등급 가중치 시스템 전체를 우회하고 자체 확률표를 쓴다.
+  let def = farmingMode ? farmPickWeightedRandomCard(forPlayer) : pickWeightedRandomCard();
   // [버그수정] 봇의 드로우(시작패/매턴 리필 등 모든 경로)에서는 패시브류·부활류 카드가 나오면
   // 웬만하면 다시 뽑는다 — 봇 AI가 이런 카드들의 발동 조건을 제대로 챙기지 못해 손패에서 낭비되는 문제.
   if(forPlayer && forPlayer.isBot){
     let tries = 0;
-    while(isBotAvoidCardType(def.type) && tries<15){ def = pickWeightedRandomCard(); tries++; }
+    while(isBotAvoidCardType(def.type) && tries<15){ def = farmingMode ? farmPickWeightedRandomCard(forPlayer) : pickWeightedRandomCard(); tries++; }
   }
   /* [Ver 9.0] 드로우의 재단 — Lv3는 E~C 배제(최소 B), Lv5는 A 이상만.
      상위 레벨이 하위 조건을 포함하므로 "최소 등급" 하나로 표현한다.
@@ -30889,6 +31237,8 @@ function grantGold(p, amount){
 }
 /* 매 바퀴(전원이 한 번씩 도는 라운드)마다 생존자 전원에게 기본 소득으로 30골드씩 지급 */
 function tickRoundIncome(){
+  // [Ver 11.4] 클래식 모드 — 골드 시스템(월급)을 아예 쓰지 않는다.
+  if(classicMode){ renderBoard(); return; }
   alivePlayers().forEach(p=>{
     /* [Ver 9.6] 바퀴 수입 = (기본 10골드 + 돈 재단 Lv1) × 거지 × 승진.
        ★ <승진>은 "기본만 2배"가 아니라 재단 보너스까지 합친 총액을 2배로 만든다.
@@ -34250,6 +34600,10 @@ function cardUnusableReason(caster, card){
   }
   // [Ver 8.1.3] 대부: 12바퀴째부터 사용 가능(그 전까지는 그레이아웃).
   if(card.minRound && turnCount < card.minRound) return `${card.minRound}바퀴째부터 사용할 수 있습니다. (현재 ${turnCount}바퀴)`;
+  // [Ver 11.4] 파밍 모드 — 첫 3바퀴("파밍 시간")는 공격 카드를 낼 수 없다.
+  if(farmingMode && turnCount < 3 && isAtkLikeCard(card)){
+    return `파밍 시간(첫 3바퀴)에는 공격 카드를 낼 수 없습니다. (현재 ${turnCount+1}바퀴째)`;
+  }
   if(isBlockedByFirstTurnRule(card, caster)) return '불문율: 첫 턴에는 강력한 공격/즉사 계열 카드를 사용할 수 없습니다.';
   if(caster.healBlocked && HEAL_CARD_TYPES.includes(card.type)) return '하드코어 상태라 회복 계열 카드를 사용할 수 없습니다.';
   if(caster.silencedDueTurn && totalIndividualTurns < caster.silencedDueTurn && isRevealCard(card)) return '침묵 상태라 보여주기(반응) 카드를 사용할 수 없습니다.';
@@ -35999,7 +36353,7 @@ function openReactionWindow(caster, card, targetId, onResolve){
     reactor.hand.splice(liveIdx,1);
     bumpReactionStat(reactor, 'reflected'); // [Ver 5.7.1] 통계
     log('highlight', `${J(reactor.name,'이','가')} ${rc.name}으로 효과를 그대로 반사했습니다!`);
-    try{ if(rc.sfx) cardAudioTriggerKey('sfx', rc.sfx, reactor.id); }catch(e){} // [Ver 7.3] 보여주기 발동 시 효과음 (반사)
+    try{ if(rc.sfxNow) cardAudioPlaySfxKey(rc.sfxNow); }catch(e){} // [Ver 11.4.2] mirrored 결과 직후 cardAudioStopNow()에 휩쓸려 꺼지던 버그 수정 — 공유 Now 큐를 아예 쓰지 않고 독립 재생
     renderBoard();
     /* [Ver 9.13.1] NO U+ — 상대가 낸 것이 공격 카드라면, 그 카드를 되돌리는 대신 9999 피해로 반사한다. */
     const evo9999 = isEvoOf(rc, 'NO U') && (typeof isAtkLikeCard==='function') && isAtkLikeCard(card);
@@ -48669,6 +49023,17 @@ function botPickSharedCard(bot){
 
 function botTurnAction(bot){
   if(!gameActive) return;
+  // [Ver 11.4] 파밍 모드 — 봇도 여유 골드가 있으면 드로우 레벨을 올린다 (턴을 소모하지 않는 자유 행동).
+  if(farmingMode && bot.alive){
+    try{
+      const lvl = bot.farmDrawLevel||0;
+      if(lvl < FARM_DRAW_LEVEL_MAX && (bot.gold||0) >= FARM_DRAW_LEVEL_COST && Math.random() < 0.8){
+        bot.gold -= FARM_DRAW_LEVEL_COST;
+        bot.farmDrawLevel = lvl + 1;
+        log('sys', `🌾 ${J(bot.name,'이','가')} 드로우 레벨을 ${lvl+1}로 올렸습니다.`);
+      }
+    }catch(e){}
+  }
   // [편의] 봇도 사람과 동일한 조건·확률로 티밍을 시도할 수 있다. 자신보다 강한 상대(threatScore 기준)가
   // 생존해 있을 때만 의미가 있으므로, 그런 상대가 있을 경우에 한해 각 턴마다 33% 확률로 요청을 시도한다.
   if(botAttemptTeamRequest(bot)) return; // 티밍 요청은 그 자체로 이번 턴 행동을 대체한다(요청 후 결과를 기다림)
@@ -50359,7 +50724,9 @@ function reResetSchedule(){
 }
 /* 개인 턴이 시작될 때마다 한 번씩 부른다. 발동할 차례면 __randomEventPending을 세운다. */
 function reTickTurnSchedule(){
-  if(!isFoundationModeActive()) return;
+  // [Ver 11.4.1] 클래식 모드 — 골드/상점을 아예 안 쓰는 모드라 랜덤 이벤트도 진행하지 않는다.
+  //   (isFoundationModeActive()는 진화 등 다른 기능도 함께 쓰는 공용 플래그라 여기서 별도로 막는다)
+  if(!isFoundationModeActive() || classicMode) return;
   if(reSchedLastTurn === totalIndividualTurns) return;   // 같은 턴 재진입 — 이미 깎았다
   reSchedLastTurn = totalIndividualTurns;
   if(reTurnsUntilEvent <= 0) reTurnsUntilEvent = reRollPeriod(); // 세이브 등으로 0인 채 들어온 경우 보정
@@ -51710,12 +52077,55 @@ function updateShopButtonState(){
   try{ updateSolemnButtonState(); }catch(e){} // [Ver 5.8] 상점 버튼 갱신 시점에 SOLEMN 버튼도 함께 갱신
   try{ updateFoundationButtonState(); }catch(e){} // [Ver 9.0] 랩터 재단 버튼도 같은 시점에 갱신
   try{ updateEvolveButtonState(); }catch(e){}     // [Ver 9.10.1] 진화 버튼도 함께 갱신
+  try{ updateFarmLevelButtonState(); }catch(e){}  // [Ver 11.4] 파밍 모드 드로우 레벨업 버튼도 함께 갱신
   const btn = document.getElementById('shopBtn');
   if(!btn) return;
   const me = viewer();
   const available = isShopAvailable(me);
   btn.classList.toggle('available', available);
   btn.classList.toggle('locked', !available);
+}
+/* [Ver 11.4] 파밍 모드 드로우 레벨업 FAB의 표시/글로우 갱신. updateShopButtonState()가 불릴 때 함께 호출된다. */
+function updateFarmLevelButtonState(){
+  const btn = document.getElementById('farmLevelBtn');
+  if(!btn) return;
+  if(!gameActive || !farmingMode){ btn.style.display = 'none'; return; }
+  btn.style.display = '';
+  const me = viewer();
+  const lvl = (me && me.farmDrawLevel) || 0;
+  const canAfford = me && lvl < FARM_DRAW_LEVEL_MAX && (me.gold||0) >= FARM_DRAW_LEVEL_COST;
+  btn.classList.toggle('ready', canAfford);
+  btn.classList.toggle('locked', !canAfford);
+  const label = document.getElementById('farmLevelFabLabel');
+  if(label) label.textContent = (lvl >= FARM_DRAW_LEVEL_MAX) ? 'MAX' : `Lv ${lvl}`;
+}
+/* [Ver 11.4] 드로우 레벨업 확인창 — 100골드로 드로우 레벨을 1단계 올린다 (최대 12). 턴을 소모하지 않는 자유 행동. */
+function openFarmDrawLevelUp(){
+  if(!gameActive || !farmingMode) return;
+  const me = viewer();
+  if(!me || !me.alive) return;
+  const lvl = me.farmDrawLevel||0;
+  if(lvl >= FARM_DRAW_LEVEL_MAX){
+    showModal('🌾 드로우 레벨업', `이미 최고 레벨(${FARM_DRAW_LEVEL_MAX})입니다.`, [{label:'확인',solid:true}]);
+    return;
+  }
+  const cost = FARM_DRAW_LEVEL_COST;
+  const canAfford = (me.gold||0) >= cost;
+  if(!canAfford){
+    showModal('🌾 드로우 레벨업', `골드가 부족합니다. (${fmtWon(cost)} 필요 · 보유 ${fmtWon(me.gold||0)})`, [{label:'확인',solid:true}]);
+    return;
+  }
+  showModal('🌾 드로우 레벨업',
+    `현재 드로우 레벨: <b>Lv.${lvl}</b> → <b>Lv.${lvl+1}</b><br>비용: <b>${fmtWon(cost)}</b> (보유 ${fmtWon(me.gold||0)})<br><br>레벨이 높을수록 A등급 이상의 카드가 더 잘 나옵니다.`,
+    [
+      { label:`레벨업 (${fmtWon(cost)})`, solid:true, action: ()=>{
+          me.gold -= cost;
+          me.farmDrawLevel = lvl + 1;
+          log('sys', `🌾 ${J(me.name,'이','가')} 드로우 레벨을 ${lvl+1}로 올렸습니다.`);
+          renderBoard();
+        }},
+      { label:'취소' }
+    ]);
 }
 
 /* "스토킹" 카드로 실시간 감시 대상이 생겼는지에 따라 상점 버튼 왼쪽의 카메라 버튼을 보이거나 숨긴다. */
@@ -52965,7 +53375,7 @@ const TUT_CARDS = {
   medkit:    { grade:'D',  name:'구급상자', type:'HEAL', power:500, pierce:'NONE', desc:'HP +500', flavor:'튜토리얼 전용 카드' },
   kokushi:   { grade:'SR', name:'國 士 無 雙', type:'KOKUSHIMUSOU', power:44444, pierce:'BREAK', desc:'ATK 44,444. 쉴드를 파괴한다.', flavor:'' },
   deathnote: { grade:'S',  name:'데스노트', type:'ATK', power:9999, pierce:'NONE', desc:'', flavor:'설명이 필요없다.' },
-  nou:       { grade:'S',  name:'NO U', type:'REACT_MIRROR', power:0, pierce:'NONE', cost:0, sfx:'nou', desc:'보여줄 시, 지금 받으려던 카드의 효과를 그대로 반사해 자신이 상대에게 시전한다. 한 번 쓰면 다시 쓸 수 없다.', flavor:'' },
+  nou:       { grade:'S',  name:'NO U', type:'REACT_MIRROR', power:0, pierce:'NONE', cost:0, sfxNow:'nou', desc:'보여줄 시, 지금 받으려던 카드의 효과를 그대로 반사해 자신이 상대에게 시전한다. 한 번 쓰면 다시 쓸 수 없다.', flavor:'' },
 };
 const TUTORIAL_UNSAFE_TYPES = ['GRENADE_TRAP','TRAP_INSTANT_DEATH','GAMBLE_DEATH','HACKER_DETECTED','DEATH_WIN_IF_UNSEEN'];
 const TUTORIAL_SHOP_STAGES = ['p0_shop_intro','p0_shop_buy','p0_shop_gamble_attempt','p0_shop_sell','p0_shop_gamble','p0_shop_gamble_pick','p0_shop_done'];
