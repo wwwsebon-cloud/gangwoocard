@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0A0A0A">
 <title>갱갱갱 우빈랩터 카드게임 JavaScript Edition</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=Gowun+Dodum&family=Jua&family=Gaegu:wght@400;700&family=Nanum+Pen+Script&family=Hi+Melody&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=Gowun+Dodum&family=Jua&display=swap');
 
 /* =====================================================================
    [Ver 12.0] DESIGN SYSTEM — 전면 재작성
@@ -2583,8 +2583,10 @@ body.team-battle-mode .p-name{ color:var(--fg) !important; }
 }
 @keyframes vizBar{ from{ transform:scaleY(0.3); } to{ transform:scaleY(1); } }
 .p-card.bgm-playing{ box-shadow:inset 0 0 0 1px rgba(124,156,255,0.3); }
+/* [Ver 12.4.1] 오른쪽 아래는 손패 접기 버튼 자리다 — 음량 컨트롤이 그 위를 덮어
+   접기 버튼이 아예 안 눌렸다. 화면 위쪽(상단 바 옆)으로 올린다. */
 .bgm-ctl,.card-audio-ctl{
-  position:fixed; right:16px; bottom:16px; z-index:120;
+  position:fixed; right:16px; top:62px; bottom:auto; z-index:120;
   display:flex; align-items:center; gap:8px;
   padding:8px 12px; border-radius:var(--r-pill);
   background:color-mix(in srgb,var(--bg-panel) 90%,transparent);
@@ -2592,7 +2594,7 @@ body.team-battle-mode .p-name{ color:var(--fg) !important; }
   box-shadow:var(--sh-ring), var(--sh-2);
   font-size:11px; color:var(--fg-dim);
 }
-.card-audio-ctl{ bottom:64px; }
+.card-audio-ctl{ top:106px; bottom:auto; }
 .bgm-ctl-btn{
   width:26px; height:26px; border-radius:50%;
   display:flex; align-items:center; justify-content:center;
@@ -2777,7 +2779,7 @@ body.dragging-card-no-target .p-card{ opacity:0.5; }
 
 /* ---------- 손패 도크 접기 ----------
    손패는 화면 아래를 200px 가까이 먹는다. 접으면 그만큼 판이 넓어진다. */
-.hand-head{ display:flex; align-items:center; gap:var(--sp-2); }
+.hand-head{ position:relative; z-index:140; display:flex; align-items:center; gap:var(--sp-2); }
 .hand-subtitle{ padding-left:2px; }
 .hand-toggle{
   margin-left:auto; display:inline-flex; align-items:center; gap:5px;
@@ -4535,7 +4537,8 @@ body.mobile-mode .nm-hub-btn small{ display:none; }
   .death-toast-layer,.ach-toast-layer{ left:12px; right:12px; top:52px; }
   .death-toast,.ach-toast{ min-width:0; max-width:none; }
   .lan-gchat{ left:12px; right:12px; width:auto; }
-  .bgm-ctl,.card-audio-ctl{ left:12px; right:auto; }
+  .bgm-ctl{ left:12px; right:12px; top:56px; }
+  .card-audio-ctl{ left:12px; right:12px; top:98px; }
 }
 
 /* ---- 아주 낮은 화면(가로 눕힘) — 세로로 쌓으면 아무것도 안 보인다 ---- */
@@ -4999,196 +5002,13 @@ body.ink .usb-avatar{ filter:grayscale(1) contrast(1.12); }
   body.ink .nm-pass:hover{ transform:none; }
 }
 
-/* =====================================================================
-   [Ver 12.5] 공책의 '결' 고르기 — MOOD LAYER
-   ---------------------------------------------------------------------
-   12.1의 공책 레이어(body.ink)는 그대로 둔다. 그 위에 성격이 다른 공책을
-   세 권 더 얹는다. 종이 · 선 · 모서리 · 손글씨의 조합만 바뀌고,
-   색은 계속 '흰 종이 + 연필'이며 색은 정보에만 남는다.
-
-     body.ink                 줄노트 · 4B 연필 · 주아        (기존, 기본값)
-     body.ink.mood-draft      모눈 제도노트 · 샤프 0.3 · 각진 모서리
-     body.ink.mood-doodle     무지 스케치북 · 굵은 잉크 · 크게 삐뚤빼뚤
-     body.ink.mood-charcoal   먹지 · 흰 연필 (어두운 공책)
-
-   전환은 화면 왼쪽 아래 칩(#mood-chip)으로. 고른 값은 localStorage에
-   남는다. 칩과 이 블록을 지우면 12.1로 되돌아간다.
-   ===================================================================== */
-
-/* ─────────────────────────────────────────────────────────────────────
-   1. 제도 노트 — 모눈 위에 샤프로 정확히 그린 공책.
-      선을 가늘게, 모서리를 각지게, 그림자를 없애 '정갈함'으로 간다.
-   ───────────────────────────────────────────────────────────────────── */
-body.ink.mood-draft,
-body.ink.mood-draft .theme-light,
-body.ink.mood-draft.force-dark,
-body.ink.mood-draft.force-dark .theme-light{
-  --bg:#F7F7F4; --bg-panel:#FFFFFF; --bg-2:#F0F0EC; --bg-3:#E4E4DE;
-  --fg:#33332F; --fg-dim:#5F5F5A; --fg-faint:#90908A;
-  --line:rgba(51,51,47,0.34); --line-soft:rgba(51,51,47,0.16); --line-hard:rgba(51,51,47,0.62);
-  --border:var(--line);
-  --sh-1:none; --sh-2:1px 1px 0 rgba(51,51,47,0.10); --sh-3:2px 2px 0 rgba(51,51,47,0.12);
-  --sh-ring:0 0 0 1px var(--line);
-  --font:'Gowun Dodum','Noto Sans KR',sans-serif;
-  --font-display:'Gowun Dodum','Noto Sans KR',sans-serif;
-}
-body.ink.mood-draft{ font-size:15px; line-height:1.6; }
-/* 모눈 — 5mm 격자에 25mm마다 진한 줄 */
-body.ink.mood-draft .screen::before{
-  background-image:
-    repeating-linear-gradient(to right,  rgba(60,90,140,0.11) 0 1px, transparent 1px 32px),
-    repeating-linear-gradient(to bottom, rgba(60,90,140,0.11) 0 1px, transparent 1px 32px),
-    repeating-linear-gradient(to right,  rgba(60,90,140,0.16) 0 1px, transparent 1px 160px),
-    repeating-linear-gradient(to bottom, rgba(60,90,140,0.16) 0 1px, transparent 1px 160px);
-  background-position:0 0;
-}
-body.ink.mood-draft #app::after{ opacity:0.028; }
-body.ink.mood-draft header{ border-bottom:1px solid var(--line); }
-/* 자로 그은 네모 */
-body.ink.mood-draft .nm-note,
-body.ink.mood-draft .nm-act3,
-body.ink.mood-draft .nm-net-btn,
-body.ink.mood-draft .nm-side-wide,
-body.ink.mood-draft .nm-pass,
-body.ink.mood-draft .nm-ticker,
-body.ink.mood-draft .nm-qb-btn,
-body.ink.mood-draft .nm-res,
-body.ink.mood-draft .user-stat-bar,
-body.ink.mood-draft .card-list-panel,
-body.ink.mood-draft .panel,
-body.ink.mood-draft .btn{ border-radius:2px; }
-body.ink.mood-draft .nm-note{ transform:none; outline:none; }
-body.ink.mood-draft .nm-note::before{ display:none; }
-body.ink.mood-draft .card-list-panel{ outline:none; }
-body.ink.mood-draft .nm-act3-play{ box-shadow:var(--sh-2), 0 0 0 1.4px var(--line-hard); }
-body.ink.mood-draft .nm-act3:hover,
-body.ink.mood-draft .nm-net-btn:hover,
-body.ink.mood-draft .nm-side-wide:hover,
-body.ink.mood-draft .nm-pass:hover{ transform:translateY(-2px); }
-/* 제목 밑줄도 자로 — 한 줄 얇게 */
-body.ink.mood-draft .nm-hero::after{
-  right:0; bottom:-8px; height:0;
-  border-bottom:1px solid var(--line); border-radius:0;
-}
-
-/* ─────────────────────────────────────────────────────────────────────
-   2. 낙서 노트 — 수업 시간에 무지 노트 뒷장에 볼펜으로 그린 그것.
-      선을 굵게, 기울기를 크게, 그림자는 '한 번 더 덧그린 선'으로.
-   ───────────────────────────────────────────────────────────────────── */
-body.ink.mood-doodle,
-body.ink.mood-doodle .theme-light,
-body.ink.mood-doodle.force-dark,
-body.ink.mood-doodle.force-dark .theme-light{
-  --bg:#FCFBF7; --bg-panel:#FFFFFF; --bg-2:#F5F3EC; --bg-3:#E9E6DC;
-  --fg:#22211F; --fg-dim:#4E4C48; --fg-faint:#87857E;
-  --line:rgba(34,33,31,0.72); --line-soft:rgba(34,33,31,0.34); --line-hard:#22211F;
-  --border:var(--line);
-  --sh-1:2px 2px 0 rgba(34,33,31,0.20);
-  --sh-2:4px 4px 0 rgba(34,33,31,0.22);
-  --sh-3:7px 8px 0 rgba(34,33,31,0.24);
-  --sh-ring:0 0 0 2px var(--line-hard);
-  --font:'Gaegu','Jua','Noto Sans KR',sans-serif;
-  --font-display:'Jua','Gaegu','Noto Sans KR',sans-serif;
-}
-body.ink.mood-doodle{ font-size:17px; line-height:1.55; }
-/* 종이는 무지 — 아주 옅은 점만 */
-body.ink.mood-doodle .screen::before{
-  background-image:radial-gradient(circle at 1px 1px, rgba(34,33,31,0.10) 1px, transparent 1.4px);
-  background-size:26px 26px; background-position:0 0;
-}
-body.ink.mood-doodle #app::after{ opacity:0.075; }
-body.ink.mood-doodle header{ border-bottom:2.5px solid var(--line-hard); }
-body.ink.mood-doodle .nm-note,
-body.ink.mood-doodle .nm-act3,
-body.ink.mood-doodle .nm-net-btn,
-body.ink.mood-doodle .nm-side-wide,
-body.ink.mood-doodle .nm-pass,
-body.ink.mood-doodle .nm-ticker,
-body.ink.mood-doodle .nm-qb-btn,
-body.ink.mood-doodle .nm-res,
-body.ink.mood-doodle .user-stat-bar,
-body.ink.mood-doodle .card-list-panel,
-body.ink.mood-doodle .panel,
-body.ink.mood-doodle .btn{ border-radius:22px 8px 24px 7px / 7px 25px 8px 22px; }
-body.ink.mood-doodle .nm-note{ transform:rotate(-1deg); outline:none; }
-body.ink.mood-doodle .nm-act3:nth-child(even){ transform:rotate(0.8deg); }
-body.ink.mood-doodle .nm-act3:hover{ transform:translateY(-4px) rotate(-1.6deg); }
-body.ink.mood-doodle .nm-net-btn:hover{ transform:translateY(-3px) rotate(1.2deg); }
-body.ink.mood-doodle .nm-side-wide:hover,
-body.ink.mood-doodle .nm-pass:hover{ transform:translateY(-3px) rotate(-1deg); }
-body.ink.mood-doodle .nm-act3-play{ box-shadow:5px 6px 0 rgba(34,33,31,0.22), 0 0 0 2.5px var(--line-hard); }
-body.ink.mood-doodle .nm-hero{ transform:rotate(-0.8deg); }
-body.ink.mood-doodle .nm-hero::after{ border-bottom-width:4px; border-bottom-color:var(--line-hard); }
-
-/* ─────────────────────────────────────────────────────────────────────
-   3. 먹지 노트 — 검은 종이에 흰 연필. 12.0의 어두운 분위기를 원하면 이쪽.
-      색은 여전히 정보에만. 흰 연필이 곧 잉크다.
-   ───────────────────────────────────────────────────────────────────── */
-body.ink.mood-charcoal,
-body.ink.mood-charcoal .theme-light,
-body.ink.mood-charcoal.force-dark,
-body.ink.mood-charcoal.force-dark .theme-light{
-  --bg:#1E1E1C; --bg-panel:#262624; --bg-2:#2E2E2B; --bg-3:#3A3A36;
-  --bg-hover:rgba(255,255,255,0.06); --bg-press:rgba(255,255,255,0.11);
-  --fg:#F0EEE7; --fg-dim:#BFBCB3; --fg-faint:#8B8880; --white:#F0EEE7;
-  --line:rgba(240,238,231,0.34); --line-soft:rgba(240,238,231,0.16); --line-hard:rgba(240,238,231,0.68);
-  --border:var(--line);
-  --accent:#EDEAE1; --accent-dim:#CFCBC0; --accent-weak:rgba(240,238,231,0.12); --accent-fg:#1E1E1C;
-  --tone-red:#F08279; --tone-red-soft:#F6B0AA;
-  --tone-yellow:#E5C067; --tone-yellow-soft:#F0D796;
-  --tone-green:#77CFA1; --tone-green-soft:#A6E2C4;
-  --tone-blue:#89ADEB; --tone-blue-soft:#B2CBF3;
-  --tone-brown:#C79C7A; --tone-brown-soft:#DCBEA5;
-  --tone-purple:#B5A3E0; --tone-purple-soft:#CFC4EC;
-  --tone-orange:#E7A470; --tone-orange-soft:#F1C5A0;
-  --tone-skyblue:#7FC6D6; --tone-skyblue-soft:#A9DAE4;
-  --tone-pink:#E294B4; --tone-pink-soft:#EFBACF;
-  --tone-black:#A9A7A0; --tone-black-soft:#CFCDC7;
-  --sh-1:2px 2px 0 rgba(0,0,0,0.35);
-  --sh-2:3px 4px 0 rgba(0,0,0,0.42);
-  --sh-3:5px 7px 0 rgba(0,0,0,0.5);
-  --sh-ring:0 0 0 1.4px var(--line);
-  --card-bg:#2A2A27;
-}
-/* 흰 분필 격자 — 아주 옅게 */
-body.ink.mood-charcoal .screen::before{
-  background-image:
-    repeating-linear-gradient(to bottom, transparent 0 31px, rgba(240,238,231,0.055) 31px 32px);
-  background-position:0 12px;
-}
-body.ink.mood-charcoal #app::after{ opacity:0.075; }
-body.ink.mood-charcoal .nm-note::before{ background:rgba(240,238,231,0.10); box-shadow:inset 0 0 0 1px rgba(240,238,231,0.16); }
-body.ink.mood-charcoal .nm-hero::after{ border-bottom-color:rgba(240,238,231,0.55); }
-body.ink.mood-charcoal .nm-qb-ic,
-body.ink.mood-charcoal .nm-tab-ic,
-body.ink.mood-charcoal .nm-tab-home-ic,
-body.ink.mood-charcoal .nmu-ic,
-body.ink.mood-charcoal .usb-avatar{ filter:grayscale(1) brightness(1.6) contrast(1.05); }
-
-/* ---------- 결 고르는 칩 ---------- */
-#mood-chip{
-  position:fixed; left:12px; bottom:12px; z-index:9999;
-  display:flex; align-items:center; gap:8px;
-  padding:7px 12px; border:none;
-  border-radius:14px 9px 15px 8px / 8px 15px 9px 14px;
-  background:var(--bg-panel); color:var(--fg-dim);
-  box-shadow:0 0 0 1.4px var(--line), var(--sh-1);
-  font-family:var(--font); font-size:13px; line-height:1.2;
-  cursor:pointer; opacity:0.5;
-  transition:opacity .18s ease, transform .18s ease;
-}
-#mood-chip:hover{ opacity:1; transform:translateY(-2px) rotate(-0.8deg); }
-#mood-chip:focus-visible{ outline:2px solid var(--fg); outline-offset:2px; }
-#mood-chip .mc-dot{ width:8px; height:8px; border-radius:50%; background:var(--fg); opacity:0.7; }
-@media (max-width:640px){ #mood-chip{ left:8px; bottom:8px; font-size:12px; padding:6px 10px; } }
-
 </style>
 </head>
 <body class="ink">
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 12.4</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 12.4.1</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -16735,6 +16555,13 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 12.4.1', date: '2026-08-21',
+    items: [
+      '\u{1F41B} <b>[버그수정] 손패 접기 버튼이 안 눌리던 문제</b>를 고쳤습니다. <b>음량 컨트롤</b>이 화면 오른쪽 아래에 떠서 접기 버튼 위를 그대로 덮고 있었습니다. 눌러도 반응이 없고, 접은 뒤에 다시 펼 수도 없던 원인입니다.',
+      '\u{1F50A} <b>[재배치] 음량 컨트롤을 화면 위쪽으로 올렸습니다.</b> 오른쪽 아래는 손패 자리라 무엇을 놓아도 부딪힙니다. BGM \u00B7 카드 음원 컨트롤 둘 다 상단으로 옮겼고, 좁은 화면에서도 겹치지 않습니다.'
+    ]
+  },
   {
     version: 'Ver 12.4', date: '2026-08-21',
     items: [
@@ -56512,32 +56339,6 @@ window.__AUD = {
   yummy: 'data:audio/ogg;base64,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',
   baseball: 'data:audio/ogg;base64,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',
 };
-</script>
-
-<button id="mood-chip" type="button" title="공책의 결 바꾸기"><span class="mc-dot"></span><span id="mood-chip-tx">줄노트</span></button>
-<script>
-/* 공책의 결 — 네 권을 순서대로 넘긴다. 고른 값은 남는다. */
-(function(){
-  var MOODS = [
-    { cls:'',              name:'줄노트'   },
-    { cls:'mood-draft',    name:'제도노트' },
-    { cls:'mood-doodle',   name:'낙서노트' },
-    { cls:'mood-charcoal', name:'먹지노트' }
-  ];
-  var KEY = 'ui-mood-v125';
-  var i = Math.max(0, MOODS.findIndex(function(m){ return m.cls === (localStorage.getItem(KEY) || ''); }));
-  var tx = document.getElementById('mood-chip-tx');
-  function apply(){
-    MOODS.forEach(function(m){ if (m.cls) document.body.classList.remove(m.cls); });
-    if (MOODS[i].cls) document.body.classList.add(MOODS[i].cls);
-    tx.textContent = MOODS[i].name;
-    try { localStorage.setItem(KEY, MOODS[i].cls); } catch(e){}
-  }
-  document.getElementById('mood-chip').addEventListener('click', function(){
-    i = (i + 1) % MOODS.length; apply();
-  });
-  apply();
-})();
 </script>
 
 </body>
