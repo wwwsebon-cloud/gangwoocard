@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0A0A0A">
 <title>갱갱갱 우빈랩터 카드게임 JavaScript Edition</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=Gowun+Dodum&family=Jua&family=Gaegu:wght@400;700&family=Nanum+Pen+Script&family=Hi+Melody&display=swap');
 
 /* =====================================================================
    [Ver 12.0] DESIGN SYSTEM — 전면 재작성
@@ -225,13 +225,24 @@ header{
   font-size:12.5px; font-weight:600; letter-spacing:-0.01em; color:var(--fg-dim);
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
+/* 버전 배지는 개발자 모드로 들어가는 유일한 문이다(11연타 + 비밀번호).
+   12.0에서 너무 흐려져 눌러볼 생각조차 들지 않았다 — 확실히 누를 수 있게 보이게 한다. */
 .version-badge{
-  flex-shrink:0; font-family:var(--font-mono); font-size:10px; font-weight:600;
-  letter-spacing:0.02em; color:var(--fg-faint);
-  padding:3px 8px; border-radius:var(--r-pill); background:var(--bg-2);
-  transition:color var(--t) var(--ease), background var(--t) var(--ease);
+  flex-shrink:0; font-family:var(--font-mono); font-size:11px; font-weight:600;
+  letter-spacing:0.02em; color:var(--fg-dim);
+  padding:5px 11px; border-radius:var(--r-pill);
+  background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--line);
+  cursor:pointer !important; user-select:none;
+  transition:color var(--t) var(--ease), background var(--t) var(--ease), transform var(--t-fast) var(--ease);
 }
-.version-badge:hover{ color:var(--fg-dim); background:var(--bg-3); }
+.version-badge:hover{ color:var(--fg); background:var(--bg-3); }
+.version-badge:active{ transform:scale(0.93); }
+/* 개발자 모드가 켜져 있으면 덱과 배지가 보라색으로 물든다 */
+body.dev-mode .version-badge{
+  background:rgba(124,58,237,0.18); color:#C4A5FF;
+  box-shadow:inset 0 0 0 1px rgba(124,58,237,0.6);
+}
+body.dev-mode .version-badge::after{ content:' DEV'; font-weight:700; }
 .hstat{
   display:flex; align-items:center; gap:var(--sp-3); flex-shrink:0;
   font-family:var(--font-mono); font-size:11px; color:var(--fg-faint);
@@ -587,18 +598,22 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 }
 
 /* =====================================================================
-   [Ver 12.0] MENU — 시작 화면
+   [Ver 12.2] MENU — 시작 화면
    ---------------------------------------------------------------------
-   구조는 그대로 두고 형태만 새로 짰다.
-     · 왼쪽 세로 아이콘 열(.nm-quickbar)      — 화면 왼쪽 가장자리 고정
-     · 오른쪽 위 재화 · 업데이트(.nm-topright) — 오른쪽 위 고정
-     · 가운데 본문(.nm-wrap)                   — 2단: 본문 + 내 기록
-     · 아래 고정 탭바(.nm-tabbar)              — 다섯 칸
+   화면 위에 떠 있는 레이어가 하나도 없다. 전부 문서 흐름 안에 있다.
+
+     · 상단 유틸 바(.nm-topbar)  — 왼쪽 바로가기 + 오른쪽 재화·업데이트
+     · 본문(.nm-wrap > .nm-left) — 2단: 왼쪽 본문 + 오른쪽 내 기록
+         나(.user-stat-bar) -> 오늘의 한 줄 -> 게임 시작(.nm-acts3)
+         -> 바로 시작(.nm-quick) -> 콘텐츠(.nm-hub) -> 정보·도구(.nm-net-grid)
+
+   12.0까지는 왼쪽 세로 아이콘 열 · 오른쪽 위 재화 배지 · 아래 고정 탭바가
+   동시에 떠 있어, 가장자리 세 곳을 매번 훑어야 했고 본문까지 가렸다.
    ===================================================================== */
 
 #screen-start{
   overflow-y:auto; overflow-x:hidden;
-  padding:var(--sp-6) var(--sp-5) 108px;
+  padding:var(--sp-5) var(--sp-5) var(--sp-7);
   align-items:center;
 }
 
@@ -677,8 +692,10 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 .nm-ticker:hover .nm-ticker-text{ animation-play-state:paused; }
 
 /* ---------- 메인 액션 3칸 ---------- */
+/* 이 화면에 온 이유는 대개 "게임 시작" 하나다. 나머지 둘보다 확실히 크게 준다. */
 .nm-acts3{
-  display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-3);
+  display:grid; grid-template-columns:minmax(0,1.8fr) minmax(0,1fr) minmax(0,1fr);
+  gap:var(--sp-3);
   animation:riseIn var(--t-slow) var(--ease) 0.16s both;
 }
 .nm-act3{
@@ -694,7 +711,17 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 .nm-act3-ic{ font-size:24px; line-height:1; transition:transform var(--t) var(--ease-spring); }
 .nm-act3:hover .nm-act3-ic{ transform:scale(1.12); }
 .nm-act3-tx{ font-size:13px; font-weight:700; letter-spacing:-0.01em; }
-.nm-act3-play{ background:var(--accent); color:var(--accent-fg); box-shadow:var(--sh-2); }
+.nm-act3-sub{ display:none; }
+.nm-act3-play{
+  background:var(--accent); color:var(--accent-fg); box-shadow:var(--sh-2);
+  padding:30px 20px; gap:10px;
+}
+.nm-act3-play .nm-act3-ic{ font-size:32px; }
+.nm-act3-play .nm-act3-tx{ font-size:19px; }
+.nm-act3-play .nm-act3-sub{
+  display:block; font-size:11px; font-weight:500;
+  color:color-mix(in srgb, var(--accent-fg) 72%, transparent);
+}
 .nm-act3-play:hover{ background:var(--accent-dim); }
 .nm-act3-play::after{
   content:''; position:absolute; inset:0;
@@ -703,9 +730,37 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
   pointer-events:none;
 }
 
-/* ---------- 2칸 격자 버튼 ---------- */
+/* ---------- 바로 시작 칩 ---------- */
+.nm-quick{
+  display:flex; flex-wrap:wrap; align-items:center; gap:6px;
+  animation:riseIn var(--t-slow) var(--ease) 0.18s both;
+}
+.nm-quick-h{
+  font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;
+  color:var(--fg-faint); margin-right:2px;
+}
+.nm-quick-chip{
+  padding:8px 14px; border-radius:var(--r-pill);
+  background:var(--bg-2); color:var(--fg-dim);
+  font-size:12px; font-weight:600; white-space:nowrap; cursor:pointer;
+  transition:background var(--t) var(--ease), color var(--t) var(--ease), transform var(--t-fast) var(--ease-spring);
+}
+.nm-quick-chip:hover{ background:var(--bg-3); color:var(--fg); transform:translateY(-2px); }
+.nm-quick-chip:active{ transform:scale(0.95); }
+
+/* ---------- 섹션 ---------- */
+.nm-sec{ display:flex; flex-direction:column; gap:var(--sp-2); animation:riseIn var(--t-slow) var(--ease) 0.22s both; }
+.nm-sec-h{
+  font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--fg-faint);
+}
+.nm-side .nm-sec-h{ margin-top:var(--sp-2); }
+.nm-side .nm-sec-h:first-child{ margin-top:0; }
+
+/* ---------- 격자 버튼 ---------- */
 .nm-net{ animation:riseIn var(--t-slow) var(--ease) 0.2s both; }
 .nm-net-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:var(--sp-3); }
+.nm-grid4{ grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); }
 .nm-net-btn{
   position:relative;
   display:flex; flex-direction:column; align-items:flex-start; gap:2px;
@@ -808,38 +863,43 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 .nm-side-wide-n.ready{ color:var(--tone-green); background:rgba(79,201,138,0.12); }
 .nm-side-acct .ic{ opacity:0.9; }
 
-/* ---------- 왼쪽 고정 아이콘 열 ---------- */
+/* ---------- 상단 유틸 바 ----------
+   왼쪽 세로 아이콘 열 + 오른쪽 위 재화 배지를 한 줄로 합쳤다.
+   고정(position:fixed) 레이어를 둘 없애고 문서 흐름 안으로 들여왔다. */
+.nm-topbar{
+  width:100%; max-width:1120px; margin:0 auto var(--sp-5);
+  display:flex; align-items:center; gap:var(--sp-3); flex-wrap:wrap;
+  animation:dropIn var(--t-slow) var(--ease) both;
+}
+.nm-topbar > .nm-quickbar{ order:1; }
+.nm-topbar > .nm-topright{ order:2; margin-left:auto; }
+
 .nm-quickbar{
-  position:fixed; left:12px; top:50%; transform:translateY(-50%); z-index:40;
-  display:flex; flex-direction:column; gap:4px;
-  padding:6px; border-radius:var(--r-lg);
-  background:var(--bg-panel); box-shadow:var(--sh-ring), var(--sh-2);
-  animation:slideInL var(--t-slow) var(--ease) 0.14s both;
+  display:flex; flex-direction:row; align-items:center; gap:2px;
+  padding:5px; border-radius:var(--r-pill);
+  background:var(--bg-panel); box-shadow:var(--sh-ring), var(--sh-1);
 }
 .nm-qb-btn{
   position:relative;
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
-  width:58px; padding:9px 4px; border-radius:var(--r-sm);
-  color:var(--fg-dim); cursor:pointer;
+  display:flex; flex-direction:row; align-items:center; justify-content:center; gap:6px;
+  padding:8px 13px; border-radius:var(--r-pill);
+  color:var(--fg-dim); cursor:pointer; white-space:nowrap;
   transition:background var(--t) var(--ease), color var(--t) var(--ease), transform var(--t-fast) var(--ease);
 }
-.nm-qb-btn:hover{ background:var(--bg-hover); color:var(--fg); transform:translateX(2px); }
+.nm-qb-btn:hover{ background:var(--bg-hover); color:var(--fg); }
 .nm-qb-btn:active{ transform:scale(0.94); }
-.nm-qb-ic{ font-size:17px; line-height:1; }
-.nm-qb-tx{ font-size:9.5px; font-weight:600; letter-spacing:-0.01em; }
+.nm-qb-ic{ font-size:15px; line-height:1; }
+.nm-qb-tx{ font-size:11.5px; font-weight:600; letter-spacing:-0.01em; }
 .nm-qb-badge{
-  position:absolute; top:4px; right:8px;
+  position:absolute; top:1px; right:4px;
   min-width:16px; height:16px; padding:0 4px; border-radius:var(--r-pill);
   display:flex; align-items:center; justify-content:center;
   background:var(--tone-red); color:#fff; font-size:9.5px; font-weight:700;
   animation:popIn var(--t) var(--ease-spring);
 }
 
-/* ---------- 오른쪽 위 클러스터 ---------- */
 .nm-topright{
-  position:fixed; top:64px; right:16px; z-index:40;
   display:flex; align-items:center; gap:var(--sp-2);
-  animation:dropIn var(--t-slow) var(--ease) 0.1s both;
 }
 .nm-resbar{
   display:flex; align-items:center; gap:2px;
@@ -864,7 +924,8 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 }
 .ubi-ic{ font-size:13px; }
 .ubi-num{ font-family:var(--font-mono); font-weight:600; }
-.ubi-name{ display:none; }
+.ubi-name{ display:none; color:var(--fg-faint); }
+@media (min-width:960px){ .ubi-name{ display:inline; } }
 
 .nm-update-badge{
   display:flex; align-items:center; gap:6px;
@@ -877,35 +938,37 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 .nmu-ic{ font-size:14px; }
 .nmu-tx{ font-size:11.5px; font-weight:600; }
 
-/* ---------- 아래 고정 탭바 ---------- */
-.nm-tabbar{
-  position:fixed; left:50%; transform:translateX(-50%); bottom:18px; z-index:45;
-  display:flex; align-items:center; gap:2px;
-  padding:6px; border-radius:var(--r-pill);
-  background:color-mix(in srgb, var(--bg-panel) 88%, transparent);
-  backdrop-filter:blur(14px) saturate(1.4); -webkit-backdrop-filter:blur(14px) saturate(1.4);
-  box-shadow:var(--sh-ring), var(--sh-3);
-  animation:riseIn var(--t-slow) var(--ease) 0.22s both;
+/* ---------- 콘텐츠 허브 ----------
+   12.0의 하단 고정 탭바를 대신한다. 떠 있지 않으므로 본문을 가리지 않고,
+   다섯 갈래가 한눈에 다 보인다. 아이콘을 크게 줘서 훑어보기 쉽게 했다. */
+.nm-hub{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(148px,1fr)); gap:var(--sp-3);
 }
-.nm-tab{
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
-  min-width:70px; padding:8px 10px; border-radius:var(--r-pill);
-  color:var(--fg-faint); cursor:pointer;
-  transition:background var(--t) var(--ease), color var(--t) var(--ease), transform var(--t-fast) var(--ease);
+.nm-hub-btn{
+  position:relative; overflow:hidden;
+  display:flex; flex-direction:column; align-items:flex-start; gap:2px;
+  padding:16px 16px 15px; border-radius:var(--r);
+  background:var(--bg-panel); box-shadow:var(--sh-ring);
+  color:var(--fg); text-align:left; cursor:pointer;
+  transition:transform var(--t) var(--ease-spring), background var(--t) var(--ease), box-shadow var(--t) var(--ease);
 }
-.nm-tab:hover{ background:var(--bg-hover); color:var(--fg-dim); }
-.nm-tab:active{ transform:scale(0.94); }
-.nm-tab-ic{ font-size:16px; line-height:1; transition:transform var(--t) var(--ease-spring); }
-.nm-tab:hover .nm-tab-ic{ transform:translateY(-2px); }
-.nm-tab-tx{ font-size:9.5px; font-weight:600; }
-.nm-tab-home{ background:var(--accent); color:var(--accent-fg); }
-.nm-tab-home:hover{ background:var(--accent-dim); color:var(--accent-fg); }
-.nm-tab-home-ic{ font-size:17px; line-height:1; }
-.nm-tab.active{ color:var(--fg); }
+.nm-hub-btn:hover{ transform:translateY(-3px); background:var(--bg-2); box-shadow:var(--sh-ring), var(--sh-2); }
+.nm-hub-btn:active{ transform:translateY(-1px) scale(0.985); }
+.nm-hub-ic{ font-size:26px; line-height:1.25; transition:transform var(--t) var(--ease-spring); }
+.nm-hub-btn:hover .nm-hub-ic{ transform:scale(1.12) rotate(-4deg); }
+.nm-hub-btn b{ font-size:14px; font-weight:700; letter-spacing:-0.01em; }
+.nm-hub-btn small{ font-size:11px; color:var(--fg-faint); line-height:1.5; }
 
-/* ---------- 포스트잇 (업데이트 요약) ---------- */
+/* ---------- 포스트잇 (업데이트 요약) — 12.2에서 화면에서 내렸다 ----------
+   #menuPostit / #menuPostitChip 은 .screen 바깥의 position:fixed 요소다.
+     · 시작 화면을 떠나도 계속 떠 있으면서 인게임 버튼 위를 덮었고
+     · 시작 화면에서는 오른쪽 열(수상한 상자 · 계정 지키기)을 가렸다
+   같은 내용은 상단 바의 🏆업데이트 배지가 전체 로그로 데려간다. 중복이라 감춘다.
+   ※ 요소 자체는 남겨 둔다 — openMenuPostit()/dismissMenuPostit()이 참조하므로
+     지우면 JS가 깨진다. 되살리려면 아래 한 줄만 지우면 된다. */
+#menuPostit, #menuPostitChip{ display:none !important; }
 .menu-postit{
-  position:fixed; right:16px; bottom:96px; z-index:38; width:280px;
+  position:fixed; right:16px; bottom:20px; z-index:38; width:280px;
   display:flex; flex-direction:column; gap:8px;
   padding:16px; border-radius:var(--r-lg);
   background:var(--bg-panel); box-shadow:var(--sh-ring), var(--sh-3);
@@ -929,7 +992,7 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 }
 .postit-more:hover{ opacity:0.75; }
 .menu-postit-chip{
-  position:fixed; right:16px; bottom:96px; z-index:38;
+  position:fixed; right:16px; bottom:20px; z-index:38;
   padding:9px 14px; border-radius:var(--r-pill);
   background:var(--bg-panel); box-shadow:var(--sh-ring), var(--sh-2);
   font-size:11.5px; font-weight:600; color:var(--fg-dim); cursor:pointer;
@@ -1005,62 +1068,124 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 .loading-tip{ font-size:11.5px; color:var(--fg-faint); text-align:center; min-height:18px; }
 .loading-volnote{ font-size:10.5px; color:var(--fg-faint); opacity:0.8; }
 
-/* ---------- 시즌 패스 화면 ---------- */
+/* ---------- 시즌 패스 화면 ----------
+   실제 마크업(renderPassScreen)은 이렇게 생겼다.
+     .pass-top   = .pass-lv(레벨+게이지+썬크림) / .pass-claimall / .pass-note / .pass-pro-buy|.pass-pro-on
+     .pass-track = .pass-col × 50, 한 칸 안에 [무료 노드] [레벨 숫자] [Pro 노드]가 세로로 묶인다
+   12.0은 이걸 가로 한 줄(flex row)로 눌러버려서 전부 찌그러졌다. 격자로 다시 짠다. */
 #screen-pass{ overflow:hidden; }
 .pass-shell{
-  flex:1; min-height:0; width:100%; max-width:820px; margin:0 auto;
-  display:flex; flex-direction:column; gap:var(--sp-4);
+  flex:1; min-height:0; width:100%; max-width:960px; margin:0 auto;
+  display:flex; flex-direction:column; gap:var(--sp-3);
   padding:var(--sp-5);
 }
 .pass-head{ display:flex; align-items:center; gap:var(--sp-3); flex-shrink:0; }
 .pass-title{ font-size:19px; font-weight:700; letter-spacing:-0.02em; }
-.pass-season{ flex:1; font-size:11.5px; color:var(--fg-faint); }
+.pass-season{ flex:1; min-width:0; font-size:12.5px; font-weight:600; }
+.pass-season small{ display:block; font-size:10.5px; font-weight:400; color:var(--fg-faint); }
+
 .pass-top{
-  flex-shrink:0; display:flex; align-items:center; gap:var(--sp-4);
+  flex-shrink:0;
+  display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:var(--sp-3) var(--sp-4);
+  align-items:center;
   padding:16px 18px; border-radius:var(--r-lg);
   background:var(--bg-panel); box-shadow:var(--sh-ring), var(--sh-1);
 }
-.pass-lv{ display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
-.pass-lv-num{ font-size:26px; font-weight:700; letter-spacing:-0.03em; line-height:1; }
-.pass-lv-sub{ font-size:11px; color:var(--fg-faint); }
-.pass-lv-bar{ height:6px; margin-top:4px; }
-.pass-note{ font-size:11px; color:var(--fg-faint); line-height:1.7; }
-.pass-pro-buy,.pass-claimall{
-  flex-shrink:0; padding:10px 16px; border-radius:var(--r-sm);
+.pass-lv{ grid-column:1; grid-row:1; display:flex; flex-direction:column; gap:5px; min-width:0; }
+.pass-lv-num{ display:flex; align-items:baseline; gap:2px; font-size:15px; font-weight:600; color:var(--fg-faint); line-height:1; }
+.pass-lv-num b{ font-size:30px; font-weight:700; letter-spacing:-0.03em; color:var(--fg); }
+.pass-lv-num small{ font-size:12px; margin-left:3px; }
+.pass-lv-bar{ height:7px; }
+.pass-lv-bar > i{ display:block; height:100%; border-radius:inherit; background:var(--accent); transition:width var(--t-slow) var(--ease-soft); }
+.pass-lv-sub{ font-size:11.5px; color:var(--fg-dim); }
+.pass-lv-sub b{ color:var(--tone-yellow); font-family:var(--font-mono); }
+.pass-lv-sub span{ color:var(--fg-faint); }
+
+.pass-claimall{
+  grid-column:2; grid-row:1; justify-self:stretch;
+  padding:14px 18px; border-radius:var(--r-sm);
   background:var(--accent); color:var(--accent-fg);
-  font-size:12.5px; font-weight:700; cursor:pointer;
+  font-size:13.5px; font-weight:700; cursor:pointer;
   transition:background var(--t) var(--ease), transform var(--t-fast) var(--ease);
 }
-.pass-pro-buy:hover,.pass-claimall:hover{ background:var(--accent-dim); }
-.pass-claimall:active,.pass-pro-buy:active{ transform:scale(0.96); }
-.pass-claimall.disabled{ background:var(--bg-2); color:var(--fg-faint); pointer-events:none; }
-.pass-pro-on{ color:var(--tone-yellow); font-size:12px; font-weight:700; }
+.pass-claimall:hover{ background:var(--accent-dim); }
+.pass-claimall:active{ transform:scale(0.97); }
+.pass-claimall.off,.pass-claimall.disabled{ background:var(--bg-2); color:var(--fg-faint); pointer-events:none; }
+
+.pass-note{ grid-column:1; grid-row:2; font-size:11px; color:var(--fg-faint); line-height:1.7; }
+.pass-pro-on{
+  grid-column:2; grid-row:2;
+  font-size:12px; font-weight:700; color:var(--tone-yellow); line-height:1.6;
+}
+.pass-pro-buy{
+  grid-column:2; grid-row:2; justify-self:stretch;
+  display:flex; align-items:center; gap:10px; text-align:left;
+  padding:11px 14px; border-radius:var(--r-sm);
+  background:var(--bg-2); color:var(--fg);
+  box-shadow:inset 0 0 0 1px rgba(233,185,73,0.45);
+  cursor:pointer;
+  transition:background var(--t) var(--ease), transform var(--t-fast) var(--ease), box-shadow var(--t) var(--ease);
+}
+.pass-pro-buy:hover{ background:var(--bg-3); box-shadow:inset 0 0 0 1px var(--tone-yellow); }
+.pass-pro-buy:active{ transform:scale(0.98); }
+.ppb-tx{ flex:1; min-width:0; display:flex; flex-direction:column; }
+.ppb-tx b{ font-size:12.5px; }
+.ppb-tx small{ font-size:10.5px; color:var(--fg-faint); line-height:1.5; }
+
+/* ---- 트랙: 한 칸 = 무료 / 레벨 / Pro 세 줄 ---- */
 .pass-track{
   flex:1; min-height:0; overflow-x:auto; overflow-y:hidden;
-  display:flex; gap:var(--sp-2); padding:var(--sp-2) 0 var(--sp-4);
+  display:flex; align-items:stretch; gap:var(--sp-2);
+  padding:var(--sp-2) 2px var(--sp-4);
 }
 .pass-col{
-  flex-shrink:0; width:96px;
-  display:flex; flex-direction:column; align-items:center; gap:6px;
+  flex:0 0 108px; width:108px;
+  display:grid; grid-template-rows:1fr auto 1fr; gap:6px; align-items:stretch;
 }
-.pass-col-lv{ font-family:var(--font-mono); font-size:11px; color:var(--fg-faint); font-weight:600; }
+.pass-col-lv{
+  display:flex; align-items:center; justify-content:center;
+  height:24px; border-radius:var(--r-pill); background:var(--bg-2);
+  font-family:var(--font-mono); font-size:11px; font-weight:700; color:var(--fg-faint);
+}
+/* 지금 레벨 칸은 세로줄 전체를 강조한다 — 트랙에서 내 위치를 바로 찾을 수 있게 */
+.pass-col.cur .pass-col-lv{ background:var(--accent); color:var(--accent-fg); }
+
 .pass-node{
-  width:100%; display:flex; flex-direction:column; align-items:center; gap:5px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
   padding:12px 8px; border-radius:var(--r);
-  background:var(--bg-2); cursor:pointer;
+  background:var(--bg-2); cursor:default;
   transition:transform var(--t) var(--ease), background var(--t) var(--ease), box-shadow var(--t) var(--ease);
 }
-.pass-node:hover{ transform:translateY(-3px); background:var(--bg-3); box-shadow:var(--sh-2); }
-.pass-node-ic{ font-size:22px; line-height:1; }
-.pass-node-name{ font-size:10px; font-weight:600; text-align:center; line-height:1.4; }
+.pass-node-ic{ font-size:24px; line-height:1; }
+.pass-node-name{ font-size:10px; font-weight:600; text-align:center; line-height:1.35; word-break:keep-all; }
 .pass-node-lv{ font-family:var(--font-mono); font-size:9.5px; color:var(--fg-faint); }
-.pass-node-state{ font-size:9.5px; font-weight:700; }
-.pass-node.claimed{ opacity:0.42; }
-.pass-node.claimed .pass-node-state{ color:var(--tone-green); }
-.pass-node.locked{ opacity:0.3; pointer-events:none; }
-.pass-node.can{ box-shadow:inset 0 0 0 1px var(--accent); animation:glowRing 1.9s var(--ease-in-out) infinite; }
-.pass-node.pro{ box-shadow:inset 0 0 0 1px var(--tone-yellow); }
-.pass-node-dash{ width:100%; height:1px; background:var(--line-soft); }
+.pass-node-state{ font-size:9.5px; font-weight:700; color:var(--fg-faint); }
+.pass-node-dash{ font-size:13px; color:var(--fg-faint); opacity:0.4; }
+
+/* 큰 보상(10·20·30·40·50)은 한눈에 도드라지게 */
+.pass-node.big{ box-shadow:inset 0 0 0 1px var(--line-hard); }
+.pass-node.big .pass-node-ic{ font-size:28px; }
+/* 받을 수 있는 칸만 누를 수 있고, 그 사실을 움직임으로 알린다 */
+.pass-node.can{
+  cursor:pointer; background:var(--accent-weak);
+  box-shadow:inset 0 0 0 1.5px var(--accent);
+  animation:glowRing 1.9s var(--ease-in-out) infinite;
+}
+.pass-node.can:hover{ transform:translateY(-3px); box-shadow:inset 0 0 0 1.5px var(--accent), var(--sh-2); }
+.pass-node.can .pass-node-state{ color:var(--accent); }
+.pass-node.done,.pass-node.claimed{ opacity:0.45; }
+.pass-node.done .pass-node-state,.pass-node.claimed .pass-node-state{ color:var(--tone-green); }
+.pass-node.locked{ opacity:0.3; }
+.pass-node.empty{ background:transparent; box-shadow:inset 0 0 0 1px var(--line-soft); }
+/* Pro 줄은 금색 계열로 무료 줄과 구분한다 */
+.pass-node.pro{ box-shadow:inset 0 0 0 1px rgba(233,185,73,0.4); }
+.pass-node.pro.can{
+  background:rgba(233,185,73,0.12);
+  box-shadow:inset 0 0 0 1.5px var(--tone-yellow);
+}
+.pass-node.pro.can .pass-node-state{ color:var(--tone-yellow); }
+.pass-node.pro.locked{ cursor:pointer; pointer-events:auto; }
+.pass-node.pro.empty{ box-shadow:inset 0 0 0 1px var(--line-soft); }
 
 /* ---------- 아케이드 ---------- */
 #screen-arcade{ overflow:hidden; }
@@ -1561,20 +1686,34 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 .pf-cell.locked{ opacity:0.38; pointer-events:none; }
 .pf-name{ font-size:10.5px; font-weight:600; text-align:center; }
 .pf-sub{ font-size:9.5px; color:var(--fg-faint); }
-.pf-wrap,.pf-frame{ position:relative; display:flex; align-items:center; justify-content:center; }
+/* profileFrameHtml()의 실제 구조는
+     .pf-wrap > .pf-photo(사진) + .pf-frame(휘장 테두리)
+   이고 둘은 형제다. 휘장은 사진 "위에 덮이는 장식"이므로 반드시 겹쳐야 한다.
+   (12.0에서 둘을 나란히 두는 바람에 사진 옆에 빈 원이 하나 더 그려졌다) */
+.pf-wrap{
+  position:relative; flex-shrink:0;
+  width:var(--pf,72px); height:var(--pf,72px);
+}
+.pf-photo{
+  position:absolute; inset:0; z-index:0;
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+  border-radius:28%; background:var(--bg-3);
+}
+.pf-photo img{ width:100%; height:100%; object-fit:cover; display:block; }
+.pf-emoji{ font-size:calc(var(--pf,72px) * 0.5); line-height:1; }
 .pf-frame{
-  width:52px; height:52px; border-radius:50%; background:var(--bg-3); overflow:hidden;
+  position:absolute; inset:0; z-index:1; pointer-events:none;
+  border-radius:28%;
   transition:box-shadow var(--t) var(--ease);
 }
-.pf-emoji{ font-size:24px; }
-.pf-photo,.pf-art{ width:100%; height:100%; object-fit:cover; }
-/* 휘장 등급 — 테두리 한 겹으로만 구분한다 */
-.pf-k-none  .pf-frame{ box-shadow:none; }
-.pf-k-iron  .pf-frame{ box-shadow:0 0 0 2px #7C8490; }
-.pf-k-bronze.pf-frame,.pf-k-bronze .pf-frame{ box-shadow:0 0 0 2px #C58A5A; }
-.pf-k-silver .pf-frame{ box-shadow:0 0 0 2px #B9C0CA; }
-.pf-k-gold   .pf-frame{ box-shadow:0 0 0 2px #E4B84A; }
-.pf-k-sun    .pf-frame{ box-shadow:0 0 0 2px var(--tone-orange), 0 0 14px -2px var(--tone-orange); }
+.pf-art{ width:100%; height:100%; object-fit:contain; display:block; }
+/* 휘장 등급 — 사진 위에 두르는 테두리 한 겹 */
+.pf-k-none   .pf-frame{ box-shadow:inset 0 0 0 1.5px var(--line); }
+.pf-k-iron   .pf-frame{ box-shadow:inset 0 0 0 2px #7C8490; }
+.pf-k-bronze .pf-frame{ box-shadow:inset 0 0 0 2px #C58A5A; }
+.pf-k-silver .pf-frame{ box-shadow:inset 0 0 0 2px #B9C0CA; }
+.pf-k-gold   .pf-frame{ box-shadow:inset 0 0 0 2px #E4B84A; }
+.pf-k-sun    .pf-frame{ box-shadow:inset 0 0 0 2px var(--tone-orange), 0 0 14px -3px var(--tone-orange); }
 .pf-k-limited .pf-frame,.pf-limited .pf-frame{ box-shadow:0 0 0 2px var(--tone-purple), 0 0 14px -2px var(--tone-purple); }
 .pf-legend .pf-frame{ box-shadow:0 0 0 2px var(--tone-yellow), 0 0 16px -2px var(--tone-yellow); }
 .usb-avatar-framed{ padding:0; background:transparent; }
@@ -1980,10 +2119,26 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
   background:var(--bg-panel); box-shadow:var(--sh-ring);
   animation:riseIn var(--t-slow) var(--ease) both;
 }
+/* [12.2 재배치] 12.0까지 상점·진화·스토킹 버튼은 테이블 오른쪽 위에 겹겹이
+   절대배치돼 있었다. 화면이 좁아지면 서로 겹치고, 모바일에서는 덱 뒤로 숨어
+   아예 누를 수 없었다. 이제 절대배치를 전부 버리고 두 줄로 세운다.
+
+     1줄: [덱] [낸 카드]      — 뽑는 곳과 내는 곳이 나란히
+     2줄: 액션 독            — 상점 · 진화 · 스토킹 · 모드 · 파밍
+
+   버튼이 흐름 안에 있으므로 숨겨진 버튼은 자리를 먹지 않고, 좁아지면
+   알아서 다음 줄로 접힌다. 어떤 화면 크기에서도 겹치지 않는다. */
 .table-stage{
   position:relative; flex:1; min-width:0; min-height:0;
-  display:flex; align-items:center; justify-content:center;
+  display:flex; flex-wrap:wrap;
+  align-items:center; align-content:center; justify-content:center;
+  gap:12px 14px;
 }
+/* 줄바꿈 자리 — 액션 독을 반드시 새 줄에서 시작시킨다 */
+.table-stage::after{ content:''; order:2; flex:0 0 100%; height:0; }
+.table-stage > .draw-pile{ order:1; }
+.table-stage > .center-pile{ order:1; }
+.table-stage > .shop-fab{ order:3; }
 
 .zone-hand{
   grid-area:hand; min-height:0; min-width:0;
@@ -2020,8 +2175,8 @@ body.reversed .turn-direction-ring svg{ animation-direction:reverse; }
 
 /* ---------- 뽑을 카드 더미 ---------- */
 .draw-pile{
-  position:absolute; top:6px; right:6px; z-index:6;
-  width:74px; height:100px; cursor:pointer;
+  position:relative; z-index:6;
+  flex:0 0 auto; width:78px; cursor:pointer;
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
   transition:transform var(--t) var(--ease-spring);
 }
@@ -2051,28 +2206,25 @@ body.reversed .turn-direction-ring svg{ animation-direction:reverse; }
 
 /* ---------- 테이블 위 버튼 (상점 · 진화 · 스토킹 …) ---------- */
 .shop-fab{
-  position:absolute; top:6px; right:88px; z-index:6;
-  width:76px; min-height:76px; padding:10px 6px;
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
-  border-radius:var(--r); background:var(--bg-2); color:var(--fg-dim);
-  cursor:pointer;
+  position:relative; z-index:6;
+  flex:0 0 auto; min-width:0;
+  display:inline-flex; flex-direction:row; align-items:center; justify-content:center; gap:7px;
+  padding:10px 15px; border-radius:var(--r-pill);
+  background:var(--bg-2); color:var(--fg-dim);
+  cursor:pointer; white-space:nowrap;
   transition:background var(--t) var(--ease), color var(--t) var(--ease),
              box-shadow var(--t) var(--ease), transform var(--t) var(--ease-spring), opacity var(--t) var(--ease);
 }
 .shop-fab:hover{ background:var(--bg-3); color:var(--fg); transform:translateY(-2px); }
-.shop-fab:active{ transform:scale(0.94); }
-.shop-fab-icon{ font-size:19px; line-height:1; }
-.shop-fab-label{ font-size:9.5px; font-weight:700; letter-spacing:-0.01em; }
-.shop-fab.available{ color:var(--fg); box-shadow:inset 0 0 0 1px var(--accent); animation:glowRing 2s var(--ease-in-out) infinite; }
-.shop-fab.locked{ opacity:0.28; pointer-events:none; animation:none; }
-/* 세로로 쌓이는 순서: 상점 → 진화 → 파밍 / 가로로 붙는 것: 스토킹 → SOLEMN */
-.evo-fab   { top:88px; right:88px; width:76px; min-height:58px; }
-.farm-fab  { top:152px; right:88px; width:76px; min-height:58px; }
-.stalk-fab { top:6px; right:170px; }
-.solemn-fab{ top:6px; right:252px; }
-.evo-fab.available{ box-shadow:inset 0 0 0 1px var(--tone-purple); }
-.farm-fab.available{ box-shadow:inset 0 0 0 1px var(--tone-green); }
-.solemn-cd{ font-family:var(--font-mono); font-size:9px; color:var(--fg-faint); }
+.shop-fab:active{ transform:scale(0.95); }
+.shop-fab-icon{ font-size:17px; line-height:1; }
+.shop-fab-label{ font-size:11.5px; font-weight:700; letter-spacing:-0.01em; }
+/* 지금 누를 수 있는 버튼만 색이 산다 */
+.shop-fab.available{ color:var(--fg); box-shadow:inset 0 0 0 1.5px var(--accent); animation:glowRing 2s var(--ease-in-out) infinite; }
+.shop-fab.locked{ opacity:0.3; pointer-events:none; animation:none; }
+.evo-fab.available  { box-shadow:inset 0 0 0 1.5px var(--tone-purple); }
+.farm-fab.available { box-shadow:inset 0 0 0 1.5px var(--tone-green); }
+.solemn-cd{ font-family:var(--font-mono); font-size:10px; color:var(--fg-faint); }
 
 /* ---------- 턴 요약 ---------- */
 .turn-summary-panel{
@@ -2381,7 +2533,19 @@ body.team-battle-mode .p-name{ color:var(--fg) !important; }
 .approval-num.danger{ color:var(--tone-red); }
 
 /* ---------- 펫 · 청부업자 ---------- */
-.p-pet{ display:flex; align-items:center; gap:4px; font-size:10px; color:var(--fg-dim); }
+/* 펫은 "내가 뭘 데리고 있나"만 알려주면 되는 보조 정보다.
+   petIconHtml()이 공식 일러스트(<img>)를 넣기도 해서, 크기를 반드시 못박는다. */
+.p-pet{
+  align-self:flex-start; flex-shrink:0;
+  display:inline-flex; align-items:center; justify-content:center;
+  width:26px; height:26px; padding:0; border-radius:var(--r-xs);
+  background:var(--bg-panel); overflow:hidden;
+  font-size:14px; line-height:1; color:var(--fg-dim); cursor:pointer;
+  transition:transform var(--t) var(--ease-spring), background var(--t) var(--ease);
+}
+.p-pet:hover{ transform:scale(1.12); background:var(--bg-3); }
+.p-pet img{ width:100%; height:100%; object-fit:cover; display:block; }
+.zone-bots .p-pet{ width:22px; height:22px; font-size:12px; }
 .hitman-panel{
   display:flex; flex-direction:column; gap:5px;
   margin-top:2px; padding:8px; border-radius:var(--r-xs); background:var(--bg-panel);
@@ -2493,51 +2657,111 @@ body.dragging-card-no-target .p-card{ opacity:0.5; }
    덕분에 색만 봐도 무슨 카드인지 알던 감각은 그대로 남고, 글씨는 항상 읽힌다.
    ===================================================================== */
 
+/* =====================================================================
+   [Ver 12.3] 카드 — 구버전 디자인 복원 + 가독성 수정
+   ---------------------------------------------------------------------
+   12.2 카드가 안 읽혔던 진짜 이유: --card-fg를 :root에서 var(--fg)로 잡아
+   테마가 바뀌어도 늘 "다크 테마의 밝은 글자색"으로 굳어 있었다. 공책 테마의
+   흰 카드 위에 흰 글씨가 얹힌 것이다. 이제 값을 못박아 다시는 안 뒤집힌다.
+
+   그 외에는 11.x 디자인을 그대로 되살렸다.
+     · 등급 알파벳 뒤의 **색깔 사각형** — 등급을 한눈에 읽는 그 칩
+     · 등급별 **발광** — D 흰빛 → C 연두 → B 하늘 → A 노랑 → S 주황
+                        → SR 빨강+금 → SSR 이상 펄 바이올렛 → X 레드/마룬
+     · **카드별 고유 디자인** — 러시안룰렛(갈색 가죽) · SOLEMN LAMENT(흑/백/반반)
+       · ABYSSAL HUNTER(심해) · 닥터후(핫핑크) · 연꽃 · 신앙심 · 영정사진 …
+       배경까지 통째로 바뀌므로, 흰 종이 위에서도 특수 카드가 확실히 구분된다.
+   ※ 연출(회전·점멸 애니메이션)은 복원하지 않았다. 디자인만 되살린다.
+   ===================================================================== */
 :root{
-  --card-bg:  var(--bg-panel);
-  --card-fg:  var(--fg);
-  --card-w:   132px;
-  --card-h:   186px;
+  /* ⚠ var(--fg)를 쓰면 안 된다 — :root에서 한 번 굳어 테마를 안 따라온다. */
+  --card-bg:   #FFFFFF;
+  --card-fg:   #14171C;
+  --card-dim:  #4B525C;
+  --card-faint:#8A9099;
+  /* 능력 줄은 제목(--card-fg)과 설명(--card-dim) 사이의 중간 회색.
+     빨강은 "피해"를 뜻하는 색인데 모든 능력에 붙어 있어 오히려 시끄러웠다. */
+  --card-atk:  #2E343C;
+  --card-w:   138px;
+  --card-h:   204px;
 }
-.theme-light{ --card-bg:#FFFFFF; }
 
 /* ---------- 카드 공통 골격 ---------- */
 .hand-card,.pile-card,.pick-card,.cm-card,.gflip-face,.inv-art,.bp-card,.nc-card,.gcut-card,.invd-card{
   position:relative;
-  display:flex; flex-direction:column; gap:4px;
-  padding:11px 11px 12px;
-  border-radius:var(--r);
+  display:flex; flex-direction:column; gap:2px;
+  padding:10px 10px 11px;
+  border:1.5px solid rgba(20,23,28,0.16); border-radius:var(--r);
   background:var(--card-bg); color:var(--card-fg);
-  box-shadow:var(--sh-ring), var(--sh-1);
+  box-shadow:0 2px 8px rgba(20,23,28,0.10);
   overflow:hidden;
   transition:transform var(--t) var(--ease-spring), box-shadow var(--t) var(--ease),
              opacity var(--t) var(--ease), filter var(--t) var(--ease);
 }
-
 /* ---------- 손패 ---------- */
 .hand-area{
   flex:1; min-width:0; max-width:100%;
   display:flex; align-items:stretch; gap:8px;
-  padding:6px 2px 10px;
+  padding:8px 2px 12px;
   overflow-x:auto; overflow-y:hidden;
   scrollbar-width:none;
+  touch-action:pan-x;   /* 세로로 끄는 동작은 브라우저에 넘기지 않는다 — 롱프레스 보호 */
 }
 .hand-area::-webkit-scrollbar{ display:none; }
+/* 카드는 설명 길이와 무관하게 언제나 같은 크기다.
+   [Ver 12.3] 대신 **설명 칸만 세로로 스크롤**한다 — 아무리 긴 설명이라도
+   카드를 키우거나 글씨를 자르지 않고 끝까지 읽을 수 있다.
+   등급 · 이름 · 공격력은 절대 줄어들지 않게 flex-shrink:0으로 못박는다
+   (12.2에서 이게 없어 이름이 위아래로 잘려 나갔다). */
 .hand-card{
-  flex:0 0 var(--card-w); width:var(--card-w); min-height:var(--card-h);
+  flex:0 0 var(--card-w); width:var(--card-w);
+  height:var(--card-h); min-height:var(--card-h); max-height:var(--card-h);
   cursor:pointer;
+  user-select:none; -webkit-user-select:none;
+  -webkit-touch-callout:none;          /* 길게 눌러 상세보기를 브라우저 기본 메뉴가 가로채지 않게 */
 }
-/* 카드를 짚었을 때 살짝 떠오른다 — 무엇을 고르는 중인지 손끝으로 알 수 있게 */
-.hand-card:hover{ transform:translateY(-10px); z-index:3; filter:brightness(1.06); }
-.hand-card:active{ transform:translateY(-5px) scale(0.985); }
-.hand-card.disabled{ opacity:0.38; filter:grayscale(0.7); cursor:default; }
-.hand-card.disabled:hover{ transform:none; filter:grayscale(0.7); }
+.hand-card > .hc-grade,
+.hand-card > .hc-name,
+.hand-card > .hc-power,
+.hand-card > .hc-flavor,
+.hand-card > .cmk-row{ flex:0 0 auto; }
+.hand-card .hc-name{ overflow-wrap:anywhere; }
+.hand-card .hc-power{ line-height:1.35; }
+.hand-card .hc-desc{
+  flex:1 1 auto; min-height:24px;
+  overflow-y:auto; overscroll-behavior:contain;
+  touch-action:pan-y;                  /* 손패는 가로로 넘기고, 설명은 세로로 넘긴다 */
+  padding-right:3px; margin-right:-3px;
+  scrollbar-width:thin;
+}
+/* 설명 스크롤바 — 카드 안이라 아주 얇게 */
+.hand-card .hc-desc::-webkit-scrollbar{ width:4px; }
+.hand-card .hc-desc::-webkit-scrollbar-thumb{
+  background:currentColor; opacity:0.3; border-radius:2px;
+}
+/* 더 읽을 게 남아 있으면 아래쪽이 살짝 흐려진다 — 스크롤이 된다는 신호 */
+.hand-card .hc-desc{
+  -webkit-mask-image:linear-gradient(180deg,#000 calc(100% - 12px), transparent);
+          mask-image:linear-gradient(180deg,#000 calc(100% - 12px), transparent);
+}
+/* 손패에서는 플레이버를 감춘다 — 11.x도 그랬다.
+   좁은 카드에서 한 줄이라도 설명에 더 주는 편이 실제 플레이에 도움이 된다.
+   (플레이버 전문은 길게 눌러 여는 상세창에서 볼 수 있다) */
+.hand-card .hc-flavor{ display:none; }
+/* 공격력 줄이 길어져도 설명 칸을 잡아먹지 않게 상한을 둔다 */
+.hand-card .hc-power{ max-height:3.2em; overflow:hidden; }
+.hand-card .hc-desc{ min-height:52px; }
+/* 카드를 짚었을 때 확실히 떠오른다 */
+.hand-card:hover{ transform:translateY(-12px); z-index:3; filter:brightness(1.12); }
+.hand-card:active{ transform:translateY(-6px) scale(0.985); }
+.hand-card.disabled{ opacity:0.42; filter:grayscale(0.75); cursor:default; }
+.hand-card.disabled:hover{ transform:none; filter:grayscale(0.75); }
 /* 지금 낼 수 있는 반응 카드 */
-.hand-card.react-glow{ box-shadow:inset 0 0 0 1.5px var(--accent), 0 0 22px -6px var(--accent); animation:glowRing 1.5s var(--ease-in-out) infinite; }
+.hand-card.react-glow{ box-shadow:inset 0 0 0 2px var(--accent), 0 0 26px -6px var(--accent); animation:glowRing 1.5s var(--ease-in-out) infinite; }
 /* 한 번 더 누르면 확정 */
-.hand-card.armed-confirm{ transform:translateY(-12px); box-shadow:inset 0 0 0 1.5px var(--tone-yellow), var(--sh-2); }
+.hand-card.armed-confirm{ transform:translateY(-14px); box-shadow:inset 0 0 0 2px #F2C94C, 0 8px 24px -8px rgba(0,0,0,0.6); }
 /* 대상 고르는 중 */
-.hand-card.targeting-pending{ transform:translateY(-12px); box-shadow:inset 0 0 0 1.5px var(--accent) , var(--sh-2); opacity:0.9; }
+.hand-card.targeting-pending{ transform:translateY(-14px); box-shadow:inset 0 0 0 2px var(--accent), 0 8px 24px -8px rgba(0,0,0,0.6); }
 
 /* 손패에 새로 들어오는 카드 — 순서대로 아래에서 올라온다 */
 @keyframes dealIn{
@@ -2547,35 +2771,96 @@ body.dragging-card-no-target .p-card{ opacity:0.5; }
 .hand-card.deal-in{ animation:dealIn 0.34s var(--ease-spring) var(--deal-delay,0s) both; }
 .draw-anim-card{ animation:dealIn var(--draw-duration,0.34s) var(--ease-spring) both; }
 .lan-pile-in{ animation:popIn var(--t) var(--ease-spring) both; }
-.shared-card{ box-shadow:inset 0 0 0 1px var(--tone-purple); }
+.shared-card{ box-shadow:inset 0 0 0 2px #B79BF0; }
 .recalling{ animation:popIn var(--t-slow) var(--ease-spring) both; }
 .discarded{ opacity:0.4; }
 
-/* ---------- 카드 본문 ---------- */
-.hc-grade,.pc-grade,.pk-grade,.cm-grade,.gflip-grade{
-  display:flex; align-items:center; gap:4px; flex-wrap:wrap;
-  font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:0.08em;
-  color:var(--fg-faint);
+/* ---------- 손패 도크 접기 ----------
+   손패는 화면 아래를 200px 가까이 먹는다. 접으면 그만큼 판이 넓어진다. */
+.hand-head{ display:flex; align-items:center; gap:var(--sp-2); }
+.hand-subtitle{ padding-left:2px; }
+.hand-toggle{
+  margin-left:auto; display:inline-flex; align-items:center; gap:5px;
+  padding:5px 11px; border-radius:var(--r-pill);
+  background:var(--bg-2); color:var(--fg-dim);
+  font-size:11px; font-weight:600; cursor:pointer;
+  transition:background var(--t) var(--ease), color var(--t) var(--ease), transform var(--t-fast) var(--ease);
 }
+.hand-toggle:hover{ background:var(--bg-3); color:var(--fg); }
+.hand-toggle:active{ transform:scale(0.94); }
+.hand-toggle-ic{ font-size:10px; line-height:1; transition:transform var(--t) var(--ease); }
+.hand-toggle-n{ font-family:var(--font-mono); font-size:10px; color:var(--accent); font-weight:700; }
+body.hand-collapsed .hand-toggle{ background:var(--accent); color:var(--accent-fg); }
+body.hand-collapsed .hand-toggle-n{ color:var(--accent-fg); }
+/* 접힘 — 손패 줄만 접고 내 스탯창과 손잡이는 남긴다 */
+body.hand-collapsed .hand-area{
+  /* flex:1 이 붙어 있으면 height:0을 줘도 다시 늘어난다 — 성장 자체를 막아야 접힌다 */
+  flex:0 0 0 !important;
+  height:0; min-height:0; padding-top:0; padding-bottom:0;
+  opacity:0; pointer-events:none; overflow:hidden;
+  transition:flex-basis var(--t-slow) var(--ease), height var(--t-slow) var(--ease),
+             opacity var(--t) var(--ease), padding var(--t-slow) var(--ease);
+}
+/* 손패를 접으면 내 스탯창도 한 줄짜리 요약 높이로 줄어든다 —
+   그래야 "판이 넓어진다"는 목적이 실제로 달성된다. */
+/* 손패 줄 전체 높이를 못박는다. .zone-hand는 보드 격자의 한 행이라
+   자식만 줄여서는 행 높이가 따라 줄지 않는다 — 행 자체에 상한을 건다. */
+body.hand-collapsed .zone-hand{
+  max-height:104px; overflow:hidden;
+  transition:max-height var(--t-slow) var(--ease);
+}
+.zone-hand{ max-height:none; transition:max-height var(--t-slow) var(--ease); }
+body.hand-collapsed .zone-hand .seat-me{ max-height:92px; overflow:hidden; }
+body.hand-collapsed .zone-hand .seat-me .p-card{ min-height:0; }
+body.hand-collapsed .zone-hand-cards{ align-self:flex-start; }
+.hand-area{ transition:height var(--t-slow) var(--ease), opacity var(--t) var(--ease); }
+body.hand-collapsed .zone-hand{ padding-top:var(--sp-2); }
+
+/* ---------- 카드 본문 ---------- */
+/* 등급 칩 — 알파벳 뒤의 색깔 사각형. 이 게임에서 가장 먼저 읽는 정보다. */
+.hc-grade,.pc-grade,.pk-grade,.cm-grade,.gflip-grade{
+  align-self:flex-start; flex-shrink:0;
+  display:flex; align-items:center; gap:5px;
+  padding:2px 7px; margin-bottom:5px;
+  border:1.5px solid rgba(20,23,28,0.35); border-radius:3px;
+  background:#E8EAEE; color:#14171C;
+  font-family:var(--font-mono); font-size:12.5px; font-weight:700; letter-spacing:0.04em;
+  max-width:100%; overflow:hidden;
+}
+/* 태그(패시브·INF·무한사용…)는 등급 칩 안에 함께 들어간다 — 구버전과 같은 자리 */
+.passive-tag,.inf-tag,.uses-tag,.reveal-tag{
+  flex-shrink:0;
+  font-family:var(--font-mono); font-weight:700; font-size:9.5px; letter-spacing:0.02em;
+  border:1px solid currentColor; border-radius:6px; padding:0 5px;
+  opacity:0.82; background:transparent; color:inherit;
+}
+.mine-tag{
+  flex-shrink:0; display:inline-block;
+  font-size:8.5px; font-weight:800; letter-spacing:0.04em;
+  padding:1px 5px; border-radius:5px;
+}
+.mine-tag.on { background:#FF3B52; color:#fff; }
+.mine-tag.off{ background:rgba(0,0,0,0.16); color:inherit; opacity:0.7; }
+
 .hc-name,.pc-name,.pk-name,.cm-name,.gflip-name{
-  font-size:13px; font-weight:700; line-height:1.32; letter-spacing:-0.015em;
+  font-size:14px; font-weight:700; line-height:1.28; letter-spacing:-0.015em;
+  color:var(--card-fg);
 }
 .hc-power,.pc-power,.cm-pw{
-  font-family:var(--font-mono); font-size:11px; font-weight:600; color:var(--tone-red);
+  font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--card-atk);
+  letter-spacing:-0.01em;
 }
 .hc-desc,.pc-desc,.pk-desc,.cm-desc,.gflip-desc{
-  font-size:10.5px; line-height:1.62; color:var(--fg-dim);
+  font-size:10.5px; line-height:1.55; color:var(--card-dim);
 }
 .hc-flavor,.pc-flavor,.cm-flavor{
-  margin-top:auto; padding-top:5px;
-  font-size:9.5px; line-height:1.55; color:var(--fg-faint); font-style:italic;
-  opacity:0.85;
+  margin-top:auto; padding-top:4px;
+  font-size:9.5px; line-height:1.5; color:var(--card-faint); font-style:italic;
 }
 .pc-owner{
-  font-size:9px; font-weight:600; color:var(--fg-faint);
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  font-size:9px; font-weight:600; color:var(--card-faint);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;
 }
-
 /* 카드 하단 마크 줄 — 색 마름모 + 속성 칩 */
 .cmk-row{ display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin-top:5px; }
 .cmk-dia{
@@ -2608,9 +2893,20 @@ body.dragging-card-no-target .p-card{ opacity:0.5; }
 
 /* ---------- 낸 카드 더미 ---------- */
 .pile-card{
-  width:172px; min-height:236px;
+  width:172px; height:236px; min-height:236px; max-height:236px;
   transform:rotate(var(--rot,0deg));
+  user-select:none; -webkit-user-select:none;
 }
+.pile-card > .pc-grade,.pile-card > .pc-name,.pile-card > .pc-power,
+.pile-card > .pc-owner,.pile-card > .pc-flavor,.pile-card > .cmk-row{ flex:0 0 auto; }
+.pile-card .pc-desc{
+  flex:1 1 auto; min-height:28px;
+  overflow-y:auto; overscroll-behavior:contain; touch-action:pan-y;
+  padding-right:3px; margin-right:-3px; scrollbar-width:thin;
+}
+.pile-card .pc-desc::-webkit-scrollbar{ width:4px; }
+.pile-card .pc-desc::-webkit-scrollbar-thumb{ background:currentColor; opacity:0.3; border-radius:2px; }
+.pile-card .pc-flavor{ flex:0 0 auto; margin-top:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 @keyframes pileFly{
   from{ opacity:0; transform:translate3d(var(--fx,0),var(--fy,-40px),0) rotate(0deg) scale(0.86); }
   70% { opacity:1; }
@@ -2623,7 +2919,14 @@ body.dragging-card-no-target .p-card{ opacity:0.5; }
 
 /* ---------- 고르기용 카드 ---------- */
 .pick-strip{ display:flex; flex-wrap:wrap; gap:var(--sp-2); justify-content:center; max-height:52vh; overflow-y:auto; padding:4px; }
-.pick-card{ width:124px; min-height:170px; cursor:pointer; }
+.pick-card{ width:124px; height:170px; cursor:pointer; user-select:none; }
+.pick-card > .pk-grade,.pick-card > .pk-name{ flex:0 0 auto; }
+.pick-card .pk-desc{
+  flex:1 1 auto; min-height:24px;
+  overflow-y:auto; overscroll-behavior:contain; touch-action:pan-y; scrollbar-width:thin;
+}
+.pick-card .pk-desc::-webkit-scrollbar{ width:4px; }
+.pick-card .pk-desc::-webkit-scrollbar-thumb{ background:currentColor; opacity:0.3; border-radius:2px; }
 .pick-card:hover{ transform:translateY(-5px); filter:brightness(1.06); }
 .pick-card.picked{ box-shadow:inset 0 0 0 2px var(--accent), var(--sh-2); }
 .pk-mark{
@@ -2690,41 +2993,47 @@ body.dragging-card-no-target .p-card{ opacity:0.5; }
 /* =====================================================================
    등급 — 색 하나 + 발광 한 겹
    ===================================================================== */
-.grade-glow-D{ --cfx:#8C939E; }
-.grade-glow-C{ --cfx:#5FBF8E; }
-.grade-glow-B{ --cfx:#5B9BEA; }
-.grade-glow-A{ --cfx:#A98BEA; }
-.grade-glow-S{ --cfx:#E9B949; }
-.grade-glow-SR{ --cfx:#F0904A; }
-.grade-glow-top{ --cfx:#E4B0F5; --cfx2:#8FD8FF; }
-.grade-glow-X{ --cfx:#F2645A; --cfx2:#7A1E1A; }
+/* ===================== 등급 =====================
+   11.x의 등급 색과 발광을 그대로 되살렸다. 손패를 훑을 때 이 빛만 보고
+   "쓸 만한 게 왔는지"를 판단하게 되는, 이 게임의 묘미다. */
+.grade-glow-D{ --cfx:#FFFFFF; }
+.grade-glow-C{ --cfx:#9AE66E; }
+.grade-glow-B{ --cfx:#74C0FC; }
+.grade-glow-A{ --cfx:#FFD43B; }
+.grade-glow-S{ --cfx:#FF9142; }
+.grade-glow-SR{ --cfx:#FF4F4F; --cfx2:#FFC400; }
+.grade-glow-top{ --cfx:#B794F6; --cfx2:#FFFFFF; }
+.grade-glow-X{ --cfx:#FF0000; --cfx2:#800000; }
 
-/* 등급 배지에도 같은 색을 얹는다 */
-[class*="grade-glow-"] .hc-grade,[class*="grade-glow-"] .pc-grade,
-[class*="grade-glow-"] .pk-grade,[class*="grade-glow-"] .inv-grade{ color:var(--cfx); }
+/* 카드 발광 */
+.grade-glow-D  { box-shadow:0 0 7px 1px rgba(255,255,255,0.9), 0 0 0 1px rgba(120,130,145,0.5), 0 4px 12px rgba(20,23,28,0.22) !important; }
+.grade-glow-C  { box-shadow:0 0 10px 2px rgba(154,230,110,0.85), 0 4px 12px rgba(20,23,28,0.22) !important; }
+.grade-glow-B  { box-shadow:0 0 11px 2.5px rgba(116,192,252,0.9),  0 4px 12px rgba(20,23,28,0.22) !important; }
+.grade-glow-A  { box-shadow:0 0 13px 3px rgba(255,212,59,0.95),    0 4px 12px rgba(20,23,28,0.22) !important; }
+.grade-glow-S  { box-shadow:0 0 17px 3.5px rgba(255,145,66,1),     0 4px 12px rgba(20,23,28,0.22) !important; }
+.grade-glow-SR { box-shadow:0 0 20px 4.5px rgba(255,79,79,0.95), 0 0 36px 11px rgba(255,196,0,0.65), 0 4px 12px rgba(20,23,28,0.22) !important; }
+.grade-glow-top{ box-shadow:0 0 0 1px rgba(183,148,246,0.55), 0 0 12px 3px rgba(186,156,255,0.75), 0 0 30px 9px rgba(140,110,240,0.4), 0 4px 12px rgba(20,23,28,0.22) !important; }
+.grade-glow-X  { box-shadow:0 0 16px 3px rgba(255,0,0,0.9), 0 0 30px 8px rgba(128,0,0,0.6), 0 4px 12px rgba(20,23,28,0.22) !important; }
 
-/* 공통 발광 — 모든 등급/고유 연출이 이 한 규칙을 공유한다 */
-[class*="grade-glow-"],[class*="card-fx-"]{
-  box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--cfx,var(--line-hard)) 55%, transparent),
-             0 0 20px -8px var(--cfx,transparent),
-             var(--sh-1);
+/* 등급 칩 — 알파벳 뒤의 색깔 사각형 */
+.grade-glow-D .hc-grade,.grade-glow-D .pc-grade,.grade-glow-D .pk-grade,.grade-glow-D .cm-grade{ background:#FFFFFF; color:#111; border-color:#B9C0CA !important; }
+.grade-glow-C .hc-grade,.grade-glow-C .pc-grade,.grade-glow-C .pk-grade,.grade-glow-C .cm-grade{ background:#9AE66E; color:#0D2B06; border-color:#9AE66E !important; }
+.grade-glow-B .hc-grade,.grade-glow-B .pc-grade,.grade-glow-B .pk-grade,.grade-glow-B .cm-grade{ background:#74C0FC; color:#04263F; border-color:#74C0FC !important; }
+.grade-glow-A .hc-grade,.grade-glow-A .pc-grade,.grade-glow-A .pk-grade,.grade-glow-A .cm-grade{ background:#FFD43B; color:#3A2900; border-color:#FFD43B !important; }
+.grade-glow-S .hc-grade,.grade-glow-S .pc-grade,.grade-glow-S .pk-grade,.grade-glow-S .cm-grade{ background:#FF9142; color:#3A1400; border-color:#FF9142 !important; }
+.grade-glow-SR .hc-grade,.grade-glow-SR .pc-grade,.grade-glow-SR .pk-grade,.grade-glow-SR .cm-grade{
+  background:linear-gradient(90deg,#FF4F4F 0%,#FFC400 40%,#FFC400 60%,#FF4F4F 100%);
+  color:#2A0A00; border-color:#fff !important;
+  box-shadow:0 0 7px rgba(255,196,0,0.85), inset 0 0 3px rgba(255,255,255,0.5);
 }
-/* S 이상만 아주 느리게 숨 쉰다 */
-@keyframes cardBreathe{
-  0%,100%{ box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--cfx) 55%, transparent),
-                       0 0 18px -9px var(--cfx), var(--sh-1); }
-  50%    { box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--cfx) 85%, transparent),
-                       0 0 26px -6px var(--cfx), var(--sh-1); }
+.grade-glow-top .hc-grade,.grade-glow-top .pc-grade,.grade-glow-top .pk-grade,.grade-glow-top .cm-grade{
+  background:linear-gradient(135deg,#FFFFFF 0%,#F3EBFF 40%,#D8C8FF 75%,#B794F6 100%);
+  color:#2E1065; border-color:#C4A8FF !important;
+  box-shadow:0 0 8px rgba(167,139,250,0.55);
 }
-.grade-glow-S,.grade-glow-SR,.grade-glow-top,.grade-glow-X{
-  animation:cardBreathe 3.2s var(--ease-in-out) infinite;
-}
-/* 최상위 등급만 두 번째 색이 얇게 흐른다 */
-.grade-glow-top::before,.grade-glow-X::before{
-  content:''; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
-  background:linear-gradient(135deg, color-mix(in srgb,var(--cfx) 12%,transparent),
-                                     transparent 45%,
-                                     color-mix(in srgb,var(--cfx2,var(--cfx)) 12%,transparent));
+.grade-glow-X .hc-grade,.grade-glow-X .pc-grade,.grade-glow-X .pk-grade,.grade-glow-X .cm-grade{
+  background:linear-gradient(135deg,#FF0000 0%,#800000 100%);
+  color:#fff; border-color:#FF6B6B !important; font-weight:900;
 }
 .grade-chip{
   display:inline-flex; align-items:center; justify-content:center;
@@ -2732,111 +3041,201 @@ body.dragging-card-no-target .p-card{ opacity:0.5; }
   background:var(--bg-2); color:var(--fg-dim);
   font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:0.06em;
 }
+
+/* ===================== 카드별 고유 디자인 =====================
+   11.x 원본에서 **정적 요소만**(배경·테두리·글자색·등급칩) 그대로 옮겨 왔다.
+   회전·점멸 같은 연출은 일부러 빼서, 카드가 시끄럽지 않고 글씨도 계속 읽힌다. */
+.card-fx-faith{ background:linear-gradient(160deg,#3a2e05,#6b5410,#3a2e05) !important; border-color:#ffe066 !important; box-shadow:0 0 0 1.5px rgba(255,224,102,0.7), 0 0 22px 5px rgba(255,200,40,0.55), inset 0 0 22px rgba(255,210,63,0.25) !important; }
+.card-fx-faith .hc-name, .card-fx-faith .hc-desc, .card-fx-faith .hc-power, .card-fx-faith .hc-flavor, .card-fx-faith .pc-name, .card-fx-faith .pk-name, .card-fx-faith .pk-desc{ color:#fff6d6 !important; text-shadow:0 1px 6px rgba(120,80,0,0.8) !important; }
+.card-fx-faith .hc-grade, .card-fx-faith .pk-grade{ background:linear-gradient(90deg,#ffe58a,#e5b915,#9c7a0a) !important; color:#3a2c00 !important; border-color:#fff2c0 !important; }
+.card-fx-portrait{ background:linear-gradient(160deg, #2b2b30 0%, #47474f 55%, #1d1d21 100%) !important; border:2px solid #d8d8dc !important; box-shadow:0 0 12px rgba(0,0,0,.55), inset 0 0 0 4px #17171a !important; color:#f2f2f4 !important; }
+.card-fx-shit{ background:linear-gradient(150deg, #6b4a24 0%, #8a6231 40%, #4d3418 100%) !important; border:2px solid #3d2a12 !important; box-shadow:0 0 14px rgba(120,80,30,.6), inset 0 0 18px rgba(0,0,0,.45) !important; color:#f5e6cf !important; }
+.card-fx-lazy{ background:linear-gradient(150deg, #6d7076 0%, #85888f 100%) !important; border:1px solid #5a5d63 !important; box-shadow:none !important; color:#f0f0f2 !important; }
+.card-fx-democracy{ background:linear-gradient(160deg, #12233f 0%, #0a1526 100%) !important; border-color:#58a6ff !important; box-shadow:inset 0 0 24px rgba(88,166,255,.25), 0 0 12px rgba(88,166,255,.35) !important; }
+.card-fx-democracy .hc-name, .card-fx-democracy .hc-power, .card-fx-democracy .hc-desc, .card-fx-democracy .hc-flavor, .card-fx-democracy .pc-name, .card-fx-democracy .pk-name{ color:#9ecbff !important; }
+.card-fx-roulette{ background:linear-gradient(160deg, #2a1a0e 0%, #4a2f1a 40%, #3a2412 70%, #1a1008 100%) !important; border-color:#c4a574 !important; box-shadow:0 0 0 1.5px rgba(196,165,116,0.55), 0 0 18px 4px rgba(139,90,43,0.35), inset 0 0 24px rgba(80,50,20,0.4) !important; }
+.card-fx-roulette .hc-name, .card-fx-roulette .hc-desc, .card-fx-roulette .hc-power, .card-fx-roulette .hc-flavor, .card-fx-roulette .pc-name, .card-fx-roulette .pk-name, .card-fx-roulette .pk-desc{ color:#f5e6c8 !important; text-shadow:0 1px 4px rgba(40,20,5,0.85) !important; }
+.card-fx-chromatic{ box-shadow:0 0 20px 5px rgba(255,79,79,0.8), 0 0 34px 10px rgba(168,85,247,0.5), 0 6px 14px rgba(0,0,0,0.6) !important; }
+.hand-card.card-fx-chromatic{ box-shadow:0 0 20px 5px rgba(255,79,79,0.8), 0 0 34px 10px rgba(168,85,247,0.5), 0 4px 10px rgba(0,0,0,0.5) !important; }
+.card-fx-rose{ box-shadow:0 0 18px 4px rgba(199,21,63,0.85), 0 0 32px 10px rgba(20,90,50,0.45), 0 6px 14px rgba(0,0,0,0.6) !important; }
+.hand-card.card-fx-rose{ box-shadow:0 0 16px 4px rgba(199,21,63,0.85), 0 0 28px 9px rgba(20,90,50,0.4), 0 4px 10px rgba(0,0,0,0.5) !important; }
+.card-fx-rt69{ box-shadow:0 0 18px 4px rgba(180,255,120,0.85), 0 0 32px 10px rgba(120,220,90,0.45), 0 6px 14px rgba(0,0,0,0.6) !important; }
+.hand-card.card-fx-rt69{ box-shadow:0 0 16px 4px rgba(180,255,120,0.85), 0 0 28px 9px rgba(120,220,90,0.4), 0 4px 10px rgba(0,0,0,0.5) !important; }
+.card-fx-purple{ box-shadow:0 0 18px 4px rgba(147,51,234,0.85), 0 0 34px 11px rgba(88,28,135,0.5), 0 6px 14px rgba(0,0,0,0.6) !important; }
+.hand-card.card-fx-purple{ box-shadow:0 0 16px 4px rgba(147,51,234,0.85), 0 0 30px 10px rgba(88,28,135,0.45), 0 4px 10px rgba(0,0,0,0.5) !important; }
+.card-fx-swag{ box-shadow:0 0 20px 5px rgba(255,110,199,0.55), 0 0 34px 12px rgba(110,207,255,0.45), 0 0 46px 16px rgba(176,110,255,0.35), 0 6px 14px rgba(0,0,0,0.6) !important; }
+.hand-card.card-fx-swag{ box-shadow:0 0 16px 4px rgba(255,110,199,0.55), 0 0 28px 9px rgba(110,207,255,0.4), 0 0 36px 13px rgba(176,110,255,0.3), 0 4px 10px rgba(0,0,0,0.5) !important; }
+.card-fx-bluelight{ background:linear-gradient(165deg, #06121f 0%, #0a2036 50%, #041426 100%) !important; color:#dff2ff !important; border:1.5px solid rgba(120,200,255,0.6) !important; box-shadow:0 0 18px 4px rgba(60,170,255,0.7), 0 0 34px 12px rgba(20,90,180,0.45), 0 6px 14px rgba(0,0,0,0.6) !important; }
+.card-fx-lk69{ background:linear-gradient(160deg, #0d1f0a 0%, #16321a 50%, #0a1f10 100%) !important; color:#e6ffe0 !important; border:1.5px solid rgba(150,255,120,0.6) !important; box-shadow:0 0 18px 4px rgba(120,255,80,0.6), 0 0 30px 10px rgba(60,180,40,0.4), 0 6px 14px rgba(0,0,0,0.6) !important; }
+.card-fx-telekinesis{ background:linear-gradient(160deg, #24081f 0%, #3a0f30 50%, #1c0a1e 100%) !important; color:#ffe0f5 !important; border:1.5px solid rgba(255,140,220,0.6) !important; box-shadow:0 0 18px 4px rgba(255,90,200,0.65), 0 0 32px 11px rgba(180,40,140,0.42), 0 6px 14px rgba(0,0,0,0.6) !important; }
+.card-fx-devpatrol{ background:linear-gradient(160deg, #0d1526 0%, #131c31 45%, #1a1020 100%) !important; color:#eaf2ff !important; border:2px solid rgba(200,225,255,0.55) !important; box-shadow:0 0 18px 4px rgba(60,140,255,0.55),
+      0 0 30px 10px rgba(255,40,60,0.35),
+      0 6px 16px rgba(0,0,0,0.65) !important; }
+.card-fx-zeus{ box-shadow:0 0 18px 4px rgba(163,230,53,0.6), 0 0 34px 11px rgba(60,90,10,0.65),
+      0 0 0 2px rgba(217,255,92,0.8), 0 0 12px 3px rgba(217,255,92,0.6),
+      0 6px 14px rgba(0,0,0,0.6) !important; }
+.hand-card.card-fx-zeus{ box-shadow:0 0 16px 3px rgba(163,230,53,0.55), 0 0 28px 9px rgba(60,90,10,0.55),
+      0 0 0 2px rgba(217,255,92,0.8), 0 0 12px 3px rgba(217,255,92,0.6),
+      0 4px 10px rgba(0,0,0,0.5) !important; }
+.card-fx-sunbeam{ box-shadow:0 0 14px 3px rgba(163,230,53,0.5), 0 0 26px 8px rgba(120,200,40,0.35), 0 6px 14px rgba(0,0,0,0.6) !important; }
+.hand-card.card-fx-sunbeam{ box-shadow:0 0 12px 3px rgba(163,230,53,0.45), 0 0 20px 6px rgba(120,200,40,0.3), 0 4px 10px rgba(0,0,0,0.5) !important; }
+.card-fx-party{ box-shadow:0 0 22px 5px rgba(255,107,107,0.85), 0 0 40px 12px rgba(77,171,247,0.55), 0 6px 14px rgba(0,0,0,0.6) !important; }
+.card-fx-carrot{ box-shadow:0 0 20px 4.5px rgba(255,138,0,0.85), 0 0 36px 11px rgba(154,230,63,0.45), 0 6px 14px rgba(0,0,0,0.6) !important; }
+.card-fx-duolingo{ box-shadow:0 0 20px 4.5px rgba(88,204,2,0.85), 0 0 36px 11px rgba(154,230,63,0.5), 0 6px 14px rgba(0,0,0,0.6) !important; }
+.card-fx-doctorwho{ box-shadow:0 0 20px 4.5px rgba(255,20,147,0.9), 0 0 36px 11px rgba(255,79,195,0.45), 0 6px 14px rgba(0,0,0,0.6) !important; }
+.card-fx-danger-red{ box-shadow:0 0 20px 4.5px rgba(230,20,20,0.9), 0 0 36px 11px rgba(255,60,60,0.45), 0 6px 14px rgba(0,0,0,0.6) !important; }
+.card-fx-radiant-red{ background:linear-gradient(160deg, #2a0808 0%, #3d0d0d 55%, #1c0505 100%) !important; border-color:#ff4444 !important; box-shadow:0 0 18px 3px rgba(220,30,30,0.7), inset 0 0 24px rgba(150,20,20,0.5) !important; }
+.card-fx-charcoal{ background:linear-gradient(160deg, #17171a 0%, #232328 55%, #101012 100%) !important; border-color:#5a5a66 !important; box-shadow:0 0 16px 3px rgba(60,60,70,0.85), inset 0 0 22px rgba(0,0,0,0.7) !important; }
+.card-fx-radiant-sky{ background:linear-gradient(160deg, #071a2a 0%, #0d2c3d 55%, #05141f 100%) !important; border-color:#4fc8ff !important; box-shadow:0 0 18px 3px rgba(40,170,230,0.7), inset 0 0 24px rgba(20,110,150,0.5) !important; }
+.card-fx-abyssal{ background:linear-gradient(175deg,#02121f 0%,#04263c 35%,#06465c 70%,#0a6e7a 100%) !important; border-color:#2fd8e6 !important; box-shadow:0 0 0 1.5px rgba(47,216,230,0.65),
+      0 0 22px 5px rgba(0,180,216,0.75),
+      0 0 44px 14px rgba(0,90,140,0.5),
+      inset 0 0 26px rgba(0,0,0,0.55) !important; }
+.card-fx-abyssal .hc-name, .card-fx-abyssal .hc-desc, .card-fx-abyssal .hc-power, .card-fx-abyssal .hc-flavor, .card-fx-abyssal .pc-name, .card-fx-abyssal .pc-desc, .card-fx-abyssal .pc-flavor, .card-fx-abyssal .pk-name, .card-fx-abyssal .pk-desc{ color:#e6fbff !important; text-shadow:0 1px 6px rgba(0,40,60,0.9) !important; }
+.card-fx-lotus{ background:radial-gradient(ellipse 120% 80% at 50% 110%, rgba(240,124,90,0.55) 0%, transparent 60%),
+      radial-gradient(ellipse 90% 60% at 20% 15%,  rgba(255,224,178,0.75) 0%, transparent 65%),
+      linear-gradient(165deg,#fbe3c0 0%,#a8e3d0 38%,#5ec8bd 62%,#2f9e9c 100%), var(--card-bg) !important; border-color:#f0846a !important; box-shadow:0 0 0 1.5px rgba(255,236,205,0.8),
+      0 0 20px 4.5px rgba(94,200,189,0.7),
+      0 0 38px 12px rgba(240,124,90,0.35),
+      inset 0 0 22px rgba(255,240,215,0.35) !important; }
+.card-fx-lotus .hc-name, .card-fx-lotus .hc-desc, .card-fx-lotus .hc-power, .card-fx-lotus .hc-flavor, .card-fx-lotus .pc-name, .card-fx-lotus .pc-desc, .card-fx-lotus .pc-flavor, .card-fx-lotus .pk-name, .card-fx-lotus .pk-desc{ color:#2a3f3d !important; text-shadow:0 1px 4px rgba(255,248,232,0.75) !important; }
+.card-fx-solemn-black{ background:#000000 !important; border-color:#9a9aa6 !important; box-shadow:0 0 0 2px rgba(230,230,240,0.9),
+      0 0 22px 6px rgba(210,210,225,0.75),
+      0 0 42px 14px rgba(180,180,200,0.4),
+      inset 0 0 0 1px rgba(255,255,255,0.18) !important; }
+.card-fx-solemn-black .hc-name, .card-fx-solemn-black .hc-desc, .card-fx-solemn-black .hc-power, .card-fx-solemn-black .hc-flavor, .card-fx-solemn-black .pc-name, .card-fx-solemn-black .pc-desc, .card-fx-solemn-black .pc-flavor, .card-fx-solemn-black .pk-name, .card-fx-solemn-black .pk-desc{ color:#f2f2f6 !important; }
+.card-fx-solemn-white{ background:#ffffff !important; border-color:#e7d9a8 !important; box-shadow:0 0 0 2px rgba(255,250,230,0.95),
+      0 0 22px 6px rgba(255,240,200,0.8),
+      0 0 42px 14px rgba(255,225,150,0.45),
+      inset 0 0 0 1px rgba(0,0,0,0.08) !important; }
+.card-fx-solemn-white .hc-name, .card-fx-solemn-white .hc-desc, .card-fx-solemn-white .hc-power, .card-fx-solemn-white .hc-flavor, .card-fx-solemn-white .pc-name, .card-fx-solemn-white .pc-desc, .card-fx-solemn-white .pc-flavor, .card-fx-solemn-white .pk-name, .card-fx-solemn-white .pk-desc{ color:#0d0d12 !important; }
+.card-fx-solemn-dual{ background:linear-gradient(105deg, #000000 0%, #000000 49.8%, #ffffff 50.2%, #ffffff 100%) !important; border-color:#c9a8ff !important; box-shadow:0 0 0 2px rgba(220,190,255,0.9),
+      0 0 22px 6px rgba(190,150,255,0.75),
+      0 0 42px 14px rgba(160,120,255,0.4),
+      inset 0 0 0 1px rgba(128,128,136,0.35) !important; }
+.card-fx-solemn-dual .hc-name, .card-fx-solemn-dual .hc-desc, .card-fx-solemn-dual .hc-power, .card-fx-solemn-dual .hc-flavor, .card-fx-solemn-dual .pc-name, .card-fx-solemn-dual .pc-desc, .card-fx-solemn-dual .pc-flavor, .card-fx-solemn-dual .pk-name, .card-fx-solemn-dual .pk-desc{ color:#ffffff !important; text-shadow:0 0 2px #000, 0 0 4px #000, 0 1px 3px rgba(0,0,0,.95) !important; }
+.card-fx-evolved{ box-shadow:0 0 18px 4px rgba(190,60,255,0.6),
+    0 0 34px 11px rgba(90,20,140,0.6),
+    0 0 0 2px rgba(224,140,255,0.85),
+    0 6px 14px rgba(0,0,0,0.6) !important; }
+
 .g-A{ color:#A98BEA; } .g-B{ color:#5B9BEA; } .g-S{ color:#E9B949; }
 .g-SR{ color:#F0904A; } .g-SSR{ color:#E4B0F5; }
 
-/* =====================================================================
-   카드 고유 연출 — 색만 지정하면 위 공통 규칙이 나머지를 그린다
-   (11.x의 톤앤매너를 그대로 물려받되 겹을 걷어냈다)
-   ===================================================================== */
-.card-fx-devpatrol   { --cfx:#4A8FE8; --cfx2:#E8534A; }  /* 경광등 청↔적 */
-.card-fx-bluelight   { --cfx:#3FC7E0; }                  /* 시린 형광 파랑 */
-.card-fx-zeus        { --cfx:#A176F0; }                  /* 뇌운 보라 */
-.card-fx-lk69        { --cfx:#8CE063; }                  /* 초전도 연두 */
-.card-fx-telekinesis { --cfx:#F075B4; }                  /* 사이킥 핑크 */
-.card-fx-chromatic   { --cfx:#7CE0D0; --cfx2:#F0A0D8; }
-.card-fx-party       { --cfx:#F0904A; --cfx2:#A98BEA; }
-.card-fx-rose        { --cfx:#E8536F; }                  /* 괴도의 장미 */
-.card-fx-rt69        { --cfx:#6FA8FF; }
-.card-fx-purple      { --cfx:#9B6FE0; }
-.card-fx-sunbeam     { --cfx:#FFD84D; }                  /* 직사광선 */
-.card-fx-orion       { --cfx:#F2C33C; }
-.card-fx-carrot      { --cfx:#F0904A; --cfx2:#9EDB63; }  /* 주황 70 · 연두 30 */
-.card-fx-duolingo    { --cfx:#7ACC3F; }
-.card-fx-danger-red  { --cfx:#F2453A; }
-.card-fx-radiant-red { --cfx:#E03A3A; }
-.card-fx-radiant-sky { --cfx:#5FC8E8; }
-.card-fx-doctorwho   { --cfx:#FF4FA3; }
-.card-fx-charcoal    { --cfx:#6C737E; }
-.card-fx-roulette    { --cfx:#B98A63; }                  /* 딱지남 갈색 */
-.card-fx-shit        { --cfx:#96703F; }
-.card-fx-lazy        { --cfx:#8C939E; }                  /* 일부러 평범하게 */
-.card-fx-faith       { --cfx:#F2C33C; }                  /* 신앙심 금빛 */
-.card-fx-democracy   { --cfx:#4A8FE8; }
-.card-fx-abyssal     { --cfx:#2E86A8; --cfx2:#7CE0D0; }
-.card-fx-lotus       { --cfx:#4FBFA8; --cfx2:#F08A5D; }
-.card-fx-portrait    { --cfx:#2A2D33; }
-.card-fx-society-signal{ --cfx:#A98BEA; }
+/* 12.0이 쓰던 "색 하나로 통일한" 고유 연출은 12.3에서 폐기했다.
+   흰 종이 배경에서는 테두리 색만으로 특수 카드를 구분할 수 없었기 때문이다.
+   지금은 위쪽 "카드별 고유 디자인" 블록이 11.x 원본 디자인을 그대로 그린다. */
 
-/* 두 색을 가진 카드는 그 두 색이 아주 느리게 자리를 바꾼다 */
-@keyframes cfxSwap{
-  0%,100%{ box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cfx) 70%,transparent),
-                      0 0 20px -8px var(--cfx), var(--sh-1); }
-  50%    { box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cfx2) 70%,transparent),
-                      0 0 20px -8px var(--cfx2), var(--sh-1); }
-}
-.card-fx-devpatrol,.card-fx-chromatic,.card-fx-party,.card-fx-carrot,
-.card-fx-abyssal,.card-fx-lotus{ animation:cfxSwap 2.6s var(--ease-in-out) infinite; }
-.card-fx-devpatrol{ animation-duration:1.1s; }   /* 경광등은 빠르게 */
-.card-fx-society-signal{ animation:cardBreathe 2.4s var(--ease-in-out) infinite; }
-.card-fx-faith,.card-fx-sunbeam,.card-fx-danger-red{ animation:cardBreathe 2.8s var(--ease-in-out) infinite; }
-
-/* ---- 國士無雙: 빨강↔파랑 태극 ---- */
-.card-fx-taegeuk{ --cfx:#E8534A; --cfx2:#4A8FE8; }
-.card-fx-taegeuk::before{
-  content:''; position:absolute; inset:-40%; pointer-events:none; opacity:0.16;
-  background:conic-gradient(#E8534A 0deg,#E8534A 180deg,#4A8FE8 180deg,#4A8FE8 360deg);
-  animation:spin 5s linear infinite;
-}
-.card-fx-taegeuk > *{ position:relative; }
-
-/* ---- 조커 · 이색 계열: 무지개. 색만 아주 느리게 돌린다 ---- */
-.card-fx-swag{ --cfx:#A98BEA; }
-.card-fx-swag::before{
-  content:''; position:absolute; inset:0; pointer-events:none; opacity:0.14;
-  background:linear-gradient(115deg,#F2645A,#E9B949,#4FC98A,#6FA8FF,#A98BEA,#F2645A);
-  background-size:300% 100%;
-  animation:swagShift 6s linear infinite;
-}
-.card-fx-swag > *{ position:relative; }
-@keyframes swagShift{ from{ background-position:0% 0; } to{ background-position:300% 0; } }
-
-/* ---- 영정사진: 검은 액자 + 리본 ---- */
-.card-fx-portrait{ box-shadow:inset 0 0 0 3px #23262B, var(--sh-2); }
-.card-fx-portrait::after{
-  content:''; position:absolute; top:0; left:14px; width:12px; height:26px;
-  background:#23262B; clip-path:polygon(0 0,100% 0,100% 100%,50% 78%,0 100%);
-  pointer-events:none;
+/* 도박 티어가 쓰는 숨쉬기 — 카드에서는 더 이상 쓰지 않지만 여기 남는다 */
+@keyframes cardBreathe{
+  0%,100%{ box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--cfx,var(--gc,#888)) 55%, transparent),
+                       0 0 18px -9px var(--cfx,var(--gc,#888)); }
+  50%    { box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--cfx,var(--gc,#888)) 90%, transparent),
+                       0 0 28px -6px var(--cfx,var(--gc,#888)); }
 }
 
-/* ---- SOLEMN LAMENT: 흑 · 백 · 반반 ---- */
-.card-fx-solemn{ --cfx:#B9C0CA; }
-.card-fx-solemn-black{ background:#0A0A0B; color:#F2F4F7; box-shadow:inset 0 0 0 1px rgba(255,255,255,0.35), 0 0 24px -8px rgba(255,255,255,0.4); }
-.card-fx-solemn-black .hc-desc,.card-fx-solemn-black .pc-desc{ color:#B9C0CA; }
-.card-fx-solemn-white{ background:#FFFFFF; color:#0A0A0B; box-shadow:inset 0 0 0 1px rgba(0,0,0,0.25), 0 0 24px -8px rgba(255,224,150,0.65); }
-.card-fx-solemn-white .hc-desc,.card-fx-solemn-white .pc-desc{ color:#4A4E56; }
-.card-fx-solemn-dual{
-  background:linear-gradient(105deg,#0A0A0B 0 50%,#FFFFFF 50% 100%);
-  box-shadow:inset 0 0 0 1px rgba(150,150,160,0.5), 0 0 24px -8px rgba(200,200,210,0.5);
-}
-.card-fx-solemn-dual .hc-name,.card-fx-solemn-dual .pc-name,
-.card-fx-solemn-dual .hc-desc,.card-fx-solemn-dual .pc-desc,
-.card-fx-solemn-dual .hc-grade,.card-fx-solemn-dual .pc-grade{
-  color:#8C939E; text-shadow:0 0 6px rgba(0,0,0,0.5);
-}
+/* 고유 디자인 카드의 등급 칩 — 카드 배경에 맞춰 칩까지 같이 갈아입는다 */
+.card-fx-faith .hc-grade, .card-fx-faith .pk-grade{ background:linear-gradient(90deg,#ffe58a,#e5b915,#9c7a0a) !important; color:#3a2c00 !important; border-color:#fff2c0 !important; }
+.card-fx-roulette .hc-grade, .card-fx-roulette .pk-grade, .card-fx-roulette .pc-grade{ background:linear-gradient(90deg, #e8c989, #a67c3a, #6b4a1e) !important; color:#2a1808 !important; border-color:#f0d9a8 !important; }
+.card-fx-chromatic .hc-grade, .card-fx-chromatic .pc-grade{ background:linear-gradient(90deg,#ff4f4f,#ffc400,#8ce996,#4fd3ff,#a855f7,#ff4fb8,#ff4f4f); background-size:300% 100%; color:#0A0A0A; border-color:#fff !important; }
+.card-fx-rose .hc-grade, .card-fx-rose .pc-grade{ background:linear-gradient(90deg,#c7153f,#8a1538,#c7153f); background-size:200% 100%; color:#fff; border-color:#ff2d55 !important; }
+.card-fx-rt69 .hc-grade, .card-fx-rt69 .pc-grade{ background:linear-gradient(90deg,#8ce65a,#5aa832,#8ce65a); background-size:200% 100%; color:#0A0A0A; border-color:#b4ff78 !important; }
+.card-fx-purple .hc-grade, .card-fx-purple .pc-grade{ background:linear-gradient(90deg,#9333ea,#581c87,#9333ea); background-size:200% 100%; color:#fff; border-color:#c084fc !important; }
+.card-fx-taegeuk .hc-grade, .card-fx-taegeuk .pc-grade{ background:linear-gradient(90deg,#ff2b2b 0%,#2b5cff 25%,#ff2b2b 50%,#2b5cff 75%,#ff2b2b 100%) !important; background-size:300% 100% !important; color:#fff !important; border-color:#fff !important; text-shadow:0 0 4px rgba(0,0,0,0.55); }
+.card-fx-swag .hc-grade, .card-fx-swag .pc-grade{ background:linear-gradient(90deg,#ff6ec7,#ffd36e,#6effb0,#6ecfff,#b06eff,#ff6ec7); background-size:300% 100%; color:#0A0A0A; border-color:#fff !important; }
+.card-fx-zeus .hc-grade, .card-fx-zeus .pc-grade{ background:linear-gradient(90deg,#22320a,#a3e635,#f2ffb8,#a3e635,#22320a); background-size:300% 100%; color:#16220a; border-color:#e8ff8a !important; }
+.card-fx-sunbeam .hc-grade, .card-fx-sunbeam .pc-grade{ background:linear-gradient(90deg,#4d7a1a,#9ae65a,#d8ffb0,#9ae65a,#4d7a1a); background-size:300% 100%; color:#16220a; border-color:#d8ffb0 !important; }
+.card-fx-party .hc-grade, .card-fx-party .pc-grade{ background:linear-gradient(90deg,#ff6b6b,#ffd43b,#69db7c,#4dabf7,#da77f2,#ff6b6b); background-size:300% 100%; color:#111; border-color:#fff !important; }
+.card-fx-carrot .hc-grade, .card-fx-carrot .pc-grade{ background:linear-gradient(90deg,#ff8a00 0%,#ff8a00 55%,#ffa51e 70%,#9ae63f 100%) !important; background-size:200% 100% !important; color:#1a1a1a !important; border-color:#fff !important; }
+.card-fx-duolingo .hc-grade, .card-fx-duolingo .pc-grade{ background:linear-gradient(90deg,#58cc02 0%,#7ed321 55%,#9ae63f 100%) !important; background-size:200% 100% !important; color:#12330a !important; border-color:#fff !important; }
+.card-fx-doctorwho .hc-grade, .card-fx-doctorwho .pc-grade{ background:linear-gradient(90deg,#c1006e 0%,#ff1493 55%,#ff7fd0 100%) !important; background-size:200% 100% !important; color:#fff !important; border-color:#ffc0e8 !important; }
+.card-fx-danger-red .hc-grade, .card-fx-danger-red .pc-grade{ background:linear-gradient(90deg,#c40808 0%,#e61414 55%,#ff3c3c 100%) !important; background-size:200% 100% !important; color:#fff !important; border-color:#ffb3b3 !important; }
+.card-fx-radiant-red .hc-grade, .card-fx-radiant-red .pc-grade{ background:linear-gradient(90deg,#8b0000 0%,#dc1414 55%,#ff5555 100%) !important; background-size:200% 100% !important; color:#fff !important; border-color:#ffaaaa !important; }
+.card-fx-charcoal .hc-grade, .card-fx-charcoal .pc-grade{ background:linear-gradient(90deg,#0d0d10 0%,#2e2e36 55%,#55555f 100%) !important; background-size:200% 100% !important; color:#e8e8ee !important; border-color:#7a7a88 !important; }
+.card-fx-radiant-sky .hc-grade, .card-fx-radiant-sky .pc-grade{ background:linear-gradient(90deg,#00507a 0%,#1497d1 55%,#7fdcff 100%) !important; background-size:200% 100% !important; color:#04222e !important; border-color:#aeefff !important; }
+.card-fx-abyssal .hc-grade, .card-fx-abyssal .pc-grade{ background:linear-gradient(90deg,#012a3d 0%,#0288a8 45%,#40e0f0 70%,#012a3d 100%) !important; background-size:200% 100% !important; color:#eafeff !important; border-color:#8ff0ff !important; }
+.card-fx-lotus .hc-grade, .card-fx-lotus .pc-grade{ background:linear-gradient(90deg,#f07c5a 0%,#f6b28c 35%,#5ec8bd 65%,#f07c5a 100%) !important; background-size:200% 100% !important; color:#fff6e4 !important; border-color:#fff2dc !important; }
+.card-fx-solemn-black .hc-grade, .card-fx-solemn-black .pc-grade, .card-fx-solemn-black .pk-grade{ background:linear-gradient(90deg,#000000 0%,#1c1c22 45%,#4a4a56 100%) !important; background-size:200% 100% !important; color:#ffffff !important; border:1.5px solid #8a8a96 !important; }
+.card-fx-solemn-white .hc-grade, .card-fx-solemn-white .pc-grade, .card-fx-solemn-white .pk-grade{ background:linear-gradient(90deg,#ffffff 0%,#eaeaf0 45%,#c2c2ce 100%) !important; background-size:200% 100% !important; color:#0d0d12 !important; border:1.5px solid #2a2a32 !important; }
+.card-fx-solemn-dual .hc-grade, .card-fx-solemn-dual .pc-grade, .card-fx-solemn-dual .pk-grade{ background:linear-gradient(105deg,#000000 0%,#000000 49.8%,#ffffff 50.2%,#ffffff 100%) !important; color:#ffffff !important; text-shadow:0 0 2px #000, 0 0 3px #000 !important; border:1.5px solid #88888f !important; }
+.card-fx-evolved .hc-grade, .card-fx-evolved .pc-grade, .card-fx-evolved .inv-grade, .card-fx-evolved .invd-grade{ background:linear-gradient(90deg,#3b0a52,#c77dff,#f7e0ff,#c77dff,#3b0a52) !important; background-size:300% 100% !important; color:#2a0736 !important; border-color:#f0c8ff !important; }
 
-/* ---- 진화 ---- */
-.card-fx-evolved{ --cfx:#A176F0; }
-.evo-glow-normal   { --cfx:#B79BF0; }
-.evo-glow-ancient  { --cfx:#9B6FE0; }
-.evo-glow-universal{ --cfx:#7C4FD6; }
-.evo-glow-ephemeral{ --cfx:#FF4FA3; }
-.card-fx-evolved::after{
-  content:'🧬'; position:absolute; top:6px; right:7px; font-size:10px; opacity:0.75; pointer-events:none;
-}
-.evo-normal   { color:#B79BF0; } .evo-ancient  { color:#9B6FE0; }
-.evo-universal{ color:#7C4FD6; } .evo-ephemeral{ color:#FF4FA3; }
-.evo-bonus{ font-size:10px; color:var(--tone-purple); font-weight:600; }
+
+/* [Ver 12.3] 흰 종이 위에서의 구분 보강 —
+   11.x에서 "발광만" 갖고 있던 카드들은 배경이 흰색이라 종이에 묻힌다.
+   원본 발광색을 아주 옅게(8~12%) 카드면에 깔아, 글씨 가독성은 그대로 두고
+   "이 카드는 특별하다"는 신호만 한 겹 더 준다. */
+.card-fx-chromatic { background:linear-gradient(165deg, rgba(255,79,79,0.10), rgba(168,85,247,0.12)), var(--card-bg) !important; }
+.card-fx-rose      { background:linear-gradient(165deg, rgba(199,21,63,0.12), rgba(20,90,50,0.08)), var(--card-bg) !important; }
+.card-fx-rt69      { background:linear-gradient(165deg, rgba(140,230,90,0.16), rgba(90,168,50,0.10)), var(--card-bg) !important; }
+.card-fx-purple    { background:linear-gradient(165deg, rgba(147,51,234,0.12), rgba(88,28,135,0.10)), var(--card-bg) !important; }
+.card-fx-swag      { background:linear-gradient(120deg, rgba(255,110,199,0.12), rgba(255,211,110,0.12) 30%, rgba(110,255,176,0.12) 55%, rgba(110,207,255,0.12) 78%, rgba(176,110,255,0.12)), var(--card-bg) !important; }
+.card-fx-taegeuk   { background:linear-gradient(105deg, rgba(255,43,43,0.13) 0 50%, rgba(43,92,255,0.13) 50% 100%), var(--card-bg) !important; }
+.card-fx-zeus      { background:linear-gradient(165deg, rgba(163,230,53,0.16), rgba(60,90,10,0.10)), var(--card-bg) !important; }
+.card-fx-sunbeam   { background:linear-gradient(165deg, rgba(216,255,176,0.30), rgba(154,230,90,0.14)), var(--card-bg) !important; }
+.card-fx-party     { background:linear-gradient(120deg, rgba(255,107,107,0.12), rgba(255,212,59,0.12) 35%, rgba(105,219,124,0.12) 65%, rgba(77,171,247,0.12)), var(--card-bg) !important; }
+.card-fx-carrot    { background:linear-gradient(165deg, rgba(255,138,0,0.14), rgba(154,230,63,0.12)), var(--card-bg) !important; }
+.card-fx-duolingo  { background:linear-gradient(165deg, rgba(88,204,2,0.14), rgba(154,230,63,0.10)), var(--card-bg) !important; }
+.card-fx-doctorwho { background:linear-gradient(165deg, rgba(255,20,147,0.12), rgba(255,127,208,0.10)), var(--card-bg) !important; }
+.card-fx-danger-red{ background:linear-gradient(165deg, rgba(230,20,20,0.13), rgba(255,60,60,0.09)), var(--card-bg) !important; }
+.card-fx-evolved   { background:linear-gradient(165deg, rgba(190,60,255,0.13), rgba(90,20,140,0.10)), var(--card-bg) !important; }
+.card-fx-society-signal{ background:linear-gradient(165deg, rgba(169,139,234,0.13), rgba(124,79,214,0.09)), var(--card-bg) !important; }
+.card-fx-orion     { background:linear-gradient(165deg, rgba(242,195,60,0.16), rgba(200,150,30,0.10)), var(--card-bg) !important;
+                     box-shadow:0 0 16px 3px rgba(242,195,60,0.75), 0 4px 12px rgba(20,23,28,0.22) !important; }
+.card-fx-orion .hc-grade,.card-fx-orion .pc-grade,.card-fx-orion .pk-grade{
+  background:linear-gradient(90deg,#f2c33c,#c8961e); color:#2a2000; border-color:#ffe58a !important; }
+
+/* [Ver 12.3] 등급 칩 · 카드면의 그라데이션이 흐르는 연출을 되살렸다.
+   background-position만 움직이므로 레이아웃을 흔들지 않고, 글씨도 그대로 읽힌다. */
+@keyframes chromaticBadgeShift { 0%{background-position:0% 50%;} 100%{background-position:300% 50%;} }
+@keyframes gradeSRBadgeShift { 0%{background-position:0% 50%;} 100%{background-position:300% 50%;} }
+@keyframes taegeukBadgeShift { 0%{background-position:0% 50%;} 100%{background-position:300% 50%;} }
+@keyframes carrotBadgeShift { 0%{background-position:0% 50%;} 100%{background-position:200% 50%;} }
+@keyframes duolingoBadgeShift { 0%{background-position:0% 50%;} 100%{background-position:200% 50%;} }
+@keyframes doctorWhoBadgeShift { 0%{background-position:0% 50%;} 100%{background-position:200% 50%;} }
+@keyframes dangerRedBadgeShift { 0%{background-position:0% 50%;} 100%{background-position:200% 50%;} }
+@keyframes radiantRedBadge { 0%{background-position:0% 50%;} 100%{background-position:200% 50%;} }
+@keyframes charcoalBadge { 0%{background-position:0% 50%;} 100%{background-position:200% 50%;} }
+@keyframes radiantSkyBadge { 0%{background-position:0% 50%;} 100%{background-position:200% 50%;} }
+@keyframes abyssalBadgeShift { 0%{background-position:0% 50%;} 100%{background-position:200% 50%;} }
+@keyframes lotusBadgeShift { 0%{background-position:0% 50%;} 100%{background-position:200% 50%;} }
+@keyframes solemnBadgeFlow { 0%{background-position:0% 50%;} 100%{background-position:200% 50%;} }
+
+/* 칩이 흐른다 — 무지개 계열은 빠르게, 단색 계열은 느긋하게 */
+.card-fx-chromatic .hc-grade,.card-fx-chromatic .pc-grade,.card-fx-chromatic .pk-grade{ animation:chromaticBadgeShift 1.1s linear infinite; }
+.card-fx-swag .hc-grade,.card-fx-swag .pc-grade,.card-fx-swag .pk-grade{ animation:chromaticBadgeShift 1.3s linear infinite; }
+.card-fx-party .hc-grade,.card-fx-party .pc-grade,.card-fx-party .pk-grade{ animation:chromaticBadgeShift 0.75s linear infinite; }
+.card-fx-zeus .hc-grade,.card-fx-zeus .pc-grade,.card-fx-zeus .pk-grade{ animation:chromaticBadgeShift 1.5s linear infinite; }
+.card-fx-sunbeam .hc-grade,.card-fx-sunbeam .pc-grade,.card-fx-sunbeam .pk-grade{ animation:chromaticBadgeShift 1.6s linear infinite; }
+.card-fx-rose .hc-grade,.card-fx-rose .pc-grade,.card-fx-rose .pk-grade{ animation:chromaticBadgeShift 1.8s ease-in-out infinite; }
+.card-fx-rt69 .hc-grade,.card-fx-rt69 .pc-grade,.card-fx-rt69 .pk-grade{ animation:chromaticBadgeShift 1.6s ease-in-out infinite; }
+.card-fx-purple .hc-grade,.card-fx-purple .pc-grade,.card-fx-purple .pk-grade{ animation:chromaticBadgeShift 1.6s ease-in-out infinite; }
+.card-fx-evolved .hc-grade,.card-fx-evolved .pc-grade,.card-fx-evolved .pk-grade{ animation:chromaticBadgeShift 1.5s linear infinite; }
+.card-fx-taegeuk .hc-grade,.card-fx-taegeuk .pc-grade,.card-fx-taegeuk .pk-grade{ animation:taegeukBadgeShift 2s linear infinite; }
+.card-fx-carrot .hc-grade,.card-fx-carrot .pc-grade,.card-fx-carrot .pk-grade{ animation:carrotBadgeShift 2s linear infinite; }
+.card-fx-duolingo .hc-grade,.card-fx-duolingo .pc-grade,.card-fx-duolingo .pk-grade{ animation:duolingoBadgeShift 2s linear infinite; }
+.card-fx-doctorwho .hc-grade,.card-fx-doctorwho .pc-grade,.card-fx-doctorwho .pk-grade{ animation:doctorWhoBadgeShift 1.8s linear infinite; }
+.card-fx-danger-red .hc-grade,.card-fx-danger-red .pc-grade,.card-fx-danger-red .pk-grade{ animation:dangerRedBadgeShift 1.6s linear infinite; }
+.card-fx-radiant-red .hc-grade,.card-fx-radiant-red .pc-grade,.card-fx-radiant-red .pk-grade{ animation:radiantRedBadge 2.2s linear infinite; }
+.card-fx-charcoal .hc-grade,.card-fx-charcoal .pc-grade,.card-fx-charcoal .pk-grade{ animation:charcoalBadge 2.8s linear infinite; }
+.card-fx-radiant-sky .hc-grade,.card-fx-radiant-sky .pc-grade,.card-fx-radiant-sky .pk-grade{ animation:radiantSkyBadge 2.2s linear infinite; }
+.card-fx-abyssal .hc-grade,.card-fx-abyssal .pc-grade,.card-fx-abyssal .pk-grade{ animation:abyssalBadgeShift 2.4s linear infinite; }
+.card-fx-lotus .hc-grade,.card-fx-lotus .pc-grade,.card-fx-lotus .pk-grade{ animation:lotusBadgeShift 3s linear infinite; }
+.card-fx-solemn-black .hc-grade,.card-fx-solemn-black .pc-grade,.card-fx-solemn-black .pk-grade,
+.card-fx-solemn-white .hc-grade,.card-fx-solemn-white .pc-grade,.card-fx-solemn-white .pk-grade{ animation:solemnBadgeFlow 3s linear infinite; }
+.grade-glow-SR .hc-grade,.grade-glow-SR .pc-grade,.grade-glow-SR .pk-grade{ background-size:300% 100%; animation:gradeSRBadgeShift 1.4s linear infinite; }
+
+/* 카드면도 함께 흐른다 — 무지개 카드가 "살아 있게" 보이는 핵심 */
+.card-fx-chromatic,.card-fx-swag,.card-fx-party{ background-size:300% 100% !important; }
+.card-fx-chromatic{ animation:chromaticBadgeShift 4.5s linear infinite; }
+.card-fx-swag     { animation:chromaticBadgeShift 5s   linear infinite; }
+.card-fx-party    { animation:chromaticBadgeShift 3s   linear infinite; }
+.card-fx-taegeuk  { background-size:200% 100% !important; animation:taegeukBadgeShift 6s linear infinite; }
+
+/* 저사양·모션 최소화에서는 흐름만 멈춘다 (색은 그대로 남는다) */
+body.low-spec-mode [class*="card-fx-"],
+body.low-spec-mode [class*="card-fx-"] .hc-grade,
+body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; }
 
 /* ---- 은폐된 카드 — 모든 연출을 무채색으로 죽인다 ---- */
 .card-masked{
@@ -2914,7 +3313,16 @@ body.dragging-card-no-target .p-card{ opacity:0.5; }
 #shopBody{ flex:1; min-height:0; display:flex; flex-direction:column; gap:var(--sp-3); overflow:hidden; }
 #shopTabContent{ flex:1; min-height:0; overflow-y:auto; padding-right:4px; }
 
-.shop-slots{ display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:var(--sp-3); }
+/* [Ver 12.4] 매물 배열 — 격자(auto-fill)는 화면 폭에 따라 "위 4칸 · 아래 1칸"처럼
+   한쪽으로 쏠린 줄을 만든다. 칸 수가 매번 달라지는 목록이라 더 도드라졌다.
+   가로 정렬(flex-wrap)로 바꿔 남는 칸을 **가운데로 모은다** — 줄이 안 맞아도 정돈돼 보인다. */
+.shop-slots{
+  display:flex; flex-wrap:wrap; justify-content:center; align-items:stretch;
+  gap:var(--sp-3);
+}
+.shop-slots > .shop-slot{
+  flex:1 1 calc(33.333% - var(--sp-3)); min-width:190px; max-width:280px;
+}
 .shop-slot{
   display:flex; flex-direction:column; gap:5px;
   padding:14px; border-radius:var(--r);
@@ -2957,7 +3365,21 @@ body.dragging-card-no-target .p-card{ opacity:0.5; }
 .shop-reroll-btn:disabled{ opacity:0.4; pointer-events:none; }
 .ricon{ display:inline-block; transition:transform var(--t-slow) var(--ease); }
 .shop-reroll-btn:hover .ricon{ transform:rotate(180deg); }
-.shop-close-btn{ margin-left:auto; }
+/* [Ver 12.4] 닫기 X를 탭 줄에서 빼내 상자 오른쪽 위로 올린다.
+   탭 줄 끝에 붙어 있으면 "다섯 번째 탭"처럼 보여서, 탭 개수가 홀수로 보이고
+   실수로 누르기도 쉬웠다. (JS가 탭 줄 안에 만들지만 위치만 옮기면 된다) */
+.shop-box{ position:relative; }
+.shop-title-row{ padding-right:42px; }
+.shop-close-btn{
+  position:absolute; top:16px; right:16px; margin:0; z-index:3;
+  width:34px; height:34px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--bg-2); color:var(--fg-dim); font-size:15px; line-height:1;
+  transition:background var(--t) var(--ease), color var(--t) var(--ease), transform var(--t) var(--ease);
+}
+.shop-close-btn:hover{ background:var(--bg-3); color:var(--fg); transform:rotate(90deg); }
+/* X가 빠졌으니 탭 넷이 폭을 고르게 나눠 갖는다 */
+.shop-tabs > .shop-tab-btn{ flex:1 1 0; }
 .shop-wait{ display:flex; flex-direction:column; align-items:center; gap:var(--sp-3); padding:52px 20px; }
 .shop-wait-text{ font-size:12px; color:var(--fg-faint); }
 .shop-check{ accent-color:var(--accent); }
@@ -3046,7 +3468,15 @@ body.dragging-card-no-target .p-card{ opacity:0.5; }
 .fdn-detail{ display:flex; flex-direction:column; gap:var(--sp-3); }
 
 /* ---------- 도박 ---------- */
-.gamble-tiers,.gamble-tier-grid,.gamble-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:var(--sp-3); }
+/* 도박은 등급이 6개다 — 3+3으로 떨어지게 3열로 못박는다.
+   (auto-fit이면 폭에 따라 4+2가 돼 "왜 두 개만 아래 있지" 하고 눈이 걸린다) */
+.gamble-tiers,.gamble-tier-grid,.gamble-grid{
+  display:flex; flex-wrap:wrap; justify-content:center; align-items:stretch;
+  gap:var(--sp-3);
+}
+.gamble-tiers > *,.gamble-tier-grid > *,.gamble-grid > *{
+  flex:1 1 calc(33.333% - var(--sp-3)); min-width:200px; max-width:300px;
+}
 .gamble-tier{
   display:flex; flex-direction:column; gap:6px; padding:15px; border-radius:var(--r);
   background:var(--bg-2); cursor:pointer;
@@ -3057,12 +3487,32 @@ body.dragging-card-no-target .p-card{ opacity:0.5; }
 .gamble-tier-name{ font-size:13px; font-weight:700; }
 .gamble-tier-sub,.gamble-tier-limit,.gamble-tier-foot{ font-size:10.5px; color:var(--fg-faint); line-height:1.6; }
 .gamble-tier-cost,.gamble-tier-range{ font-family:var(--font-mono); font-size:11.5px; color:var(--tone-yellow); }
-.gamble-c-low   { --cfx:#8C939E; box-shadow:inset 0 0 0 1px rgba(140,147,158,0.35); }
-.gamble-c-mid   { --cfx:#5FBF8E; box-shadow:inset 0 0 0 1px rgba(95,191,142,0.35); }
-.gamble-c-high  { --cfx:#5B9BEA; box-shadow:inset 0 0 0 1px rgba(91,155,234,0.4); }
-.gamble-c-max   { --cfx:#A98BEA; box-shadow:inset 0 0 0 1px rgba(169,139,234,0.45); }
-.gamble-c-legend{ --cfx:#E9B949; box-shadow:inset 0 0 0 1px rgba(233,185,73,0.5), 0 0 18px -8px #E9B949; }
-.gamble-c-myth  { --cfx:#FF4FA3; box-shadow:inset 0 0 0 1px rgba(255,79,163,0.5), 0 0 22px -8px #FF4FA3; }
+/* 도박은 "얼마나 위험한가"가 한눈에 읽혀야 한다.
+   테두리만으로는 구분이 안 돼서, 배경 틴트 + 위쪽 색띠 + 글자색까지 함께 물들인다. */
+.gamble-tier{
+  position:relative; overflow:hidden;
+  background:color-mix(in srgb, var(--gc) 12%, var(--bg-2));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--gc) 55%, transparent);
+}
+.gamble-tier::before{
+  content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--gc);
+}
+.gamble-tier:hover{
+  background:color-mix(in srgb, var(--gc) 20%, var(--bg-2));
+  box-shadow:inset 0 0 0 1px var(--gc), 0 0 24px -8px var(--gc);
+}
+.gamble-tier .gamble-tier-name{ color:var(--gc); }
+.gamble-tier .gamble-tier-range,
+.gamble-tier .gamble-tier-cost{ color:color-mix(in srgb, var(--gc) 78%, var(--fg)); }
+.gamble-tier.disabled{ opacity:0.4; pointer-events:none; }
+.gamble-c-low   { --gc:#8C939E; }
+.gamble-c-mid   { --gc:#4FC98A; }
+.gamble-c-high  { --gc:#5B9BEA; }
+.gamble-c-max   { --gc:#A98BEA; }
+.gamble-c-legend{ --gc:#E9B949; }
+.gamble-c-myth  { --gc:#FF4FA3; }
+/* 최상위 두 등급만 숨을 쉰다 — 여기서부터가 진짜 도박이라는 신호 */
+.gamble-c-legend,.gamble-c-myth{ animation:cardBreathe 3s var(--ease-in-out) infinite; --cfx:var(--gc); }
 .gamble-active-head{ display:flex; flex-direction:column; gap:4px; align-items:center; text-align:center; }
 .gamble-active-title{ font-size:15px; font-weight:700; }
 .gamble-active-sub,.gamble-note{ font-size:11px; color:var(--fg-faint); line-height:1.7; }
@@ -3422,27 +3872,72 @@ body.dragging-card-no-target .p-card{ opacity:0.5; }
 }
 .roulette-title{ font-size:17px; font-weight:700; letter-spacing:-0.02em; }
 .roulette-sub{ font-size:11.5px; color:var(--fg-faint); text-align:center; line-height:1.7; }
+/* ⚠ 이 세 수치는 JS와 반드시 일치해야 한다.
+     룰렛      : showRouletteOverlay        CELL=70,  창 높이 210
+     랜덤 이벤트: renderRandomEventOverlay   CELL=56,  창 높이 168
+   스트립은 translateY로 굴러가므로 세로로 쌓아야 한다(12.0에서 가로로 깔아 깨졌다). */
 .roulette-window,.re-window{
-  position:relative; width:100%; height:96px; border-radius:var(--r); overflow:hidden;
+  position:relative; width:100%; border-radius:var(--r); overflow:hidden;
   background:var(--bg-2);
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 22%,#000 78%,transparent);
+          mask-image:linear-gradient(180deg,transparent,#000 22%,#000 78%,transparent);
 }
-.roulette-strip,.re-strip{ display:flex; height:100%; transition:transform 3.4s cubic-bezier(0.16,0.84,0.24,1); }
+.roulette-window{ height:210px; }
+.re-window{ height:168px; }
+.roulette-strip,.re-strip{
+  display:flex; flex-direction:column; width:100%;
+  will-change:transform;
+}
+.roulette-strip{ transition:transform 3.4s cubic-bezier(0.16,0.84,0.24,1); }
 .roulette-cell,.re-cell{
-  flex:0 0 150px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
-  padding:10px; border-right:1px solid var(--line-soft); text-align:center;
+  flex:0 0 auto; box-sizing:border-box;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  padding:6px 12px; text-align:center;
+  border-bottom:1px solid var(--line-soft);
 }
-.roulette-cell-name,.re-name{ font-size:12px; font-weight:700; }
-.roulette-cell-desc,.re-desc{ font-size:9.5px; color:var(--fg-faint); line-height:1.5; }
+.roulette-cell{ height:70px; }
+.re-cell{ height:56px; }
+.roulette-cell-name,.re-name{ font-size:13px; font-weight:700; }
+.roulette-cell-desc{ font-size:10px; color:var(--fg-faint); line-height:1.45; }
+.re-cell-ic{ font-size:16px; line-height:1; }
+/* 당첨 줄을 가리키는 가로선 — 창 정중앙 */
 .roulette-marker,.re-marker{
-  position:absolute; top:0; bottom:0; left:50%; width:2px; transform:translateX(-50%);
-  background:var(--accent); z-index:2;
-  box-shadow:0 0 12px var(--accent);
+  position:absolute; left:0; right:0; top:50%; height:0;
+  transform:translateY(-50%); z-index:2; pointer-events:none;
+}
+.roulette-marker{ height:70px; }
+.re-marker{ height:56px; }
+.roulette-marker::before,.re-marker::before{
+  content:''; position:absolute; inset:0; border-radius:var(--r-xs);
+  box-shadow:inset 0 0 0 2px var(--accent), 0 0 22px -6px var(--accent);
 }
 .roulette-result,.re-result{
   display:none; flex-direction:column; align-items:center; gap:6px; text-align:center;
   animation:popIn var(--t-slow) var(--ease-spring) both;
 }
-.roulette-result.show,.re-result.show{ display:flex; }
+.roulette-result.show,.re-result.show,
+.re-overlay.revealed .re-result{ display:flex; }
+/* 대상 뽑기 칸 — 글로우가 이 사각형들 위를 뛰어다니다 한 칸에 멈춘다 */
+.re-pick{
+  display:flex; align-items:center; justify-content:center;
+  min-height:52px; padding:10px 8px; border-radius:var(--r-sm);
+  background:var(--bg-2); color:var(--fg-dim);
+  font-size:12.5px; font-weight:700; text-align:center; word-break:keep-all;
+  transition:background var(--t-fast) var(--ease), color var(--t-fast) var(--ease),
+             box-shadow var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.re-pick.on{
+  background:var(--bg-3); color:var(--fg);
+  box-shadow:inset 0 0 0 1.5px var(--accent), 0 0 20px -6px var(--accent);
+  transform:scale(1.04);
+}
+.re-pick.picked{
+  background:var(--accent); color:var(--accent-fg);
+  box-shadow:0 0 26px -6px var(--accent);
+  transform:scale(1.08);
+  animation:beat 0.9s var(--ease-in-out) infinite;
+}
+.re-name{ display:flex; align-items:center; justify-content:center; gap:7px; font-size:19px; }
 .roulette-result-desc{ font-size:12px; color:var(--fg-dim); line-height:1.75; }
 .roulette-close{ margin-top:var(--sp-2); }
 .sab-roulette-list{ display:flex; flex-direction:column; gap:5px; }
@@ -3824,9 +4319,17 @@ body.battle-royale-mode .board{
   grid-template-areas:"bots" "hand";
 }
 body.battle-royale-mode .zone-table{
-  position:absolute; top:0; right:0; width:340px; height:264px; z-index:5;
-  grid-area:unset;
+  position:absolute; top:0; right:0; width:360px; height:310px; z-index:5;
+  grid-area:unset; padding:var(--sp-2);
 }
+body.battle-royale-mode .table-stage{ gap:7px 6px; }
+body.battle-royale-mode .center-pile{ width:132px; height:182px; }
+body.battle-royale-mode .pile-card{ width:132px; height:182px; min-height:182px; max-height:182px; }
+body.battle-royale-mode .draw-pile{ width:58px; }
+body.battle-royale-mode .dp-stack{ width:50px; height:66px; }
+body.battle-royale-mode .shop-fab{ padding:7px 10px; gap:5px; }
+body.battle-royale-mode .shop-fab-icon{ font-size:14px; }
+body.battle-royale-mode .shop-fab-label{ font-size:10px; }
 body.battle-royale-mode .turn-summary-panel{ display:none; }
 body.battle-royale-mode .zone-log{
   position:fixed; top:0; right:0; bottom:0; width:min(340px,86vw); z-index:400;
@@ -3884,10 +4387,13 @@ body.party-time-mode .nm-act3-play{ animation:beat 0.6s var(--ease-in-out) infin
 body.mobile-mode #screen-battle{ padding:var(--sp-2) var(--sp-2) var(--sp-3); gap:var(--sp-2); }
 body.mobile-mode .board{
   grid-template-columns:minmax(0,1fr);
-  grid-template-rows:132px auto minmax(0,1fr) auto;
+  grid-template-rows:132px auto auto auto;
   grid-template-areas:"log" "bots" "table" "hand";
   gap:var(--sp-2);
+  align-content:start;
 }
+body.mobile-mode .zone-table{ min-height:auto; }
+body.mobile-mode .table-stage{ min-height:auto; }
 body.mobile-mode .zone-bots-row{ flex-direction:row; overflow-x:auto; overflow-y:hidden; }
 body.mobile-mode .zone-bots .seat{ flex:0 0 148px; }
 body.mobile-mode .zone-hand{ flex-direction:column; align-items:stretch; gap:var(--sp-2); }
@@ -3900,15 +4406,16 @@ body.mobile-mode .pile-card{ width:140px; min-height:196px; }
 body.mobile-mode .hand-card{ --card-w:110px; --card-h:160px; }
 body.mobile-mode .hc-flavor,
 body.mobile-mode .last-action{ display:none; }
-body.mobile-mode .draw-pile{ width:56px; height:76px; top:4px; right:4px; }
-body.mobile-mode .dp-stack{ width:48px; height:64px; }
-body.mobile-mode .shop-fab{ width:56px; min-height:56px; right:64px; top:4px; padding:7px 4px; }
-body.mobile-mode .shop-fab-icon{ font-size:15px; }
-body.mobile-mode .shop-fab-label{ font-size:8px; }
-body.mobile-mode .evo-fab { top:64px; right:64px; min-height:46px; }
-body.mobile-mode .farm-fab{ top:114px; right:64px; min-height:46px; }
-body.mobile-mode .stalk-fab{ top:4px; right:124px; }
-body.mobile-mode .solemn-fab{ top:4px; right:184px; }
+/* 액션 독은 흐름 안에 있으므로 좁아져도 알아서 접힌다.
+   여기서는 크기만 한 호수 줄인다 — 위치를 다시 잡을 일이 없다. */
+body.mobile-mode .draw-pile{ width:62px; }
+body.mobile-mode .dp-stack{ width:52px; height:70px; }
+body.mobile-mode .table-stage{ gap:8px 6px; }
+body.mobile-mode .shop-fab{ padding:8px 10px; gap:5px; }
+body.mobile-mode .shop-fab-icon{ font-size:14px; }
+body.mobile-mode .shop-fab-label{ font-size:10px; }
+body.mobile-mode .center-pile{ width:132px; height:184px; }
+body.mobile-mode .pile-card{ width:132px; height:184px; min-height:184px; max-height:184px; }
 /* 이름표를 눌러 상세를 여는 동작은 끈다 — 지목하려다 상세창이 열리는 사고가 잦았다 */
 body.mobile-mode .p-name .tag,
 body.mobile-mode .p-title{ display:none; }
@@ -3918,21 +4425,20 @@ body.mobile-mode .logo-text{ display:none; }
 body.mobile-mode #screen-start{ padding:var(--sp-4) var(--sp-3) 104px; }
 body.mobile-mode .nm-left{ grid-template-columns:minmax(0,1fr); }
 body.mobile-mode .nm-side{ grid-column:1; grid-row:auto; }
-body.mobile-mode .nm-quickbar{
-  position:static; transform:none; flex-direction:row; justify-content:center;
-  margin:0 auto var(--sp-3); border-radius:var(--r-pill);
-}
-body.mobile-mode .nm-qb-btn{ width:auto; padding:8px 12px; }
+body.mobile-mode .nm-topbar{ justify-content:center; gap:var(--sp-2); }
+body.mobile-mode .nm-topbar > .nm-topright{ margin-left:0; }
 body.mobile-mode .nm-qb-tx{ display:none; }
-body.mobile-mode .nm-topright{ position:static; justify-content:center; margin-bottom:var(--sp-3); }
+body.mobile-mode .nm-qb-btn{ padding:9px 12px; }
 body.mobile-mode .nm-update-badge .nmu-tx{ display:none; }
 body.mobile-mode .nm-acts3{ grid-template-columns:1fr; }
-body.mobile-mode .nm-net-grid{ grid-template-columns:1fr; }
+body.mobile-mode .nm-act3-play{ padding:22px 18px; }
+body.mobile-mode .nm-net-grid{ grid-template-columns:repeat(2,1fr); }
+body.mobile-mode .nm-quick{ justify-content:center; }
 body.mobile-mode .nm-net-btn small,
 body.mobile-mode .nm-side-wide small{ display:none; }
 body.mobile-mode .menu-postit{ left:12px; right:12px; width:auto; }
-body.mobile-mode .nm-tab{ min-width:58px; padding:7px 6px; }
-body.mobile-mode .nm-tab-tx{ font-size:8.5px; }
+body.mobile-mode .nm-hub{ grid-template-columns:repeat(2,1fr); }
+body.mobile-mode .nm-hub-btn small{ display:none; }
 
 /* =====================================================================
    3. 실제 화면 폭에 따른 반응형
@@ -3951,9 +4457,8 @@ body.mobile-mode .nm-tab-tx{ font-size:8.5px; }
   .turn-summary-panel{ display:none; }
   .nm-left{ grid-template-columns:minmax(0,1fr); }
   .nm-side{ grid-column:1; grid-row:auto; }
-  .nm-quickbar{ left:8px; }
-  .nm-qb-btn{ width:46px; padding:8px 3px; }
   .nm-qb-tx{ display:none; }
+  .nm-qb-btn{ padding:9px 12px; }
 }
 
 /* ---- 태블릿 이하: 보드를 세로로 쌓는다 ---- */
@@ -3963,10 +4468,13 @@ body.mobile-mode .nm-tab-tx{ font-size:8.5px; }
   #screen-battle{ padding:var(--sp-2) var(--sp-3) var(--sp-3); gap:var(--sp-2); }
   .board{
     grid-template-columns:minmax(0,1fr);
-    grid-template-rows:126px auto minmax(0,1fr) auto;
+    grid-template-rows:126px auto auto auto;
     grid-template-areas:"log" "bots" "table" "hand";
     gap:var(--sp-2);
+    align-content:start;
   }
+  .zone-table{ min-height:auto; }
+  .table-stage{ min-height:auto; }
   .zone-bots-row{ flex-direction:row; overflow-x:auto; overflow-y:hidden; }
   .zone-bots .seat{ flex:0 0 146px; }
   .zone-hand{ flex-direction:column; align-items:stretch; gap:var(--sp-2); }
@@ -3974,24 +4482,17 @@ body.mobile-mode .nm-tab-tx{ font-size:8.5px; }
   .center-pile{ width:146px; height:200px; }
   .pile-card{ width:146px; min-height:200px; }
   .hand-card{ --card-w:114px; --card-h:164px; }
-  .draw-pile{ width:58px; height:80px; top:4px; right:4px; }
-  .dp-stack{ width:50px; height:66px; }
-  .shop-fab{ width:58px; min-height:58px; right:66px; top:4px; }
-  .shop-fab-icon{ font-size:15px; }
-  .shop-fab-label{ font-size:8px; }
-  .evo-fab{ top:66px; right:66px; min-height:48px; }
-  .farm-fab{ top:118px; right:66px; min-height:48px; }
-  .stalk-fab{ top:4px; right:128px; }
-  .solemn-fab{ top:4px; right:190px; }
+  .draw-pile{ width:64px; }
+  .dp-stack{ width:54px; height:72px; }
+  .table-stage{ gap:8px 6px; }
+  .shop-fab{ padding:8px 10px; gap:5px; }
+  .shop-fab-icon{ font-size:14px; }
+  .shop-fab-label{ font-size:10px; }
 
-  .nm-quickbar{
-    position:static; transform:none; flex-direction:row; justify-content:center;
-    margin:0 auto var(--sp-3); border-radius:var(--r-pill);
-  }
-  .nm-qb-btn{ width:auto; padding:8px 12px; }
-  .nm-topright{ position:static; justify-content:center; margin-bottom:var(--sp-3); }
+  .nm-topbar{ justify-content:center; }
+  .nm-topbar > .nm-topright{ margin-left:0; }
   .nmu-tx{ display:none; }
-  #screen-start{ padding:var(--sp-4) var(--sp-3) 100px; }
+  #screen-start{ padding:var(--sp-4) var(--sp-3) var(--sp-6); }
 
   .editor-grid,.gc-shell,.inv-shell,.pass-shell,.arc-shell,.qm-shell{ padding:var(--sp-3); }
   .card-list-panel{ padding:var(--sp-4); border-radius:var(--r-lg); }
@@ -4008,13 +4509,18 @@ body.mobile-mode .nm-tab-tx{ font-size:8.5px; }
   header{ height:42px; }
   .logo-text{ display:none; }
   .nm-hero{ font-size:20px; }
-  .nm-acts3{ grid-template-columns:1fr; }
-  .nm-act3{ flex-direction:row; justify-content:flex-start; gap:12px; padding:16px 18px; }
-  .nm-net-grid{ grid-template-columns:1fr; }
+  .nm-acts3{ grid-template-columns:1fr 1fr; }
+  .nm-acts3 > .nm-act3-play{ grid-column:1 / -1; }
+  .nm-act3{ padding:16px 12px; }
+  .nm-act3-play{ padding:22px 18px; }
+  .nm-net-grid{ grid-template-columns:repeat(2,1fr); }
+  .nm-net-btn{ padding:12px; }
+  .nm-quick{ justify-content:center; }
+  .nm-quick-h{ width:100%; text-align:center; margin:0; }
   .nm-net-btn small,.nm-side-wide small{ display:none; }
-  .nm-tabbar{ left:8px; right:8px; transform:none; justify-content:space-around; border-radius:var(--r-lg); }
-  .nm-tab{ min-width:0; flex:1; padding:7px 4px; }
-  .nm-tab-tx{ font-size:8.5px; }
+  .nm-hub{ grid-template-columns:repeat(2,1fr); }
+  .nm-hub-btn{ padding:13px; }
+  .nm-hub-btn small{ display:none; }
   .gm-grid{ grid-template-columns:1fr; }
   .inv-grid,.dex-grid{ grid-template-columns:repeat(auto-fill,minmax(108px,1fr)); gap:var(--sp-2); }
   .shop-slots{ grid-template-columns:1fr; }
@@ -4231,8 +4737,20 @@ body.mobile-mode .nm-tab-tx{ font-size:8.5px; }
 .loading-bot-slot.joined{ box-shadow:inset 0 0 0 1px var(--accent); animation:popIn var(--t) var(--ease-spring); }
 /* 슬롯이 확정되는 순간 */
 .gslot.lockin{ animation:beat 0.32s var(--ease-spring); }
-/* 개발자 모드에서 무한 드로우가 켜진 더미 */
-.draw-pile.dev-on .dp-stack{ box-shadow:inset 0 0 0 1px var(--tone-purple); }
+/* 개발자 모드에서 원하는 카드를 직접 뽑을 수 있는 더미 */
+.draw-pile.dev-on .dp-stack{
+  background:rgba(124,58,237,0.16);
+  box-shadow:inset 0 0 0 1.5px #7C3AED, 0 0 22px -6px #7C3AED,
+             3px 3px 0 -1px var(--bg-2), 6px 6px 0 -2px var(--bg-2);
+  color:#C4A5FF;
+}
+.draw-pile.dev-on::after{
+  content:'DEV'; position:absolute; top:-6px; left:-6px;
+  padding:1px 6px; border-radius:var(--r-pill);
+  background:#7C3AED; color:#fff;
+  font-family:var(--font-mono); font-size:8px; font-weight:700; letter-spacing:0.06em;
+}
+#devEventBtnGame{ border-radius:var(--r-xs); }
 
 /* SOLEMN 모드 표시 (FAB 라벨) */
 .mode-BLACK{ color:#B9C0CA; } .mode-WHITE{ color:#FFFFFF; } .mode-DUAL{ color:var(--fg-dim); }
@@ -4279,13 +4797,398 @@ body.paper-skin{ }
   100%  { transform:translateY(-50%) rotate(-12deg) scaleX(1); opacity:0; }
 }
 
+/* =====================================================================
+   [Ver 12.1] 공책 레이어 (PENCIL LAYER)
+   ---------------------------------------------------------------------
+   12.0의 구조 · 클래스 이름 · JS는 하나도 건드리지 않는다. 토큰 "값"만
+   종이와 연필로 덮어써서, 12.0이 잡아 둔 층 · 간격 · 모션을 그대로 쓰면서
+   재질만 바꾼다. 12.0이 너무 매끈해져 잃어버린 '공책 낙서에서 시작된
+   게임'이라는 시그니처를, 12.0을 되돌리지 않고 한 겹만 덧입혀 되찾는다.
+
+     · 면  : 전부 종이 흰색. 색은 정보(--tone-*)에만 남긴다.
+     · 선  : --line 계열이 연필 선이 되므로 12.0의 모든 테두리 · sh-ring이
+             자동으로 손으로 그은 선이 된다.
+     · 형태: 모서리 반경을 비대칭으로 흔들어 '자 없이 그린 네모'로.
+     · 글씨: Gaegu 손글씨. 크기 · 굵기는 12.0 위계를 그대로 따른다.
+
+   <body class="ink"> 의 ink 한 단어만 지우면 12.0 원본으로 즉시 복귀한다.
+   ===================================================================== */
+body.ink,
+body.ink .theme-light,
+body.ink.force-dark,
+body.ink.force-dark .theme-light{
+  --bg:        #FBFAF6;
+  --bg-panel:  #FFFFFF;
+  --bg-2:      #F4F2EC;
+  --bg-3:      #E8E5DC;
+  --bg-hover:  rgba(43,43,43,0.05);
+  --bg-press:  rgba(43,43,43,0.10);
+
+  --fg:        #2B2B2B;
+  --fg-dim:    #5C5B57;
+  --fg-faint:  #8C8B84;
+  --white:     #2B2B2B;
+
+  --line:      rgba(43,43,43,0.50);
+  --line-soft: rgba(43,43,43,0.24);
+  --line-hard: rgba(43,43,43,0.78);
+  --border:    var(--line);
+
+  --accent:      #3A3937;
+  --accent-dim:  #1E1D1B;
+  --accent-weak: rgba(43,43,43,0.08);
+  --accent-fg:   #FFFFFF;
+  --danger:      #C4463C;
+
+  --tone-red:        #C4463C;  --tone-red-soft:      #DE8A83;
+  --tone-yellow:     #A37C1C;  --tone-yellow-soft:   #C6A557;
+  --tone-green:      #2C875C;  --tone-green-soft:    #6CBB93;
+  --tone-blue:       #3A69C0;  --tone-blue-soft:     #7A9DDA;
+  --tone-brown:      #87603E;  --tone-brown-soft:    #B69071;
+  --tone-purple:     #6B52B0;  --tone-purple-soft:   #A18CD3;
+  --tone-orange:     #C06E29;  --tone-orange-soft:   #D9A06F;
+  --tone-skyblue:    #268CA3;  --tone-skyblue-soft:  #71BDCC;
+  --tone-pink:       #BE4D7D;  --tone-pink-soft:     #DB92B1;
+  --tone-black:      #55544F;  --tone-black-soft:    #97968F;
+
+  /* 그림자는 번짐 없이 — 연필로 한 번 더 덧그린 선처럼 */
+  --sh-1: 2px 2px 0 rgba(43,43,43,0.12);
+  --sh-2: 3px 4px 0 rgba(43,43,43,0.15);
+  --sh-3: 5px 7px 0 rgba(43,43,43,0.17);
+  --sh-ring: 0 0 0 1.6px var(--line);
+
+  /* [Ver 12.2] 글꼴 교체 — Gaegu는 획이 가늘고 꼬불꼬불해 본문에서 읽히지 않았다.
+       본문: 고운돋움  — 손으로 또박또박 쓴 느낌의 고딕. 획이 굵고 곧아 잘 읽힌다.
+       제목: 주아      — 굵고 둥근 마커 글씨. 큰 크기에서 공책 분위기를 낸다.
+     둘 다 굵기가 하나뿐이라, 위계는 '크기'와 '글꼴'로만 만든다. */
+  /* [Ver 12.4] 카드 이름과 같은 글꼴(주아)로 화면 전체를 통일했다.
+     고운돋움과 섞어 쓰니 같은 화면 안에서 두 손글씨가 부딪혔다. */
+  --font:         'Jua', 'Gowun Dodum', 'Noto Sans KR', sans-serif;
+  --font-display: 'Jua', 'Gowun Dodum', 'Noto Sans KR', sans-serif;
+  --card-bg: #FFFFFF;
+}
+body.ink{
+  background:var(--bg); color:var(--fg);
+  font-size:15.5px;          /* 손글씨 계열은 같은 px에서 작아 보인다 — 한 호수 올린다 */
+  line-height:1.62;
+  letter-spacing:0;
+}
+/* 제목 계열은 주아로 — 굵기 대비를 글꼴로 만든다(가짜 볼드를 쓰지 않는다) */
+body.ink .nm-hero,
+body.ink .nm-act3-tx,
+body.ink .gc-title, body.ink .inv-title, body.ink .pass-title, body.ink .arc-title,
+body.ink .gm-title, body.ink .mtitle,  body.ink .shop-title, body.ink .lan-title,
+body.ink .gr-title, body.ink .clsup-name, body.ink .qm-final-title,
+body.ink .match-intro-title, body.ink .qm-intro-title, body.ink .loading-title,
+body.ink .usb-name, body.ink .nm-note-head, body.ink .cm-title, body.ink .re-name,
+body.ink .roulette-title, body.ink .auction-title, body.ink .pass-lv-num b{
+  font-family:var(--font-display);
+  font-weight:400; letter-spacing:0;
+}
+/* 카드 이름 · 버튼 글씨도 본문보다 또렷하게 */
+body.ink .hc-name, body.ink .pc-name, body.ink .pk-name, body.ink .inv-name,
+body.ink .shop-slot-name, body.ink .p-name{
+  font-family:var(--font-display); font-weight:400;
+}
+/* 고정폭은 "자릿수가 흔들리면 안 되는 곳"에만 남긴다 —
+   체력·골드·타이머·코드. 카드 안(등급칩·능력줄)은 본문과 같은 주아로 통일한다. */
+body.ink .stat-num, body.ink .p-gold, body.ink .mono,
+body.ink .uc-code, body.ink .ol-mycode-big, body.ink .lan-roomcode{ font-family:var(--font-mono); }
+body.ink .hc-grade, body.ink .pc-grade, body.ink .pk-grade, body.ink .cm-grade,
+body.ink .hc-power, body.ink .pc-power, body.ink .cm-pw,
+body.ink .inv-grade, body.ink .dex-grade{
+  font-family:var(--font); letter-spacing:0.02em;
+}
+
+/* ---------- 종이: 줄 + 왼쪽 여백선 ---------- */
+body.ink .screen::before{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
+  background-image:
+    linear-gradient(to right, transparent 0 71px, rgba(196,70,60,0.17) 71px 72.4px, transparent 72.4px),
+    repeating-linear-gradient(to bottom, transparent 0 31px, rgba(58,105,192,0.08) 31px 32px);
+  background-position:0 12px;
+}
+body.ink #app::after{   /* 종이 결 */
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9998;
+  opacity:0.05; background-size:170px 170px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='170' height='170' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+body.ink header{ border-bottom:2px solid var(--line-hard); background:transparent; }
+
+/* ---------- 자 없이 그린 네모 ---------- */
+body.ink .nm-note,
+body.ink .nm-act3,
+body.ink .nm-net-btn,
+body.ink .nm-side-wide,
+body.ink .nm-pass,
+body.ink .nm-ticker,
+body.ink .nm-qb-btn,
+body.ink .nm-res,
+body.ink .user-stat-bar,
+body.ink .card-list-panel,
+body.ink .panel,
+body.ink .btn{
+  border-radius:16px 11px 17px 10px / 10px 17px 11px 16px;
+}
+body.ink .nm-note,
+body.ink .card-list-panel{ outline:1.5px solid var(--line-soft); outline-offset:3px; }
+body.ink .nm-act3-play{ box-shadow:var(--sh-2), 0 0 0 1.8px var(--line-hard); }
+body.ink .nm-act3:hover{ transform:translateY(-3px) rotate(-0.7deg); }
+body.ink .nm-net-btn:hover{ transform:translateY(-2px) rotate(0.6deg); }
+body.ink .nm-side-wide:hover,
+body.ink .nm-pass:hover{ transform:translateY(-2px) rotate(-0.5deg); }
+
+/* ---------- 붙여 놓은 메모 ---------- */
+body.ink .nm-note{ position:relative; transform:rotate(-0.4deg); }
+body.ink .nm-note::before{
+  content:''; position:absolute; top:-11px; left:50%;
+  width:78px; height:21px; transform:translateX(-50%) rotate(-2.4deg);
+  background:rgba(192,110,41,0.13);
+  box-shadow:inset 0 0 0 1px rgba(43,43,43,0.15);
+  clip-path:polygon(3% 0,100% 4%,97% 100%,0 96%);
+}
+
+/* ---------- 손글씨는 한 호수 크게 앉는다 ---------- */
+body.ink .nm-eyebrow{ font-size:13.5px; letter-spacing:0.02em; text-transform:none; }
+body.ink .nm-hero{ font-size:clamp(28px,3.8vw,42px); line-height:1.28; }
+body.ink .nm-card-count{ font-size:14px; }
+body.ink .nm-note-head{ font-size:18px; }
+body.ink .nm-act3-tx{ font-size:17px; }
+body.ink .nm-act3-play .nm-act3-tx{ font-size:24px; }
+body.ink .nm-act3-play .nm-act3-sub{ font-size:13px; }
+body.ink .nm-net-btn b{ font-size:15.5px; }
+body.ink .nm-net-btn small,
+body.ink .nm-side-wide small{ font-size:13.5px; }
+body.ink .nm-ticker-text{ font-size:15px; }
+body.ink .nm-quick-chip{ font-size:14px; }
+body.ink .nm-qb-tx{ font-size:13px; }
+body.ink .section-label,
+body.ink .nm-sec-h,
+body.ink .nm-quick-h{ font-size:13.5px; letter-spacing:0.02em; text-transform:none; }
+/* 인게임 잔글씨 — 공책 글꼴은 작으면 뭉개진다 */
+body.ink .hc-desc, body.ink .pc-desc{ font-size:11.5px; line-height:1.45; }
+body.ink .hc-name, body.ink .pc-name{ font-size:14px; line-height:1.3; }
+body.ink .hc-power, body.ink .pc-power{ font-size:11.5px; }
+body.ink .hc-grade, body.ink .pc-grade{ font-size:12px; }
+body.ink .log-area .line{ font-size:13px; }
+body.ink .status-chip{ font-size:11px; }
+body.ink .zone-title, body.ink .zone-subtitle{ font-size:12px; letter-spacing:0.02em; text-transform:none; }
+body.ink .shop-fab-label{ font-size:13px; }
+body.ink .btn{ font-size:14.5px; }
+body.ink .btn-sm{ font-size:13px; }
+
+/* ---------- 제목 밑에 그은 줄 ---------- */
+body.ink .nm-hero{ position:relative; }
+body.ink .nm-hero::after{
+  content:''; position:absolute; left:2px; right:16%; bottom:-9px; height:7px;
+  border-bottom:2.6px solid rgba(43,43,43,0.58);
+  border-radius:52% 58% 44% 56% / 100% 100% 100% 100%;
+  pointer-events:none;
+}
+
+/* ---------- 아이콘 · 아바타는 연필 톤으로 ---------- */
+body.ink .nm-qb-ic,
+body.ink .nm-hub-ic,
+body.ink .nmu-ic,
+body.ink .usb-avatar{ filter:grayscale(1) contrast(1.12); }
+
+@media (prefers-reduced-motion:reduce){
+  body.ink .nm-act3:hover,
+  body.ink .nm-net-btn:hover,
+  body.ink .nm-side-wide:hover,
+  body.ink .nm-pass:hover{ transform:none; }
+}
+
+/* =====================================================================
+   [Ver 12.5] 공책의 '결' 고르기 — MOOD LAYER
+   ---------------------------------------------------------------------
+   12.1의 공책 레이어(body.ink)는 그대로 둔다. 그 위에 성격이 다른 공책을
+   세 권 더 얹는다. 종이 · 선 · 모서리 · 손글씨의 조합만 바뀌고,
+   색은 계속 '흰 종이 + 연필'이며 색은 정보에만 남는다.
+
+     body.ink                 줄노트 · 4B 연필 · 주아        (기존, 기본값)
+     body.ink.mood-draft      모눈 제도노트 · 샤프 0.3 · 각진 모서리
+     body.ink.mood-doodle     무지 스케치북 · 굵은 잉크 · 크게 삐뚤빼뚤
+     body.ink.mood-charcoal   먹지 · 흰 연필 (어두운 공책)
+
+   전환은 화면 왼쪽 아래 칩(#mood-chip)으로. 고른 값은 localStorage에
+   남는다. 칩과 이 블록을 지우면 12.1로 되돌아간다.
+   ===================================================================== */
+
+/* ─────────────────────────────────────────────────────────────────────
+   1. 제도 노트 — 모눈 위에 샤프로 정확히 그린 공책.
+      선을 가늘게, 모서리를 각지게, 그림자를 없애 '정갈함'으로 간다.
+   ───────────────────────────────────────────────────────────────────── */
+body.ink.mood-draft,
+body.ink.mood-draft .theme-light,
+body.ink.mood-draft.force-dark,
+body.ink.mood-draft.force-dark .theme-light{
+  --bg:#F7F7F4; --bg-panel:#FFFFFF; --bg-2:#F0F0EC; --bg-3:#E4E4DE;
+  --fg:#33332F; --fg-dim:#5F5F5A; --fg-faint:#90908A;
+  --line:rgba(51,51,47,0.34); --line-soft:rgba(51,51,47,0.16); --line-hard:rgba(51,51,47,0.62);
+  --border:var(--line);
+  --sh-1:none; --sh-2:1px 1px 0 rgba(51,51,47,0.10); --sh-3:2px 2px 0 rgba(51,51,47,0.12);
+  --sh-ring:0 0 0 1px var(--line);
+  --font:'Gowun Dodum','Noto Sans KR',sans-serif;
+  --font-display:'Gowun Dodum','Noto Sans KR',sans-serif;
+}
+body.ink.mood-draft{ font-size:15px; line-height:1.6; }
+/* 모눈 — 5mm 격자에 25mm마다 진한 줄 */
+body.ink.mood-draft .screen::before{
+  background-image:
+    repeating-linear-gradient(to right,  rgba(60,90,140,0.11) 0 1px, transparent 1px 32px),
+    repeating-linear-gradient(to bottom, rgba(60,90,140,0.11) 0 1px, transparent 1px 32px),
+    repeating-linear-gradient(to right,  rgba(60,90,140,0.16) 0 1px, transparent 1px 160px),
+    repeating-linear-gradient(to bottom, rgba(60,90,140,0.16) 0 1px, transparent 1px 160px);
+  background-position:0 0;
+}
+body.ink.mood-draft #app::after{ opacity:0.028; }
+body.ink.mood-draft header{ border-bottom:1px solid var(--line); }
+/* 자로 그은 네모 */
+body.ink.mood-draft .nm-note,
+body.ink.mood-draft .nm-act3,
+body.ink.mood-draft .nm-net-btn,
+body.ink.mood-draft .nm-side-wide,
+body.ink.mood-draft .nm-pass,
+body.ink.mood-draft .nm-ticker,
+body.ink.mood-draft .nm-qb-btn,
+body.ink.mood-draft .nm-res,
+body.ink.mood-draft .user-stat-bar,
+body.ink.mood-draft .card-list-panel,
+body.ink.mood-draft .panel,
+body.ink.mood-draft .btn{ border-radius:2px; }
+body.ink.mood-draft .nm-note{ transform:none; outline:none; }
+body.ink.mood-draft .nm-note::before{ display:none; }
+body.ink.mood-draft .card-list-panel{ outline:none; }
+body.ink.mood-draft .nm-act3-play{ box-shadow:var(--sh-2), 0 0 0 1.4px var(--line-hard); }
+body.ink.mood-draft .nm-act3:hover,
+body.ink.mood-draft .nm-net-btn:hover,
+body.ink.mood-draft .nm-side-wide:hover,
+body.ink.mood-draft .nm-pass:hover{ transform:translateY(-2px); }
+/* 제목 밑줄도 자로 — 한 줄 얇게 */
+body.ink.mood-draft .nm-hero::after{
+  right:0; bottom:-8px; height:0;
+  border-bottom:1px solid var(--line); border-radius:0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   2. 낙서 노트 — 수업 시간에 무지 노트 뒷장에 볼펜으로 그린 그것.
+      선을 굵게, 기울기를 크게, 그림자는 '한 번 더 덧그린 선'으로.
+   ───────────────────────────────────────────────────────────────────── */
+body.ink.mood-doodle,
+body.ink.mood-doodle .theme-light,
+body.ink.mood-doodle.force-dark,
+body.ink.mood-doodle.force-dark .theme-light{
+  --bg:#FCFBF7; --bg-panel:#FFFFFF; --bg-2:#F5F3EC; --bg-3:#E9E6DC;
+  --fg:#22211F; --fg-dim:#4E4C48; --fg-faint:#87857E;
+  --line:rgba(34,33,31,0.72); --line-soft:rgba(34,33,31,0.34); --line-hard:#22211F;
+  --border:var(--line);
+  --sh-1:2px 2px 0 rgba(34,33,31,0.20);
+  --sh-2:4px 4px 0 rgba(34,33,31,0.22);
+  --sh-3:7px 8px 0 rgba(34,33,31,0.24);
+  --sh-ring:0 0 0 2px var(--line-hard);
+  --font:'Gaegu','Jua','Noto Sans KR',sans-serif;
+  --font-display:'Jua','Gaegu','Noto Sans KR',sans-serif;
+}
+body.ink.mood-doodle{ font-size:17px; line-height:1.55; }
+/* 종이는 무지 — 아주 옅은 점만 */
+body.ink.mood-doodle .screen::before{
+  background-image:radial-gradient(circle at 1px 1px, rgba(34,33,31,0.10) 1px, transparent 1.4px);
+  background-size:26px 26px; background-position:0 0;
+}
+body.ink.mood-doodle #app::after{ opacity:0.075; }
+body.ink.mood-doodle header{ border-bottom:2.5px solid var(--line-hard); }
+body.ink.mood-doodle .nm-note,
+body.ink.mood-doodle .nm-act3,
+body.ink.mood-doodle .nm-net-btn,
+body.ink.mood-doodle .nm-side-wide,
+body.ink.mood-doodle .nm-pass,
+body.ink.mood-doodle .nm-ticker,
+body.ink.mood-doodle .nm-qb-btn,
+body.ink.mood-doodle .nm-res,
+body.ink.mood-doodle .user-stat-bar,
+body.ink.mood-doodle .card-list-panel,
+body.ink.mood-doodle .panel,
+body.ink.mood-doodle .btn{ border-radius:22px 8px 24px 7px / 7px 25px 8px 22px; }
+body.ink.mood-doodle .nm-note{ transform:rotate(-1deg); outline:none; }
+body.ink.mood-doodle .nm-act3:nth-child(even){ transform:rotate(0.8deg); }
+body.ink.mood-doodle .nm-act3:hover{ transform:translateY(-4px) rotate(-1.6deg); }
+body.ink.mood-doodle .nm-net-btn:hover{ transform:translateY(-3px) rotate(1.2deg); }
+body.ink.mood-doodle .nm-side-wide:hover,
+body.ink.mood-doodle .nm-pass:hover{ transform:translateY(-3px) rotate(-1deg); }
+body.ink.mood-doodle .nm-act3-play{ box-shadow:5px 6px 0 rgba(34,33,31,0.22), 0 0 0 2.5px var(--line-hard); }
+body.ink.mood-doodle .nm-hero{ transform:rotate(-0.8deg); }
+body.ink.mood-doodle .nm-hero::after{ border-bottom-width:4px; border-bottom-color:var(--line-hard); }
+
+/* ─────────────────────────────────────────────────────────────────────
+   3. 먹지 노트 — 검은 종이에 흰 연필. 12.0의 어두운 분위기를 원하면 이쪽.
+      색은 여전히 정보에만. 흰 연필이 곧 잉크다.
+   ───────────────────────────────────────────────────────────────────── */
+body.ink.mood-charcoal,
+body.ink.mood-charcoal .theme-light,
+body.ink.mood-charcoal.force-dark,
+body.ink.mood-charcoal.force-dark .theme-light{
+  --bg:#1E1E1C; --bg-panel:#262624; --bg-2:#2E2E2B; --bg-3:#3A3A36;
+  --bg-hover:rgba(255,255,255,0.06); --bg-press:rgba(255,255,255,0.11);
+  --fg:#F0EEE7; --fg-dim:#BFBCB3; --fg-faint:#8B8880; --white:#F0EEE7;
+  --line:rgba(240,238,231,0.34); --line-soft:rgba(240,238,231,0.16); --line-hard:rgba(240,238,231,0.68);
+  --border:var(--line);
+  --accent:#EDEAE1; --accent-dim:#CFCBC0; --accent-weak:rgba(240,238,231,0.12); --accent-fg:#1E1E1C;
+  --tone-red:#F08279; --tone-red-soft:#F6B0AA;
+  --tone-yellow:#E5C067; --tone-yellow-soft:#F0D796;
+  --tone-green:#77CFA1; --tone-green-soft:#A6E2C4;
+  --tone-blue:#89ADEB; --tone-blue-soft:#B2CBF3;
+  --tone-brown:#C79C7A; --tone-brown-soft:#DCBEA5;
+  --tone-purple:#B5A3E0; --tone-purple-soft:#CFC4EC;
+  --tone-orange:#E7A470; --tone-orange-soft:#F1C5A0;
+  --tone-skyblue:#7FC6D6; --tone-skyblue-soft:#A9DAE4;
+  --tone-pink:#E294B4; --tone-pink-soft:#EFBACF;
+  --tone-black:#A9A7A0; --tone-black-soft:#CFCDC7;
+  --sh-1:2px 2px 0 rgba(0,0,0,0.35);
+  --sh-2:3px 4px 0 rgba(0,0,0,0.42);
+  --sh-3:5px 7px 0 rgba(0,0,0,0.5);
+  --sh-ring:0 0 0 1.4px var(--line);
+  --card-bg:#2A2A27;
+}
+/* 흰 분필 격자 — 아주 옅게 */
+body.ink.mood-charcoal .screen::before{
+  background-image:
+    repeating-linear-gradient(to bottom, transparent 0 31px, rgba(240,238,231,0.055) 31px 32px);
+  background-position:0 12px;
+}
+body.ink.mood-charcoal #app::after{ opacity:0.075; }
+body.ink.mood-charcoal .nm-note::before{ background:rgba(240,238,231,0.10); box-shadow:inset 0 0 0 1px rgba(240,238,231,0.16); }
+body.ink.mood-charcoal .nm-hero::after{ border-bottom-color:rgba(240,238,231,0.55); }
+body.ink.mood-charcoal .nm-qb-ic,
+body.ink.mood-charcoal .nm-tab-ic,
+body.ink.mood-charcoal .nm-tab-home-ic,
+body.ink.mood-charcoal .nmu-ic,
+body.ink.mood-charcoal .usb-avatar{ filter:grayscale(1) brightness(1.6) contrast(1.05); }
+
+/* ---------- 결 고르는 칩 ---------- */
+#mood-chip{
+  position:fixed; left:12px; bottom:12px; z-index:9999;
+  display:flex; align-items:center; gap:8px;
+  padding:7px 12px; border:none;
+  border-radius:14px 9px 15px 8px / 8px 15px 9px 14px;
+  background:var(--bg-panel); color:var(--fg-dim);
+  box-shadow:0 0 0 1.4px var(--line), var(--sh-1);
+  font-family:var(--font); font-size:13px; line-height:1.2;
+  cursor:pointer; opacity:0.5;
+  transition:opacity .18s ease, transform .18s ease;
+}
+#mood-chip:hover{ opacity:1; transform:translateY(-2px) rotate(-0.8deg); }
+#mood-chip:focus-visible{ outline:2px solid var(--fg); outline-offset:2px; }
+#mood-chip .mc-dot{ width:8px; height:8px; border-radius:50%; background:var(--fg); opacity:0.7; }
+@media (max-width:640px){ #mood-chip{ left:8px; bottom:8px; font-size:12px; padding:6px 10px; } }
+
 </style>
 </head>
-<body>
+<body class="ink">
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 12.0</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 12.4</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -4306,60 +5209,70 @@ body.paper-skin{ }
   <!-- ============ START (Ver 5.13 — 좌/우 분할 + 폴더형 메뉴) ============ -->
   <div id="screen-start" class="screen theme-light active">
 
-    <!-- [Ver 11.0] 우측 상단 재구성 — 구상도 도안 반영.
-         밸런스 패치·신규 카드 버튼은 중앙 버튼 그룹으로 이동했고, 그 자리에
-         재화 배지(열쇠·곡괭이·개쩌는 곡괭이 — 우비나이트는 renderUbiniteBadge()가 끼워 넣음)와
-         업데이트 로그 배지가 들어왔다. -->
-    <div class="nm-topright" id="nmTopRight">
-      <div class="nm-resbar" id="nmResBar">
-        <button class="nm-res" onclick="openBoxScreen()" title="상자 열쇠">
-          <span class="ic">🔑</span><b id="resKeys">0</b>
-        </button>
-        <button class="nm-res" onclick="openMineScreen()" title="곡괭이">
-          <span class="ic">⛏️</span><b id="resPick">0</b>
-        </button>
-        <button class="nm-res" onclick="openMineScreen()" title="개쩌는 곡괭이">
-          <span class="ic">🪙</span><b id="resGoldPick">0</b>
+    <!-- ==========================================================================
+         [Ver 12.2] 메뉴 재배치
+         --------------------------------------------------------------------------
+         11.x~12.0은 같은 화면에 떠 있는 고정 레이어가 셋이었다.
+           · 왼쪽 세로 아이콘 열(설정·온라인·우편함·코드·디스코드)
+           · 오른쪽 위 재화 배지 + 업데이트 배지
+           · 아래 고정 탭바
+         가장자리 세 곳에 흩어져 있어 "어디에 뭐가 있는지"를 매번 다시 찾아야 했고,
+         좁은 화면에서는 본문 위를 덮기까지 했다.
+
+         12.2는 위쪽 두 덩어리를 **상단 유틸 바 한 줄**로 합친다. 화면에 떠 있는
+         레이어는 아래 탭바 하나뿐이고, 나머지는 전부 문서 흐름 안으로 들어온다.
+
+         그리고 본문은 "무엇을 하러 왔는가" 순서로 다시 세웠다.
+           내가 누구인지(프로필) → 무엇을 할지(게임 시작) → 곁다리(정보·도구)
+         ========================================================================== -->
+
+    <!-- ① 상단 유틸 바 — 재화 · 바로가기 · 업데이트가 한 줄에 모인다 -->
+    <div class="nm-topbar">
+      <div class="nm-topright" id="nmTopRight">
+        <div class="nm-resbar" id="nmResBar">
+          <button class="nm-res" onclick="openBoxScreen()" title="상자 열쇠">
+            <span class="ic">🔑</span><b id="resKeys">0</b>
+          </button>
+          <button class="nm-res" onclick="openMineScreen()" title="곡괭이">
+            <span class="ic">⛏️</span><b id="resPick">0</b>
+          </button>
+          <button class="nm-res" onclick="openMineScreen()" title="개쩌는 곡괭이">
+            <span class="ic">🪙</span><b id="resGoldPick">0</b>
+          </button>
+        </div>
+        <!-- renderUbiniteBadge()는 #nmTopRight와 #nmBurger가 함께 있을 때만
+             💎우비나이트 배지를 업데이트 배지 앞에 끼워 넣는다. 11.1에서 ≡ 버튼이
+             사라지며 그 조건이 깨져 배지가 엉뚱한 자리로 가 있었다 — 자리표만 남긴다. -->
+        <span id="nmBurger" hidden aria-hidden="true"></span>
+        <button class="nm-update-badge" id="nmUpdateBadge" onclick="goToChangelog()" title="업데이트 로그">
+          <span class="nmu-ic">🏆</span><span class="nmu-tx">업데이트</span>
         </button>
       </div>
-      <!-- [Ver 11.0] 업데이트 로그 — 기존 포스트잇 형식 업데이트 로그(goToChangelog)로 그대로 연결 -->
-      <button class="nm-update-badge" id="nmUpdateBadge" onclick="goToChangelog()" title="업데이트 로그">
-        <span class="nmu-ic">🏆</span><span class="nmu-tx">업데이트</span>
-      </button>
-      <!-- [Ver 11.1] ≡ 버튼 삭제 — 안에 있던 항목이 전부 좌측 아이콘 열(.nm-quickbar)과
-           설정 화면 하단으로 옮겨가면서 드로어 자체가 더 이상 필요 없어졌다. -->
+
+      <nav class="nm-quickbar" id="nmQuickBar">
+        <button class="nm-qb-btn" onclick="goToSettings()" title="설정">
+          <span class="nm-qb-ic">⚙️</span><span class="nm-qb-tx">설정</span>
+        </button>
+        <button class="nm-qb-btn" onclick="openOnlineScreen('rank')" title="온라인 · 랭킹 · 친구">
+          <span class="nm-qb-ic">🌐</span><span class="nm-qb-tx">온라인</span>
+        </button>
+        <button class="nm-qb-btn" onclick="openMailbox()" title="우편함">
+          <span class="nm-qb-ic">📬</span><span class="nm-qb-tx">우편함</span>
+          <span class="nm-qb-badge" id="nmQbMailBadge" style="display:none;">0</span>
+        </button>
+        <button class="nm-qb-btn" onclick="openCodeInput()" title="코드 입력">
+          <span class="nm-qb-ic">🎟️</span><span class="nm-qb-tx">코드</span>
+        </button>
+        <a class="nm-qb-btn" href="https://discord.gg/WyRyNk4G2Y" target="_blank" rel="noopener" title="공식 디스코드">
+          <span class="nm-qb-ic">💬</span><span class="nm-qb-tx">디스코드</span>
+        </a>
+      </nav>
     </div>
 
-    <!-- [Ver 11.1 신규] 좌측 고정 아이콘 메뉴 — 구상도 반영.
-         설정 · 친구 · 우편함 · 코드 · 디스코드는 예전엔 ≡ 드로어 안에 접혀 있었지만,
-         이제 화면 왼쪽 가장자리에 항상 보이는 세로 아이콘 열로 나왔다.
-         (재화 배지가 우측 상단에 고정된 것과 대칭이 되도록 같은 absolute 방식) -->
-    <nav class="nm-quickbar" id="nmQuickBar">
-      <button class="nm-qb-btn" onclick="goToSettings()" title="설정">
-        <span class="nm-qb-ic">⚙️</span><span class="nm-qb-tx">설정</span>
-      </button>
-      <!-- [Ver 11.8] 친구 → 온라인으로 교체. 친구는 온라인 화면의 탭 중 하나라
-           여기서 온라인을 열면 친구·랭킹·계정·통계·공지에 전부 닿는다. -->
-      <button class="nm-qb-btn" onclick="openOnlineScreen('rank')" title="온라인">
-        <span class="nm-qb-ic">🌐</span><span class="nm-qb-tx">온라인</span>
-      </button>
-      <button class="nm-qb-btn" onclick="openMailbox()" title="우편함">
-        <span class="nm-qb-ic">📬</span><span class="nm-qb-tx">우편함</span>
-        <span class="nm-qb-badge" id="nmQbMailBadge" style="display:none;">0</span>
-      </button>
-      <button class="nm-qb-btn" onclick="openCodeInput()" title="코드 입력">
-        <span class="nm-qb-ic">🎟️</span><span class="nm-qb-tx">코드</span>
-      </button>
-      <a class="nm-qb-btn" href="https://discord.gg/WyRyNk4G2Y" target="_blank" rel="noopener" title="공식 디스코드">
-        <span class="nm-qb-ic">💬</span><span class="nm-qb-tx">디스코드</span>
-      </a>
-    </nav>
-
     <div class="nm-wrap">
-
-      <!-- ===== 메인 존 ===== -->
       <div class="nm-left">
-        <!-- [Ver 8.0] 유저 스탯창: 닉네임 · 레벨 · 경험치바. 클릭하면 업적/티어/통계/닉네임변경 통합 패널이 열린다 -->
+
+        <!-- ② 나 — 닉네임 · 클래스 · 경험치. 누르면 업적/티어/통계가 열린다 -->
         <div class="user-stat-bar" id="userStatBar" onclick="openUserStatPanel()">
           <div class="usb-avatar" id="usbAvatar">🐊</div>
           <div class="usb-main">
@@ -4373,14 +5286,11 @@ body.paper-skin{ }
           <div class="usb-chev">›</div>
         </div>
 
-        <!-- [Ver 9.2] 규칙 4칸(인원/봇/HP/돈)은 정보 가치가 없어 영구 삭제됨 -->
-
+        <!-- ③ 오늘의 한 줄 -->
         <div class="nm-eyebrow">
           <span class="nm-eyebrow-dot"></span>갱갱갱 우빈랩터 카드게임
         </div>
-
         <div class="nm-hero" id="menuHeroText">뭐라고? 지금 가입하면 SSR급 우빈랩터를 준다고?🗣️🔥🔥</div>
-
         <div class="nm-ticker" id="nmTicker">
           <span class="nm-ticker-icon">📢</span>
           <div class="nm-ticker-track">
@@ -4388,17 +5298,12 @@ body.paper-skin{ }
           </div>
         </div>
 
-        <!-- [Ver 9.2] 메인 액션 3개 — 게임 시작 / 랜서버 만들기 / 랜서버 참가.
-             게임 시작은 곧바로 시작하지 않고 모드 선택 UI를 먼저 띄운다. -->
-        <!-- ============================================================
-             [Ver 11.1] 구상도 반영 — 게임 시작 / 온라인 / LAN서버를
-             세로로 쌓지 않고 동일한 크기의 정사각 버튼 3개를 한 줄에 나란히 둔다.
-             (온라인·LAN서버는 각각 누르면 만들기·참가 선택 팝업이 뜬다)
-             ============================================================ -->
+        <!-- ④ 할 일 — 게임 시작을 압도적으로 크게. 여기 온 이유는 대개 이것 하나다 -->
         <div class="nm-acts3">
           <button class="nm-act3 nm-act3-play" onclick="openGameModePicker()">
             <span class="nm-act3-ic">▶</span>
             <span class="nm-act3-tx">게임 시작</span>
+            <span class="nm-act3-sub">일반전 · 클래식 · 팀전 · 튜토리얼</span>
           </button>
           <button class="nm-act3" onclick="openOnlinePicker()">
             <span class="nm-act3-ic">🌐</span>
@@ -4410,22 +5315,50 @@ body.paper-skin{ }
           </button>
         </div>
 
-        <!-- [Ver 11.0] 밸런스 패치 · 신규 카드 — 우측 상단에서 이 자리로 이동 -->
-        <div class="nm-net">
-          <div class="nm-net-grid">
+        <!-- [Ver 12.2 신규] 바로 시작 — "게임 시작 → 모드 고르기" 두 단계를 한 번으로 줄인다.
+             늘 같은 모드만 하는 사람이 대부분이라, 자주 가는 길을 화면에 꺼내 놓았다. -->
+        <div class="nm-quick">
+          <span class="nm-quick-h">바로 시작</span>
+          <button class="nm-quick-chip" onclick="pickGameMode('normal')">🎮 일반전</button>
+          <button class="nm-quick-chip" onclick="pickGameMode('classic')">🃏 클래식</button>
+          <button class="nm-quick-chip" onclick="pickGameMode('team')">🟥 3:3 팀전</button>
+          <button class="nm-quick-chip" onclick="pickGameMode('tutorial')">💡 튜토리얼</button>
+          <button class="nm-quick-chip" onclick="openArcade()">🕹️ 아케이드</button>
+        </div>
+
+        <!-- ⑤ 콘텐츠 — 예전 하단 탭바에 있던 갈래들이 여기로 내려왔다.
+             떠 있지 않으니 무엇도 가리지 않고, 한 번에 다 보인다. -->
+        <div class="nm-sec">
+          <div class="nm-sec-h">콘텐츠</div>
+          <div class="nm-hub">
+            <button class="nm-hub-btn" onclick="openArcade()">
+              <span class="nm-hub-ic">🕹️</span><b>아케이드</b><small>야차 · 파밍 · 난투 · 퀴즈</small>
+            </button>
+            <button class="nm-hub-btn" onclick="goToDex()">
+              <span class="nm-hub-ic">🎒</span><b>인벤토리</b><small>모은 카드 · 진화 · 마스터리</small>
+            </button>
+            <button class="nm-hub-btn" onclick="openMineScreen()">
+              <span class="nm-hub-ic">⛏️</span><b>유물 광산</b><small>곡괭이로 캐는 영구 능력</small>
+            </button>
+            <button class="nm-hub-btn" onclick="openGachaScreen()">
+              <span class="nm-hub-ic">🎴</span><b>카드 뽑기</b><small>진화석을 얻는 곳</small>
+            </button>
+            <button class="nm-hub-btn" onclick="openRaptorMart()">
+              <span class="nm-hub-ic">🏪</span><b>랩터마트24</b><small>칭호 · 펫 · 꾸미기</small>
+            </button>
+          </div>
+        </div>
+
+        <!-- ⑥ 곁다리 — 2×2 두 덩어리로 흩어져 있던 것을 한 줄로 모았다 -->
+        <div class="nm-sec">
+          <div class="nm-sec-h">정보 · 도구</div>
+          <div class="nm-net-grid nm-grid4">
             <button class="nm-net-btn" onclick="openBalancePatch()">
               <span class="ic">⚖️</span><b>밸런스 패치</b><small>이번 판 조정 내역</small>
             </button>
             <button class="nm-net-btn" onclick="openNewCards()">
               <span class="ic">🃏</span><b>신규 카드</b><small>새로 들어온 카드</small>
             </button>
-          </div>
-        </div>
-
-        <!-- [Ver 11.0] 전투 기록 · 모바일 모드 — 전투 기록은 ≡ 메뉴에서 바로가기로 나왔고,
-             모바일 모드는 기존 가로 막대 대신 같은 2버튼 격자 안으로 들어왔다 -->
-        <div class="nm-net">
-          <div class="nm-net-grid">
             <button class="nm-net-btn" onclick="openBattleRecords()">
               <span class="ic">⚔️</span><b>전투 기록</b><small>최근 10판 기보</small>
             </button>
@@ -4436,31 +5369,20 @@ body.paper-skin{ }
           </div>
         </div>
 
-        <!-- [Ver 9.9] "이어하기"는 삭제되었습니다. (자동 저장·복구 기능 전체 폐지) -->
-
         <div class="nm-card-count">등록된 카드 <b id="cardCountLabel">0</b>장 · 최소 1장 필요</div>
 
-        <!-- [Ver 9.2] 오른쪽 빈 공간을 채우는 "공책 메모" — 티어·전적·도감 진행도를
-             한눈에 보여준다. 내용은 renderMenuNote()가 채운다.
-             [Ver 9.9] 메모 아래에 별관 버튼 3개를 세로로 늘려 붙여, 오른쪽 열의
-             빈 공간이 남지 않게 한다. (기존엔 메모 안에 2개가 작게 들어 있었다) -->
+        <!-- ⑥ 오른쪽 열 — 내 기록과 "쌓이는 것들" -->
         <div class="nm-side" id="nmSide">
+          <div class="nm-sec-h">내 기록</div>
           <div class="nm-note" id="nmNote"></div>
-          <!-- [Ver 11.8] 시즌 패스 — 내 기록 바로 아래에 가로 한 줄로 붙는다.
-               아래 항목들(수상한 상자·계정 지키기)은 그만큼 자연스럽게 내려간다. -->
+          <div class="nm-sec-h">쌓이는 것들</div>
           <button class="nm-pass" id="nmPassBar" onclick="openPassScreen()"></button>
-          <!-- [Ver 11.0] 인벤토리·카드뽑기·유물 광산·랩터마트24 4칸 격자는 삭제되었다.
-               인벤토리·유물·랩터마트24는 화면 하단 고정 탭바(.nm-tabbar)로 이동했고,
-               카드 뽑기는 인벤토리 화면 상단 버튼으로 옮겨졌다. -->
-          <!-- [Ver 9.16 신규] 우빈이의 수상한 상자 — 격자가 있던 자리에 가로로 한 줄 붙는다 -->
           <button class="nm-side-wide" id="nmBoxLink" onclick="openBoxScreen()">
             <span class="ic">🎁</span>
             <span class="tx"><b>우빈이의 수상한 상자</b><small>열쇠로 여는 무작위 상자</small></span>
             <span class="nm-side-wide-n" id="nmBoxKeys">🔑 0</span>
           </button>
-          <!-- [Ver 10.0.2] 계정 지키기 — 진행도 유실 대책의 진입점.
-               예전엔 ≡ → 온라인 → 백업·복원까지 3단계라 아무도 찾지 못했다.
-               내 유저 코드를 항상 띄워두어, 복구 열쇠가 있다는 사실 자체를 보이게 한다. -->
+          <!-- 기기가 바뀌어도 진행도를 되찾는 유일한 열쇠라, 코드를 항상 띄워 둔다 -->
           <button class="nm-side-wide nm-side-acct" onclick="openOnlineScreen('sync')">
             <span class="ic">☁️</span>
             <span class="tx"><b>계정 지키기</b><small>기기가 바뀌어도 이 코드로 복구</small></span>
@@ -4471,34 +5393,11 @@ body.paper-skin{ }
 
     </div><!-- /.nm-wrap -->
 
-    <!-- ===== [Ver 11.0 신규] 하단 고정 탭바 — 클래시로얄 메뉴화면 스타일.
-         랩터마트24 · 인벤토리 · 유물 광산 · 온라인을 여기로 몰았고, 가운데 "홈"은
-         지금 화면(메인)을 가리키는 원형 강조 버튼이다. 시작 화면에서만 보인다
-         (.screen이 display:none이면 position:fixed여도 함께 숨는다). ===== -->
-    <nav class="nm-tabbar" id="nmTabBar">
-      <button class="nm-tab" onclick="openRaptorMart()">
-        <span class="nm-tab-ic">🏪</span><span class="nm-tab-tx">랩터마트24</span>
-      </button>
-      <button class="nm-tab" onclick="goToDex()">
-        <span class="nm-tab-ic">🎒</span><span class="nm-tab-tx">인벤토리</span>
-      </button>
-      <button class="nm-tab nm-tab-home active" onclick="goToStart()">
-        <span class="nm-tab-home-ic">🏠</span><span class="nm-tab-tx">홈</span>
-      </button>
-      <button class="nm-tab" onclick="openMineScreen()">
-        <span class="nm-tab-ic">⛏️</span><span class="nm-tab-tx">유물</span>
-      </button>
-      <!-- [Ver 11.8] 온라인 → 아케이드로 교체. 온라인은 좌측 아이콘 열로 옮겼다. -->
-      <button class="nm-tab" onclick="openArcade()">
-        <span class="nm-tab-ic">🕹️</span><span class="nm-tab-tx">아케이드</span>
-      </button>
-    </nav>
+    <!-- [Ver 12.2] 하단 고정 탭바는 삭제했다.
+         화면 위에 떠서 본문(수상한 상자·계정 지키기·카드 뽑기)을 가렸고,
+         한가운데 "홈" 버튼은 이미 홈에 있는 사람에게 아무 의미가 없었다.
+         다섯 갈래는 본문 안 "콘텐츠" 구획으로 내려왔다. -->
 
-    <!-- [Ver 11.1] ≡ 햄버거 드로어 삭제 — 안에 있던 항목은 전부 다른 자리로 옮겨갔다.
-           · 설정 · 친구 · 우편함 · 코드 · 디스코드 → 좌측 고정 아이콘 열(.nm-quickbar)
-           · 전투 기록 → 중앙 2×2 버튼 (밸런스패치/신규카드 아래 줄)
-           · 업데이트 로그 → 우측 상단 🏆업데이트 배지
-           · 크레딧 · (개발자) 코드 확인 → 설정 화면 하단 -->
   </div><!-- /#screen-start -->
 
   <!-- ============ [Ver 11.8 신규] 시즌 패스 ============ -->
@@ -4970,7 +5869,16 @@ body.paper-skin{ }
       <div class="zone-hand">
         <div class="seat seat-me" id="seat-p0"></div>
         <div class="zone-hand-cards">
-          <div class="zone-subtitle hand-subtitle">내 손패</div>
+          <!-- [Ver 12.3] 손패 접기 — 내리면 판 전체가 그만큼 넓어진다.
+               접힌 상태는 저장돼서 다음 판에도 그대로 유지된다. -->
+          <div class="hand-head">
+            <div class="zone-subtitle hand-subtitle">내 손패</div>
+            <button class="hand-toggle" id="handToggleBtn" onclick="toggleHandDock()"
+                    title="손패 접기 / 펴기 (H)">
+              <span class="hand-toggle-ic">▾</span><span class="hand-toggle-tx">접기</span>
+              <span class="hand-toggle-n" id="handToggleCount"></span>
+            </button>
+          </div>
           <div class="hand-area" id="handArea"></div>
         </div>
       </div>
@@ -11978,6 +12886,10 @@ function openCodeInput(){
 /* [Ver 9.12.1] 개발자 모드 전용 — 지금 이 빌드에 등록된 코드를 전부 보여준다.
    테스트할 때마다 소스를 뒤져 코드를 찾던 걸 없앤다. 이미 쓴 코드는 흐리게 표시한다. */
 function updateDevMenuButtons(){
+  /* [Ver 12.2] 개발자 모드가 켜졌다는 걸 화면이 알려준다 —
+     버전 배지가 보라색 DEV 배지로 바뀌고, 카드 더미에도 DEV 표시가 붙는다.
+     (12.0까지는 켜도 아무 표시가 없어 "개발자 모드가 사라졌다"고 느껴졌다) */
+  try{ document.body.classList.toggle('dev-mode', !!devMode); }catch(e){}
   const b = document.getElementById('devCodeListBtn');
   if(b) b.style.display = devMode ? '' : 'none';
   const e = document.getElementById('devEventBtn');
@@ -15823,6 +16735,53 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 12.4', date: '2026-08-21',
+    items: [
+      '\u{1F58B}\uFE0F <b>[글꼴] 화면 전체를 카드 이름과 같은 글꼴로 통일했습니다.</b> 본문에 쓰던 고운돋움을 걷어내고 <b>주아</b> 하나로 맞췄습니다. 같은 화면 안에서 두 손글씨가 부딪히던 어색함이 사라집니다. (체력 \u00B7 골드 \u00B7 코드처럼 자릿수가 흔들리면 안 되는 곳만 고정폭을 유지합니다)',
+      '\u{1F3A8} <b>[카드] 능력 줄 색을 바꿨습니다.</b> 빨강은 "피해"를 뜻하는 색인데 모든 능력에 붙어 있어 오히려 시끄러웠습니다. 이제 <b>제목(검정)과 설명(회색) 사이의 중간 회색</b>으로, 위계가 자연스럽게 계단이 됩니다.',
+      '\u{1F6D2} <b>[상점] 매물 배열을 정리했습니다.</b> 화면 폭에 따라 <b>위 4칸 \u00B7 아래 1칸</b>처럼 한쪽으로 쏠리던 줄을, <b>3칸씩 + 남는 칸은 가운데 정렬</b>로 바꿨습니다. 칸 수가 매번 달라져도 정돈돼 보입니다.',
+      '\u{1F3B0} <b>[상점] 도박 6등급이 3+3으로 딱 떨어집니다.</b> "왜 두 개만 아래 있지" 하고 눈이 걸리던 4+2 배열을 고쳤습니다.',
+      '\u274C <b>[상점] 닫기 버튼을 탭 줄에서 빼냈습니다.</b> 탭 끝에 붙어 있어 <b>다섯 번째 탭</b>처럼 보이고 실수로 누르기도 쉬웠습니다. 이제 상자 오른쪽 위 모서리에 있고, 탭 넷이 폭을 고르게 나눠 갖습니다.'
+    ]
+  },
+  {
+    version: 'Ver 12.3', date: '2026-08-21',
+    items: [
+      '\u{1F0CF} <b>[카드] 글씨가 안 보이던 문제를 고쳤습니다.</b> 카드 글자색이 테마와 무관하게 <b>다크 테마 값으로 굳어</b> 있어서, 흰 카드 위에 흰 글씨가 얹혀 있었습니다. 이제 이름 \u00B7 능력 \u00B7 설명이 전부 또렷하게 읽힙니다.',
+      '\u{1F3F7}\uFE0F <b>[카드] 등급 칩이 돌아왔습니다.</b> 알파벳 뒤의 <b>색깔 사각형</b> \u2014 D 흰색 \u00B7 C 연두 \u00B7 B 하늘 \u00B7 A 노랑 \u00B7 S 주황 \u00B7 SR 빨강+금 \u00B7 SSR 이상 펄 바이올렛 \u00B7 X 레드/마룬. 등급별 발광도 11.x 그대로입니다.',
+      '\u{1F3A8} <b>[카드] 고유 디자인 35종을 되살렸습니다.</b> <b>딱지남 러시안룰렛</b>(갈색 가죽) \u00B7 <b>SOLEMN LAMENT</b>(흑 \u00B7 백 \u00B7 반반) \u00B7 <b>ABYSSAL HUNTER</b>(심해) \u00B7 <b>닥터후</b>(핫핑크) \u00B7 <b>蓮 渦</b> \u00B7 <b>신앙심</b> \u00B7 <b>영정사진</b> 등 카드 배경까지 통째로 바뀌는 디자인이 전부 원래대로 돌아왔습니다.',
+      '\u2728 <b>[카드] 발광만 있던 카드도 구분됩니다.</b> ZEUS \u00B7 조커 \u00B7 파티 타임 처럼 배경 없이 빛만 났던 카드들은 흰 종이 위에서 묻혔습니다. 각자의 색을 아주 옅게 카드면에 깔아, 글씨는 그대로 읽히면서 특별한 카드라는 게 보이게 했습니다.',
+      '\u{1F4DC} <b>[신규] 카드 설명 스크롤</b> \u2014 설명이 아무리 길어도 <b>설명 칸만 위아래로 넘겨</b> 끝까지 읽을 수 있습니다. 카드 크기는 그대로라 손패 줄이 들쭉날쭉해지지 않습니다. 아래쪽이 흐려져 있으면 더 읽을 내용이 남았다는 뜻입니다.',
+      '\u{1F308} <b>[복원] 무지개가 다시 흐릅니다.</b> 크로마틱 우빈권 \u00B7 조커 \u00B7 파티 타임 \u00B7 국사무쌍 \u00B7 SR 등급 칩의 <b>그라데이션이 흐르는 연출</b>을 되살렸습니다. 배경 위치만 움직이므로 글씨는 그대로 읽힙니다.',
+      '\u{1F41B} <b>[버그수정] 낸 카드 더미에서 아래 카드 글씨가 비쳐 보이던 문제</b>를 고쳤습니다. 특수 카드에 얹은 옅은 색이 <b>불투명한 바탕 없이</b> 깔려 카드가 반투명해져 있었습니다. 두 카드의 이름과 능력이 겹쳐 보이던 원인입니다.',
+      '\u{1F41B} <b>[버그수정] 카드 이름이 위아래로 잘리던 문제</b>를 고쳤습니다. 등급 \u00B7 이름 \u00B7 공격력이 설명에 밀려 찌그러지고 있었습니다.',
+      '\u2B07\uFE0F <b>[신규] 손패 접기</b> \u2014 손패 오른쪽의 <b>접기</b> 버튼(또는 <b>H</b> 키)으로 손패를 내려둘 수 있습니다. 상대 상태나 로그를 볼 때 화면이 그만큼 넓어집니다. 접어 둔 상태는 다음 판에도 유지되고, 접혀 있어도 <b>몇 장 들고 있는지</b>는 버튼에 표시됩니다.'
+    ]
+  },
+  {
+    version: 'Ver 12.2', date: '2026-08-21',
+    items: [
+      '\u{1F58A}\uFE0F <b>[글꼴] 본문이 읽힙니다.</b> 획이 가늘고 꼬불꼬불해 눈이 아프던 손글씨체를 걷어내고, 본문은 <b>고운돋움</b>(또박또박 쓴 고딕), 제목은 <b>주아</b>(굵고 둥근 마커 글씨)로 바꿨습니다. 글씨 크기도 전반적으로 한 호수 올렸습니다.',
+      '\u{1F9ED} <b>[재배치] 메뉴 화면을 다시 짰습니다.</b> 화면 가장자리 <b>세 곳</b>에 흩어져 떠 있던 왼쪽 아이콘 열 \u00B7 오른쪽 위 재화 배지를 <b>상단 한 줄</b>로 합쳤습니다. 떠 있는 레이어는 이제 아래 탭바 하나뿐입니다.',
+      '\u{1F5D1}\uFE0F <b>[삭제] 아래 고정 탭바를 없앴습니다.</b> 화면 위에 떠서 <b>수상한 상자 \u00B7 계정 지키기</b>를 가렸고, 한가운데 "홈" 버튼은 이미 홈에 있는 사람에게 아무 의미가 없었습니다. 다섯 갈래는 본문 안 <b>콘텐츠</b> 구획으로 내려왔습니다 \u2014 <b>아케이드 \u00B7 인벤토리 \u00B7 유물 광산 \u00B7 카드 뽑기 \u00B7 랩터마트24</b>.',
+      '\u{1F4CC} <b>[삭제] 메뉴 포스트잇</b>도 내렸습니다. 오른쪽 열을 덮는 데다, 같은 내용을 상단 \u{1F3C6}업데이트 배지가 이미 보여줍니다.',
+      '\u2728 <b>[결과] 시작 화면에 떠 있는 레이어가 하나도 없습니다.</b> 모든 버튼이 문서 흐름 안에 있어, 어떤 크기의 화면에서도 서로를 가리지 않습니다.',
+      '\u25B6 <b>[재배치] 게임 시작 버튼을 크게.</b> 이 화면에 온 이유는 대개 그것 하나라서, 나머지 둘보다 확실히 크게 놓았습니다.',
+      '\u26A1 <b>[신규] 바로 시작</b> \u2014 <b>일반전 \u00B7 클래식 \u00B7 3:3 팀전 \u00B7 튜토리얼 \u00B7 아케이드</b>를 메뉴에서 바로 누를 수 있습니다. "게임 시작 → 모드 고르기" 두 단계가 한 번으로 줄었습니다.',
+      '\u{1F3B4} <b>[재배치] 카드 뽑기</b>가 메뉴로 나왔습니다. 인벤토리 안에 묻혀 있어 두 번 들어가야 닿던 기능입니다.',
+      '\u{1F6D2} <b>[재배치] 인게임 버튼을 액션 독으로.</b> 상점 \u00B7 진화 \u00B7 스토킹 \u00B7 모드 \u00B7 파밍 버튼이 테이블 오른쪽 위에 겹겹이 떠 있어, <b>모바일 모드에서는 덱 뒤로 숨어 아예 누를 수 없었습니다.</b> 이제 낸 카드 아래에 <b>가로 한 줄</b>로 놓입니다 \u2014 어떤 화면 크기에서도 겹치지 않습니다.',
+      '\u{1F0CF} <b>[버그수정] 카드 크기가 고정됩니다.</b> 설명이 길면 카드가 위아래로 늘어나 손패 줄이 들쭉날쭉하던 문제를 고쳤습니다. 넘치는 설명은 잘리고, 전문은 <b>길게 눌러</b> 여는 상세창에서 봅니다.',
+      '\u{1F464} <b>[버그수정] 프로필 아이콘 옆 빈 동그라미</b>가 하나 더 그려지던 문제를 고쳤습니다. 휘장이 사진 옆에 따로 놓이고 있었습니다.',
+      '\u{1F3B2} <b>[버그수정] 랜덤 이벤트 \u00B7 룰렛</b>이 통째로 깨져 보이던 문제를 고쳤습니다. 세로로 굴러가야 할 목록이 가로로 깔려 있었고, 대상 뽑기 칸에는 아예 모양이 없었습니다.',
+      '\u2600\uFE0F <b>[버그수정] 시즌 패스 화면</b>이 한 줄로 눌려 찌그러지던 문제를 고쳤습니다. 무료/Pro 두 줄과 레벨 눈금이 제대로 세로로 묶입니다.',
+      '\u{1F3B0} <b>[버그수정] 상점 도박</b> 등급 색이 거의 보이지 않던 문제 \u2014 배경 \u00B7 위쪽 색띠 \u00B7 글자색까지 등급 색으로 물들여 위험도가 한눈에 들어옵니다.',
+      '\u{1F415} <b>[버그수정] 펫 아이콘</b>이 스탯창을 다 차지할 만큼 크게 나오던 문제를 고쳤습니다.',
+      '\u{1F527} <b>[버그수정] 개발자 모드</b>가 켜져도 아무 표시가 없어 "사라졌다"고 느껴지던 문제 \u2014 버전 배지가 <b>보라색 DEV 배지</b>로 바뀌고, 카드 더미에도 DEV 표시가 붙습니다.',
+      '\u{1F4CC} <b>[버그수정] 메뉴 포스트잇</b>이 시작 화면을 떠난 뒤에도 계속 떠 있으면서 인게임 버튼 위를 덮던 문제를 고쳤습니다.',
+      '\u{1F4F1} <b>[버그수정] 세로 화면</b>에서 중앙 테이블 칸이 0으로 눌리며 버튼들이 화면 밖으로 밀려나던 문제를 고쳤습니다.'
+    ]
+  },
   {
     version: 'Ver 12.0', date: '2026-08-20',
     items: [
@@ -29892,6 +30851,49 @@ function cardMarkRowHtml(c, cls){
   return `<div class="cmk-row ${cls||''}">${dia}${chips}</div>`;
 }
 
+/* [Ver 12.3] 손패 도크 접기/펴기
+   ─────────────────────────────────────────────────────────────────
+   손패는 화면 아래를 200px 가까이 차지한다. 상대 상태나 로그를 볼 때는
+   방해가 되므로, 필요할 때만 펴서 쓰도록 접을 수 있게 했다.
+   ▶ 접힌 상태는 body.hand-collapsed 한 클래스로만 표현한다(CSS가 전부 처리).
+   ▶ 접어 둔 채로 판이 넘어가도 유지되도록 localStorage에 남긴다.
+   ▶ 접혀 있어도 몇 장 들고 있는지는 버튼에 숫자로 보여준다. */
+function toggleHandDock(force){
+  const on = (typeof force === 'boolean')
+    ? document.body.classList.toggle('hand-collapsed', force)
+    : document.body.classList.toggle('hand-collapsed');
+  try{ localStorage.setItem('gw_handCollapsed', on ? '1' : '0'); }catch(e){}
+  syncHandDockBtn();
+  return on;
+}
+function syncHandDockBtn(){
+  const on = document.body.classList.contains('hand-collapsed');
+  const btn = document.getElementById('handToggleBtn');
+  if(btn){
+    const ic = btn.querySelector('.hand-toggle-ic');
+    const tx = btn.querySelector('.hand-toggle-tx');
+    if(ic) ic.textContent = on ? '▴' : '▾';
+    if(tx) tx.textContent = on ? '펴기' : '접기';
+  }
+  const n = document.getElementById('handToggleCount');
+  if(n){
+    let cnt = 0;
+    try{ const me = viewer(); cnt = (me && me.hand) ? me.hand.length : 0; }catch(e){}
+    n.textContent = on && cnt ? cnt + '장' : '';
+  }
+}
+/* 부팅 시 저장된 상태를 되살리고, H 키로도 여닫을 수 있게 한다 */
+try{
+  if(localStorage.getItem('gw_handCollapsed') === '1') document.body.classList.add('hand-collapsed');
+}catch(e){}
+document.addEventListener('keydown', (e)=>{
+  if(e.key !== 'h' && e.key !== 'H') return;
+  const t = e.target;
+  if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  if(!document.getElementById('screen-battle')?.classList.contains('active')) return;
+  toggleHandDock();
+});
+
 function renderHand(){
   const me = viewer();
   const area = document.getElementById('handArea');
@@ -29930,6 +30932,7 @@ function renderHand(){
 
   const doDealAnim = pendingDealAnimation;
   pendingDealAnimation = false;
+  try{ syncHandDockBtn(); }catch(e){}   // [Ver 12.3] 접힌 상태에서도 장수는 보이게
 
   me.hand.forEach((c,i)=>{
     const el = document.createElement('div');
@@ -55509,6 +56512,32 @@ window.__AUD = {
   yummy: 'data:audio/ogg;base64,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',
   baseball: 'data:audio/ogg;base64,T2dnUwACAAAAAAAAAAASof8GAAAAANKBR9gBE09wdXNIZWFkAQE4AcBdAAAAAABPZ2dTAAAAAAAAAAAAABKh/wYBAAAA+M2VvAGMT3B1c1RhZ3MMAAAATGF2ZjYxLjcuMTAwBAAAAB0AAABlbmNvZGVyPUxhdmM2MS4xOS4xMDAgbGlib3B1cxAAAABtYWpvcl9icmFuZD1pc29tEQAAAG1pbm9yX3ZlcnNpb249NTEyIgAAAGNvbXBhdGlibGVfYnJhbmRzPWlzb21pc28yYXZjMW1wNDFPZ2dTAACAuwAAAAAAABKh/wYCAAAAoTPyWjIDAwMDAwMDAwMDAwNONDhBP0RLS0pOQEE8RDtCRUNGW09dSz9ERkg7UVZCMzo3NzUwNdj//tj//tj//tj//tj//tj//tj//tj//tj//tj//tj//tj//mgL5eeKXLVUnNofVsjJ7gRbSOIaJg25YDH/rR1elg1++L1HOOz7mWpGM8FT0JZCtf/+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGiABd7kwr0WL0typ2RQ2hEfaBsJfS89QLnZPedTyP3D3uFLb3kN4TRXysS8vfi8WipSiWNohF8eigrkmofw+m0ZrLIsPM0LpT3+jZokuu5zGycyKvBdap+jDBgim9xHYy+NkBX2Xal8lb0uOWiX1/zlf2lEA69+wOpNstOjjcRikho/HP8acCR1muO0gLLYKP0F6sbQLFD6oAxJxRFv6vjccBNTUlHesuuR3yYvaIXoWo5DUumQOcq0QHswrc6pXvhVfT2l/ZTntqZMFM+GoJlZylbVXtIYX1z6btPfsGnDKJv6Z08MOkuizpP8aJf0QSIIoKU5EhmPMZ9Kuc1JEEWTk99WeMyLzCJvXQJ6eRjAcUSaamyhkPVUdya365kVcLs7qBMYMT45fNWcbEATekZovM0epqOfrkd7I49ydQvdYn05BY9qw4JY/ereXN+63u41fb0TCcBSapGgVyRdtFEXPA6ivYmshxP4ZyRPTC5ZreQMKcAqn000NU9ovJ853AWqRjyuzvUcqro8NZ8CbRpKOuBLL3DGN7Q55ND70gND/vrHur3PScjMgxuY44ZNQTXhO9swwp8Xz2gbYLIK8hCsOftl191ovNjpehbVHgdsDX+IrDyKXmFO1VX3yVAd5MU+KeCmC2EWHEPAV2TZw/FhmuwkSOhSQqL0vKN0XMml7dtKcT6pOGIt5mpnsZW9bGi8kZ3F1Pt1yrddlk9BfCu9Bw2hoqtqTDqMl+7qahHdOGeE0O306Qq0QqEjqK7V3aUeh190zYIB15RBbeTDGwpSpQQv1GZZ/1+bliCXImiXM8f0vid8hTnjuOUGwKihLo1NB/6j7E9+nJTqotye6SEoMLY0+8De0pKUQzRBAqxfwEYINmX0jmobBdsppc5olty3dPm83aKXg3S3krk8ukNnNVvDPFKU2gF0aJOWkIsXK3iuVk1keUOVj5P0RyoLa0sSRK/pmoCVPIORr5ZaRmiFYKnmqN7OH9Eh7egRik2CRYUE2o/HxXQaA3yFuAqi4NJcRlm40EwkYkCd5KAzJuzT104aoa+BhdHQCmiFZVX7WbsFJX/9Jn5FrXk14uEU6I97bcxezgyQqcAPXVRms3LmVMW9qvq5fpI/JhZo8jB/ut+Jfeo16OhiCMDVjbtqaJbdCxFAebUht7O1xt24MQD9MilG7LYhx1wgNtERoNg8gHcCPLD4Qetc/W43BNylojvLlwLIBbmx9DxolptC4xqTVt2mCuAwOXHQ/eTxw9GTCzkShxYQ5DvClUlAT5CLium0W7Sh3vuZpSStgOp8fixpPKk6dnQmBf55VxtohY6infTeLJS/LmgNFc3UrY1JkXP6DeUG1SqyyaiYLJq83WtrTUrgnPWh+t6Q7VuiYuk/LIfftHciGF28sPBdMOspb5Folxzy5m7o+h/o6+7oODYtqa7pcFg1J1gzB2IjQSXtgpBnhmlYS4VnMmAaQnm7l/Ya4SBEUVHpXINthjEbtxrlRIXKaJdI/KWxxIq4UJCCCflDYAloDnlbZHl948H5CFP6UMCUl5bAb5fPef3xF/jiCW77oyRw11O8CGPRkb/cVBPLmCK1jfFD6GiXOEUrBs49/goTJOMHvmm1uO8EhYX6T3myOoouJzXlDF6jvX9ZQ6O4Jrknl9w8v3ReJhLHQK8EquKCyr5+SbgytLJiwPRObVCw4Ij+OfJRnPjFJO8j11XsHY7YgZ7NFLgvkQeiK8UBIYZ9heEgnceBHM7lYZE6W9lLtFhsR+1V/JYyE9NsE9cq4kgQRci0U2rZhOdBfThLHT76J9E0fvTIeuO31IEEYXxI2J8gi1bgiCXkoii5ICCyTav9IUcDRi0rEbVaszvgkd3zmu39vX7DXQnl3Lm50ukmBknmBel8iXWVCCxCeTxq27qgotTmQ1GRBlhzuBSe3M3g38fHr8OpGwCPL+iO2Jpcgt8zDgPhcN7an9UpSkxaQSf+HVIF77zX6AjCX1MH8ha0EvlVAewgB01fWEOTUePYvM/ThgM8QhSgvwnowePMqP2oK/dyPYlu2Jbjlc+3MuimHSIWU7X0vj89RC74aR1aLh49I8sNA7r5xbmiIFaPqm1ZvLlL3VLYrqXuk2ibL/SM6GKaTqlu2JrcjSgFyyMYDUN+nEwSYFYffedhroPtsBIe7xvPKIv69dFGf1KytN7Q4gxflwLq2QDyhfJS6wRAwuBWzKjDNdcltq/YoRP/xdZ5bGFXyG2UAmkvlzmNiPt0ehHQq6b2ysRnexlIb5g72aYzfyqBpA6gXq+BvYErQZ/OW1mc6SxHVOzfC8KnQ9+O2KKYpLtA94IB9Tf5s0LAON2rca2fyMvYUmL2rkV0E20gH95F7zM4K3cIEkr/ScXzT3DMgQqXAvRW1fHGwROwwYy5GyVV1B6O2Jbx/bTlYiHyK2vdi9Di+hsnBC2sEfvqsJYr4RjuQTdPnKy/pCaE+iAYjtgNtjcOgUBYqt+RRHb8Mk/YlxOTXHYxju5Ey/HOi7orF2GdFl2DPyzrqmAU5pSmuB1hsnuyoN8SNFqXR3rG1YsruYAw+5D3zeo7Aqpo6O5404MHWpo1dn9k30G3JQYcsI7Yny5MmH7gvvkxMsSqleIaBGoNtSkNKYxdFR8NtjJiEY6flNJ1c9/4kfv33ivL7ptdnZJjuRnCgVmzJBLc0xVHDBpLlXGoJTc4lQIhJQfUj4zEJjwgjtiGuwrzVaVUMtXjKAP0/6VZ9pfjFF3NeZWbsG0UFn8wytzp1vxlpG2Gzw3m6rN4VfVTp/X+6Pb/p3WVR04azLqxONiC7yygg33Ibo36ha3pQhV3HXk246tKxlsc+fw6yN8YIWjKykdc0Xkq713y3LoaMhk2ONiFD93ZjEoX/+/DMS8RDhUxlxn+Xhc6HjgCHHlR2SLBaOffFbLzGsyC/Ks5/0DtEQ1fVScmGYGvANjYhWPmuecFWhLrepKa8GLC8v+2BoirFUAXCoFHfsA9zO/BoOA2Ktmq4k9llDc5tfecWiW4BK+o2I4Cv+gbknKQTGviWPVsqjh+rYPAlmrJ+vvr19wgtukGloTzyPW5vMREwqmaSGlgM6+fM5+VyNiFVL5xqzop4xaIynt8N1cu4lYQS9wGzng2pzjFw3T6KmFgWh4cw9tX9ak96BkF3+7cI5dI2JwSKAjNoN/epHgLZE9vgxOJSqH2Vx04T0A4OcxDkvUCBhf7FQoGNi21KDTuLv9O2JqqFtrO5oW5qA2HRFxwtK5T/ux5BAlfyN+ruHjl8VaJqSGHWVMx/crTFBrWD04bCh92Lk9PZ2dTAARGKQEAAAAAABKh/wYDAAAA93KKwh5LNi8sLUIpKSoqKi0/HyEjIBYWFhYWFhYWFhYWFhbYhVC3WwqCVpOGGsAvrURRfoLv6s4W6U2cShvlvI4wZi1BmUuADLdSZtu3ndcDecd7rCOotB0mEVyMoQbFDJH6pPaBbtDbOUUiIjjYUExyrcZZpOe653UZPqekUpFHkmzUC7xHxSbFX0N43K7ES0Nqo1MK/Mh0fzc7bF/rfe+RJEfYha8MyYkajchmGte63lc51VIJbJzt64QfSEw3QEFXxw2R2fFhCucz9J/5Mvx8SNiC6A5b6ERwc5nlCadfQFuLLghove4/rONhtHN/ZsNujjzhiSeGLLRYCJC32Ikc9advwi84nzd5LBeRIt6cvOYtEF6MDVSiBAIQxFioq0ti7Fh0PEWnrs9i2IcFPaOMXX1F6wgJrJ73f+8R0b2iWV40bjXJC6kbZAF/dDiCDTfzJSOJYAC6W//QzD9LfRrf3YArer+FCLmEF1vg2JxS+fRvPZPgxmsUt/+xYiHN5GUdvcTAWiTH0S6ugipkYjUoRTvgQ9TYskVJwJ+3T2af5R6gEmkPQi4QoRbSxoPwxY+iXV05V37walCynUtfhtiz4/8S6Af0VSMYq9ijlD9wM1Sf6hxena4AmfOizO0EV3jHfZiLrV6xhtiySRGEOn6gjORlcNyoPBlqVGDGd40UrCnxzH0Wb50EV3jHfZiKc8EvhtiySgsih/KAq7RM/Pal6hBXSd/xefQ47m6Q+fOizO0EV3jHfVCKnUvlhtiz7BU1V69UHwbJraWPbTsjWczkx5+/sEheQJ9uvEsztOSP3078egW/OWZNRmgL5OD66j50a5pufR6hzNrbrZwczr6VNug8Zopa5X2YALPsADCxB6kVnLYuC/eEinQWOL+/shofvfb97NuGhmgH0KTFaJ1VpUiE4jMoMEiiklQUwGE4lHrAC4eri41oB9CkxSXpL7ubicp/tW0ksPS23B3FkNds93uhK4eri5hoB9CkxSdEYvc8wW5muVTHMDgl23KP3Mj7xx+XAXnNFmuLiGgH0KTFKLFZAj9rZlcIYKK+4KR++/nYITrHALzVC4uYaAfJecjJV8CiEiN2ufcKNa5Z80uLiGgHyXnIyVfAohIjgNn3CjW4HvNLi5RoB8l5yMlXwKISI4DZ9wo1uB7zS4uEaAfJecjJV8CiEiOK+fcKNa5Z80uLkGgHyXnIyVfAohIjivn3CjWuWfNLi4BoB8l5yMlXwKISI5UZ9wo1rlnzS4uQaAfJecjJV8CiEiOfOfcKNbge80uLnGgHyXnIyVfAohIjnzn3CjW4HvNLi4xoB8l5yMlXwKISI6lZ9wo1uB7zS4ucaAfJecjJV8CiEiOpWfcKNbge80uLiGgHyXnIyVfAohIjs3n3CjWuWfNLi5hoB8l5yMlXwKISI7N59wo1uB7zS4uIaAfJecjJV8CiEiO9mfcKNbge80uLlA==',
 };
+</script>
+
+<button id="mood-chip" type="button" title="공책의 결 바꾸기"><span class="mc-dot"></span><span id="mood-chip-tx">줄노트</span></button>
+<script>
+/* 공책의 결 — 네 권을 순서대로 넘긴다. 고른 값은 남는다. */
+(function(){
+  var MOODS = [
+    { cls:'',              name:'줄노트'   },
+    { cls:'mood-draft',    name:'제도노트' },
+    { cls:'mood-doodle',   name:'낙서노트' },
+    { cls:'mood-charcoal', name:'먹지노트' }
+  ];
+  var KEY = 'ui-mood-v125';
+  var i = Math.max(0, MOODS.findIndex(function(m){ return m.cls === (localStorage.getItem(KEY) || ''); }));
+  var tx = document.getElementById('mood-chip-tx');
+  function apply(){
+    MOODS.forEach(function(m){ if (m.cls) document.body.classList.remove(m.cls); });
+    if (MOODS[i].cls) document.body.classList.add(MOODS[i].cls);
+    tx.textContent = MOODS[i].name;
+    try { localStorage.setItem(KEY, MOODS[i].cls); } catch(e){}
+  }
+  document.getElementById('mood-chip').addEventListener('click', function(){
+    i = (i + 1) % MOODS.length; apply();
+  });
+  apply();
+})();
 </script>
 
 </body>
