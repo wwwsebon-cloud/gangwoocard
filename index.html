@@ -1339,7 +1339,7 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
   color:var(--fg); cursor:pointer;
   transition:transform var(--t) var(--ease-spring), box-shadow var(--t) var(--ease), background var(--t) var(--ease);
 }
-.gc-pull:hover{ transform:translateY(-3px); background:var(--bg-2); box-shadow:var(--sh-ring), var(--sh-2); }
+.gc-pull:hover{ transform:translateY(-3px) scale(1.03); background:var(--bg-2); box-shadow:var(--sh-ring), var(--sh-2); }
 .gc-pull:active{ transform:translateY(-1px) scale(0.98); }
 .gc-pull:disabled{ opacity:0.34; pointer-events:none; }
 .gc-pull b{ font-size:13.5px; font-weight:700; }
@@ -1906,14 +1906,7 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 .mine-dig-ic{ font-size:40px; animation:nudgeY 0.6s var(--ease-in-out) infinite; }
 .mine-dig-t{ font-size:14px; font-weight:700; }
 .mine-dig-bar{ width:190px; height:5px; border-radius:var(--r-pill); background:var(--bg-3); overflow:hidden; }
-/* [버그수정] 로딩바가 안 차오르던 문제 — <i>에 width가 아예 지정된 적이 없어서
-   block 요소 기본값(부모 너비 100%)으로 처음부터 꽉 찬 채로 나타났다(애니메이션할 값의
-   변화 자체가 없었다). 시작 width를 0으로 두고, 오버레이가 뜬 직후 .on 클래스가 붙는
-   순간(showMineDigging 등에서 requestAnimationFrame 두 번 뒤) 100%로 전이시켜 실제로
-   차오르게 한다. 지속 시간은 각 호출부가 style="transition-duration:...ms"로 넘긴다
-   (상자 개봉 쪽은 존재하지도 않는 animation-duration을 쓰고 있었다 — 같이 고침). */
-.mine-dig-bar > i{ display:block; height:100%; width:0; background:var(--accent); transition:width linear; }
-.mine-dig-ov.on .mine-dig-bar > i{ width:100%; }
+.mine-dig-bar > i{ display:block; height:100%; background:var(--accent); transition:width var(--t) linear; }
 
 /* ---------- 우빈이의 수상한 상자 ---------- */
 .bx-tbls{ display:flex; flex-direction:column; gap:var(--sp-3); }
@@ -1988,11 +1981,7 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 
 .code-wrap{ display:flex; flex-direction:column; gap:var(--sp-3); }
 .code-row{ display:flex; gap:var(--sp-2); }
-/* [Ver 12.4.3 버그수정] text-transform:uppercase는 화면 표시만 바꾸고 실제 입력값은
-   그대로였다. 그런데 코드가 대소문자를 구분하는 방식이라(예: 소문자 전용 코드
-   imgangwoodeveloper090205), 사용자가 소문자로 쳐도 화면엔 대문자로만 보여
-   "소문자를 못 치는 것"처럼 느껴졌다. 표시를 실제 입력값과 일치시킨다. */
-.code-input{ flex:1; font-family:var(--font-mono); letter-spacing:0.08em; }
+.code-input{ flex:1; font-family:var(--font-mono); letter-spacing:0.08em; text-transform:uppercase; }
 .code-go{
   flex-shrink:0; padding:10px 18px; border-radius:var(--r-sm);
   background:var(--accent); color:var(--accent-fg); font-size:12.5px; font-weight:700; cursor:pointer;
@@ -2228,11 +2217,8 @@ body.reversed .turn-direction-ring svg{ animation-direction:reverse; }
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
   transition:transform var(--t) var(--ease-spring);
 }
-.draw-pile:hover{ transform:translateY(-3px); }
-.draw-pile:active{ transform:scale(0.95); }
-/* [버그수정] .disabled 클래스는 JS에서 계속 토글되고 있었지만 대응하는 CSS가 없어
-   실제로는 아무것도 막지 못했다(연타 방지는 JS의 turnActed 잠금이 담당, 이건 방어선 하나 추가). */
-.draw-pile.disabled{ pointer-events:none; cursor:default; }
+.draw-pile:hover{ transform:translateY(-3px) scale(1.06); }
+.draw-pile:active{ transform:translateY(-1px) scale(0.96); }
 .dp-stack{
   position:relative; width:64px; height:84px; border-radius:var(--r-sm);
   background:var(--bg-3);
@@ -2266,8 +2252,8 @@ body.reversed .turn-direction-ring svg{ animation-direction:reverse; }
   transition:background var(--t) var(--ease), color var(--t) var(--ease),
              box-shadow var(--t) var(--ease), transform var(--t) var(--ease-spring), opacity var(--t) var(--ease);
 }
-.shop-fab:hover{ background:var(--bg-3); color:var(--fg); transform:translateY(-2px); }
-.shop-fab:active{ transform:scale(0.95); }
+.shop-fab:hover{ background:var(--bg-3); color:var(--fg); transform:translateY(-2px) scale(1.05); }
+.shop-fab:active{ transform:translateY(0) scale(0.96); }
 .shop-fab-icon{ font-size:17px; line-height:1; }
 .shop-fab-label{ font-size:11.5px; font-weight:700; letter-spacing:-0.01em; }
 /* 지금 누를 수 있는 버튼만 색이 산다 */
@@ -2635,43 +2621,17 @@ body.team-battle-mode .p-name{ color:var(--fg) !important; }
 @keyframes vizBar{ from{ transform:scaleY(0.3); } to{ transform:scaleY(1); } }
 .p-card.bgm-playing{ box-shadow:inset 0 0 0 1px rgba(124,156,255,0.3); }
 /* [Ver 12.4.1] 오른쪽 아래는 손패 접기 버튼 자리다 — 음량 컨트롤이 그 위를 덮어
-   접기 버튼이 아예 안 눌렸다. 화면 위쪽(상단 바 옆)으로 올렸었다.
-   [Ver 12.4.3 버그수정] 그런데 오른쪽 위는 .zone-log(상황 로그 패널, 오른쪽 280px
-   칼럼)의 상단과 겹치는 자리였다 — 로그 패널 제목("상황")을 그대로 덮었다.
-   왼쪽 위(.zone-bots 칼럼, 236px)로 옮겼었으나, 그 자리는 상대 스탯 카드(HP/SH 게이지,
-   버프 목록)와 겹쳐 항상 뭔가를 가렸다.
-   [Ver 12.5] 결국 상시 노출되는 슬라이더 두 벌을 화면 아무 데나 얹는 방식 자체를 접고,
-   화면 하단 중앙에 작은 원형 버튼 하나(.avol-fab)만 상시 고정해두고, 클릭하면 그 위로
-   음량 패널(.avol-panel)이 펼쳐지는 팝오버 방식으로 바꾼다. 평소에는 아무것도 가리지 않는다. */
-.avol-fab{
-  position:fixed; left:50%; bottom:14px; transform:translateX(-50%);
-  z-index:130; width:38px; height:38px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  background:color-mix(in srgb,var(--bg-panel) 92%,transparent);
+   접기 버튼이 아예 안 눌렸다. 화면 위쪽(상단 바 옆)으로 올린다. */
+.bgm-ctl,.card-audio-ctl{
+  position:fixed; right:16px; top:62px; bottom:auto; z-index:120;
+  display:flex; align-items:center; gap:8px;
+  padding:8px 12px; border-radius:var(--r-pill);
+  background:color-mix(in srgb,var(--bg-panel) 90%,transparent);
   backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
   box-shadow:var(--sh-ring), var(--sh-2);
-  cursor:pointer; font-size:16px;
-  transition:background var(--t) var(--ease), transform var(--t-fast) var(--ease);
-}
-.avol-fab:hover{ background:var(--bg-3); }
-.avol-fab:active{ transform:translateX(-50%) scale(0.92); }
-.avol-fab.muted{ color:var(--fg-dim); }
-.avol-panel{
-  position:fixed; left:50%; bottom:60px; transform:translateX(-50%) translateY(6px);
-  z-index:130; width:220px;
-  display:flex; flex-direction:column; gap:10px;
-  padding:12px 14px; border-radius:14px;
-  background:color-mix(in srgb,var(--bg-panel) 94%,transparent);
-  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
-  box-shadow:var(--sh-ring), var(--sh-2);
   font-size:11px; color:var(--fg-dim);
-  opacity:0; pointer-events:none;
-  transition:opacity var(--t) var(--ease), transform var(--t) var(--ease);
 }
-.avol-panel.open{ opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0); }
-.avol-row{ display:flex; align-items:center; gap:8px; }
-.avol-row > input[type="range"]{ flex:1; min-width:0; }
-.avol-label{ width:20px; text-align:center; flex:none; font-size:13px; cursor:pointer; }
+.card-audio-ctl{ top:106px; bottom:auto; }
 .bgm-ctl-btn{
   width:26px; height:26px; border-radius:50%;
   display:flex; align-items:center; justify-content:center;
@@ -2831,8 +2791,8 @@ body.dragging-card-no-target .p-card{ opacity:0.5; }
 .hand-card .hc-power{ max-height:3.2em; overflow:hidden; }
 .hand-card .hc-desc{ min-height:52px; }
 /* 카드를 짚었을 때 확실히 떠오른다 */
-.hand-card:hover{ transform:translateY(-12px); z-index:3; filter:brightness(1.12); }
-.hand-card:active{ transform:translateY(-6px) scale(0.985); }
+.hand-card:hover{ transform:translateY(-12px) scale(1.045); z-index:3; filter:brightness(1.12); }
+.hand-card:active{ transform:translateY(-6px) scale(0.99); }
 .hand-card.disabled{ opacity:0.42; filter:grayscale(0.75); cursor:default; }
 .hand-card.disabled:hover{ transform:none; filter:grayscale(0.75); }
 /* 지금 낼 수 있는 반응 카드 */
@@ -2884,16 +2844,14 @@ body.hand-collapsed .hand-area{
    그래야 "판이 넓어진다"는 목적이 실제로 달성된다. */
 /* 손패 줄 전체 높이를 못박는다. .zone-hand는 보드 격자의 한 행이라
    자식만 줄여서는 행 높이가 따라 줄지 않는다 — 행 자체에 상한을 건다. */
-/* [Ver 12.4.3 버그수정] 이전에는 .zone-hand 행 전체에 max-height를 걸어서 접었는데,
-   그 안에 같이 들어있는 내 스탯창(.seat-me)까지 부모를 따라 92px로 잘려버렸다.
-   접혀야 하는 건 카드 목록(.zone-hand-cards)뿐이므로, .zone-hand 자체는 더 이상
-   높이를 제한하지 않고 .zone-hand-cards에만 상한을 건다 — 스탯창은 원래 높이를 유지한다. */
-body.hand-collapsed .zone-hand{ overflow:visible; }
-.zone-hand{ transition:max-height var(--t-slow) var(--ease); }
-body.hand-collapsed .zone-hand-cards{
-  max-height:104px; overflow:hidden; align-self:flex-start;
+body.hand-collapsed .zone-hand{
+  max-height:104px; overflow:hidden;
   transition:max-height var(--t-slow) var(--ease);
 }
+.zone-hand{ max-height:none; transition:max-height var(--t-slow) var(--ease); }
+body.hand-collapsed .zone-hand .seat-me{ max-height:92px; overflow:hidden; }
+body.hand-collapsed .zone-hand .seat-me .p-card{ min-height:0; }
+body.hand-collapsed .zone-hand-cards{ align-self:flex-start; }
 .hand-area{ transition:height var(--t-slow) var(--ease), opacity var(--t) var(--ease); }
 body.hand-collapsed .zone-hand{ padding-top:var(--sp-2); }
 
@@ -3008,7 +2966,7 @@ body.hand-collapsed .zone-hand{ padding-top:var(--sp-2); }
 }
 .pick-card .pk-desc::-webkit-scrollbar{ width:4px; }
 .pick-card .pk-desc::-webkit-scrollbar-thumb{ background:currentColor; opacity:0.3; border-radius:2px; }
-.pick-card:hover{ transform:translateY(-5px); filter:brightness(1.06); }
+.pick-card:hover{ transform:translateY(-5px) scale(1.035); filter:brightness(1.06); }
 .pick-card.picked{ box-shadow:inset 0 0 0 2px var(--accent), var(--sh-2); }
 .pk-mark{
   position:absolute; top:6px; right:6px; z-index:2;
@@ -3410,11 +3368,11 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
   display:flex; flex-direction:column; gap:6px; min-width:0; min-height:144px;
   padding:14px 15px; border-radius:var(--r);
   background:transparent; box-shadow:inset 0 0 0 1px var(--line);
-  transition:background var(--t) var(--ease), box-shadow var(--t) var(--ease);
+  transition:background var(--t) var(--ease), box-shadow var(--t) var(--ease), transform var(--t) var(--ease-spring);
   animation:fadeIn var(--t-slow) var(--ease) both;
 }
 /* 카드가 튀어 오르지 않는다 — 밝기와 테두리로만 반응해 시선이 흔들리지 않게 */
-.shop-slot:hover{ background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--fg-faint); }
+.shop-slot:hover{ background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--fg-faint); transform:scale(1.015); }
 .shop-slot.sold-out{ opacity:0.42; pointer-events:none; }
 .shop-slot-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .shop-slot-grade{ font-family:var(--font-mono); font-size:9.5px; font-weight:700; letter-spacing:0.06em; color:var(--fg-faint); }
@@ -3573,9 +3531,9 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 .gamble-tier{
   display:flex; flex-direction:column; gap:6px; padding:15px; border-radius:var(--r);
   background:var(--bg-2); cursor:pointer;
-  transition:transform var(--t) var(--ease), background var(--t) var(--ease), box-shadow var(--t) var(--ease);
+  transition:transform var(--t) var(--ease-spring), background var(--t) var(--ease), box-shadow var(--t) var(--ease);
 }
-.gamble-tier:hover{ transform:translateY(-3px); background:var(--bg-3); }
+.gamble-tier:hover{ transform:translateY(-2px); background:var(--bg-3); }
 .gamble-tier-left,.gamble-tier-right{ display:flex; flex-direction:column; gap:3px; }
 .gamble-tier-name{ font-size:13px; font-weight:700; }
 .gamble-tier-sub,.gamble-tier-limit,.gamble-tier-foot{ font-size:10.5px; color:var(--fg-faint); line-height:1.6; }
@@ -3604,37 +3562,152 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 .gamble-c-max   { --gc:#A98BEA; }
 .gamble-c-legend{ --gc:#E9B949; }
 .gamble-c-myth  { --gc:#FF4FA3; }
-/* 최상위 두 등급만 숨을 쉰다 — 여기서부터가 진짜 도박이라는 신호 */
-.gamble-c-legend,.gamble-c-myth{ animation:cardBreathe 3s var(--ease-in-out) infinite; --cfx:var(--gc); }
-.gamble-active-head{ display:flex; flex-direction:column; gap:4px; align-items:center; text-align:center; }
-.gamble-active-title{ font-size:15px; font-weight:700; }
-.gamble-active-sub,.gamble-note{ font-size:11px; color:var(--fg-faint); line-height:1.7; }
-.gamble-active-range{ font-family:var(--font-mono); font-size:12px; color:var(--tone-yellow); }
-.gamble-progress{ height:5px; border-radius:var(--r-pill); background:var(--bg-3); overflow:hidden; }
-.gamble-spin-btn{
-  padding:12px 26px; border-radius:var(--r-sm);
-  background:var(--accent); color:var(--accent-fg); font-size:13px; font-weight:700; cursor:pointer;
-  transition:background var(--t) var(--ease), transform var(--t-fast) var(--ease);
-}
-.gamble-spin-btn:hover{ background:var(--accent-dim); }
-.gamble-spin-btn:active{ transform:scale(0.96); }
-.gamble-footer{ display:flex; justify-content:center; gap:var(--sp-2); margin-top:var(--sp-3); }
+/* 최상위 등급만 숨을 쉰다 — 칸 수가 많아 하나로 줄였다(합성 부담 감소) */
+.gamble-c-myth{ animation:cardBreathe 3s var(--ease-in-out) infinite; --cfx:var(--gc); }
+/* 티어 카드가 순서대로 들어온다 */
+.gamble-tiers > *,.gamble-tier-grid > *{ animation:riseInSm var(--t-slow) var(--ease) both; }
+.gamble-tiers > *:nth-child(2){ animation-delay:0.04s; }
+.gamble-tiers > *:nth-child(3){ animation-delay:0.08s; }
+.gamble-tiers > *:nth-child(4){ animation-delay:0.12s; }
+.gamble-tiers > *:nth-child(5){ animation-delay:0.16s; }
+.gamble-tiers > *:nth-child(6){ animation-delay:0.20s; }
 
-/* 슬롯머신 */
-.gslot-row{ display:flex; gap:var(--sp-2); justify-content:center; }
-.gslot{
-  position:relative; width:96px; height:124px; border-radius:var(--r);
-  background:var(--bg-2); overflow:hidden;
-  display:flex; align-items:center; justify-content:center;
+/* [Ver 12.7] 도박 진행 화면 — 머리글 / 슬롯 / 풋터 3단. 움직이는 건 슬롯 안에서만. */
+.gamble-active-head{
+  display:flex; flex-direction:column; gap:5px; align-items:center; text-align:center;
+  padding-bottom:var(--sp-3);
 }
-.gslot-reel{ display:flex; flex-direction:column; animation:reelSpin 0.28s linear infinite; }
-@keyframes reelSpin{ from{ transform:translateY(0); } to{ transform:translateY(-33.33%); } }
+.gamble-active-title{ display:flex; align-items:center; justify-content:center; gap:8px; font-size:15.5px; font-weight:700; letter-spacing:-0.02em; }
+.gamble-active-sub,.gamble-note{ font-size:11.5px; color:var(--fg-faint); line-height:1.7; }
+.gamble-active-range{
+  padding:2px 8px; border-radius:var(--r-pill); box-shadow:inset 0 0 0 1px var(--line);
+  font-family:var(--font-mono); font-size:10.5px; font-weight:700; color:var(--tone-yellow);
+}
+/* 선택 개수 — 예전엔 5px 높이 게이지 스타일이 걸려 글자가 아예 안 보였다 */
+.gamble-progress{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:9px 15px; border-radius:var(--r-pill);
+  background:transparent; box-shadow:inset 0 0 0 1px var(--line);
+  font-size:11.5px; color:var(--fg-dim);
+}
+.gamble-progress b{ font-family:var(--font-mono); font-size:13px; color:var(--fg); }
+.gamble-spin-btn{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:13px 30px; border-radius:var(--r-pill);
+  background:var(--accent); color:var(--accent-fg);
+  font-size:13px; font-weight:700; letter-spacing:-0.01em; cursor:pointer;
+  transition:background var(--t) var(--ease), transform var(--t) var(--ease-spring), box-shadow var(--t) var(--ease);
+}
+.gamble-spin-btn:hover{ background:var(--accent-dim); transform:translateY(-1px); box-shadow:0 8px 22px -12px var(--accent); }
+.gamble-spin-btn:active{ transform:translateY(0) scale(0.97); }
+.gamble-spin-btn:disabled{ background:var(--bg-3); color:var(--fg-faint); pointer-events:none; box-shadow:none; transform:none; }
+.gamble-footer{ display:flex; align-items:center; justify-content:center; gap:var(--sp-3); margin-top:var(--sp-4); min-height:46px; }
+
+/* ---------- 슬롯머신 ----------
+   [Ver 12.7] 예전 릴은 대기 상태에서도 reelSpin이 무한히 돌았다. 릴 안에 텍스트 노드가
+   하나뿐이라 위로 33% 밀린 채 멈춰, "?"가 칸 밖으로 반쯤 나가 있었다 — UI가 깨져 보인 원인.
+   이제 회전 애니메이션은 .spinning 동안에만 붙고, 나머지 시간엔 아무것도 돌지 않는다. */
+.gslot-row{ display:flex; flex-wrap:wrap; gap:var(--sp-3); justify-content:center; align-items:stretch; }
+.gslot{
+  position:relative; width:112px; height:152px; border-radius:var(--r);
+  background:linear-gradient(165deg, var(--bg-2), var(--bg-3));
+  box-shadow:inset 0 0 0 1px var(--line);
+  overflow:hidden; cursor:default;
+  display:flex; align-items:center; justify-content:center;
+  transition:box-shadow var(--t) var(--ease), transform var(--t) var(--ease-spring), background var(--t) var(--ease);
+  animation:riseInSm var(--t-slow) var(--ease) both;
+}
+@media (max-width:520px){ .gslot{ width:98px; height:136px; } }
+/* 미공개 칸은 카드 뒷면처럼 — 옅은 사선 무늬로 "아직 덮여 있다"를 말한다 */
+.gslot:not(.open)::after{
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:repeating-linear-gradient(135deg, transparent 0 7px, rgba(255,255,255,0.022) 7px 14px);
+}
+.gslot-reel{
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-mono); font-size:26px; font-weight:700; color:var(--fg-faint);
+  line-height:1; will-change:transform, opacity;
+}
+.gslot.spinning{ box-shadow:inset 0 0 0 1px var(--fg-faint); }
+.gslot.spinning .gslot-reel{ color:var(--fg-dim); animation:reelSpin 0.16s linear infinite; }
+@keyframes reelSpin{
+  0%  { transform:translateY(-34%) scale(0.9); opacity:0; }
+  22% { transform:translateY(0) scale(1); opacity:1; }
+  78% { transform:translateY(0) scale(1); opacity:1; }
+  100%{ transform:translateY(34%) scale(0.9); opacity:0; }
+}
+.gslot.open{ cursor:pointer; background:var(--bg-2); }
 .gslot.open .gslot-reel{ display:none; }
-.gslot.open .gslot-face{ display:flex; animation:popIn var(--t) var(--ease-spring) both; }
-.gslot-face{ display:none; flex-direction:column; align-items:center; gap:4px; padding:10px; text-align:center; }
-.gslot-name{ font-size:11px; font-weight:700; }
-.gslot-desc{ font-size:9.5px; color:var(--fg-faint); line-height:1.5; }
-.gslot-mark{ position:absolute; top:5px; right:6px; font-size:11px; }
+.gslot.open .gslot-face{ display:flex; animation:gslotFace 0.34s var(--ease) both; }
+@keyframes gslotFace{
+  from{ opacity:0; transform:translateY(6px); }
+  to  { opacity:1; transform:none; }
+}
+.gslot-face{
+  display:none; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+  width:100%; height:100%; padding:11px 9px; text-align:center; overflow:hidden;
+}
+.gslot-name{ font-size:11.5px; font-weight:700; line-height:1.35; letter-spacing:-0.01em; overflow-wrap:anywhere; }
+.gslot-desc{
+  font-size:9.5px; color:var(--fg-faint); line-height:1.5; overflow-wrap:anywhere;
+  display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden;
+}
+/* 칸이 확정되는 순간의 한 번짜리 반응 */
+.gslot.lockin{ animation:gslotLock 0.34s var(--ease-spring); }
+@keyframes gslotLock{
+  0%  { transform:scale(1); }
+  45% { transform:scale(1.045); }
+  100%{ transform:scale(1); }
+}
+.gslot.open:hover{ transform:translateY(-3px); box-shadow:inset 0 0 0 1px var(--fg-faint), var(--sh-2); }
+/* 고른 칸 — 금색 테두리 + 체크. 체크는 골랐을 때만 나타난다(예전엔 늘 떠 있었다) */
+.gslot.picked{ box-shadow:inset 0 0 0 1.5px var(--accent), 0 0 20px -10px var(--accent); }
+.gslot.picked:hover{ transform:translateY(-3px); box-shadow:inset 0 0 0 1.5px var(--accent), var(--sh-2); }
+.gslot-mark{
+  position:absolute; top:6px; right:7px; z-index:2;
+  display:flex; align-items:center; justify-content:center;
+  width:17px; height:17px; border-radius:50%;
+  background:var(--accent); color:var(--accent-fg);
+  font-size:10px; font-weight:700; line-height:1;
+  opacity:0; transform:scale(0.5);
+  transition:opacity var(--t) var(--ease), transform var(--t) var(--ease-spring);
+}
+.gslot.picked .gslot-mark{ opacity:1; transform:scale(1); }
+.gslot.death{ box-shadow:inset 0 0 0 1.5px var(--tone-red); }
+
+/* [Ver 12.7] 도박 상호작용 — 커서를 올리거나 누를 때의 짧은 반응.
+   전부 transform/opacity만 건드려 리플로우 없이 끝난다. */
+/* 아직 안 열린 칸도 커서를 따라 살짝 반응한다 — "여기 뭔가 있다"는 신호 */
+.gslot:not(.open):hover{ box-shadow:inset 0 0 0 1px var(--fg-faint); transform:translateY(-2px); }
+.gslot:not(.open):hover .gslot-reel{ color:var(--fg-dim); transform:scale(1.08); }
+.gslot-reel{ transition:color var(--t) var(--ease), transform var(--t) var(--ease-spring); }
+/* 누르는 순간 — 카드가 눌려 들어간다 */
+.gslot.open:active{ transform:translateY(-1px) scale(0.965); transition-duration:var(--t-fast); }
+.gslot:not(.open):active{ transform:translateY(0) scale(0.975); transition-duration:var(--t-fast); }
+/* 고를 때 금테가 한 번 번진다 */
+.gslot.picked{ animation:gslotPick 0.42s var(--ease) both; }
+@keyframes gslotPick{
+  0%  { box-shadow:inset 0 0 0 1.5px var(--accent), 0 0 0 0 var(--accent); }
+  40% { box-shadow:inset 0 0 0 2px var(--accent), 0 0 26px -6px var(--accent); }
+  100%{ box-shadow:inset 0 0 0 1.5px var(--accent), 0 0 20px -10px var(--accent); }
+}
+/* 티어 카드 — 위쪽 색띠가 커서에 반응해 굵어진다 */
+.gamble-tier::before{ transition:height var(--t) var(--ease), opacity var(--t) var(--ease); opacity:0.85; }
+.gamble-tier:hover::before{ height:4px; opacity:1; }
+.gamble-tier:active{ transform:translateY(0) scale(0.985); transition-duration:var(--t-fast); }
+.gamble-tier:focus-visible,.gslot:focus-visible,.gamble-spin-btn:focus-visible{
+  outline:2px solid var(--accent); outline-offset:2px;
+}
+/* 돌리기 버튼 — 대기 중엔 아주 옅게 숨쉬고, 돌아갈 땐 멈춘다 */
+.gamble-spin-btn:not(:disabled){ animation:spinBtnIdle 2.6s var(--ease-in-out) infinite; }
+@keyframes spinBtnIdle{
+  0%,100%{ box-shadow:0 0 0 0 transparent; }
+  50%    { box-shadow:0 0 22px -12px var(--accent); }
+}
+.gamble-spin-btn:hover{ animation:none; }
+@media (prefers-reduced-motion:reduce){
+  .gslot,.gslot-reel,.gamble-spin-btn,.gamble-tier,.gamble-tier::before{ animation:none !important; transition:none !important; }
+}
 
 /* ---------- LAN 로비 ---------- */
 .lan-overlay{
@@ -4181,6 +4254,121 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 .auction-result{ font-size:13px; font-weight:700; text-align:center; animation:popIn var(--t) var(--ease-spring); }
 .hidden-bid{ filter:blur(6px); user-select:none; }
 
+/* ---------- [Ver 12.7] 경매 · 잡상인 리뉴얼 ----------
+   패널을 "머리글 / 매물 / 응찰 / 시계" 네 단으로 못 박고, 단 사이는 얇은 선으로만 나눈다.
+   색은 테두리로만 쓰고 채우지 않는다 — 매물 카드가 화면의 주인공이어야 한다. */
+#draftAuctionOverlay .auction-panel{ gap:0; padding:0; overflow:hidden; }
+#draftAuctionOverlay .auction-title{
+  display:flex; align-items:center; gap:9px;
+  padding:20px 24px 0; font-size:18px;
+}
+#draftAuctionOverlay .auction-subtitle{
+  display:block; padding:7px 24px 0;
+  font-size:11.5px; line-height:1.75; color:var(--fg-faint);
+}
+#draftAuctionOverlay .auction-estprice{
+  margin:14px 24px 0; padding:9px 13px; border-radius:var(--r-sm);
+  box-shadow:inset 0 0 0 1px var(--line); font-size:11.5px; text-align:center;
+}
+#draftAuctionOverlay .auction-estprice b{ color:var(--tone-yellow); }
+#draftAuctionOverlay .auction-stage{
+  margin-top:18px; padding:18px 24px; gap:var(--sp-4);
+  border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  align-items:flex-start;
+}
+#draftAuctionOverlay .auction-card-zone{ flex:1 1 260px; }
+#draftAuctionOverlay .auction-bids{ flex:1 1 240px; max-height:236px; gap:7px; padding-right:2px; }
+#draftAuctionOverlay .auction-timer-bar{ margin:0; border-radius:0; height:4px; }
+#draftAuctionOverlay .auction-timer-label{ padding:9px 24px 0; }
+#draftAuctionOverlay .auction-phase-note{ padding:4px 24px 0; text-align:center; }
+#draftAuctionOverlay .auction-result{ padding:10px 24px 20px; }
+#draftAuctionOverlay .auction-result:empty{ padding:0 0 20px; }
+/* 응찰 줄 — 채우기 없이 테두리로, 내 줄만 금테 */
+.auction-bid-row{
+  flex-direction:column; align-items:stretch; gap:6px;
+  background:transparent; box-shadow:inset 0 0 0 1px var(--line);
+  transition:box-shadow var(--t) var(--ease), transform var(--t) var(--ease-spring);
+}
+.auction-bid-row:hover{ box-shadow:inset 0 0 0 1px var(--fg-faint); }
+.auction-bid-row.mine{ box-shadow:inset 0 0 0 1.5px var(--accent); }
+.auction-bid-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; letter-spacing:0.04em; }
+.auction-bid-name{ font-size:12px; font-weight:700; letter-spacing:0; text-transform:none; color:var(--fg); }
+.auction-bid-amount{ font-size:17px; letter-spacing:-0.01em; }
+.auction-btn{
+  border-radius:var(--r-pill); box-shadow:inset 0 0 0 1px var(--line); background:transparent;
+  transition:background var(--t) var(--ease), box-shadow var(--t) var(--ease), transform var(--t) var(--ease-spring);
+}
+.auction-btn:hover{ background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--fg-faint); transform:translateY(-1px) scale(1.04); }
+.auction-btn:active{ transform:translateY(0) scale(0.95); }
+.auction-btn.plus{ color:var(--tone-yellow); }
+.auction-btn.minus{ color:var(--fg-dim); }
+.auction-btn.big{ font-weight:700; }
+
+/* ---------- [Ver 12.7] 베팅 리뉴얼 ----------
+   250ms마다 통째로 다시 그리던 것을 "골격은 한 번, 숫자만 갱신"으로 바꿨다(grpBetRender).
+   그래서 여기 애니메이션이 매 틱마다 처음부터 다시 돌지 않는다. */
+.bet-panel{ gap:0 !important; padding:0 !important; overflow:hidden; }
+.bet-head{ display:flex; flex-direction:column; gap:5px; padding:20px 24px 16px; }
+.bet-kicker{ font-size:9.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--fg-faint); }
+.bet-title{ display:flex; align-items:center; gap:8px; font-size:19px; font-weight:700; letter-spacing:-0.02em; }
+.bet-rule{ font-size:11.5px; line-height:1.75; color:var(--fg-faint); }
+.bet-rule b{ color:var(--fg-dim); }
+.bet-dial{
+  display:flex; flex-direction:column; align-items:center; gap:12px;
+  padding:20px 24px 22px; border-top:1px solid var(--line);
+}
+.bet-amount{
+  font-family:var(--font-mono); font-size:40px; font-weight:700; line-height:1;
+  letter-spacing:-0.02em; color:var(--tone-yellow);
+  transition:transform var(--t) var(--ease-spring);
+}
+.bet-amount.bump{ animation:betBump 0.26s var(--ease-spring); }
+@keyframes betBump{ 0%{ transform:scale(1); } 45%{ transform:scale(1.09); } 100%{ transform:scale(1); } }
+.bet-amount.spectate{ font-size:15px; color:var(--fg-faint); font-family:var(--font); }
+/* 내가 건 값이 50~500 사이 어디쯤인지 눈금 위에 표시한다 */
+.bet-rail{ position:relative; width:100%; max-width:340px; height:3px; border-radius:var(--r-pill); background:var(--bg-3); }
+.bet-rail > i{
+  position:absolute; top:50%; width:13px; height:13px; margin-left:-6.5px; border-radius:50%;
+  background:var(--accent); box-shadow:0 0 0 3px var(--bg-panel), 0 0 18px -4px var(--accent);
+  transform:translateY(-50%);
+  transition:left var(--t-slow) var(--ease-spring);
+}
+.bet-scale{ display:flex; justify-content:space-between; width:100%; max-width:340px; font-family:var(--font-mono); font-size:10px; color:var(--fg-faint); }
+.bet-steps{ display:flex; flex-wrap:wrap; gap:7px; justify-content:center; }
+.bet-step{
+  min-width:62px; padding:10px 15px; border-radius:var(--r-pill);
+  background:transparent; box-shadow:inset 0 0 0 1px var(--line);
+  font-family:var(--font-mono); font-size:12.5px; font-weight:700; color:var(--fg-dim); cursor:pointer;
+  transition:background var(--t) var(--ease), box-shadow var(--t) var(--ease), color var(--t) var(--ease), transform var(--t) var(--ease-spring);
+}
+.bet-step:hover{ background:var(--bg-2); color:var(--fg); box-shadow:inset 0 0 0 1px var(--fg-faint); transform:translateY(-1px) scale(1.05); }
+.bet-step:active{ transform:translateY(0) scale(0.95); }
+.bet-step.up{ color:var(--tone-yellow); }
+.bet-step:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+/* 남들이 건 값 */
+.bet-board{ display:flex; flex-direction:column; gap:9px; padding:16px 24px 18px; border-top:1px solid var(--line); }
+.bet-board-t{ font-size:9.5px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--fg-faint); }
+.bet-rows{ display:grid; grid-template-columns:repeat(auto-fill,minmax(122px,1fr)); gap:7px; }
+.bet-row{
+  display:flex; align-items:baseline; justify-content:space-between; gap:8px;
+  padding:9px 12px; border-radius:var(--r-sm);
+  box-shadow:inset 0 0 0 1px var(--line);
+  transition:box-shadow var(--t) var(--ease);
+  animation:riseInSm var(--t) var(--ease) both;
+}
+.bet-row.me{ box-shadow:inset 0 0 0 1.5px var(--accent); }
+.bet-row-name{ font-size:11.5px; color:var(--fg-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bet-row.me .bet-row-name{ color:var(--fg); font-weight:700; }
+.bet-row-val{ font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--fg); }
+.bet-foot{ display:flex; align-items:center; gap:10px; padding:0 24px 18px; }
+.bet-clock{ flex:1; height:3px; border-radius:var(--r-pill); background:var(--bg-3); overflow:hidden; }
+.bet-clock > i{ display:block; height:100%; background:var(--accent); transition:width 0.25s linear; }
+.bet-left{ font-family:var(--font-mono); font-size:11px; color:var(--fg-faint); min-width:44px; text-align:right; }
+@media (max-width:520px){ .bet-amount{ font-size:32px; } .bet-step{ min-width:54px; padding:9px 12px; } }
+@media (prefers-reduced-motion:reduce){
+  .bet-amount,.bet-step,.bet-rail > i,.auction-btn,.auction-bid-row{ animation:none !important; transition:none !important; }
+}
+
 /* ---------- 맞히기 (청부업자 · 자경단원) ---------- */
 .guess-head{ font-size:14px; font-weight:700; text-align:center; }
 .guess-target{ font-size:12.5px; color:var(--fg-dim); text-align:center; }
@@ -4632,7 +4820,8 @@ body.mobile-mode .nm-hub-btn small{ display:none; }
   .death-toast-layer,.ach-toast-layer{ left:12px; right:12px; top:52px; }
   .death-toast,.ach-toast{ min-width:0; max-width:none; }
   .lan-gchat{ left:12px; right:12px; width:auto; }
-  .avol-panel{ width:min(240px, calc(100vw - 24px)); }
+  .bgm-ctl{ left:12px; right:12px; top:56px; }
+  .card-audio-ctl{ left:12px; right:12px; top:98px; }
 }
 
 /* ---- 아주 낮은 화면(가로 눕힘) — 세로로 쌓으면 아무것도 안 보인다 ---- */
@@ -4832,8 +5021,7 @@ body.mobile-mode .nm-hub-btn small{ display:none; }
 .cooling{ opacity:0.45; pointer-events:none; }
 /* 로딩 화면에서 자리에 합류한 봇 */
 .loading-bot-slot.joined{ box-shadow:inset 0 0 0 1px var(--accent); animation:popIn var(--t) var(--ease-spring); }
-/* 슬롯이 확정되는 순간 */
-.gslot.lockin{ animation:beat 0.32s var(--ease-spring); }
+
 /* 개발자 모드에서 원하는 카드를 직접 뽑을 수 있는 더미 */
 .draw-pile.dev-on .dp-stack{
   background:rgba(124,58,237,0.16);
@@ -4910,12 +5098,10 @@ body.paper-skin{ }
 
    <body class="ink"> 의 ink 한 단어만 지우면 12.0 원본으로 즉시 복귀한다.
    ===================================================================== */
-/* [Ver 12.4.3 버그수정] 지금까지 body.ink(연필/종이 스킨)는 force-dark(다크 모드) 여부와
-   무관하게 항상 같은 밝은 종이색만 썼다 — "다크 모드"를 켜도 이 블록이 밝은 --bg를
-   덮어써서 화면이 전혀 어두워지지 않았던 원인이다. .ink 안에서도 다크/라이트를
-   갈라, 다크 모드일 때는 실제로 어두운 팔레트를 쓰게 한다. */
 body.ink,
-body.ink .theme-light{
+body.ink .theme-light,
+body.ink.force-dark,
+body.ink.force-dark .theme-light{
   --bg:        #FBFAF6;
   --bg-panel:  #FFFFFF;
   --bg-2:      #F4F2EC;
@@ -4965,60 +5151,6 @@ body.ink .theme-light{
   --font:         'Jua', 'Gowun Dodum', 'Noto Sans KR', sans-serif;
   --font-display: 'Jua', 'Gowun Dodum', 'Noto Sans KR', sans-serif;
   --card-bg: #FFFFFF;
-}
-/* [Ver 12.4.3 신규] ink 스킨의 다크 모드 버전 — 종이가 아니라 어두운 잉크 노트 느낌.
-   폰트·그림자 스타일(연필 느낌)은 위 블록과 동일하게 유지하고, 색만 어둡게 뒤집는다. */
-body.ink.force-dark,
-body.ink.force-dark .theme-light{
-  --bg:        #16140F;
-  --bg-panel:  #201D17;
-  --bg-2:      #29251D;
-  --bg-3:      #332E24;
-  --bg-hover:  rgba(255,252,244,0.06);
-  --bg-press:  rgba(255,252,244,0.11);
-
-  --fg:        #F1EEE4;
-  --fg-dim:    #B9B2A0;
-  --fg-faint:  #85806F;
-  --white:     #F1EEE4;
-
-  --line:      rgba(255,252,244,0.28);
-  --line-soft: rgba(255,252,244,0.14);
-  --line-hard: rgba(255,252,244,0.42);
-  --border:    var(--line);
-
-  --accent:      #D8D2C0;
-  --accent-dim:  #B8B29E;
-  --accent-weak: rgba(216,210,192,0.12);
-  --accent-fg:   #16140F;
-  --danger:      #E08178;
-
-  --tone-red:        #E08178;  --tone-red-soft:      #F0B4AC;
-  --tone-yellow:     #D6B558;  --tone-yellow-soft:   #E9D394;
-  --tone-green:      #6FC79A;  --tone-green-soft:    #A6E2C1;
-  --tone-blue:       #85A8E8;  --tone-blue-soft:     #B7CBF2;
-  --tone-brown:      #C4A17E;  --tone-brown-soft:    #DCC4A6;
-  --tone-purple:     #B2A0E0;  --tone-purple-soft:   #D3C7F0;
-  --tone-orange:     #E0A26B;  --tone-orange-soft:   #EEC6A0;
-  --tone-skyblue:    #7CC6D8;  --tone-skyblue-soft:  #ABDEE9;
-  --tone-pink:       #E0A0BE;  --tone-pink-soft:     #F0C8DB;
-  --tone-black:      #A19C8E;  --tone-black-soft:    #C9C5B8;
-
-  --sh-1: 2px 2px 0 rgba(0,0,0,0.35);
-  --sh-2: 3px 4px 0 rgba(0,0,0,0.40);
-  --sh-3: 5px 7px 0 rgba(0,0,0,0.45);
-  --sh-ring: 0 0 0 1.6px var(--line);
-
-  --font:         'Jua', 'Gowun Dodum', 'Noto Sans KR', sans-serif;
-  --font-display: 'Jua', 'Gowun Dodum', 'Noto Sans KR', sans-serif;
-  /* [Ver 12.4.4] 카드 배경만 어둡게 바꿔놨는데 글씨 색(--card-fg 등)은 :root의
-     "항상 검정 글씨" 고정값을 그대로 물려받아, 어두운 카드 위에 어두운 글씨가
-     겹쳐 거의 안 보였다. 카드 전용 색상도 배경에 맞춰 다크 세트로 뒤집는다. */
-  --card-bg:    #201D17;
-  --card-fg:    #F1EEE4;
-  --card-dim:   #B9B2A0;
-  --card-faint: #85806F;
-  --card-atk:   #D8D2C0;
 }
 body.ink{
   background:var(--bg); color:var(--fg);
@@ -5293,7 +5425,7 @@ body.high-contrast.theme-light-shell{
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 12.4.4</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 12.5.1</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -6817,10 +6949,29 @@ function bgmSetVolume(v){
   bgmApply();
 }
 
-/* [Ver 12.5] 배틀 화면 하단 중앙의 통합 음량 버튼(avol-fab) 안에, 이 BGM 줄을 채워 넣는다.
-   패널 자체의 생성/펼침 여부는 avolRenderCtl()이 맡고, 여기서는 그 안의 한 행만 갱신한다. */
+/* 배틀 화면 우상단(경매 배지 아래)에 작은 토글 + 음량 게이지를 붙인다 */
 function bgmRenderCtl(){
-  try{ avolRenderCtl(); }catch(e){}
+  const battle = document.getElementById('screen-battle');
+  if(!battle) return;
+  let ctl = document.getElementById('bgmCtl');
+  if(!bgmShouldPlay()){ if(ctl) ctl.remove(); return; }
+  if(!ctl){
+    ctl = document.createElement('div');
+    ctl.id = 'bgmCtl';
+    ctl.className = 'bgm-ctl';
+    ctl.innerHTML = '<button class="bgm-ctl-btn" id="bgmCtlBtn" onclick="bgmToggle()" title="BGM 켜기/끄기">🎵</button>'
+      + '<input type="range" id="bgmCtlVol" min="0" max="100" step="1" oninput="bgmSetVolume(this.value)" title="BGM 음량">';
+    battle.appendChild(ctl);
+  }
+  const btn = document.getElementById('bgmCtlBtn');
+  const rng = document.getElementById('bgmCtlVol');
+  if(btn){ btn.textContent = bgmOn ? '🎵' : '🔇'; btn.classList.toggle('muted', !bgmOn); }
+  if(rng){
+    const pct = Math.round(bgmVol*100);
+    if(document.activeElement !== rng) rng.value = pct;
+    rng.style.setProperty('--bgm-pct', pct + '%');
+  }
+  ctl.classList.toggle('off', !bgmOn);
 }
 
 /* ===================== [Ver 7.2] 카드 음원 (효과음 / 카드 고유 BGM) =====================
@@ -7355,88 +7506,29 @@ function setCardAudioEnabled(on){
   }
   try{ cardAudioRenderCtl(); }catch(e){}
 }
-/* [Ver 12.5] 마찬가지로 통합 패널의 카드 음원 줄만 갱신한다. */
+/* 배틀 화면의 카드 음원 토글 + 음량 게이지 */
 function cardAudioRenderCtl(){
-  try{ avolRenderCtl(); }catch(e){}
-}
-
-/* ===================== [Ver 12.5] 하단 통합 음량 버튼 =====================
-   기존에는 BGM 토글(.bgm-ctl)과 카드 음원 토글(.card-audio-ctl)이 화면 위쪽에
-   상시 떠 있는 슬라이더 두 벌이었는데, 자리를 어디로 옮겨도 상대 스탯 카드나
-   로그 패널 같은 다른 UI와 계속 겹쳐서 가렸다.
-   이제 화면 하단 중앙에 작은 원형 버튼(🔊) 하나만 상시 띄워두고, 클릭하면 그 위로
-   음량 패널이 펼쳐지는 팝오버로 바꾼다. 평소엔 버튼 하나뿐이라 아무것도 가리지 않는다. */
-let avolPanelOpen = false;
-function avolToggleOpen(e){
-  if(e) e.stopPropagation();
-  avolPanelOpen = !avolPanelOpen;
-  avolRenderCtl();
-}
-function avolClosePanel(){
-  if(!avolPanelOpen) return;
-  avolPanelOpen = false;
-  avolRenderCtl();
-}
-// 패널 바깥을 클릭하면 닫힌다
-document.addEventListener('click', (e)=>{
-  if(!avolPanelOpen) return;
-  const panel = document.getElementById('avolPanel');
-  const fab = document.getElementById('avolFab');
-  if(panel && (panel.contains(e.target) || (fab && fab.contains(e.target)))) return;
-  avolClosePanel();
-});
-
-function avolRenderCtl(){
   const battle = document.getElementById('screen-battle');
   if(!battle) return;
-  const showBgmRow = bgmShouldPlay();
-  const showCardRow = !!gameActive;
-  let root = document.getElementById('avolRoot');
-  if(!showBgmRow && !showCardRow){ if(root) root.remove(); return; }
-  if(!root){
-    root = document.createElement('div');
-    root.id = 'avolRoot';
-    root.innerHTML =
-      '<button class="avol-fab" id="avolFab" onclick="avolToggleOpen(event)" title="음량 설정">🔊</button>'
-      + '<div class="avol-panel" id="avolPanel">'
-        + '<div class="avol-row" id="avolBgmRow">'
-          + '<span class="avol-label" id="avolBgmBtn" onclick="bgmToggle()" title="BGM 켜기/끄기">🎵</span>'
-          + '<input type="range" id="bgmCtlVol" min="0" max="100" step="1" oninput="bgmSetVolume(this.value)" title="BGM 음량">'
-        + '</div>'
-        + '<div class="avol-row" id="avolCardRow">'
-          + '<span class="avol-label" id="avolCardBtn" onclick="cardAudioToggle()" title="카드 효과음/BGM 켜기·끄기">🔊</span>'
-          + '<input type="range" id="cardAudioCtlVol" min="0" max="100" step="1" oninput="cardAudioSetVolume(this.value)" title="카드 효과음/BGM 음량">'
-        + '</div>'
-      + '</div>';
-    battle.appendChild(root);
+  let ctl = document.getElementById('cardAudioCtl');
+  if(!gameActive){ if(ctl) ctl.remove(); return; }
+  if(!ctl){
+    ctl = document.createElement('div');
+    ctl.id = 'cardAudioCtl';
+    ctl.className = 'bgm-ctl card-audio-ctl';
+    ctl.innerHTML = '<button class="bgm-ctl-btn" id="cardAudioCtlBtn" onclick="cardAudioToggle()" title="카드 효과음/BGM 켜기·끄기">🔊</button>'
+      + '<input type="range" id="cardAudioCtlVol" min="0" max="100" step="1" oninput="cardAudioSetVolume(this.value)" title="카드 효과음/BGM 음량">';
+    battle.appendChild(ctl);
   }
-  const bgmRow = document.getElementById('avolBgmRow');
-  const cardRow = document.getElementById('avolCardRow');
-  if(bgmRow) bgmRow.style.display = showBgmRow ? '' : 'none';
-  if(cardRow) cardRow.style.display = showCardRow ? '' : 'none';
-
-  const bgmBtn = document.getElementById('avolBgmBtn');
-  const bgmRng = document.getElementById('bgmCtlVol');
-  if(bgmBtn) bgmBtn.textContent = bgmOn ? '🎵' : '🔇';
-  if(bgmRng){
-    const pct = Math.round(bgmVol*100);
-    if(document.activeElement !== bgmRng) bgmRng.value = pct;
-  }
-
-  const cardBtn = document.getElementById('avolCardBtn');
-  const cardRng = document.getElementById('cardAudioCtlVol');
-  if(cardBtn) cardBtn.textContent = cardAudioOn ? '🔊' : '🔈';
-  if(cardRng){
+  const btn = document.getElementById('cardAudioCtlBtn');
+  const rng = document.getElementById('cardAudioCtlVol');
+  if(btn){ btn.textContent = cardAudioOn ? '🔊' : '🔈'; btn.classList.toggle('muted', !cardAudioOn); }
+  if(rng){
     const pct = Math.round(cardAudioVol*100);
-    if(document.activeElement !== cardRng) cardRng.value = pct;
+    if(document.activeElement !== rng) rng.value = pct;
+    rng.style.setProperty('--bgm-pct', pct + '%');
   }
-
-  // 대표 아이콘: 카드 음원 상태를 우선 반영(더 자주 쓰이는 설정), 없으면 BGM 상태
-  const fab = document.getElementById('avolFab');
-  const panel = document.getElementById('avolPanel');
-  const repOn = showCardRow ? cardAudioOn : bgmOn;
-  if(fab){ fab.textContent = repOn ? '🔊' : '🔈'; fab.classList.toggle('muted', !repOn); }
-  if(panel) panel.classList.toggle('open', avolPanelOpen);
+  ctl.classList.toggle('off', !cardAudioOn);
 }
 
 const YACHA_DEATHMATCH_FROM = 20;  // 이 바퀴부터 데스매치
@@ -8352,8 +8444,8 @@ function startDraftAuction(onDone){
   overlay.className = 'auction-overlay';
   overlay.innerHTML = `
     <div class="auction-panel">
-      <div class="auction-title">🔨 경매</div>
-      <div class="auction-subtitle">${DRAFT_AUCTION_SECONDS}초 동안 5골드 단위로 베팅하세요. 낙찰된 매물은 <b>즉시 손패로</b> 들어옵니다.<br>${DRAFT_AUCTION_OPEN_SECONDS}초 이후에는 남들의 베팅이 가려집니다. 최고액이 같으면 <b>동액자 전원</b>이 낙찰받습니다.</div>
+      <div class="auction-title">${window.__peddlerMode ? '🎒 잡상인' : '🔨 경매'}</div>
+      <div class="auction-subtitle">${window.__peddlerMode ? '수상한 잡상인이 물건을 펼쳤습니다 — 매물은 <b>A등급 이상 카드 3장</b>입니다.<br>' : ''}${DRAFT_AUCTION_SECONDS}초 동안 5골드 단위로 베팅하세요. 낙찰된 매물은 <b>즉시 손패로</b> 들어옵니다.<br>${DRAFT_AUCTION_OPEN_SECONDS}초 이후에는 남들의 베팅이 가려집니다. 최고액이 같으면 <b>동액자 전원</b>이 낙찰받습니다.</div>
       <div class="auction-estprice">🏷 상점 구매가 기준 예상가 <b>${fmtWon(estPrice)}</b>${(()=>{
         const t = yachaAuctionRampProgress();
         if(t <= 0) return '';
@@ -11072,20 +11164,24 @@ function renderSettingsScreen(){
   const specialBgmVolPct = Math.round(((typeof bgmVol !== 'undefined') ? bgmVol : 0.45) * 100);
   wrap.innerHTML = `
     <div class="settings-list">
-      <div class="setting-row" style="cursor:pointer;" onclick="goToChangelog()">
-        <div class="setting-meta">
-          <div class="setting-name">🏆 업데이트 로그</div>
-          <div class="setting-desc">지금까지의 변경사항을 버전별로 확인합니다.</div>
-        </div>
-      </div>
       <div class="setting-row">
         <div class="setting-meta">
           <div class="setting-name">다크 모드</div>
-          <div class="setting-desc">켜면 검정 바탕·흰 글씨, 끄면 흰 바탕·검정 글씨로 메뉴·전투 화면 전체가 바뀝니다.</div>
+          <div class="setting-desc">검정 바탕·흰 글씨. 인게임 기본 테마입니다.</div>
         </div>
         <label class="setting-switch">
           <input type="checkbox" ${!isLight ? 'checked' : ''} onchange="if(this.checked) setTheme('dark'); else setTheme('light')">
           <span>${!isLight ? 'ON' : 'OFF'}</span>
+        </label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-meta">
+          <div class="setting-name">라이트 모드</div>
+          <div class="setting-desc">흰 바탕·검정 글씨. 메뉴·전투 화면 전체를 밝은 테마로 전환합니다.</div>
+        </div>
+        <label class="setting-switch">
+          <input type="checkbox" ${isLight ? 'checked' : ''} onchange="if(this.checked) setTheme('light'); else setTheme('dark')">
+          <span>${isLight ? 'ON' : 'OFF'}</span>
         </label>
       </div>
       <div class="settings-audio-head">🎮 게임 플레이</div>
@@ -13106,7 +13202,6 @@ function mailRewardText(r){
   if(r.pickaxe) parts.push(`⛏️ 곡괭이 ${r.pickaxe.toLocaleString()}개`);          // [Ver 9.11]
   if(r.goldPickaxe) parts.push(`🪙 개쩌는 곡괭이 ${r.goldPickaxe.toLocaleString()}개`); // [Ver 9.16]
   if(r.boxKeys) parts.push(`🔑 상자 열쇠 ${r.boxKeys.toLocaleString()}개`);        // [Ver 9.16]
-  if(r.cream) parts.push(`☀️ 썬크림 ${r.cream.toLocaleString()}개`);              // [Ver 12.4.4]
   // [Ver 9.13.1] 등급 확정 진화석 뽑기권 — { tier:'Ephemeral', n:1 }
   if(r.evoPick && r.evoPick.tier) parts.push(`🎫 ${r.evoPick.tier} 확정 진화석 뽑기권 ${(r.evoPick.n||1).toLocaleString()}장`);
   return parts.length ? parts.join(' · ') : '보상 없음';
@@ -13125,7 +13220,6 @@ function claimMail(id){
     if(m.reward.pickaxe) grantPickaxe(m.reward.pickaxe);      // [Ver 9.11] 곡괭이
     if(m.reward.goldPickaxe) grantGoldPickaxe(m.reward.goldPickaxe); // [Ver 9.16] 개쩌는 곡괭이
     if(m.reward.boxKeys) grantBoxKeys(m.reward.boxKeys);      // [Ver 9.16] 상자 열쇠
-    if(m.reward.cream) grantCream(m.reward.cream);            // [Ver 12.4.4] 시즌 패스 썬크림
     // [Ver 9.13.1] 등급 확정 진화석 뽑기권
     if(m.reward.evoPick && m.reward.evoPick.tier) grantEvoPick(m.reward.evoPick.tier, m.reward.evoPick.n||1);
   }
@@ -13586,16 +13680,7 @@ async function fbFetchTop(boardKey, n){
 const BACKUP_KEYS = ['stats','achievements','cardDex','cardMastery','masteryRank','evolved','titles',
                      'equippedTitle','artifacts','pickaxe','goldPickaxe','boxKeys','gachaTickets','pets','equippedPet',
                      'evoStones','evoClaws','evoPicks','profile','exp','ubinite','redeemed','mailbox',
-                     'bio','friendCode','friends',   // [Ver 10.5] 상태메시지 · 친구 코드 · 친구 목록
-                     /* [버그수정] 클래스·시즌 패스가 백업이 안 되던 문제 — Ver 11.5(클래스·시즌)와
-                        Ver 11.8(랩터코인·와일드 진화석·시즌 패스·휘장) 도입 당시 이 목록에 추가하는
-                        걸 빠뜨렸다. 그래서 기기를 바꾸거나 복원하면 클래스·시즌 패스 진행도만
-                        통째로 사라졌다. seasonMigrated·seasonId·genesisSeasonSnap을 같이 넣지
-                        않으면, 복원된 classState가 다음 로드 때 "마이그레이션 안 됨"으로 오인되어
-                        migrateToSeasonClassSystem()이 곧바로 클래스를 1로 되돌려버리므로 반드시
-                        함께 백업한다. */
-                     'classState','seasonStats','seasonMigrated','seasonId','genesisSeasonSnap',
-                     'arcade','wildStones','pass','frames','frameOn'];
+                     'bio','friendCode','friends'];   // [Ver 10.5] 상태메시지 · 친구 코드 · 친구 목록
 /* [Ver 9.14] 백업을 뜨기 전에 메모리에만 있는 값을 전부 localStorage로 내려쓴다.
    백업은 localStorage를 읽어가므로, 아직 저장되지 않은 최신 진행도가 있으면 그대로 누락된다.
    (예: STATS는 10초 간격 타이머로만 저장돼, 직전 판의 기록이 빠질 수 있었다) */
@@ -13618,14 +13703,6 @@ function flushPersistentCaches(){
   call(typeof saveArtifacts    !== 'undefined' && saveArtifacts);
   call(typeof saveMailbox      !== 'undefined' && saveMailbox);
   call(typeof saveRedeemed     !== 'undefined' && saveRedeemed);
-  /* [버그수정] 클래스·시즌 패스 백업 누락 — 아래 저장 함수들이 flush 목록에 빠져 있어
-     백업 시점까지 메모리에만 있던 최신 클래스/패스 진행도가 누락될 수 있었다. */
-  call(typeof saveClassToStorage !== 'undefined' && saveClassToStorage);
-  call(typeof saveSeasonStats  !== 'undefined' && saveSeasonStats);
-  call(typeof saveArcade       !== 'undefined' && saveArcade);
-  call(typeof saveWildStones   !== 'undefined' && saveWildStones);
-  call(typeof savePass         !== 'undefined' && savePass);
-  call(typeof saveFrames       !== 'undefined' && saveFrames);
 }
 function buildBackupPayload(){
   try{ flushPersistentCaches(); }catch(e){}
@@ -13672,16 +13749,6 @@ function invalidatePersistentCaches(){
      (equippedTitle은 getEquippedTitle()이 매번 localStorage를 직접 읽어 캐시가 없다 — 안전) */
   try{ OWNED_PETS = null; }catch(e){}
   try{ loadPlayerProfileFromStorage(); }catch(e){}
-  /* [버그수정] 클래스·시즌 패스 복원 누락과 짝을 이루는 캐시 무효화 —
-     classState·seasonStats는 즉시 다시 읽고, ARCADE·WILD_STONES·PASSDATA·OWNED_FRAMES는
-     게으른 캐시라 null로 비워 다음 load*() 호출 때 복원된 값을 새로 읽게 한다.
-     (frameOn/equippedFrame()은 캐시 없이 매번 localStorage를 직접 읽어 여기서 손댈 게 없다) */
-  try{ loadClassFromStorage(); }catch(e){}
-  try{ loadSeasonStats(); }catch(e){}
-  try{ ARCADE = null; }catch(e){}
-  try{ WILD_STONES = null; }catch(e){}
-  try{ PASSDATA = null; }catch(e){}
-  try{ OWNED_FRAMES = null; }catch(e){}
   /* ② 시작할 때 한 번만 읽는 스칼라 — 직접 다시 읽어준다 */
   try{ const v = parseInt(localStorage.getItem(STORAGE_KEYS.evoClaws),10);     if(Number.isFinite(v)) evoClaws = Math.max(0, v); }catch(e){}
   try{ const v = parseInt(localStorage.getItem(STORAGE_KEYS.gachaTickets),10); if(Number.isFinite(v)) gachaTickets = Math.max(0, v); }catch(e){}
@@ -15749,7 +15816,7 @@ function showMineDigging(onDone, mode){
   ov.innerHTML = `<div class="mine-dig-box${mode==='gold'?' gold':''}">
       <div class="mine-dig-ic">${ic}</div>
       <div class="mine-dig-t">${tx}</div>
-      <div class="mine-dig-bar"><i style="transition-duration:${MINE_DIG_MS}ms;"></i></div>
+      <div class="mine-dig-bar"><i></i></div>
     </div>`;
   requestAnimationFrame(()=> requestAnimationFrame(()=> ov.classList.add('on')));
   setTimeout(()=>{
@@ -15962,7 +16029,7 @@ function showBoxOpening(onDone){
   ov.innerHTML = `<div class="mine-dig-box">
       <div class="mine-dig-ic box-shake">🎁</div>
       <div class="mine-dig-t">상자 여는 중...</div>
-      <div class="mine-dig-bar"><i style="transition-duration:${BOX_OPEN_MS}ms;background:#e0b64a;"></i></div>
+      <div class="mine-dig-bar"><i style="animation-duration:${BOX_OPEN_MS}ms;background:#e0b64a;"></i></div>
     </div>`;
   requestAnimationFrame(()=> requestAnimationFrame(()=> ov.classList.add('on')));
   setTimeout(()=>{
@@ -16891,8 +16958,7 @@ function goToStart(){
   try{
     const __b = document.getElementById('bgmAudio');
     if(__b && !__b.paused){ __b.pause(); __b.currentTime = 0; }
-    const __bc = document.getElementById('avolRoot'); if(__bc) __bc.remove();
-    avolPanelOpen = false;
+    const __bc = document.getElementById('bgmCtl'); if(__bc) __bc.remove();
   }catch(e){}
   // [Ver 6.11] 야차 모드 정리 — 진행 중이던 경매 오버레이/타이머를 반드시 끈다.
   try{
@@ -17040,27 +17106,12 @@ function exitPlaygroundBar(){
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
   {
-    version: 'Ver 12.5', date: '2026-08-21',
+    version: 'Ver 12.5.1', date: '2026-08-21',
     items: [
-      '\u{1F50A} <b>[개선] 음량 컨트롤을 화면 하단의 작은 버튼 하나로 통합했습니다.</b> 지금까지는 BGM 게이지와 카드 효과음 게이지가 화면 위쪽에 슬라이더 두 벌로 상시 떠 있어서, 자리를 옮겨봐도 결국 상대 스탯 카드(HP\u00B7SH 게이지, 버프 목록)를 계속 가렸습니다. 이제 화면 하단 중앙에 작은 \uD83D\uDD0A 버튼 하나만 있고, 누르면 그 위로 BGM\u00B7카드 효과음 슬라이더가 담긴 작은 패널이 펼쳐집니다. 평소엔 버튼 하나뿐이라 아무것도 가리지 않습니다.'
-    ]
-  },
-  {
-    version: 'Ver 12.4.4', date: '2026-08-21',
-    items: [
-      '\u{1F4C7} <b>[버그수정] 다크 모드 카드 글씨가 안 보이던 문제</b>를 고쳤습니다. 카드 배경만 어둡게 바꿔놨을 뿐 글씨 색은 그대로라, 어두운 카드 위에 어두운 글씨가 겹쳐 있었습니다. 이름 \u00B7 능력 \u00B7 설명 전부 밝은 색으로 뒤집어 이제 다크 모드에서도 또렷하게 읽힙니다.',
-      '\u{1F381} <b>[코드] 버그 제보 보상 코드 <b>BUGSORRY</b>를 추가했습니다.</b> 썬크림 500개 \u00B7 우비나이트 3,000개 \u00B7 에피메랄 확정 진화석 뽑기권 1장을 드립니다. 메뉴 \u2192 코드 입력에서 받아주세요.',
-      '\u{1F3C6} <b>[복구] 설정 화면에 업데이트 로그로 가는 버튼을 추가했습니다.</b> 설정 \u2192 맨 위 <b>업데이트 로그</b>를 누르면 바로 이 화면으로 옵니다.'
-    ]
-  },
-  {
-    version: 'Ver 12.4.3', date: '2026-08-21',
-    items: [
-      '\u{1F319} <b>[신규] 다크 모드가 실제로 다크 모드가 됩니다.</b> 지금까지 화면 전체에 씌워져 있던 연필/종이 스킨이 "다크 모드"를 켜도 항상 같은 밝은 종이색을 강제하고 있어, 설정에서 켜도 화면이 전혀 어두워지지 않았습니다. 스킨 안에 <b>진짜 다크 팔레트</b>를 새로 만들어, 이제 켜면 확실히 어두운 잉크 노트 느낌으로, 끄면 원래의 밝은 종이 느낌으로 바뀝니다.',
-      '\u{1F517} <b>[정리] "다크 모드"와 "라이트 모드"로 따로 있던 설정 두 줄을 하나로 합쳤습니다.</b> 서로 반대되는 같은 값을 두 스위치로 나눠 보여주던 것이라 헷갈렸습니다. 이제 <b>다크 모드 토글 하나</b>로 — 켜면 다크, 끄면 라이트입니다.',
-      '\u{1F524} <b>[버그수정] 코드 입력창이 대문자로만 보이던 문제</b>를 고쳤습니다. 실제 입력값은 그대로 소문자로 들어가고 있었지만 화면 표시만 대문자로 바뀌어, 소문자 코드를 쳐도 제대로 친 게 맞는지 알 수 없었습니다. 이제 입력한 그대로 보입니다. (코드 보상은 원래부터 대소문자를 구분합니다)',
-      '\u{1F50A} <b>[재배치] 음량 컨트롤이 상황 로그 패널 상단과 겹치던 문제</b>를 고쳤습니다. 지난 버전에서 손패 접기 버튼을 피해 화면 위쪽 오른쪽으로 옮겼는데, 그 자리가 이번엔 <b>상황 로그</b>(오른쪽 패널) 제목을 덮고 있었습니다. 겹치는 UI가 없는 <b>왼쪽 위</b>로 다시 옮겼습니다.',
-      '\u{1F0CF} <b>[버그수정] 손패를 접으면 내 스탯창까지 같이 잘리던 문제</b>를 고쳤습니다. 손패 줄 전체에 높이 제한을 걸었더니 그 안에 나란히 있던 <b>내 스탯창</b>도 부모를 따라 잘려버렸습니다. 이제 <b>카드 목록만</b> 접히고, 스탯창은 원래 높이 그대로 남습니다.'
+      '\u{1F41B} <b>[버그수정] 연타 카드를 낼 때 반응 시간이 끝난 뒤 10초 가까이 멈춰 있던 문제</b>를 고쳤습니다. <b>이색빔</b>(999타) \u00B7 <b>새털라이트 전술폭격</b>(1000타)처럼 타격 수가 많은 카드는 <b>타격마다 화면 전체를 다시 그리고</b> 있었습니다. 이제 연타가 끝날 때 한 번만 그리고, 빗나감 로그도 요약합니다.',
+      '\u{1F3B0} <b>[리뉴얼] 도박 화면</b> — 슬롯 칸이 커지고, 아직 열리지 않은 칸은 카드 뒷면처럼 보입니다. 대기 중에도 계속 돌아 <b>\"?\"가 칸 밖으로 밀려 있던</b> 문제와, 고르지도 않은 칸에 체크가 떠 있던 문제를 함께 고쳤습니다. 선택 개수 표시도 다시 보입니다.',
+      '\u{1F5B1}\uFE0F <b>[연출] 커서 반응</b> — 손패 카드 \u00B7 카드 더미 \u00B7 상점 버튼 \u00B7 상점 매물에 커서를 올리면 살짝 커지고, 누르면 눌려 들어갑니다.',
+      '\u{1F3B2} <b>[리뉴얼] 베팅 \u00B7 잡상인</b> — 베팅은 큰 금액 표시와 50~500 눈금, 알약형 \u00B1 버튼으로 다시 만들었습니다(0.25초마다 화면을 통째로 갈아끼우던 깜빡임도 사라졌습니다). 잡상인 경매는 머리글 \u00B7 매물 \u00B7 응찰 \u00B7 시계 네 단으로 정리했습니다.'
     ]
   },
   {
@@ -22077,9 +22128,6 @@ const REDEEM_CODES = {
   // [Ver 9.16] 유물 리워크로 전 유저의 유물이 초기화된 것에 대한 보상
   'BYEBYEATF':                { title:'유물 초기화 보상', desc:'유물 리워크(레벨 상한 Lv10 · 등급별 강화 비용)로 보유 유물이 초기화되었습니다. 다시 캐러 가는 길에 보태주세요.',
                                 reward:{ pickaxe:50, goldPickaxe:1 }, once:true, noExpire:true },
-  // [Ver 12.4.4] 버그 제보 보상 — 사과의 의미로 썬크림 · 우비나이트 · 에피메랄 확정권 지급
-  'BUGSORRY':                  { title:'버그 제보 보상', desc:'불편을 드려 죄송합니다. 제보해주신 덕분에 문제를 고칠 수 있었습니다.',
-                                reward:{ cream:500, ubinite:3000, evoPick:{ tier:'Ephemeral', n:1 } }, once:true, noExpire:true },
 };
 let REDEEMED_CODES = null;
 function loadRedeemed(){
@@ -44930,7 +44978,8 @@ function applyTotalAtkPct(caster, amount){
 function prepareHitPacket(caster, target, amount, pierce){
   if(target.id === caster.id) return { cancelled:true };
   if(!rollAccuracy(caster)){
-    log('sys', `${caster.name}의 공격이 빗나갔습니다! (명중률 ${Math.max(0,100+(caster.accuracyMod||0))}%)`);
+    // [Ver 12.7] 연타 요약 모드에서는 타격마다 빗나감 줄을 남기지 않는다 (999줄 도배 + 리플로우)
+    if(!window.__multiHitQuiet) log('sys', `${caster.name}의 공격이 빗나갔습니다! (명중률 ${Math.max(0,100+(caster.accuracyMod||0))}%)`);
     return { missed:true };
   }
 
@@ -44999,6 +45048,30 @@ function prepareHitPacket(caster, target, amount, pierce){
      ⚠ 상한 15개 — 이색빔(999타)처럼 타수가 많은 카드가 화면을 몇 초씩 도배하지 않도록.
        잘린 만큼은 마지막 숫자 뒤에 "×N" 꼬리표로 알려준다.
    ========================================================================== */
+/* ==========================================================================
+   [Ver 12.7 버그수정] 연타 카드(이색빔 999타 · 새털라이트 전술폭격 1000타)를 낼 때
+   반응 시간이 끝난 뒤 10초 가까이 화면이 멈춰 있던 문제.
+   --------------------------------------------------------------------------
+   ▶ 원인: applyDamageToPlayer가 **타격 한 번마다** renderBoard()를 불렀다.
+     한 번의 renderBoard는 좌석·HP바·BGM 동기화·드래프트 캡까지 전부 다시 도는
+     무거운 작업이라, 1000번이면 메인 스레드가 통째로 수 초간 잠긴다.
+     빗나간 타격의 로그(prepareHitPacket)도 타격마다 한 줄씩 쌓여 같이 무거워졌다.
+   ▶ 해결: 연타 구간에는 렌더를 "예약"만 하고, 루프가 끝날 때 딱 한 번 그린다.
+     로그도 요약 모드(6타 이상)에서는 개별 빗나감 줄을 접는다.
+   ⚠ 다른 AI 주의: 연타 안에서 renderBoard를 직접 부르면 이 최적화가 다시 무너진다.
+     피해 처리 경로에서는 renderBoardBatched()를 쓸 것.
+   ========================================================================== */
+let __rbSuppress = 0, __rbPending = false;
+function renderBoardBatched(){
+  if(__rbSuppress > 0){ __rbPending = true; return; }
+  try{ renderBoard(); }catch(e){}
+}
+function beginRenderBatch(){ __rbSuppress++; }
+function endRenderBatch(){
+  __rbSuppress = Math.max(0, __rbSuppress - 1);
+  if(__rbSuppress === 0 && __rbPending){ __rbPending = false; try{ renderBoard(); }catch(e){} }
+}
+
 const MULTI_HIT_FLOAT_MAX = 15;      // 화면에 연속으로 띄우는 최대 개수
 const MULTI_HIT_FLOAT_GAP = 110;     // 숫자 사이 간격(ms) — "따다닥" 체감이 나는 값
 function flushMultiHitFloats(){
@@ -45034,11 +45107,15 @@ function resolveMultiHitAttack(caster, target, hitAmount, hitCount, pierce){
       //          → 반사 데미지는 자동 명중, 배율 없이 hitAmount × hitCount 로 확정.
       const effReflectPierce = (target.permaPierce && pierce === 'NONE') ? 'PIERCE' : pierce;
       window.__multiHitFloatCollect = [];   // [Ver 10.5] 반사된 연타도 한 타씩 터뜨린다
+      beginRenderBatch();                   // [Ver 12.7] 타격마다 다시 그리지 않는다
+      if(hitCount > 5) window.__multiHitQuiet = true;
       for(let i=0;i<hitCount;i++){
         if(!caster.alive) break;
         log('sys', `${currentStatCardName||'연속 공격'} ${i+1}타! (반사)`);
         applyDamageToPlayer(caster, hitAmount, effReflectPierce);
       }
+      window.__multiHitQuiet = false;
+      endRenderBatch();
       try{ flushMultiHitFloats(); }catch(e){ window.__multiHitFloatCollect = null; }
       return !caster.alive;
     }
@@ -45052,11 +45129,13 @@ function resolveMultiHitAttack(caster, target, hitAmount, hitCount, pierce){
   const __verboseHits = hitCount <= 5;
   let __hitLanded = 0, __hitMissed = 0;
   window.__multiHitFloatCollect = [];   // [Ver 10.5] 이 아래 피해 숫자는 큐에 모았다가 한 타씩 터뜨린다
+  beginRenderBatch();                   // [Ver 12.7] 1000타여도 화면은 마지막에 한 번만 그린다
+  if(!__verboseHits) window.__multiHitQuiet = true;
   for(let i=0;i<hitCount;i++){
     if(!target.alive) break;
     if(__verboseHits) log('sys', `${currentStatCardName||'연속 공격'} ${i+1}타!`);
     const pkt = prepareHitPacket(caster, target, hitAmount, pierce);
-    if(pkt.cancelled) return false;
+    if(pkt.cancelled){ window.__multiHitQuiet = false; endRenderBatch(); return false; }
     if(pkt.missed){ __hitMissed++; continue; }
     __hitLanded++;
     if(!__verboseHits) window.__suppressDmgLog = true; // 타격별 피해 로그도 함께 접는다
@@ -45067,6 +45146,8 @@ function resolveMultiHitAttack(caster, target, hitAmount, hitCount, pierce){
     const attempted = __hitLanded + __hitMissed;
     log('dmg', `${currentStatCardName||'연속 공격'} — ${hitCount}타 중 ${__hitLanded}타 명중${__hitMissed?` (${__hitMissed}타 빗나감)`:''}, 총 ${(__hitLanded*hitAmount).toLocaleString()} 기준 피해${attempted<hitCount?` · 대상 사망으로 ${attempted}타에서 중단`:''}`);
   }
+  window.__multiHitQuiet = false;
+  endRenderBatch();                     // 여기서 딱 한 번 그린다
   try{ flushMultiHitFloats(); }catch(e){ window.__multiHitFloatCollect = null; }  // [Ver 10.5]
   window.__lastMultiHitLanded = __hitLanded; // [Ver 8.6] 호출부가 "한 대라도 맞았는지" 확인할 수 있게 노출
   return !target.alive;
@@ -46465,7 +46546,7 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
       applyPsychoKillHeal(target.id);
     }
   }
-  renderBoard();
+  renderBoardBatched();
 
   // 구미호랩터: 자신의 체력이 500 이하이고 생존해있고 이 카드를 소지한 채라면 즉시 발동 (1회 한정).
   // 발동 시 자신을 마지막으로 공격한 사람을 3바퀴동안 탄핵당하게 한다.
@@ -46478,7 +46559,7 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
       attacker.impeachDueRound = turnCount + 3;
       try{ cardAudioTriggerKey('bgm', 'impeached', attacker.id); }catch(e){} // [Ver 8.1.3] 탄핵 디버프 발동 시 BGM
       log('sys', `${J(target.name,'이','가')} "구미호랩터"의 효과 발동! 체력이 위험 수위에 이르자 마지막 공격자 ${attacker.name}${J(attacker.name,'을','를')} 3바퀴 동안 탄핵시킵니다!`);
-      renderBoard();
+      renderBoardBatched();
     } else {
       log('sys', `${J(target.name,'이','가')} "구미호랩터"의 효과가 발동했지만, 마지막 공격자를 특정할 수 없어 탄핵이 무산되었습니다.`);
     }
@@ -47415,14 +47496,6 @@ function onDrawClick(){
     showModal('드로우 불가', '"거래"의 효과로 앞으로 카드를 드로우할 수 없습니다.', [{label:'확인', solid:true}]);
     return;
   }
-  /* [버그수정] 드로우 버튼 연타 방지 — 카드를 낼 때는 turnActed가 즉시 true로 잠기지만
-     드로우는 이 플래그를 전혀 세팅하지 않아, 뽑기 애니메이션(2초)과 advanceTurn 지연(0.4초)
-     사이의 틈에 버튼을 연타하면 매 클릭마다 별도로 카드가 지급됐다(같은 턴에 여러 장 획득).
-     updateDrawPileState(false)로 씌우는 'disabled' 클래스는 대응하는 CSS 규칙이 없어
-     클릭을 막지 못했고, renderHand()가 다시 렌더링되며 my-turn 상태로 되돌아오기도 했다.
-     실제로 드로우가 진행되기 직전(여기)에 turnActed를 true로 잠가, 이후 재클릭은 함수
-     맨 위의 turnActed 가드에서 즉시 막히도록 한다. (다음 턴 시작 시 turnActed는 false로 리셋됨) */
-  if(me) me.turnActed = true;
   updateDrawPileState(false);
   { const _hs=document.getElementById('headerStat'); if(_hs) _hs.textContent = '카드를 뽑는 중...'; }
   // [Ver 7.1.6] 호스트가 원격 참가자 대신 뽑는 경우(LAN.__actAs 세팅됨):
@@ -48055,35 +48128,83 @@ function grpBetRender(){
   if(!ov) return;
   const meId = grpBetMyId();
   const left = Math.max(0, GRP_BET_SECONDS*1000 - (Date.now() - G.startedAt));
-  const pct = Math.max(0, Math.min(100, left / (GRP_BET_SECONDS*1000) * 100));
-  const rows = G.order.map(pid=>{
-    const p = players.find(x=> x && x.id===pid);
-    if(!p) return '';
-    const mine = pid === meId;
-    return `<div class="goods-player${mine?' me':''}">
-        <div class="goods-player-chip">${mine?'나':escapeHtml(p.name)}</div>
-        <div class="grp-bet-val">${fmtWon(G.bets[pid]||0)}</div>
-      </div>`;
-  }).join('');
-  const meAlive = (function(){ const m = players.find(x=> x && x.id===meId); return !!(m && m.alive && G.bets.hasOwnProperty(meId)); })();
-  ov.innerHTML = `
-    <div class="auction-panel">
-      <div class="auction-title">🎰 베팅</div>
-      <div class="auction-subtitle">
-        비공개의 숫자 하나가 <b>${GRP_BET_MIN}~${GRP_BET_MAX}</b> 사이에 정해져 있습니다.<br>
-        <b>${GRP_BET_SECONDS}초</b> 안에 숫자를 거세요. 가장 가까운 사람이 <b>자기가 건 숫자만큼</b> 골드를 가져갑니다.<br>
-        동률이면 모두 받습니다. 모두의 베팅은 <b>공개</b>됩니다.
+  const pct  = Math.max(0, Math.min(100, left / (GRP_BET_SECONDS*1000) * 100));
+  const me   = players.find(x=> x && x.id===meId);
+  const meAlive = !!(me && me.alive && G.bets.hasOwnProperty(meId));
+  const myVal = G.bets[meId] || 0;
+  const span  = Math.max(1, GRP_BET_MAX - GRP_BET_MIN);
+  const railPct = Math.max(0, Math.min(100, (myVal - GRP_BET_MIN) / span * 100));
+
+  /* 골격은 한 번만 만든다 — 250ms마다 통째로 갈아끼우면 애니메이션이 매번 처음으로 돌아간다 */
+  if(!ov.querySelector('#betPanel')){
+    ov.innerHTML = `
+    <div class="auction-panel bet-panel" id="betPanel">
+      <div class="bet-head">
+        <div class="bet-kicker">단체 이벤트</div>
+        <div class="bet-title">🎰 베팅</div>
+        <div class="bet-rule">
+          <b>${GRP_BET_MIN}~${GRP_BET_MAX}</b> 사이의 숫자 하나가 비공개로 정해져 있습니다.
+          <b>${GRP_BET_SECONDS}초</b> 안에 숫자를 걸면, 가장 가까운 사람이 <b>자기가 건 금액만큼</b> 골드를 가져갑니다 · 동률이면 모두 받습니다.
+        </div>
       </div>
-      ${meAlive ? `<div class="grp-bet-ctl">
-        <button class="btn btn-sm" onclick="grpBetAdjust(-50)">-50</button>
-        <button class="btn btn-sm" onclick="grpBetAdjust(-10)">-10</button>
-        <div class="grp-bet-mine">${fmtWon(G.bets[meId]||0)}</div>
-        <button class="btn btn-sm" onclick="grpBetAdjust(10)">+10</button>
-        <button class="btn btn-sm" onclick="grpBetAdjust(50)">+50</button>
-      </div>` : `<div class="grp-bet-ctl"><span style="opacity:.6;">관전 중</span></div>`}
-      <div class="goods-players">${rows}</div>
-      <div class="auction-timer-bar"><div class="auction-timer-fill" style="width:${pct}%"></div></div>
+      <div class="bet-dial">
+        <div class="bet-amount${meAlive?'':' spectate'}" id="betAmount">${meAlive ? fmtWon(myVal) : '관전 중'}</div>
+        <div class="bet-rail"><i id="betRailDot" style="left:${meAlive?railPct:50}%"></i></div>
+        <div class="bet-scale"><span>${GRP_BET_MIN}</span><span>${GRP_BET_MAX}</span></div>
+        ${meAlive ? `<div class="bet-steps">
+          <button class="bet-step" onclick="grpBetAdjust(-50)">−50</button>
+          <button class="bet-step" onclick="grpBetAdjust(-10)">−10</button>
+          <button class="bet-step up" onclick="grpBetAdjust(10)">＋10</button>
+          <button class="bet-step up" onclick="grpBetAdjust(50)">＋50</button>
+        </div>` : ''}
+      </div>
+      <div class="bet-board">
+        <div class="bet-board-t">모두의 베팅 · 공개</div>
+        <div class="bet-rows" id="betRows"></div>
+      </div>
+      <div class="bet-foot">
+        <div class="bet-clock"><i id="betClockFill" style="width:${pct}%"></i></div>
+        <div class="bet-left" id="betLeft">${(left/1000).toFixed(1)}초</div>
+      </div>
     </div>`;
+    G._betSig = null;
+  }
+
+  /* 여기서부터는 값만 갈아 끼운다 */
+  const amt = ov.querySelector('#betAmount');
+  if(amt && meAlive){
+    const next = fmtWon(myVal);
+    if(amt.textContent !== next){
+      amt.textContent = next;
+      amt.classList.remove('bump');
+      void amt.offsetWidth;                 // 애니메이션 재시작
+      amt.classList.add('bump');
+    }
+  }
+  const dot = ov.querySelector('#betRailDot');
+  if(dot && meAlive) dot.style.left = railPct + '%';
+  const fill = ov.querySelector('#betClockFill');
+  if(fill) fill.style.width = pct + '%';
+  const lf = ov.querySelector('#betLeft');
+  if(lf) lf.textContent = (left/1000).toFixed(1) + '초';
+
+  /* 남들의 베팅 — 실제로 바뀔 때만 다시 그린다 */
+  const sig = G.order.map(pid=> pid + ':' + (G.bets[pid]||0)).join('|') + '/' + meId;
+  if(G._betSig !== sig){
+    G._betSig = sig;
+    const rowsEl = ov.querySelector('#betRows');
+    if(rowsEl){
+      rowsEl.innerHTML = G.order.map(pid=>{
+        const p = players.find(x=> x && x.id===pid);
+        if(!p) return '';
+        const mine = pid === meId;
+        return `<div class="bet-row${mine?' me':''}">
+            <span class="bet-row-name">${mine?'나':escapeHtml(p.name)}</span>
+            <span class="bet-row-val">${fmtWon(G.bets[pid]||0)}</span>
+          </div>`;
+      }).join('');
+    }
+  }
 }
 function grpBetSettle(){
   const G = window.__grp;
@@ -51133,7 +51254,7 @@ function renderShopGambleReveal(){
     ? `원하는 카드 <b>${tier.pick}장</b>을 골라 확정하세요`
     : (blindGambleActive
         ? '"랜덤뽑기 RPG"의 효과로 어떤 카드인지 알 수 없습니다 — 감으로 고르세요'
-        : `버튼을 누르면 3칸이 차례로 공개됩니다 · 그중 <b>${tier.pick}장</b>을 가져갑니다`);
+        : `버튼을 누르면 ${pool.length}칸이 차례로 공개됩니다 · 그중 <b>${tier.pick}장</b>을 가져갑니다`);
 
   content.innerHTML = `
   <div class="gamble-active-head">
@@ -51206,7 +51327,7 @@ function startGambleSpin(){
   }
   gambleState.spinning = true;
   const btn = document.getElementById('gambleSpinBtn');
-  if(btn){ btn.disabled = true; btn.textContent = '돌아가는 중...'; }
+  if(btn){ btn.disabled = true; btn.textContent = '돌아가는 중…'; }
   const reels = gambleState.pool.map((_,i)=> document.getElementById(`greel-${i}`));
   reels.forEach(el=>{ if(el) el.parentElement && el.parentElement.classList.add('spinning'); });
   let tick = 0;
@@ -51217,7 +51338,7 @@ function startGambleSpin(){
       if(!el || (gambleState.flipped && gambleState.flipped.has(i))) continue;
       el.textContent = GAMBLE_SPIN_SYMBOLS[(tick + i*4) % GAMBLE_SPIN_SYMBOLS.length];
     }
-  }, 55);
+  }, 80);   // 릴 애니메이션 한 주기(0.16s)의 절반 — 글자 교체가 페이드와 어긋나지 않는다
 
   const step = (i)=>{
     if(!gambleState || gambleState.dead) return;
