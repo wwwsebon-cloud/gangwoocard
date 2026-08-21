@@ -243,6 +243,12 @@ body.dev-mode .version-badge{
   box-shadow:inset 0 0 0 1px rgba(124,58,237,0.6);
 }
 body.dev-mode .version-badge::after{ content:' DEV'; font-weight:700; }
+/* [Ver 12.6] 부개발자 모드 — 개발자 모드의 축소판이라 색도 한 단계 낮춘다 */
+body.subdev-mode .version-badge{
+  background:rgba(79,196,220,0.16); color:#7FDCEC;
+  box-shadow:inset 0 0 0 1px rgba(79,196,220,0.6);
+}
+body.subdev-mode .version-badge::after{ content:' SUB'; font-weight:700; }
 .hstat{
   display:flex; align-items:center; gap:var(--sp-3); flex-shrink:0;
   font-family:var(--font-mono); font-size:11px; color:var(--fg-faint);
@@ -557,19 +563,34 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
   animation:barStripe 0.7s linear infinite;
 }
 
-/* ---------- SWITCH ---------- */
+/* ---------- SWITCH ----------
+   [Ver 12.5] 알약과 ON/OFF 글자가 서로 어긋나 있었다(글자가 알약 아래로 흘러내림).
+   이제 라벨 자체가 [알약][ON/OFF] 한 줄이 되고, 상태는 체크박스가 직접 그린다. */
 .setting-switch{
-  position:relative; flex-shrink:0; width:42px; height:24px;
-  border-radius:var(--r-pill); background:var(--bg-3); cursor:pointer;
+  position:relative; flex-shrink:0;
+  display:inline-flex; align-items:center; gap:9px;
+  width:auto; height:auto; background:none; border-radius:0; cursor:pointer;
+  font-family:var(--font-mono); font-size:10.5px; font-weight:700;
+  letter-spacing:0.06em; color:var(--fg-faint);
+}
+.setting-switch > input[type="checkbox"]{ position:absolute; opacity:0; width:0; height:0; margin:0; pointer-events:none; }
+.setting-switch::before{
+  content:''; flex:0 0 auto; width:42px; height:24px;
+  border-radius:var(--r-pill); background:var(--bg-3);
   transition:background var(--t) var(--ease);
 }
 .setting-switch::after{
-  content:''; position:absolute; top:3px; left:3px; width:18px; height:18px;
-  border-radius:50%; background:var(--fg-dim); box-shadow:var(--sh-1);
+  content:''; position:absolute; left:3px; top:50%; margin-top:-9px;
+  width:18px; height:18px; border-radius:50%;
+  background:var(--fg-dim); box-shadow:var(--sh-1);
   transition:transform var(--t) var(--ease-spring), background var(--t) var(--ease);
 }
-.setting-switch.on{ background:var(--accent); }
-.setting-switch.on::after{ transform:translateX(18px); background:#fff; }
+.setting-switch > span{ min-width:28px; text-align:left; }
+.setting-switch:has(input:checked){ color:var(--fg); }
+.setting-switch:has(input:checked)::before,.setting-switch.on::before{ background:var(--accent); }
+.setting-switch:has(input:checked)::after,.setting-switch.on::after{ transform:translateX(18px); background:#fff; }
+.setting-switch:hover::before{ background:var(--bg-hover); }
+.setting-switch:has(input:focus-visible)::before{ outline:2px solid var(--accent); outline-offset:2px; }
 
 /* ---------- 공통 빈 상태 ---------- */
 .ol-empty,.inv-empty,.mail-empty,.cm-empty,.br-empty,.art-empty,.wild-empty,
@@ -1885,7 +1906,14 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 .mine-dig-ic{ font-size:40px; animation:nudgeY 0.6s var(--ease-in-out) infinite; }
 .mine-dig-t{ font-size:14px; font-weight:700; }
 .mine-dig-bar{ width:190px; height:5px; border-radius:var(--r-pill); background:var(--bg-3); overflow:hidden; }
-.mine-dig-bar > i{ display:block; height:100%; background:var(--accent); transition:width var(--t) linear; }
+/* [버그수정] 로딩바가 안 차오르던 문제 — <i>에 width가 아예 지정된 적이 없어서
+   block 요소 기본값(부모 너비 100%)으로 처음부터 꽉 찬 채로 나타났다(애니메이션할 값의
+   변화 자체가 없었다). 시작 width를 0으로 두고, 오버레이가 뜬 직후 .on 클래스가 붙는
+   순간(showMineDigging 등에서 requestAnimationFrame 두 번 뒤) 100%로 전이시켜 실제로
+   차오르게 한다. 지속 시간은 각 호출부가 style="transition-duration:...ms"로 넘긴다
+   (상자 개봉 쪽은 존재하지도 않는 animation-duration을 쓰고 있었다 — 같이 고침). */
+.mine-dig-bar > i{ display:block; height:100%; width:0; background:var(--accent); transition:width linear; }
+.mine-dig-ov.on .mine-dig-bar > i{ width:100%; }
 
 /* ---------- 우빈이의 수상한 상자 ---------- */
 .bx-tbls{ display:flex; flex-direction:column; gap:var(--sp-3); }
@@ -1960,7 +1988,11 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 
 .code-wrap{ display:flex; flex-direction:column; gap:var(--sp-3); }
 .code-row{ display:flex; gap:var(--sp-2); }
-.code-input{ flex:1; font-family:var(--font-mono); letter-spacing:0.08em; text-transform:uppercase; }
+/* [Ver 12.4.3 버그수정] text-transform:uppercase는 화면 표시만 바꾸고 실제 입력값은
+   그대로였다. 그런데 코드가 대소문자를 구분하는 방식이라(예: 소문자 전용 코드
+   imgangwoodeveloper090205), 사용자가 소문자로 쳐도 화면엔 대문자로만 보여
+   "소문자를 못 치는 것"처럼 느껴졌다. 표시를 실제 입력값과 일치시킨다. */
+.code-input{ flex:1; font-family:var(--font-mono); letter-spacing:0.08em; }
 .code-go{
   flex-shrink:0; padding:10px 18px; border-radius:var(--r-sm);
   background:var(--accent); color:var(--accent-fg); font-size:12.5px; font-weight:700; cursor:pointer;
@@ -2007,15 +2039,31 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 .petinfo-price{ font-family:var(--font-mono); font-size:12.5px; font-weight:600; color:var(--tone-yellow); text-align:center; }
 .petinfo-own,.petinfo-eq{ font-size:11px; color:var(--tone-green); font-weight:600; text-align:center; }
 
-/* ---------- 환경설정 ---------- */
-.settings-list{ display:flex; flex-direction:column; gap:6px; }
-.settings-audio-head{ font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--fg-faint); margin:var(--sp-3) 0 var(--sp-1); }
+/* ---------- 환경설정 ----------
+   [Ver 12.5] 한 줄에 하나씩 쌓던 긴 목록을 격자로 바꾼다.
+     · 설명이 길어도 칸 밖으로 밀려나지 않는다 (가로 스크롤이 사라진다)
+     · 스위치는 칸 아래쪽 한 줄에 모여 칸끼리 나란히 선다 */
+.settings-list{
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
+  gap:10px; align-items:stretch;
+}
+.settings-audio-head{ grid-column:1/-1; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--fg-faint); margin:var(--sp-3) 0 var(--sp-1); }
 .settings-subnote{ font-size:11px; color:var(--fg-faint); line-height:1.7; }
-.setting-row{ background:var(--bg-2); }
-.setting-name{ flex:1; min-width:0; font-size:12.5px; font-weight:600; }
-.setting-desc{ font-size:11px; color:var(--fg-faint); line-height:1.65; font-weight:400; }
-.setting-meta{ flex-shrink:0; font-family:var(--font-mono); font-size:11px; color:var(--fg-faint); }
-.setting-vol-wrap{ flex:1; max-width:190px; display:flex; align-items:center; gap:8px; }
+.setting-row{
+  display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start;
+  gap:12px; min-width:0; padding:14px 15px 13px;
+  background:var(--bg-2);
+}
+.setting-name{ flex:none; min-width:0; font-size:12.5px; font-weight:600; }
+.setting-desc{ font-size:11px; color:var(--fg-faint); line-height:1.65; font-weight:400; overflow-wrap:anywhere; }
+.setting-meta{
+  flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;
+  font-family:var(--font); font-size:11px; color:var(--fg-faint);
+}
+.setting-row > .setting-switch,
+.setting-row > .setting-vol-wrap{ margin-top:auto; align-self:flex-start; }
+.setting-vol-wrap{ flex:none; width:100%; max-width:none; display:flex; align-items:center; gap:8px; }
+.setting-vol-wrap > input[type="range"]{ flex:1; min-width:0; }
 .setting-vol-pct{ flex-shrink:0; width:36px; text-align:right; font-family:var(--font-mono); font-size:11px; color:var(--fg-dim); }
 
 /* ---------- 크레딧 ---------- */
@@ -2182,6 +2230,9 @@ body.reversed .turn-direction-ring svg{ animation-direction:reverse; }
 }
 .draw-pile:hover{ transform:translateY(-3px); }
 .draw-pile:active{ transform:scale(0.95); }
+/* [버그수정] .disabled 클래스는 JS에서 계속 토글되고 있었지만 대응하는 CSS가 없어
+   실제로는 아무것도 막지 못했다(연타 방지는 JS의 turnActed 잠금이 담당, 이건 방어선 하나 추가). */
+.draw-pile.disabled{ pointer-events:none; cursor:default; }
 .dp-stack{
   position:relative; width:64px; height:84px; border-radius:var(--r-sm);
   background:var(--bg-3);
@@ -2584,17 +2635,43 @@ body.team-battle-mode .p-name{ color:var(--fg) !important; }
 @keyframes vizBar{ from{ transform:scaleY(0.3); } to{ transform:scaleY(1); } }
 .p-card.bgm-playing{ box-shadow:inset 0 0 0 1px rgba(124,156,255,0.3); }
 /* [Ver 12.4.1] 오른쪽 아래는 손패 접기 버튼 자리다 — 음량 컨트롤이 그 위를 덮어
-   접기 버튼이 아예 안 눌렸다. 화면 위쪽(상단 바 옆)으로 올린다. */
-.bgm-ctl,.card-audio-ctl{
-  position:fixed; right:16px; top:62px; bottom:auto; z-index:120;
-  display:flex; align-items:center; gap:8px;
-  padding:8px 12px; border-radius:var(--r-pill);
-  background:color-mix(in srgb,var(--bg-panel) 90%,transparent);
+   접기 버튼이 아예 안 눌렸다. 화면 위쪽(상단 바 옆)으로 올렸었다.
+   [Ver 12.4.3 버그수정] 그런데 오른쪽 위는 .zone-log(상황 로그 패널, 오른쪽 280px
+   칼럼)의 상단과 겹치는 자리였다 — 로그 패널 제목("상황")을 그대로 덮었다.
+   왼쪽 위(.zone-bots 칼럼, 236px)로 옮겼었으나, 그 자리는 상대 스탯 카드(HP/SH 게이지,
+   버프 목록)와 겹쳐 항상 뭔가를 가렸다.
+   [Ver 12.5] 결국 상시 노출되는 슬라이더 두 벌을 화면 아무 데나 얹는 방식 자체를 접고,
+   화면 하단 중앙에 작은 원형 버튼 하나(.avol-fab)만 상시 고정해두고, 클릭하면 그 위로
+   음량 패널(.avol-panel)이 펼쳐지는 팝오버 방식으로 바꾼다. 평소에는 아무것도 가리지 않는다. */
+.avol-fab{
+  position:fixed; left:50%; bottom:14px; transform:translateX(-50%);
+  z-index:130; width:38px; height:38px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:color-mix(in srgb,var(--bg-panel) 92%,transparent);
   backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
   box-shadow:var(--sh-ring), var(--sh-2);
-  font-size:11px; color:var(--fg-dim);
+  cursor:pointer; font-size:16px;
+  transition:background var(--t) var(--ease), transform var(--t-fast) var(--ease);
 }
-.card-audio-ctl{ top:106px; bottom:auto; }
+.avol-fab:hover{ background:var(--bg-3); }
+.avol-fab:active{ transform:translateX(-50%) scale(0.92); }
+.avol-fab.muted{ color:var(--fg-dim); }
+.avol-panel{
+  position:fixed; left:50%; bottom:60px; transform:translateX(-50%) translateY(6px);
+  z-index:130; width:220px;
+  display:flex; flex-direction:column; gap:10px;
+  padding:12px 14px; border-radius:14px;
+  background:color-mix(in srgb,var(--bg-panel) 94%,transparent);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  box-shadow:var(--sh-ring), var(--sh-2);
+  font-size:11px; color:var(--fg-dim);
+  opacity:0; pointer-events:none;
+  transition:opacity var(--t) var(--ease), transform var(--t) var(--ease);
+}
+.avol-panel.open{ opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0); }
+.avol-row{ display:flex; align-items:center; gap:8px; }
+.avol-row > input[type="range"]{ flex:1; min-width:0; }
+.avol-label{ width:20px; text-align:center; flex:none; font-size:13px; cursor:pointer; }
 .bgm-ctl-btn{
   width:26px; height:26px; border-radius:50%;
   display:flex; align-items:center; justify-content:center;
@@ -2807,14 +2884,16 @@ body.hand-collapsed .hand-area{
    그래야 "판이 넓어진다"는 목적이 실제로 달성된다. */
 /* 손패 줄 전체 높이를 못박는다. .zone-hand는 보드 격자의 한 행이라
    자식만 줄여서는 행 높이가 따라 줄지 않는다 — 행 자체에 상한을 건다. */
-body.hand-collapsed .zone-hand{
-  max-height:104px; overflow:hidden;
+/* [Ver 12.4.3 버그수정] 이전에는 .zone-hand 행 전체에 max-height를 걸어서 접었는데,
+   그 안에 같이 들어있는 내 스탯창(.seat-me)까지 부모를 따라 92px로 잘려버렸다.
+   접혀야 하는 건 카드 목록(.zone-hand-cards)뿐이므로, .zone-hand 자체는 더 이상
+   높이를 제한하지 않고 .zone-hand-cards에만 상한을 건다 — 스탯창은 원래 높이를 유지한다. */
+body.hand-collapsed .zone-hand{ overflow:visible; }
+.zone-hand{ transition:max-height var(--t-slow) var(--ease); }
+body.hand-collapsed .zone-hand-cards{
+  max-height:104px; overflow:hidden; align-self:flex-start;
   transition:max-height var(--t-slow) var(--ease);
 }
-.zone-hand{ max-height:none; transition:max-height var(--t-slow) var(--ease); }
-body.hand-collapsed .zone-hand .seat-me{ max-height:92px; overflow:hidden; }
-body.hand-collapsed .zone-hand .seat-me .p-card{ min-height:0; }
-body.hand-collapsed .zone-hand-cards{ align-self:flex-start; }
 .hand-area{ transition:height var(--t-slow) var(--ease), opacity var(--t) var(--ease); }
 body.hand-collapsed .zone-hand{ padding-top:var(--sp-2); }
 
@@ -3297,42 +3376,45 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 }
 .shop-bg.show{ display:flex; animation:fadeIn var(--t) var(--ease); }
 .shop-box{
-  width:100%; max-width:860px; max-height:88vh;
+  /* [Ver 12.6] 높이를 못 박으면 판매·업그레이드 탭에서 아래가 텅 빈다.
+     내용에 맞춰 줄되 아주 작게 쪼그라들지만 않도록 최소 높이만 준다. */
+  width:100%; max-width:880px; min-height:min(340px,60vh); max-height:88vh;
   display:flex; flex-direction:column; gap:var(--sp-3);
   padding:22px; border-radius:var(--r-xl);
   background:var(--bg-panel); box-shadow:var(--sh-3);
   animation:popIn var(--t-slow) var(--ease-spring) both;
 }
-.shop-title-row{ display:flex; align-items:center; gap:var(--sp-3); flex-shrink:0; }
+.shop-title-row{ display:flex; align-items:center; gap:var(--sp-3); flex-shrink:0; padding-bottom:13px; border-bottom:1px solid var(--line); }
 .shop-title{ flex:1; display:flex; align-items:center; gap:8px; font-size:17px; font-weight:700; letter-spacing:-0.02em; }
 .shop-title-ico{ font-size:18px; }
 .shop-title-sub{ font-size:11px; color:var(--fg-faint); font-weight:400; }
 .shop-gold-badge{
-  flex-shrink:0; padding:6px 13px; border-radius:var(--r-pill);
-  background:rgba(233,185,73,0.13); color:var(--tone-yellow);
+  flex-shrink:0; padding:5px 13px; border-radius:var(--r-pill);
+  background:transparent; box-shadow:inset 0 0 0 1px var(--line);
+  color:var(--tone-yellow); white-space:nowrap;
   font-family:var(--font-mono); font-size:12.5px; font-weight:700;
 }
-#shopBody{ flex:1; min-height:0; display:flex; flex-direction:column; gap:var(--sp-3); overflow:hidden; }
-#shopTabContent{ flex:1; min-height:0; overflow-y:auto; padding-right:4px; }
+#shopBody{ flex:0 1 auto; min-height:0; display:flex; flex-direction:column; gap:var(--sp-3); overflow:hidden; }
+#shopTabContent{ flex:0 1 auto; min-height:0; overflow-y:auto; padding:2px 4px 2px 2px; scrollbar-gutter:stable; }
 
 /* [Ver 12.4] 매물 배열 — 격자(auto-fill)는 화면 폭에 따라 "위 4칸 · 아래 1칸"처럼
    한쪽으로 쏠린 줄을 만든다. 칸 수가 매번 달라지는 목록이라 더 도드라졌다.
    가로 정렬(flex-wrap)로 바꿔 남는 칸을 **가운데로 모은다** — 줄이 안 맞아도 정돈돼 보인다. */
 .shop-slots{
-  display:flex; flex-wrap:wrap; justify-content:center; align-items:stretch;
-  gap:var(--sp-3);
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  align-items:stretch; gap:var(--sp-3);
 }
-.shop-slots > .shop-slot{
-  flex:1 1 calc(33.333% - var(--sp-3)); min-width:190px; max-width:280px;
-}
+@media (max-width:860px){ .shop-slots{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:560px){ .shop-slots{ grid-template-columns:minmax(0,1fr); } }
 .shop-slot{
-  display:flex; flex-direction:column; gap:5px;
-  padding:14px; border-radius:var(--r);
-  background:var(--bg-2);
-  transition:transform var(--t) var(--ease), background var(--t) var(--ease), box-shadow var(--t) var(--ease);
-  animation:riseInSm var(--t-slow) var(--ease) both;
+  display:flex; flex-direction:column; gap:6px; min-width:0; min-height:144px;
+  padding:14px 15px; border-radius:var(--r);
+  background:transparent; box-shadow:inset 0 0 0 1px var(--line);
+  transition:background var(--t) var(--ease), box-shadow var(--t) var(--ease);
+  animation:fadeIn var(--t-slow) var(--ease) both;
 }
-.shop-slot:hover{ transform:translateY(-3px); background:var(--bg-3); box-shadow:var(--sh-2); }
+/* 카드가 튀어 오르지 않는다 — 밝기와 테두리로만 반응해 시선이 흔들리지 않게 */
+.shop-slot:hover{ background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--fg-faint); }
 .shop-slot.sold-out{ opacity:0.42; pointer-events:none; }
 .shop-slot-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .shop-slot-grade{ font-family:var(--font-mono); font-size:9.5px; font-weight:700; letter-spacing:0.06em; color:var(--fg-faint); }
@@ -3341,13 +3423,13 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
   background:rgba(242,100,90,0.15); color:var(--tone-red);
   font-size:9px; font-weight:700;
 }
-.shop-slot-name{ font-size:13px; font-weight:700; letter-spacing:-0.015em; }
-.shop-slot-desc{ font-size:10.5px; line-height:1.6; color:var(--fg-dim); flex:1; }
-.shop-slot-buy-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px; }
+.shop-slot-name{ font-size:13.5px; font-weight:700; letter-spacing:-0.015em; }
+.shop-slot-desc{ font-size:11.5px; line-height:1.75; color:var(--fg-dim); flex:1; overflow-wrap:anywhere; }
+.shop-slot-buy-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; padding-top:9px; border-top:1px solid var(--line-soft); }
 .shop-price{ font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--tone-yellow); }
 .shop-price .strike{ color:var(--fg-faint); text-decoration:line-through; margin-right:5px; font-weight:400; }
 .shop-buy-btn,.shop-confirm-btn{
-  padding:6px 14px; border-radius:var(--r-xs);
+  padding:8px 16px; min-height:32px; border-radius:var(--r-xs);
   background:var(--accent); color:var(--accent-fg);
   font-size:11.5px; font-weight:700; cursor:pointer;
   transition:background var(--t) var(--ease), transform var(--t-fast) var(--ease);
@@ -3380,24 +3462,33 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
   transition:background var(--t) var(--ease), color var(--t) var(--ease), transform var(--t) var(--ease);
 }
 .shop-close-btn:hover{ background:var(--bg-3); color:var(--fg); transform:rotate(90deg); }
-/* X가 빠졌으니 탭 넷이 폭을 고르게 나눠 갖는다 */
-.shop-tabs > .shop-tab-btn{ flex:1 1 0; }
+/* [Ver 12.6] 탭 — 회색 덩어리를 지우고 공책 줄처럼 밑줄 하나로 */
+.shop-tabs{ background:none; padding:0; gap:0; border-radius:0; box-shadow:inset 0 -1px 0 var(--line); }
+.shop-tabs > .shop-tab-btn{
+  flex:1 1 0; padding:11px 6px 12px; border-radius:0;
+  background:none; box-shadow:none; color:var(--fg-faint);
+  font-size:12px; letter-spacing:0.01em;
+}
+.shop-tabs > .shop-tab-btn:hover{ background:none; color:var(--fg-dim); box-shadow:inset 0 -1px 0 var(--line-soft); }
+.shop-tabs > .shop-tab-btn.active{ background:none; color:var(--fg); box-shadow:inset 0 -2px 0 var(--accent); }
 .shop-wait{ display:flex; flex-direction:column; align-items:center; gap:var(--sp-3); padding:52px 20px; }
 .shop-wait-text{ font-size:12px; color:var(--fg-faint); }
 .shop-check{ accent-color:var(--accent); }
 
 /* 카드 팔기 */
-.shop-sell-list,.shop-sell-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:var(--sp-2); }
+/* [Ver 12.6] 판매 목록 — 큰 빈 카드가 늘어서 있던 걸 촘촘한 명단으로 */
+.shop-sell-list,.shop-sell-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:7px; }
 .shop-sell-item,.shop-sell-card{
-  display:flex; flex-direction:column; gap:4px; padding:12px; border-radius:var(--r-sm);
-  background:var(--bg-2); cursor:pointer;
-  transition:background var(--t) var(--ease), transform var(--t) var(--ease);
+  display:flex; flex-direction:column; gap:3px; padding:9px 11px 10px; border-radius:var(--r-sm);
+  background:transparent; box-shadow:inset 0 0 0 1px var(--line); cursor:pointer;
+  transition:background var(--t) var(--ease), box-shadow var(--t) var(--ease);
 }
-.shop-sell-item:hover,.shop-sell-card:hover{ background:var(--bg-3); transform:translateY(-2px); }
+.shop-sell-item:hover,.shop-sell-card:hover{ background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--fg-faint); }
+.shop-sell-card.selected{ background:var(--accent-weak); box-shadow:inset 0 0 0 1.5px var(--accent); }
 .shop-sell-card-top{ display:flex; align-items:center; justify-content:space-between; gap:6px; }
-.shop-sell-name{ font-size:12px; font-weight:700; }
+.shop-sell-name{ font-size:12.5px; font-weight:700; letter-spacing:-0.01em; }
 .shop-sell-price{ font-family:var(--font-mono); font-size:11px; color:var(--tone-yellow); }
-.shop-sell-footer{ display:flex; align-items:center; justify-content:space-between; gap:var(--sp-3); margin-top:var(--sp-3); padding-top:var(--sp-3); border-top:1px solid var(--line-soft); }
+.shop-sell-footer{ display:flex; align-items:center; justify-content:space-between; gap:var(--sp-3); margin-top:var(--sp-3); padding-top:13px; border-top:1px solid var(--line); }
 .shop-sell-total{ font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--tone-yellow); }
 
 /* 상점 옆 로그 */
@@ -3813,7 +3904,11 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 .evolve-flash-overlay,.solemn-flash-overlay,.abyssal-flash-overlay,
 .gsy-awaken-overlay,.qm-flash-layer{
   position:fixed; inset:0; z-index:9998; pointer-events:none;
-  opacity:0; transition:opacity 0.3s var(--ease);
+  /* [Ver 12.6] 플래시가 렉을 만든 이유 — 부를 때마다 새 오버레이를 붙이고 큰
+     그라데이션을 다시 칠했다. 이제 레이어를 재사용하고, 합성만으로 처리되는
+     opacity 하나만 움직인다(레이어를 미리 GPU로 올려둔다). */
+  opacity:0; will-change:opacity; transform:translateZ(0); backface-visibility:hidden;
+  transition:opacity 0.42s cubic-bezier(0.22,0.61,0.36,1);
 }
 .gsy-awaken-overlay{ z-index:99999; }
 .death-flash-overlay.active   { opacity:1; background:radial-gradient(ellipse at center, rgba(242,100,90,0.28), transparent 68%); }
@@ -4299,7 +4394,7 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 .clash{ display:flex; align-items:center; justify-content:center; gap:var(--sp-3); }
 .clash-tx{ font-size:15px; font-weight:700; }
 .won-tx{ color:var(--tone-green); font-weight:700; }
-.save-tools{ display:flex; gap:var(--sp-2); flex-wrap:wrap; }
+.save-tools{ display:flex; align-items:center; gap:var(--sp-2); flex-wrap:wrap; margin-top:var(--sp-3); }
 .stalk-fab .shop-fab-icon{ font-size:17px; }
 
 /* =====================================================================
@@ -4537,8 +4632,7 @@ body.mobile-mode .nm-hub-btn small{ display:none; }
   .death-toast-layer,.ach-toast-layer{ left:12px; right:12px; top:52px; }
   .death-toast,.ach-toast{ min-width:0; max-width:none; }
   .lan-gchat{ left:12px; right:12px; width:auto; }
-  .bgm-ctl{ left:12px; right:12px; top:56px; }
-  .card-audio-ctl{ left:12px; right:12px; top:98px; }
+  .avol-panel{ width:min(240px, calc(100vw - 24px)); }
 }
 
 /* ---- 아주 낮은 화면(가로 눕힘) — 세로로 쌓으면 아무것도 안 보인다 ---- */
@@ -4816,10 +4910,12 @@ body.paper-skin{ }
 
    <body class="ink"> 의 ink 한 단어만 지우면 12.0 원본으로 즉시 복귀한다.
    ===================================================================== */
+/* [Ver 12.4.3 버그수정] 지금까지 body.ink(연필/종이 스킨)는 force-dark(다크 모드) 여부와
+   무관하게 항상 같은 밝은 종이색만 썼다 — "다크 모드"를 켜도 이 블록이 밝은 --bg를
+   덮어써서 화면이 전혀 어두워지지 않았던 원인이다. .ink 안에서도 다크/라이트를
+   갈라, 다크 모드일 때는 실제로 어두운 팔레트를 쓰게 한다. */
 body.ink,
-body.ink .theme-light,
-body.ink.force-dark,
-body.ink.force-dark .theme-light{
+body.ink .theme-light{
   --bg:        #FBFAF6;
   --bg-panel:  #FFFFFF;
   --bg-2:      #F4F2EC;
@@ -4869,6 +4965,60 @@ body.ink.force-dark .theme-light{
   --font:         'Jua', 'Gowun Dodum', 'Noto Sans KR', sans-serif;
   --font-display: 'Jua', 'Gowun Dodum', 'Noto Sans KR', sans-serif;
   --card-bg: #FFFFFF;
+}
+/* [Ver 12.4.3 신규] ink 스킨의 다크 모드 버전 — 종이가 아니라 어두운 잉크 노트 느낌.
+   폰트·그림자 스타일(연필 느낌)은 위 블록과 동일하게 유지하고, 색만 어둡게 뒤집는다. */
+body.ink.force-dark,
+body.ink.force-dark .theme-light{
+  --bg:        #16140F;
+  --bg-panel:  #201D17;
+  --bg-2:      #29251D;
+  --bg-3:      #332E24;
+  --bg-hover:  rgba(255,252,244,0.06);
+  --bg-press:  rgba(255,252,244,0.11);
+
+  --fg:        #F1EEE4;
+  --fg-dim:    #B9B2A0;
+  --fg-faint:  #85806F;
+  --white:     #F1EEE4;
+
+  --line:      rgba(255,252,244,0.28);
+  --line-soft: rgba(255,252,244,0.14);
+  --line-hard: rgba(255,252,244,0.42);
+  --border:    var(--line);
+
+  --accent:      #D8D2C0;
+  --accent-dim:  #B8B29E;
+  --accent-weak: rgba(216,210,192,0.12);
+  --accent-fg:   #16140F;
+  --danger:      #E08178;
+
+  --tone-red:        #E08178;  --tone-red-soft:      #F0B4AC;
+  --tone-yellow:     #D6B558;  --tone-yellow-soft:   #E9D394;
+  --tone-green:      #6FC79A;  --tone-green-soft:    #A6E2C1;
+  --tone-blue:       #85A8E8;  --tone-blue-soft:     #B7CBF2;
+  --tone-brown:      #C4A17E;  --tone-brown-soft:    #DCC4A6;
+  --tone-purple:     #B2A0E0;  --tone-purple-soft:   #D3C7F0;
+  --tone-orange:     #E0A26B;  --tone-orange-soft:   #EEC6A0;
+  --tone-skyblue:    #7CC6D8;  --tone-skyblue-soft:  #ABDEE9;
+  --tone-pink:       #E0A0BE;  --tone-pink-soft:     #F0C8DB;
+  --tone-black:      #A19C8E;  --tone-black-soft:    #C9C5B8;
+
+  --sh-1: 2px 2px 0 rgba(0,0,0,0.35);
+  --sh-2: 3px 4px 0 rgba(0,0,0,0.40);
+  --sh-3: 5px 7px 0 rgba(0,0,0,0.45);
+  --sh-ring: 0 0 0 1.6px var(--line);
+
+  --font:         'Jua', 'Gowun Dodum', 'Noto Sans KR', sans-serif;
+  --font-display: 'Jua', 'Gowun Dodum', 'Noto Sans KR', sans-serif;
+  /* [Ver 12.4.4] 카드 배경만 어둡게 바꿔놨는데 글씨 색(--card-fg 등)은 :root의
+     "항상 검정 글씨" 고정값을 그대로 물려받아, 어두운 카드 위에 어두운 글씨가
+     겹쳐 거의 안 보였다. 카드 전용 색상도 배경에 맞춰 다크 세트로 뒤집는다. */
+  --card-bg:    #201D17;
+  --card-fg:    #F1EEE4;
+  --card-dim:   #B9B2A0;
+  --card-faint: #85806F;
+  --card-atk:   #D8D2C0;
 }
 body.ink{
   background:var(--bg); color:var(--fg);
@@ -5002,13 +5152,148 @@ body.ink .usb-avatar{ filter:grayscale(1) contrast(1.12); }
   body.ink .nm-pass:hover{ transform:none; }
 }
 
+
+/* =====================================================================
+   [Ver 12.6] ≡ 서랍 · 개발자 인증 · 화면 설정
+   ===================================================================== */
+
+/* ---------- 오른쪽 위 햄버거 ---------- */
+.nm-burger{
+  flex-shrink:0; display:inline-flex; align-items:center; justify-content:center;
+  width:38px; height:38px; border-radius:var(--r-sm);
+  background:var(--bg-2); box-shadow:var(--sh-ring); cursor:pointer;
+  transition:background var(--t) var(--ease), box-shadow var(--t) var(--ease);
+}
+.nm-burger:hover{ background:var(--bg-3); }
+.nm-burger.on{ background:var(--bg-3); box-shadow:inset 0 0 0 1px var(--line-hard); }
+.nm-burger-bars{ display:flex; flex-direction:column; gap:4px; width:16px; }
+.nm-burger-bars > i{ display:block; height:1.5px; border-radius:2px; background:var(--fg-dim); transition:background var(--t) var(--ease); }
+.nm-burger:hover .nm-burger-bars > i,.nm-burger.on .nm-burger-bars > i{ background:var(--fg); }
+
+/* ---------- ≡ 서랍 ---------- */
+.nm-drawer-bg{
+  position:fixed; inset:0; z-index:9400; display:none;
+  background:rgba(0,0,0,0.42);
+  backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
+}
+.nm-drawer-bg.show{ display:block; animation:fadeIn var(--t) var(--ease); }
+.nm-drawer{
+  position:absolute; top:14px; right:14px; width:min(320px,calc(100vw - 28px));
+  max-height:calc(100vh - 28px); overflow-y:auto;
+  display:flex; flex-direction:column; gap:4px;
+  padding:12px; border-radius:var(--r-lg);
+  background:var(--bg-panel); box-shadow:var(--sh-ring), var(--sh-3);
+  animation:dropIn var(--t) var(--ease) both;
+}
+.nm-drawer-head{
+  display:flex; align-items:center; justify-content:space-between; gap:var(--sp-3);
+  padding:2px 4px 10px; margin-bottom:2px; border-bottom:1px solid var(--line);
+  font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--fg-faint);
+}
+.nm-drawer-x{
+  width:26px; height:26px; border-radius:var(--r-xs);
+  background:transparent; color:var(--fg-faint); font-size:12px; cursor:pointer;
+  transition:background var(--t) var(--ease), color var(--t) var(--ease);
+}
+.nm-drawer-x:hover{ background:var(--bg-2); color:var(--fg); }
+.nm-drawer-item{
+  position:relative; display:flex; align-items:center; gap:11px;
+  width:100%; padding:11px 12px; border-radius:var(--r-sm);
+  background:transparent; color:var(--fg); text-align:left; cursor:pointer;
+  transition:background var(--t) var(--ease);
+}
+.nm-drawer-item:hover{ background:var(--bg-2); }
+.nm-drawer-item > .ic{ flex-shrink:0; width:20px; font-size:15px; line-height:1; text-align:center; }
+.nm-drawer-item > .tx{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.nm-drawer-item > .tx > b{ font-size:12.5px; font-weight:600; }
+.nm-drawer-item > .tx > small{ font-size:10.5px; color:var(--fg-faint); }
+.nm-drawer-sep{ height:1px; margin:5px 4px; background:var(--line); }
+.nm-drawer-dev{ color:var(--tone-purple); }
+.nm-drawer-dev > .tx > small{ color:var(--tone-purple); opacity:0.75; }
+/* 서랍 안 토글 — 스위치를 오른쪽에 세워 목록 리듬을 깨지 않는다 */
+.nm-drawer-toggle > input[type="checkbox"]{ position:absolute; opacity:0; width:0; height:0; }
+.nm-drawer-sw{
+  position:relative; flex-shrink:0; width:36px; height:20px;
+  border-radius:var(--r-pill); background:var(--bg-3);
+  transition:background var(--t) var(--ease);
+}
+.nm-drawer-sw::after{
+  content:''; position:absolute; top:3px; left:3px; width:14px; height:14px;
+  border-radius:50%; background:var(--fg-dim);
+  transition:transform var(--t) var(--ease-spring), background var(--t) var(--ease);
+}
+.nm-drawer-toggle > input:checked ~ .nm-drawer-sw{ background:var(--accent); }
+.nm-drawer-toggle > input:checked ~ .nm-drawer-sw::after{ transform:translateX(16px); background:#fff; }
+
+/* ---------- 개발자 인증 ---------- */
+.devauth-bg{
+  position:fixed; inset:0; z-index:9750; display:none;
+  align-items:center; justify-content:center; padding:var(--sp-5);
+  background:rgba(0,0,0,0.62);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+}
+.devauth-bg.show{ display:flex; animation:fadeIn var(--t) var(--ease); }
+.devauth-box{
+  width:100%; max-width:340px;
+  display:flex; flex-direction:column; gap:9px;
+  padding:22px; border-radius:var(--r-xl);
+  background:var(--bg-panel); box-shadow:var(--sh-ring), var(--sh-3);
+  animation:popIn var(--t) var(--ease-spring) both;
+}
+.devauth-box.shake{ animation:shakeX 0.36s var(--ease-in-out); }
+.devauth-tag{
+  align-self:flex-start; padding:2px 8px; border-radius:var(--r-pill);
+  background:rgba(124,58,237,0.16); color:#C4A5FF;
+  font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:0.14em;
+}
+.devauth-title{ font-size:16px; font-weight:700; letter-spacing:-0.02em; }
+.devauth-sub{ font-size:11.5px; color:var(--fg-faint); line-height:1.7; }
+.devauth-input{
+  width:100%; margin-top:4px; padding:12px 14px; border-radius:var(--r-sm);
+  background:var(--bg-2); color:var(--fg); border:0;
+  box-shadow:inset 0 0 0 1px var(--line);
+  font-family:var(--font-mono); font-size:15px; letter-spacing:0.22em;
+  transition:box-shadow var(--t) var(--ease);
+}
+.devauth-input:focus{ outline:none; box-shadow:inset 0 0 0 1.5px var(--accent); }
+.devauth-err{ min-height:15px; font-size:11px; font-weight:600; color:var(--tone-red); }
+.devauth-foot{ display:flex; justify-content:flex-end; gap:8px; }
+.devauth-btn{
+  padding:9px 16px; border-radius:var(--r-xs);
+  background:var(--bg-2); color:var(--fg-dim);
+  font-size:12px; font-weight:600; cursor:pointer;
+  transition:background var(--t) var(--ease), color var(--t) var(--ease);
+}
+.devauth-btn:hover{ background:var(--bg-3); color:var(--fg); }
+.devauth-btn.primary{ background:var(--accent); color:var(--accent-fg); }
+.devauth-btn.primary:hover{ background:var(--accent-dim); color:var(--accent-fg); }
+
+/* ---------- 화면 · 연출 설정 ---------- */
+body.no-flash-fx .death-flash-overlay,body.no-flash-fx .rarity-flash-overlay,
+body.no-flash-fx .diabolic-flash-overlay,body.no-flash-fx .evolve-flash-overlay,
+body.no-flash-fx .solemn-flash-overlay,body.no-flash-fx .abyssal-flash-overlay,
+body.no-flash-fx .qm-flash-layer{ display:none !important; }
+body.no-shake-fx.screen-shake-ssr,body.no-shake-fx.gsy-screen-shake{ animation:none !important; }
+body.reduce-fx [class*="card-fx-"],
+body.reduce-fx [class*="card-fx-"] .hc-grade,
+body.reduce-fx [class*="grade-glow-"] .hc-grade{ animation:none !important; }
+body.no-ticker #nmTicker{ display:none; }
+body.log-compact .log-area .line{ padding-top:2px; padding-bottom:2px; font-size:11px; line-height:1.55; }
+body.high-contrast{
+  --line:rgba(255,255,255,0.22); --line-soft:rgba(255,255,255,0.13);
+  --line-hard:rgba(255,255,255,0.40); --border:rgba(255,255,255,0.22);
+}
+body.high-contrast.theme-light-shell{
+  --line:rgba(0,0,0,0.30); --line-soft:rgba(0,0,0,0.17);
+  --line-hard:rgba(0,0,0,0.50); --border:rgba(0,0,0,0.30);
+}
 </style>
 </head>
 <body class="ink">
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 12.4.1</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 12.4.4</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -5063,7 +5348,9 @@ body.ink .usb-avatar{ filter:grayscale(1) contrast(1.12); }
         <!-- renderUbiniteBadge()는 #nmTopRight와 #nmBurger가 함께 있을 때만
              💎우비나이트 배지를 업데이트 배지 앞에 끼워 넣는다. 11.1에서 ≡ 버튼이
              사라지며 그 조건이 깨져 배지가 엉뚱한 자리로 가 있었다 — 자리표만 남긴다. -->
-        <span id="nmBurger" hidden aria-hidden="true"></span>
+        <button class="nm-burger" id="nmBurger" onclick="toggleMenuDrawer()" title="정보 · 도구" aria-label="정보 · 도구">
+          <span class="nm-burger-bars"><i></i><i></i><i></i></span>
+        </button>
         <button class="nm-update-badge" id="nmUpdateBadge" onclick="goToChangelog()" title="업데이트 로그">
           <span class="nmu-ic">🏆</span><span class="nmu-tx">업데이트</span>
         </button>
@@ -5169,25 +5456,8 @@ body.ink .usb-avatar{ filter:grayscale(1) contrast(1.12); }
           </div>
         </div>
 
-        <!-- ⑥ 곁다리 — 2×2 두 덩어리로 흩어져 있던 것을 한 줄로 모았다 -->
-        <div class="nm-sec">
-          <div class="nm-sec-h">정보 · 도구</div>
-          <div class="nm-net-grid nm-grid4">
-            <button class="nm-net-btn" onclick="openBalancePatch()">
-              <span class="ic">⚖️</span><b>밸런스 패치</b><small>이번 판 조정 내역</small>
-            </button>
-            <button class="nm-net-btn" onclick="openNewCards()">
-              <span class="ic">🃏</span><b>신규 카드</b><small>새로 들어온 카드</small>
-            </button>
-            <button class="nm-net-btn" onclick="openBattleRecords()">
-              <span class="ic">⚔️</span><b>전투 기록</b><small>최근 10판 기보</small>
-            </button>
-            <label class="nm-net-btn nm-net-toggle">
-              <input type="checkbox" id="mobileModeToggle" onchange="toggleMobileMode(this.checked)" style="position:absolute;opacity:0;width:0;height:0;">
-              <span class="ic">📱</span><b>모바일 모드</b><small>세로화면 UI로 전환</small>
-            </label>
-          </div>
-        </div>
+        <!-- [Ver 12.6] '정보 · 도구' 네 칸은 오른쪽 위 ≡ 버튼(서랍) 안으로 들어갔다.
+             본문에서 자리만 차지하고 실제로는 거의 눌리지 않던 구획이었다. -->
 
         <div class="nm-card-count">등록된 카드 <b id="cardCountLabel">0</b>장 · 최소 1장 필요</div>
 
@@ -5212,6 +5482,40 @@ body.ink .usb-avatar{ filter:grayscale(1) contrast(1.12); }
       </div>
 
     </div><!-- /.nm-wrap -->
+
+    <!-- [Ver 12.6] ≡ 서랍 — 오른쪽 위 햄버거로 여는 '정보 · 도구' -->
+    <div class="nm-drawer-bg" id="nmDrawerBg" onclick="if(event.target===this) closeMenuDrawer();">
+      <div class="nm-drawer">
+        <div class="nm-drawer-head">
+          <span>정보 · 도구</span>
+          <button class="nm-drawer-x" onclick="closeMenuDrawer()" aria-label="닫기">✕</button>
+        </div>
+        <button class="nm-drawer-item" onclick="closeMenuDrawer(); openBalancePatch();">
+          <span class="ic">⚖️</span><span class="tx"><b>밸런스 패치</b><small>이번 판 조정 내역</small></span>
+        </button>
+        <button class="nm-drawer-item" onclick="closeMenuDrawer(); openNewCards();">
+          <span class="ic">🃏</span><span class="tx"><b>신규 카드</b><small>새로 들어온 카드</small></span>
+        </button>
+        <button class="nm-drawer-item" onclick="closeMenuDrawer(); openBattleRecords();">
+          <span class="ic">⚔️</span><span class="tx"><b>전투 기록</b><small>최근 10판 기보</small></span>
+        </button>
+        <button class="nm-drawer-item" onclick="closeMenuDrawer(); goToChangelog();">
+          <span class="ic">🏆</span><span class="tx"><b>업데이트 로그</b><small>버전별 변경 내역</small></span>
+        </button>
+        <label class="nm-drawer-item nm-drawer-toggle">
+          <input type="checkbox" id="mobileModeToggle" onchange="toggleMobileMode(this.checked)">
+          <span class="ic">📱</span><span class="tx"><b>모바일 모드</b><small>세로화면 UI로 전환</small></span>
+          <span class="nm-drawer-sw"></span>
+        </label>
+        <div class="nm-drawer-sep"></div>
+        <button class="nm-drawer-item nm-drawer-dev" id="devCodeListBtn" style="display:none;" onclick="closeMenuDrawer(); openCodeList();">
+          <span class="ic">🔑</span><span class="tx"><b>코드 확인</b><small>이 빌드에 등록된 코드</small></span>
+        </button>
+        <button class="nm-drawer-item nm-drawer-dev" id="devEventBtn" style="display:none;" onclick="openDevEventForce();">
+          <span class="ic">🎲</span><span class="tx"><b>이벤트 강제</b><small>개발자 전용</small></span>
+        </button>
+      </div>
+    </div>
 
     <!-- [Ver 12.2] 하단 고정 탭바는 삭제했다.
          화면 위에 떠서 본문(수상한 상자·계정 지키기·카드 뽑기)을 가렸고,
@@ -5740,6 +6044,25 @@ body.ink .usb-avatar{ filter:grayscale(1) contrast(1.12); }
   </div>
 </div>
 
+<!-- [Ver 12.6] 개발자 인증 — 브라우저 prompt() 대신 전용 창.
+     비밀번호에 따라 개발자(전체) / 부개발자(축소판)로 갈린다. -->
+<div class="devauth-bg" id="devAuthBg">
+  <div class="devauth-box" id="devAuthBox">
+    <div class="devauth-tag">RESTRICTED</div>
+    <div class="devauth-title">개발자 인증</div>
+    <div class="devauth-sub">권한 비밀번호를 입력하세요. 권한은 이 접속에만 유지됩니다.</div>
+    <input class="devauth-input" id="devAuthInput" type="password" autocomplete="off" spellcheck="false"
+      placeholder="비밀번호"
+      oninput="var e=document.getElementById('devAuthErr'); if(e) e.textContent='';"
+      onkeydown="if(event.key==='Enter'){ event.preventDefault(); devAuthSubmit(); } else if(event.key==='Escape'){ closeDevAuth(); }">
+    <div class="devauth-err" id="devAuthErr"></div>
+    <div class="devauth-foot">
+      <button class="devauth-btn" onclick="closeDevAuth()">취소</button>
+      <button class="devauth-btn primary" onclick="devAuthSubmit()">인증</button>
+    </div>
+  </div>
+</div>
+
 <div class="shop-bg" id="shopBg">
   <div class="shop-side-log" id="shopSideLog">
     <div class="shop-side-log-title">상황</div>
@@ -5900,17 +6223,25 @@ let shopAutoReroll = false; // [5.2.1] 광창시장: 매 턴 상점 자동 리�
 let shopDiscountPct = 0; // [5.5] DJ 부스: 상점 구매가 % 할인(누적)
 // ===================== [Ver 5.3.7 batch2] 개발자 모드 & 안티치트 카드 =====================
 let devMode = false;
+/* [Ver 12.6] 부개발자 모드 — 개발자 모드의 축소판.
+     · 카드 더미(DECK)를 눌러 원하는 카드를 직접 뽑을 수 있다
+     · 단, X등급(안티치트 · 개발자 전용) 카드는 목록에 나오지 않는다
+     · 메뉴 ≡ 서랍에 '🔑 코드 확인'이 생긴다
+   개발자 모드만 되는 것: 이벤트 강제, 인벤토리 전체 해금. */
+let subDevMode = false;
+function devAnyMode(){ return !!(devMode || subDevMode); }
 let __versionClicks = 0;
 let __versionClickTimer = null;
 function onVersionBadgeClick(){
-  // [Ver 5.3.7] 개발자 모드가 켜진 상태에서는 버전을 한 번만 눌러도 즉시 꺼진다.
-  if(devMode){
-    devMode = false;
+  // [Ver 5.3.7] 권한이 켜진 상태에서는 버전을 한 번만 눌러도 즉시 꺼진다.
+  if(devAnyMode()){
+    const wasSub = subDevMode && !devMode;
+    devMode = false; subDevMode = false;
     __versionClicks = 0;
     clearTimeout(__versionClickTimer);
     try{ document.getElementById('drawPile').classList.remove('dev-on'); }catch(e){}
     try{ updateDevMenuButtons(); renderDexScreen(); }catch(e){} // [Ver 9.12.1] 코드 확인 버튼·인벤 해금 표시 원복
-    showModal('개발자 모드 OFF', '개발자 모드가 비활성화되었습니다.', [{label:'확인', solid:true}]);
+    showModal(wasSub ? '부개발자 모드 OFF' : '개발자 모드 OFF', '권한이 해제되었습니다.', [{label:'확인', solid:true}]);
     return;
   }
   __versionClicks++;
@@ -5918,16 +6249,48 @@ function onVersionBadgeClick(){
   __versionClickTimer = setTimeout(()=>{ __versionClicks = 0; }, 2500); // 2.5초 안에 연타해야 함
   if(__versionClicks >= 11){
     __versionClicks = 0;
-    const pw = prompt('개발자 모드 비밀번호를 입력하세요.');
-    if(pw === '7753'){
-      devMode = true;
-      try{ document.getElementById('drawPile').classList.add('dev-on'); }catch(e){}
-      try{ updateDevMenuButtons(); renderDexScreen(); }catch(e){} // [Ver 9.12.1] 코드 확인 버튼 노출 + 인벤 전체 해금
-      showModal('개발자 모드 ON', '개발자 모드가 활성화되었습니다.<br>· 카드 더미(DECK)를 누르면 원하는 카드를 직접 뽑을 수 있습니다.<br>· 특수 안티치트 카드(X등급)도 뽑을 수 있습니다.<br>· <b>인벤토리의 모든 카드가 해금 상태로 보입니다.</b><br>· 메뉴에 <b>🔑 코드 확인</b> 버튼이 생깁니다.<br><br>버전을 다시 한 번 누르면 개발자 모드가 꺼집니다.', [{label:'확인', solid:true}]);
-    } else if(pw !== null){
-      showModal('실패', '비밀번호가 올바르지 않습니다.', [{label:'확인'}]);
-    }
+    openDevAuth();
   }
+}
+/* [Ver 12.6] 개발자 인증 창 — prompt()는 게임 밖 낯선 창을 띄우고 입력한 글자가
+   그대로 보였다. 전용 UI로 옮겨 마스킹 · 오류 표시 · 엔터 확정을 준다. */
+function openDevAuth(){
+  const bg = document.getElementById('devAuthBg');
+  if(!bg) return;
+  const inp = document.getElementById('devAuthInput');
+  const err = document.getElementById('devAuthErr');
+  if(inp) inp.value = '';
+  if(err) err.textContent = '';
+  bg.classList.add('show');
+  setTimeout(()=>{ try{ if(inp) inp.focus(); }catch(e){} }, 60);
+}
+function closeDevAuth(){
+  const bg = document.getElementById('devAuthBg');
+  if(bg) bg.classList.remove('show');
+  const inp = document.getElementById('devAuthInput');
+  if(inp) inp.value = '';
+}
+function devAuthSubmit(){
+  const inp = document.getElementById('devAuthInput');
+  const err = document.getElementById('devAuthErr');
+  const box = document.getElementById('devAuthBox');
+  const v = String((inp && inp.value) || '').trim();
+  if(v === '7753'){ closeDevAuth(); enableDevMode('full'); return; }
+  if(v.toLowerCase() === 'zazihu'){ closeDevAuth(); enableDevMode('sub'); return; }
+  if(err) err.textContent = '비밀번호가 올바르지 않습니다.';
+  if(box){ box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake'); }
+  if(inp){ inp.value = ''; try{ inp.focus(); }catch(e){} }
+}
+function enableDevMode(kind){
+  const full = (kind === 'full');
+  devMode = full; subDevMode = !full;
+  try{ document.getElementById('drawPile').classList.add('dev-on'); }catch(e){}
+  try{ updateDevMenuButtons(); renderDexScreen(); }catch(e){}
+  if(!full){
+    showModal('부개발자 모드 ON', '개발자 모드의 <b>축소판</b>이 활성화되었습니다.<br>· 카드 더미(DECK)를 누르면 원하는 카드를 직접 뽑을 수 있습니다.<br>· <b>X등급(개발자 전용) 카드는 뽑을 수 없습니다.</b><br>· 메뉴 ≡ 서랍에 <b>🔑 코드 확인</b>이 생깁니다.<br>· 인벤토리 전체 해금 · 이벤트 강제는 <b>제공되지 않습니다.</b><br><br>버전을 다시 한 번 누르면 꺼집니다.', [{label:'확인', solid:true}]);
+    return;
+  }
+  showModal('개발자 모드 ON', '개발자 모드가 활성화되었습니다.<br>· 카드 더미(DECK)를 누르면 원하는 카드를 직접 뽑을 수 있습니다.<br>· 특수 안티치트 카드(X등급)도 뽑을 수 있습니다.<br>· <b>인벤토리의 모든 카드가 해금 상태로 보입니다.</b><br>· 메뉴 ≡ 서랍에 <b>🔑 코드 확인</b>과 <b>🎲 이벤트 강제</b>가 생깁니다.<br><br>버전을 다시 한 번 누르면 개발자 모드가 꺼집니다.', [{label:'확인', solid:true}]);
 }
 /* 안티치트 X등급 카드 3종 — 일반 카드 풀/목록/봇 획득에서 제외되며, 개발자 모드 또는 특수 조건으로만 손에 들어온다. */
 const HIDDEN_CARDS = [
@@ -5960,11 +6323,14 @@ function isAntiCheatCard(c){ return !!(c && (c.antiCheat || ['HACKER_DETECTED','
 function openDevDrawPicker(){
   const me = viewer();
   if(!me) return;
-  const all = cards.concat(HIDDEN_CARDS);
+  /* [Ver 12.6] 부개발자 모드는 X등급(안티치트 · 개발자 전용)을 애초에 목록에 담지 않는다. */
+  const all = subDevMode
+    ? cards.filter(c=> c && c.grade !== 'X' && !isAntiCheatCard(c))
+    : cards.concat(HIDDEN_CARDS);
   const body = `
     <input id="devCardSearch" placeholder="카드 이름 검색..." oninput="renderDevCardPickList()" style="width:100%;padding:9px 12px;margin-bottom:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--fg);font-family:'JetBrains Mono',monospace;">
     <div id="devCardPickList" style="max-height:50vh;overflow-y:auto;display:flex;flex-direction:column;gap:4px;"></div>`;
-  showModal('개발자 — 카드 뽑기', body, [{label:'닫기'}]);
+  showModal(subDevMode ? '부개발자 — 카드 뽑기 <span style="font-size:11px;opacity:.6;">(X등급 제외)</span>' : '개발자 — 카드 뽑기', body, [{label:'닫기'}]);
   window.__devAllCards = all;
   renderDevCardPickList();
 }
@@ -6152,6 +6518,8 @@ function devGrantCard(idx){
   const all = window.__devAllCards || [];
   const src = all[idx];
   if(!src) return;
+  // [Ver 12.6] 부개발자 모드에서는 X등급이 손패로 들어가지 않게 한 번 더 막는다
+  if(subDevMode && (src.grade === 'X' || isAntiCheatCard(src))) return;
   // [Ver 7.1.7] 원격 참가자: 카드를 직접 손패에 넣어봐야 호스트 게임에 반영되지 않으므로,
   //   호스트에게 "이 카드를 나에게 지급" 요청을 보낸다. (카드 원본 데이터를 그대로 전달)
   if(typeof lanIsRemoteClient==='function' && lanIsRemoteClient()){
@@ -6449,29 +6817,10 @@ function bgmSetVolume(v){
   bgmApply();
 }
 
-/* 배틀 화면 우상단(경매 배지 아래)에 작은 토글 + 음량 게이지를 붙인다 */
+/* [Ver 12.5] 배틀 화면 하단 중앙의 통합 음량 버튼(avol-fab) 안에, 이 BGM 줄을 채워 넣는다.
+   패널 자체의 생성/펼침 여부는 avolRenderCtl()이 맡고, 여기서는 그 안의 한 행만 갱신한다. */
 function bgmRenderCtl(){
-  const battle = document.getElementById('screen-battle');
-  if(!battle) return;
-  let ctl = document.getElementById('bgmCtl');
-  if(!bgmShouldPlay()){ if(ctl) ctl.remove(); return; }
-  if(!ctl){
-    ctl = document.createElement('div');
-    ctl.id = 'bgmCtl';
-    ctl.className = 'bgm-ctl';
-    ctl.innerHTML = '<button class="bgm-ctl-btn" id="bgmCtlBtn" onclick="bgmToggle()" title="BGM 켜기/끄기">🎵</button>'
-      + '<input type="range" id="bgmCtlVol" min="0" max="100" step="1" oninput="bgmSetVolume(this.value)" title="BGM 음량">';
-    battle.appendChild(ctl);
-  }
-  const btn = document.getElementById('bgmCtlBtn');
-  const rng = document.getElementById('bgmCtlVol');
-  if(btn){ btn.textContent = bgmOn ? '🎵' : '🔇'; btn.classList.toggle('muted', !bgmOn); }
-  if(rng){
-    const pct = Math.round(bgmVol*100);
-    if(document.activeElement !== rng) rng.value = pct;
-    rng.style.setProperty('--bgm-pct', pct + '%');
-  }
-  ctl.classList.toggle('off', !bgmOn);
+  try{ avolRenderCtl(); }catch(e){}
 }
 
 /* ===================== [Ver 7.2] 카드 음원 (효과음 / 카드 고유 BGM) =====================
@@ -7006,29 +7355,88 @@ function setCardAudioEnabled(on){
   }
   try{ cardAudioRenderCtl(); }catch(e){}
 }
-/* 배틀 화면의 카드 음원 토글 + 음량 게이지 */
+/* [Ver 12.5] 마찬가지로 통합 패널의 카드 음원 줄만 갱신한다. */
 function cardAudioRenderCtl(){
+  try{ avolRenderCtl(); }catch(e){}
+}
+
+/* ===================== [Ver 12.5] 하단 통합 음량 버튼 =====================
+   기존에는 BGM 토글(.bgm-ctl)과 카드 음원 토글(.card-audio-ctl)이 화면 위쪽에
+   상시 떠 있는 슬라이더 두 벌이었는데, 자리를 어디로 옮겨도 상대 스탯 카드나
+   로그 패널 같은 다른 UI와 계속 겹쳐서 가렸다.
+   이제 화면 하단 중앙에 작은 원형 버튼(🔊) 하나만 상시 띄워두고, 클릭하면 그 위로
+   음량 패널이 펼쳐지는 팝오버로 바꾼다. 평소엔 버튼 하나뿐이라 아무것도 가리지 않는다. */
+let avolPanelOpen = false;
+function avolToggleOpen(e){
+  if(e) e.stopPropagation();
+  avolPanelOpen = !avolPanelOpen;
+  avolRenderCtl();
+}
+function avolClosePanel(){
+  if(!avolPanelOpen) return;
+  avolPanelOpen = false;
+  avolRenderCtl();
+}
+// 패널 바깥을 클릭하면 닫힌다
+document.addEventListener('click', (e)=>{
+  if(!avolPanelOpen) return;
+  const panel = document.getElementById('avolPanel');
+  const fab = document.getElementById('avolFab');
+  if(panel && (panel.contains(e.target) || (fab && fab.contains(e.target)))) return;
+  avolClosePanel();
+});
+
+function avolRenderCtl(){
   const battle = document.getElementById('screen-battle');
   if(!battle) return;
-  let ctl = document.getElementById('cardAudioCtl');
-  if(!gameActive){ if(ctl) ctl.remove(); return; }
-  if(!ctl){
-    ctl = document.createElement('div');
-    ctl.id = 'cardAudioCtl';
-    ctl.className = 'bgm-ctl card-audio-ctl';
-    ctl.innerHTML = '<button class="bgm-ctl-btn" id="cardAudioCtlBtn" onclick="cardAudioToggle()" title="카드 효과음/BGM 켜기·끄기">🔊</button>'
-      + '<input type="range" id="cardAudioCtlVol" min="0" max="100" step="1" oninput="cardAudioSetVolume(this.value)" title="카드 효과음/BGM 음량">';
-    battle.appendChild(ctl);
+  const showBgmRow = bgmShouldPlay();
+  const showCardRow = !!gameActive;
+  let root = document.getElementById('avolRoot');
+  if(!showBgmRow && !showCardRow){ if(root) root.remove(); return; }
+  if(!root){
+    root = document.createElement('div');
+    root.id = 'avolRoot';
+    root.innerHTML =
+      '<button class="avol-fab" id="avolFab" onclick="avolToggleOpen(event)" title="음량 설정">🔊</button>'
+      + '<div class="avol-panel" id="avolPanel">'
+        + '<div class="avol-row" id="avolBgmRow">'
+          + '<span class="avol-label" id="avolBgmBtn" onclick="bgmToggle()" title="BGM 켜기/끄기">🎵</span>'
+          + '<input type="range" id="bgmCtlVol" min="0" max="100" step="1" oninput="bgmSetVolume(this.value)" title="BGM 음량">'
+        + '</div>'
+        + '<div class="avol-row" id="avolCardRow">'
+          + '<span class="avol-label" id="avolCardBtn" onclick="cardAudioToggle()" title="카드 효과음/BGM 켜기·끄기">🔊</span>'
+          + '<input type="range" id="cardAudioCtlVol" min="0" max="100" step="1" oninput="cardAudioSetVolume(this.value)" title="카드 효과음/BGM 음량">'
+        + '</div>'
+      + '</div>';
+    battle.appendChild(root);
   }
-  const btn = document.getElementById('cardAudioCtlBtn');
-  const rng = document.getElementById('cardAudioCtlVol');
-  if(btn){ btn.textContent = cardAudioOn ? '🔊' : '🔈'; btn.classList.toggle('muted', !cardAudioOn); }
-  if(rng){
+  const bgmRow = document.getElementById('avolBgmRow');
+  const cardRow = document.getElementById('avolCardRow');
+  if(bgmRow) bgmRow.style.display = showBgmRow ? '' : 'none';
+  if(cardRow) cardRow.style.display = showCardRow ? '' : 'none';
+
+  const bgmBtn = document.getElementById('avolBgmBtn');
+  const bgmRng = document.getElementById('bgmCtlVol');
+  if(bgmBtn) bgmBtn.textContent = bgmOn ? '🎵' : '🔇';
+  if(bgmRng){
+    const pct = Math.round(bgmVol*100);
+    if(document.activeElement !== bgmRng) bgmRng.value = pct;
+  }
+
+  const cardBtn = document.getElementById('avolCardBtn');
+  const cardRng = document.getElementById('cardAudioCtlVol');
+  if(cardBtn) cardBtn.textContent = cardAudioOn ? '🔊' : '🔈';
+  if(cardRng){
     const pct = Math.round(cardAudioVol*100);
-    if(document.activeElement !== rng) rng.value = pct;
-    rng.style.setProperty('--bgm-pct', pct + '%');
+    if(document.activeElement !== cardRng) cardRng.value = pct;
   }
-  ctl.classList.toggle('off', !cardAudioOn);
+
+  // 대표 아이콘: 카드 음원 상태를 우선 반영(더 자주 쓰이는 설정), 없으면 BGM 상태
+  const fab = document.getElementById('avolFab');
+  const panel = document.getElementById('avolPanel');
+  const repOn = showCardRow ? cardAudioOn : bgmOn;
+  if(fab){ fab.textContent = repOn ? '🔊' : '🔈'; fab.classList.toggle('muted', !repOn); }
+  if(panel) panel.classList.toggle('open', avolPanelOpen);
 }
 
 const YACHA_DEATHMATCH_FROM = 20;  // 이 바퀴부터 데스매치
@@ -9624,8 +10032,15 @@ const DEFAULT_SETTINGS = {
   theme: 'dark',
   dragMode: false,
   peacefulMode: false,
-  startWith8Cards: false, // [Ver 6.6] 시작 패를 5장 대신 8장으로 시작
-  menuBgm: true // [Ver 9.10.5] 메뉴 화면 배경음(푸른 다뉴브) 재생 여부
+  // [Ver 12.6] '시작 카드 8장'은 삭제됐다 — 시작 패는 언제나 기본 5장이다.
+  menuBgm: true, // [Ver 9.10.5] 메뉴 화면 배경음(푸른 다뉴브) 재생 여부
+  /* [Ver 12.6] 화면 · 연출 — 렉·눈부심을 직접 끌 수 있게 한다 */
+  reduceFx: false,
+  flashFx: true,
+  screenShake: true,
+  highContrast: false,
+  compactLog: false,
+  menuTicker: true
 };
 let settings = { ...DEFAULT_SETTINGS };
 let currentTurnSummary = [];
@@ -10349,7 +10764,9 @@ function loadSettingsFromStorage(){
   if(settings.theme !== 'light' && settings.theme !== 'dark') settings.theme = 'dark';
   document.body.classList.toggle('mobile-mode', !!settings.mobileMode);
   document.body.classList.remove('paper-skin'); // 페이퍼스킨 폐지
+  if('startWith8Cards' in settings) delete settings.startWith8Cards; // [Ver 12.6] 삭제된 설정
   applyAppTheme();
+  applyDisplaySettings();
 }
 function saveSettingsToStorage(){
   try{ localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings)); }catch(e){}
@@ -10372,6 +10789,7 @@ function setSetting(key, value){
       else if(getComputedScreen() !== 'screen-battle') ambientBgmPlay('lobbytheme');
     }catch(e){}
   }
+  applyDisplaySettings(); // [Ver 12.6] 화면 · 연출 설정은 그 자리에서 반영된다
   saveSettingsToStorage();
   const cb = document.getElementById('mobileModeToggle');
   if(cb) cb.checked = !!settings.mobileMode;
@@ -10379,6 +10797,21 @@ function setSetting(key, value){
   renderTurnSummary();
   renderBeginnerTip();
   updateContinueButton();
+}
+/* [Ver 12.6] 화면 · 연출 설정을 body 클래스로 내린다.
+   CSS 한 곳에서만 반응하므로, 설정이 늘어도 로직이 흩어지지 않는다. */
+function applyDisplaySettings(){
+  try{
+    const b = document.body;
+    if(!b) return;
+    const off = (k)=> !!settings.reduceFx || settings[k] === false;
+    b.classList.toggle('reduce-fx', !!settings.reduceFx);
+    b.classList.toggle('no-flash-fx', off('flashFx'));
+    b.classList.toggle('no-shake-fx', off('screenShake'));
+    b.classList.toggle('high-contrast', !!settings.highContrast);
+    b.classList.toggle('log-compact', !!settings.compactLog);
+    b.classList.toggle('no-ticker', settings.menuTicker === false);
+  }catch(e){}
 }
 /* [Ver 8.1.18] 앱 전역 테마 — 다크 / 라이트 */
 function applyAppTheme(){
@@ -10619,8 +11052,18 @@ function renderSettingsScreen(){
     { key:'mobileMode', name:'모바일 모드', desc:'세로 화면에 맞게 UI를 더 촘촘한 배치로 강제 전환합니다.' },
     { key:'dragMode', name:'드래그 모드 (BETA)', desc:'손패의 카드를 상대에게 끌어다 놓아 사용할 수 있습니다. 대상이 필요 없는 카드(회복 등)는 화면 중앙 디스카드 파일로 끌어다 놓으면 바로 발동됩니다.' },
     { key:'peacefulMode', name:'평화주의 모드', desc:'첫 턴에는 어떤 공격 카드도 낼 수 없도록 "불문율" 데미지 상한을 1로 낮춥니다. 더 여유롭게 시작하고 싶을 때 켜세요.' },
-    { key:'startWith8Cards', name:'시작 카드 8장', desc:'기본 5장 대신 8장의 카드를 들고 게임을 시작합니다. (다음 게임 시작부터 적용)' },
   ];
+  /* [Ver 12.6] 화면 · 연출 — def:true는 "켜져 있는 게 기본"이라는 뜻이다.
+     (저장된 값이 없을 때 OFF로 보이면, 켠 적도 없는 기능이 꺼진 것처럼 읽힌다) */
+  const fxRows = [
+    { key:'reduceFx', name:'연출 줄이기', desc:'화면 플래시·흔들림·카드 특수 이펙트를 한꺼번에 끕니다. 버벅임이 느껴지면 이것부터 켜세요.' },
+    { key:'flashFx', name:'화면 플래시', desc:'희귀 카드 획득·사망·진화 때 화면 전체에 번지는 빛입니다.', def:true },
+    { key:'screenShake', name:'화면 흔들림', desc:'SSR 획득처럼 큰 순간에 화면이 짧게 흔들립니다.', def:true },
+    { key:'highContrast', name:'고대비 선', desc:'카드·패널의 테두리를 진하게 그려 경계를 또렷하게 만듭니다.' },
+    { key:'compactLog', name:'로그 촘촘히', desc:'인게임 로그의 줄 간격을 좁혀 한 화면에 더 많은 줄을 봅니다.' },
+    { key:'menuTicker', name:'메뉴 공지 띠', desc:'메뉴 위쪽에서 흐르는 공지 문구를 표시합니다.', def:true },
+  ];
+  const fxOn = (r)=> r.def ? settings[r.key] !== false : !!settings[r.key];
   const menuBgmOn = !!settings.menuBgm;
   const cardOn = (typeof cardAudioOn !== 'undefined') ? !!cardAudioOn : true;
   const cardVolPct = Math.round(((typeof cardAudioVol !== 'undefined') ? cardAudioVol : 1) * 100);
@@ -10629,26 +11072,23 @@ function renderSettingsScreen(){
   const specialBgmVolPct = Math.round(((typeof bgmVol !== 'undefined') ? bgmVol : 0.45) * 100);
   wrap.innerHTML = `
     <div class="settings-list">
+      <div class="setting-row" style="cursor:pointer;" onclick="goToChangelog()">
+        <div class="setting-meta">
+          <div class="setting-name">🏆 업데이트 로그</div>
+          <div class="setting-desc">지금까지의 변경사항을 버전별로 확인합니다.</div>
+        </div>
+      </div>
       <div class="setting-row">
         <div class="setting-meta">
           <div class="setting-name">다크 모드</div>
-          <div class="setting-desc">검정 바탕·흰 글씨. 인게임 기본 테마입니다.</div>
+          <div class="setting-desc">켜면 검정 바탕·흰 글씨, 끄면 흰 바탕·검정 글씨로 메뉴·전투 화면 전체가 바뀝니다.</div>
         </div>
         <label class="setting-switch">
           <input type="checkbox" ${!isLight ? 'checked' : ''} onchange="if(this.checked) setTheme('dark'); else setTheme('light')">
           <span>${!isLight ? 'ON' : 'OFF'}</span>
         </label>
       </div>
-      <div class="setting-row">
-        <div class="setting-meta">
-          <div class="setting-name">라이트 모드</div>
-          <div class="setting-desc">흰 바탕·검정 글씨. 메뉴·전투 화면 전체를 밝은 테마로 전환합니다.</div>
-        </div>
-        <label class="setting-switch">
-          <input type="checkbox" ${isLight ? 'checked' : ''} onchange="if(this.checked) setTheme('light'); else setTheme('dark')">
-          <span>${isLight ? 'ON' : 'OFF'}</span>
-        </label>
-      </div>
+      <div class="settings-audio-head">🎮 게임 플레이</div>
       ${rows.map(r=>`
         <div class="setting-row">
           <div class="setting-meta">
@@ -10658,6 +11098,19 @@ function renderSettingsScreen(){
           <label class="setting-switch">
             <input type="checkbox" ${settings[r.key] ? 'checked' : ''} onchange="setSetting('${r.key}', this.checked)">
             <span>${settings[r.key] ? 'ON' : 'OFF'}</span>
+          </label>
+        </div>`).join('')}
+
+      <div class="settings-audio-head">🖥️ 화면 · 연출</div>
+      ${fxRows.map(r=>`
+        <div class="setting-row">
+          <div class="setting-meta">
+            <div class="setting-name">${r.name}</div>
+            <div class="setting-desc">${r.desc}</div>
+          </div>
+          <label class="setting-switch">
+            <input type="checkbox" ${fxOn(r) ? 'checked' : ''} onchange="setSetting('${r.key}', this.checked)">
+            <span>${fxOn(r) ? 'ON' : 'OFF'}</span>
           </label>
         </div>`).join('')}
 
@@ -12653,6 +13106,7 @@ function mailRewardText(r){
   if(r.pickaxe) parts.push(`⛏️ 곡괭이 ${r.pickaxe.toLocaleString()}개`);          // [Ver 9.11]
   if(r.goldPickaxe) parts.push(`🪙 개쩌는 곡괭이 ${r.goldPickaxe.toLocaleString()}개`); // [Ver 9.16]
   if(r.boxKeys) parts.push(`🔑 상자 열쇠 ${r.boxKeys.toLocaleString()}개`);        // [Ver 9.16]
+  if(r.cream) parts.push(`☀️ 썬크림 ${r.cream.toLocaleString()}개`);              // [Ver 12.4.4]
   // [Ver 9.13.1] 등급 확정 진화석 뽑기권 — { tier:'Ephemeral', n:1 }
   if(r.evoPick && r.evoPick.tier) parts.push(`🎫 ${r.evoPick.tier} 확정 진화석 뽑기권 ${(r.evoPick.n||1).toLocaleString()}장`);
   return parts.length ? parts.join(' · ') : '보상 없음';
@@ -12671,6 +13125,7 @@ function claimMail(id){
     if(m.reward.pickaxe) grantPickaxe(m.reward.pickaxe);      // [Ver 9.11] 곡괭이
     if(m.reward.goldPickaxe) grantGoldPickaxe(m.reward.goldPickaxe); // [Ver 9.16] 개쩌는 곡괭이
     if(m.reward.boxKeys) grantBoxKeys(m.reward.boxKeys);      // [Ver 9.16] 상자 열쇠
+    if(m.reward.cream) grantCream(m.reward.cream);            // [Ver 12.4.4] 시즌 패스 썬크림
     // [Ver 9.13.1] 등급 확정 진화석 뽑기권
     if(m.reward.evoPick && m.reward.evoPick.tier) grantEvoPick(m.reward.evoPick.tier, m.reward.evoPick.n||1);
   }
@@ -12710,8 +13165,9 @@ function updateDevMenuButtons(){
      버전 배지가 보라색 DEV 배지로 바뀌고, 카드 더미에도 DEV 표시가 붙는다.
      (12.0까지는 켜도 아무 표시가 없어 "개발자 모드가 사라졌다"고 느껴졌다) */
   try{ document.body.classList.toggle('dev-mode', !!devMode); }catch(e){}
+  try{ document.body.classList.toggle('subdev-mode', !!subDevMode); }catch(e){} // [Ver 12.6]
   const b = document.getElementById('devCodeListBtn');
-  if(b) b.style.display = devMode ? '' : 'none';
+  if(b) b.style.display = devAnyMode() ? '' : 'none'; // [Ver 12.6] 부개발자도 코드 확인은 쓴다
   const e = document.getElementById('devEventBtn');
   if(e) e.style.display = devMode ? '' : 'none';
   // [Ver 10.5] 인게임 버튼바 쪽 — 실제로 쓰는 자리는 이쪽이다
@@ -13130,7 +13586,16 @@ async function fbFetchTop(boardKey, n){
 const BACKUP_KEYS = ['stats','achievements','cardDex','cardMastery','masteryRank','evolved','titles',
                      'equippedTitle','artifacts','pickaxe','goldPickaxe','boxKeys','gachaTickets','pets','equippedPet',
                      'evoStones','evoClaws','evoPicks','profile','exp','ubinite','redeemed','mailbox',
-                     'bio','friendCode','friends'];   // [Ver 10.5] 상태메시지 · 친구 코드 · 친구 목록
+                     'bio','friendCode','friends',   // [Ver 10.5] 상태메시지 · 친구 코드 · 친구 목록
+                     /* [버그수정] 클래스·시즌 패스가 백업이 안 되던 문제 — Ver 11.5(클래스·시즌)와
+                        Ver 11.8(랩터코인·와일드 진화석·시즌 패스·휘장) 도입 당시 이 목록에 추가하는
+                        걸 빠뜨렸다. 그래서 기기를 바꾸거나 복원하면 클래스·시즌 패스 진행도만
+                        통째로 사라졌다. seasonMigrated·seasonId·genesisSeasonSnap을 같이 넣지
+                        않으면, 복원된 classState가 다음 로드 때 "마이그레이션 안 됨"으로 오인되어
+                        migrateToSeasonClassSystem()이 곧바로 클래스를 1로 되돌려버리므로 반드시
+                        함께 백업한다. */
+                     'classState','seasonStats','seasonMigrated','seasonId','genesisSeasonSnap',
+                     'arcade','wildStones','pass','frames','frameOn'];
 /* [Ver 9.14] 백업을 뜨기 전에 메모리에만 있는 값을 전부 localStorage로 내려쓴다.
    백업은 localStorage를 읽어가므로, 아직 저장되지 않은 최신 진행도가 있으면 그대로 누락된다.
    (예: STATS는 10초 간격 타이머로만 저장돼, 직전 판의 기록이 빠질 수 있었다) */
@@ -13153,6 +13618,14 @@ function flushPersistentCaches(){
   call(typeof saveArtifacts    !== 'undefined' && saveArtifacts);
   call(typeof saveMailbox      !== 'undefined' && saveMailbox);
   call(typeof saveRedeemed     !== 'undefined' && saveRedeemed);
+  /* [버그수정] 클래스·시즌 패스 백업 누락 — 아래 저장 함수들이 flush 목록에 빠져 있어
+     백업 시점까지 메모리에만 있던 최신 클래스/패스 진행도가 누락될 수 있었다. */
+  call(typeof saveClassToStorage !== 'undefined' && saveClassToStorage);
+  call(typeof saveSeasonStats  !== 'undefined' && saveSeasonStats);
+  call(typeof saveArcade       !== 'undefined' && saveArcade);
+  call(typeof saveWildStones   !== 'undefined' && saveWildStones);
+  call(typeof savePass         !== 'undefined' && savePass);
+  call(typeof saveFrames       !== 'undefined' && saveFrames);
 }
 function buildBackupPayload(){
   try{ flushPersistentCaches(); }catch(e){}
@@ -13199,6 +13672,16 @@ function invalidatePersistentCaches(){
      (equippedTitle은 getEquippedTitle()이 매번 localStorage를 직접 읽어 캐시가 없다 — 안전) */
   try{ OWNED_PETS = null; }catch(e){}
   try{ loadPlayerProfileFromStorage(); }catch(e){}
+  /* [버그수정] 클래스·시즌 패스 복원 누락과 짝을 이루는 캐시 무효화 —
+     classState·seasonStats는 즉시 다시 읽고, ARCADE·WILD_STONES·PASSDATA·OWNED_FRAMES는
+     게으른 캐시라 null로 비워 다음 load*() 호출 때 복원된 값을 새로 읽게 한다.
+     (frameOn/equippedFrame()은 캐시 없이 매번 localStorage를 직접 읽어 여기서 손댈 게 없다) */
+  try{ loadClassFromStorage(); }catch(e){}
+  try{ loadSeasonStats(); }catch(e){}
+  try{ ARCADE = null; }catch(e){}
+  try{ WILD_STONES = null; }catch(e){}
+  try{ PASSDATA = null; }catch(e){}
+  try{ OWNED_FRAMES = null; }catch(e){}
   /* ② 시작할 때 한 번만 읽는 스칼라 — 직접 다시 읽어준다 */
   try{ const v = parseInt(localStorage.getItem(STORAGE_KEYS.evoClaws),10);     if(Number.isFinite(v)) evoClaws = Math.max(0, v); }catch(e){}
   try{ const v = parseInt(localStorage.getItem(STORAGE_KEYS.gachaTickets),10); if(Number.isFinite(v)) gachaTickets = Math.max(0, v); }catch(e){}
@@ -15266,7 +15749,7 @@ function showMineDigging(onDone, mode){
   ov.innerHTML = `<div class="mine-dig-box${mode==='gold'?' gold':''}">
       <div class="mine-dig-ic">${ic}</div>
       <div class="mine-dig-t">${tx}</div>
-      <div class="mine-dig-bar"><i></i></div>
+      <div class="mine-dig-bar"><i style="transition-duration:${MINE_DIG_MS}ms;"></i></div>
     </div>`;
   requestAnimationFrame(()=> requestAnimationFrame(()=> ov.classList.add('on')));
   setTimeout(()=>{
@@ -15479,7 +15962,7 @@ function showBoxOpening(onDone){
   ov.innerHTML = `<div class="mine-dig-box">
       <div class="mine-dig-ic box-shake">🎁</div>
       <div class="mine-dig-t">상자 여는 중...</div>
-      <div class="mine-dig-bar"><i style="animation-duration:${BOX_OPEN_MS}ms;background:#e0b64a;"></i></div>
+      <div class="mine-dig-bar"><i style="transition-duration:${BOX_OPEN_MS}ms;background:#e0b64a;"></i></div>
     </div>`;
   requestAnimationFrame(()=> requestAnimationFrame(()=> ov.classList.add('on')));
   setTimeout(()=>{
@@ -16408,7 +16891,8 @@ function goToStart(){
   try{
     const __b = document.getElementById('bgmAudio');
     if(__b && !__b.paused){ __b.pause(); __b.currentTime = 0; }
-    const __bc = document.getElementById('bgmCtl'); if(__bc) __bc.remove();
+    const __bc = document.getElementById('avolRoot'); if(__bc) __bc.remove();
+    avolPanelOpen = false;
   }catch(e){}
   // [Ver 6.11] 야차 모드 정리 — 진행 중이던 경매 오버레이/타이머를 반드시 끈다.
   try{
@@ -16555,6 +17039,30 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 12.5', date: '2026-08-21',
+    items: [
+      '\u{1F50A} <b>[개선] 음량 컨트롤을 화면 하단의 작은 버튼 하나로 통합했습니다.</b> 지금까지는 BGM 게이지와 카드 효과음 게이지가 화면 위쪽에 슬라이더 두 벌로 상시 떠 있어서, 자리를 옮겨봐도 결국 상대 스탯 카드(HP\u00B7SH 게이지, 버프 목록)를 계속 가렸습니다. 이제 화면 하단 중앙에 작은 \uD83D\uDD0A 버튼 하나만 있고, 누르면 그 위로 BGM\u00B7카드 효과음 슬라이더가 담긴 작은 패널이 펼쳐집니다. 평소엔 버튼 하나뿐이라 아무것도 가리지 않습니다.'
+    ]
+  },
+  {
+    version: 'Ver 12.4.4', date: '2026-08-21',
+    items: [
+      '\u{1F4C7} <b>[버그수정] 다크 모드 카드 글씨가 안 보이던 문제</b>를 고쳤습니다. 카드 배경만 어둡게 바꿔놨을 뿐 글씨 색은 그대로라, 어두운 카드 위에 어두운 글씨가 겹쳐 있었습니다. 이름 \u00B7 능력 \u00B7 설명 전부 밝은 색으로 뒤집어 이제 다크 모드에서도 또렷하게 읽힙니다.',
+      '\u{1F381} <b>[코드] 버그 제보 보상 코드 <b>BUGSORRY</b>를 추가했습니다.</b> 썬크림 500개 \u00B7 우비나이트 3,000개 \u00B7 에피메랄 확정 진화석 뽑기권 1장을 드립니다. 메뉴 \u2192 코드 입력에서 받아주세요.',
+      '\u{1F3C6} <b>[복구] 설정 화면에 업데이트 로그로 가는 버튼을 추가했습니다.</b> 설정 \u2192 맨 위 <b>업데이트 로그</b>를 누르면 바로 이 화면으로 옵니다.'
+    ]
+  },
+  {
+    version: 'Ver 12.4.3', date: '2026-08-21',
+    items: [
+      '\u{1F319} <b>[신규] 다크 모드가 실제로 다크 모드가 됩니다.</b> 지금까지 화면 전체에 씌워져 있던 연필/종이 스킨이 "다크 모드"를 켜도 항상 같은 밝은 종이색을 강제하고 있어, 설정에서 켜도 화면이 전혀 어두워지지 않았습니다. 스킨 안에 <b>진짜 다크 팔레트</b>를 새로 만들어, 이제 켜면 확실히 어두운 잉크 노트 느낌으로, 끄면 원래의 밝은 종이 느낌으로 바뀝니다.',
+      '\u{1F517} <b>[정리] "다크 모드"와 "라이트 모드"로 따로 있던 설정 두 줄을 하나로 합쳤습니다.</b> 서로 반대되는 같은 값을 두 스위치로 나눠 보여주던 것이라 헷갈렸습니다. 이제 <b>다크 모드 토글 하나</b>로 — 켜면 다크, 끄면 라이트입니다.',
+      '\u{1F524} <b>[버그수정] 코드 입력창이 대문자로만 보이던 문제</b>를 고쳤습니다. 실제 입력값은 그대로 소문자로 들어가고 있었지만 화면 표시만 대문자로 바뀌어, 소문자 코드를 쳐도 제대로 친 게 맞는지 알 수 없었습니다. 이제 입력한 그대로 보입니다. (코드 보상은 원래부터 대소문자를 구분합니다)',
+      '\u{1F50A} <b>[재배치] 음량 컨트롤이 상황 로그 패널 상단과 겹치던 문제</b>를 고쳤습니다. 지난 버전에서 손패 접기 버튼을 피해 화면 위쪽 오른쪽으로 옮겼는데, 그 자리가 이번엔 <b>상황 로그</b>(오른쪽 패널) 제목을 덮고 있었습니다. 겹치는 UI가 없는 <b>왼쪽 위</b>로 다시 옮겼습니다.',
+      '\u{1F0CF} <b>[버그수정] 손패를 접으면 내 스탯창까지 같이 잘리던 문제</b>를 고쳤습니다. 손패 줄 전체에 높이 제한을 걸었더니 그 안에 나란히 있던 <b>내 스탯창</b>도 부모를 따라 잘려버렸습니다. 이제 <b>카드 목록만</b> 접히고, 스탯창은 원래 높이 그대로 남습니다.'
+    ]
+  },
   {
     version: 'Ver 12.4.1', date: '2026-08-21',
     items: [
@@ -21569,6 +22077,9 @@ const REDEEM_CODES = {
   // [Ver 9.16] 유물 리워크로 전 유저의 유물이 초기화된 것에 대한 보상
   'BYEBYEATF':                { title:'유물 초기화 보상', desc:'유물 리워크(레벨 상한 Lv10 · 등급별 강화 비용)로 보유 유물이 초기화되었습니다. 다시 캐러 가는 길에 보태주세요.',
                                 reward:{ pickaxe:50, goldPickaxe:1 }, once:true, noExpire:true },
+  // [Ver 12.4.4] 버그 제보 보상 — 사과의 의미로 썬크림 · 우비나이트 · 에피메랄 확정권 지급
+  'BUGSORRY':                  { title:'버그 제보 보상', desc:'불편을 드려 죄송합니다. 제보해주신 덕분에 문제를 고칠 수 있었습니다.',
+                                reward:{ cream:500, ubinite:3000, evoPick:{ tier:'Ephemeral', n:1 } }, once:true, noExpire:true },
 };
 let REDEEMED_CODES = null;
 function loadRedeemed(){
@@ -24993,6 +25504,9 @@ function actuallyStartGame(){
   document.getElementById('logArea').innerHTML = '';
   log('sys', '게임 시작. 목숨 시스템 없음 — HP 0이 되면 즉시 탈락합니다.');
   log('sys', `참가자: ${players.map(p=>p.name).join(', ')}`);
+  /* [Ver 12.6] 시작 패를 나누는 동안에는 화면 플래시를 재생하지 않는다.
+     좋은 등급이 여러 장 섞이면 플래시가 연달아 터져 시작이 통째로 버벅였다. */
+  try{ muteScreenFlash(1800); }catch(e){}
   renderBoard(); pendingDealAnimation = true; renderHand(); updateTeamButton(); renderTurnSummary(); renderBeginnerTip();
   try{ brStartGame(); }catch(e){} // [Ver 9.9] 전투 기록 시작 — 참가자와 모드가 다 확정된 뒤
   showMatchIntro(()=> setTimeout(runTurnStart, 120));
@@ -31035,11 +31549,7 @@ function triggerAbyssalFlash(){
 /* [Ver 5.8] SOLEMN LAMENT 시전 시 화면 전체에 터지는 모드별 플래시 (다이아볼릭 플래시와 동일 구조) */
 function triggerSolemnFlash(modeKey){
   if(typeof document === 'undefined') return;
-  const overlay = document.createElement('div');
-  overlay.className = 'solemn-flash-overlay solemn-flash-' + (modeKey || 'DUAL');
-  document.body.appendChild(overlay);
-  requestAnimationFrame(()=> requestAnimationFrame(()=> overlay.classList.add('active')));
-  setTimeout(()=>{ if(overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 1600);
+  screenFlash('solemn-flash-overlay solemn-flash-' + (modeKey || 'DUAL'), 1600);
 }
 /* [Ver 5.6] 길거리캐스팅·카드캡터체리 등 "여러 장 중 고르기" UI에서 쓰는 실물 카드 마크업.
    등급 글로우/고유 이펙트를 손패 카드와 동일하게 적용한다. */
@@ -31651,16 +32161,48 @@ function announceRarityDraw(playerName, grade){
   if(grade==='SR' || grade==='SSR') triggerRarityFlash();
   if(grade==='SSR') triggerScreenShakeSsr();
 }
+/* [Ver 12.6] 화면 플래시 엔진 — 종류별 레이어 하나를 재사용한다.
+   예전에는 부를 때마다 오버레이를 새로 만들어 붙였다. 게임 시작처럼 여러 장을
+   한꺼번에 나눠 줄 때는 큰 레이어가 여러 겹 쌓여 눈에 보이게 버벅였다.
+   이제 겹치는 호출은 같은 레이어를 다시 켜는 것으로 합쳐지고,
+   시작 직후 잠깐(muteScreenFlash)은 아예 재생하지 않는다. */
+const __flashLayers = {};
+let __flashMuteUntil = 0;
+function muteScreenFlash(ms){ __flashMuteUntil = Date.now() + (ms || 0); }
+function screenFlashAllowed(){
+  if(typeof document === 'undefined' || !document.body) return false;
+  if(Date.now() < __flashMuteUntil) return false;
+  try{ if(settings && (settings.reduceFx || settings.flashFx === false)) return false; }catch(e){}
+  try{ if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false; }catch(e){}
+  return true;
+}
+function screenFlash(cls, dur){
+  if(!screenFlashAllowed()) return;
+  const key = String(cls || '');
+  if(!key) return;
+  const life = dur || 900;
+  let el = __flashLayers[key];
+  if(!el || !el.isConnected){
+    el = document.createElement('div');
+    el.className = key;
+    document.body.appendChild(el);
+    __flashLayers[key] = el;
+  }
+  clearTimeout(el.__offT); clearTimeout(el.__endT);
+  if(!el.__on){
+    el.__on = true;
+    requestAnimationFrame(()=>{ if(el.__on) el.classList.add('active'); });
+  }
+  el.__offT = setTimeout(()=>{ el.classList.remove('active'); }, Math.round(life * 0.42));
+  el.__endT = setTimeout(()=>{ el.__on = false; }, life);
+}
 function triggerRarityFlash(){
   if(typeof document === 'undefined') return;
-  const overlay = document.createElement('div');
-  overlay.className = 'rarity-flash-overlay';
-  document.body.appendChild(overlay);
-  requestAnimationFrame(()=> requestAnimationFrame(()=> overlay.classList.add('active')));
-  setTimeout(()=>{ if(overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 1100);
+  screenFlash('rarity-flash-overlay', 1100);
 }
 function triggerScreenShakeSsr(){
   if(typeof document === 'undefined' || !document.body) return;
+  try{ if(settings && (settings.reduceFx || settings.screenShake === false)) return; }catch(e){} // [Ver 12.6]
   document.body.classList.remove('screen-shake-ssr');
   void document.body.offsetWidth; // 강제 리플로우로 애니메이션 재시작 보장
   document.body.classList.add('screen-shake-ssr');
@@ -31754,11 +32296,7 @@ function logDeathFlavor(deadName, killerName, killerCardName){
    overlay 요소는 body에 매번 새로 붙였다 자동 제거. 겹쳐 사망해도 각각 개별 플래시로 표시. */
 function triggerDiabolicFlash(){
   if(typeof document === 'undefined') return;
-  const overlay = document.createElement('div');
-  overlay.className = 'diabolic-flash-overlay';
-  document.body.appendChild(overlay);
-  requestAnimationFrame(()=> requestAnimationFrame(()=> overlay.classList.add('active')));
-  setTimeout(()=>{ if(overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 1700);
+  screenFlash('diabolic-flash-overlay', 1700);
 }
 
 function triggerDeathFlash(isRare){
@@ -46864,7 +47402,7 @@ function onDrawClick(){
   if(currentPlayer().id !== viewerIdNow()) return;
   // [Ver 7.1.7] 개발자 모드: 원격 참가자든 호스트든, devMode면 카드 더미를 눌러 선택기를 연다.
   //   (원격은 카드를 고르면 devGrantCard가 호스트로 지급 요청을 보낸다)
-  if(devMode){ openDevDrawPicker(); return; }
+  if(devAnyMode()){ openDevDrawPicker(); return; } // [Ver 12.6] 부개발자도 카드 더미를 쓴다
   // [Ver 7.1] 원격 클라이언트: (개발자 모드가 아닐 때) 일반 드로우는 호스트에 전달
   if(typeof lanIsRemoteClient==='function' && lanIsRemoteClient()){ lanSend({ t:'to_host', payload:{ action:'draw' } }); return; }
   markGameAch('usedDrawButton'); // [Ver 5.9] 업적: 자급자족(드로우 버튼 미사용) 판정용
@@ -46877,6 +47415,14 @@ function onDrawClick(){
     showModal('드로우 불가', '"거래"의 효과로 앞으로 카드를 드로우할 수 없습니다.', [{label:'확인', solid:true}]);
     return;
   }
+  /* [버그수정] 드로우 버튼 연타 방지 — 카드를 낼 때는 turnActed가 즉시 true로 잠기지만
+     드로우는 이 플래그를 전혀 세팅하지 않아, 뽑기 애니메이션(2초)과 advanceTurn 지연(0.4초)
+     사이의 틈에 버튼을 연타하면 매 클릭마다 별도로 카드가 지급됐다(같은 턴에 여러 장 획득).
+     updateDrawPileState(false)로 씌우는 'disabled' 클래스는 대응하는 CSS 규칙이 없어
+     클릭을 막지 못했고, renderHand()가 다시 렌더링되며 my-turn 상태로 되돌아오기도 했다.
+     실제로 드로우가 진행되기 직전(여기)에 turnActed를 true로 잠가, 이후 재클릭은 함수
+     맨 위의 turnActed 가드에서 즉시 막히도록 한다. (다음 턴 시작 시 turnActed는 false로 리셋됨) */
+  if(me) me.turnActed = true;
   updateDrawPileState(false);
   { const _hs=document.getElementById('headerStat'); if(_hs) _hs.textContent = '카드를 뽑는 중...'; }
   // [Ver 7.1.6] 호스트가 원격 참가자 대신 뽑는 경우(LAN.__actAs 세팅됨):
@@ -48946,11 +49492,7 @@ function doEvolveHandCard(me, uid){
 /* 사망 플래시와 같은 룩의 보라색 화면 플래시 */
 function triggerEvolveFlash(){
   if(typeof document === 'undefined') return;
-  const overlay = document.createElement('div');
-  overlay.className = 'evolve-flash-overlay';
-  document.body.appendChild(overlay);
-  requestAnimationFrame(()=> requestAnimationFrame(()=> overlay.classList.add('active')));
-  setTimeout(()=>{ if(overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 1700);
+  screenFlash('evolve-flash-overlay', 1700);
 }
 
 function isFoundationOpen(){
