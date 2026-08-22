@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0A0A0A">
+<meta name="theme-color" content="#FBFAF6">
 <title>갱갱갱 우빈랩터 카드게임 JavaScript Edition</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=Gowun+Dodum&family=Jua&display=swap');
@@ -1981,7 +1981,12 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 
 .code-wrap{ display:flex; flex-direction:column; gap:var(--sp-3); }
 .code-row{ display:flex; gap:var(--sp-2); }
-.code-input{ flex:1; font-family:var(--font-mono); letter-spacing:0.08em; text-transform:uppercase; }
+/* [Ver 12.5.2 버그수정] text-transform:uppercase를 뺐다.
+   이 코드는 **대소문자를 구분**한다(redeemCode는 입력값을 그대로 비교한다).
+   그런데 화면에서만 대문자로 바꿔 보여주니, 소문자로 정확히 친 사람도
+   자기가 뭘 쳤는지 확인할 수 없었다 — 맞게 쳤는데 틀린 것처럼 보였다.
+   유저 코드 · 친구 코드 입력창은 JS가 값 자체를 toUpperCase 하므로 그대로 둔다. */
+.code-input{ flex:1; font-family:var(--font-mono); letter-spacing:0.08em; }
 .code-go{
   flex-shrink:0; padding:10px 18px; border-radius:var(--r-sm);
   background:var(--accent); color:var(--accent-fg); font-size:12.5px; font-weight:700; cursor:pointer;
@@ -2620,20 +2625,40 @@ body.team-battle-mode .p-name{ color:var(--fg) !important; }
 }
 @keyframes vizBar{ from{ transform:scaleY(0.3); } to{ transform:scaleY(1); } }
 .p-card.bgm-playing{ box-shadow:inset 0 0 0 1px rgba(124,156,255,0.3); }
-/* [Ver 12.4.1] 오른쪽 아래는 손패 접기 버튼 자리다 — 음량 컨트롤이 그 위를 덮어
-   접기 버튼이 아예 안 눌렸다. 화면 위쪽(상단 바 옆)으로 올린다. */
+/* =====================================================================
+   [Ver 12.5.2 재배치] 음량 컨트롤 — 화면 맨 아래 손패 머리줄 안으로
+   ---------------------------------------------------------------------
+   12.4.1까지의 역사: 오른쪽 아래(손패 접기 버튼 위) → 오른쪽 위(상단 바 옆).
+   position:fixed로 화면 위에 **떠 있는 한** 어디로 옮겨도 언젠가는
+   무언가와 겹친다. 위로 올리니 이번엔 경매 배지 · 토스트와 부딪혔다.
+   그래서 띄우기를 그만두고, 손패 머리줄(.hand-head) 안에 **흐름대로** 넣는다.
+     · 화면 맨 아래다 — 요청대로 하단.
+     · 자리를 직접 차지하므로 무엇과도 겹칠 수 없다(겹침 문제의 근본 해결).
+     · 손패를 접어도 .hand-head는 남으므로 접힌 상태에서도 계속 보인다.
+   크기도 한 단계 줄였다(버튼 26→20px, 슬라이더 62px, 여백 8/12→4/8). */
+.hand-head-audio{
+  margin-left:auto; display:flex; align-items:center; gap:6px; flex-shrink:0;
+}
+/* 음량 컨트롤이 오른쪽 auto 여백을 가져갔으니, 접기 버튼은 그 옆에 바로 붙는다 */
+.hand-head .hand-head-audio + .hand-toggle{ margin-left:0; }
 .bgm-ctl,.card-audio-ctl{
-  position:fixed; right:16px; top:62px; bottom:auto; z-index:120;
-  display:flex; align-items:center; gap:8px;
-  padding:8px 12px; border-radius:var(--r-pill);
+  position:static; z-index:auto;
+  display:flex; align-items:center; gap:5px;
+  padding:4px 8px; border-radius:var(--r-pill);
   background:color-mix(in srgb,var(--bg-panel) 90%,transparent);
   backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
-  box-shadow:var(--sh-ring), var(--sh-2);
-  font-size:11px; color:var(--fg-dim);
+  box-shadow:var(--sh-ring);
+  font-size:10px; color:var(--fg-dim);
 }
-.card-audio-ctl{ top:106px; bottom:auto; }
+/* 슬라이더도 같은 비율로 줄인다 — 전역 range 규격(width:100%·14px 손잡이)을 덮는다 */
+.bgm-ctl input[type="range"]{ width:62px; height:14px; flex:0 0 auto; }
+.bgm-ctl input[type="range"]::-webkit-slider-runnable-track{ height:3px; }
+.bgm-ctl input[type="range"]::-webkit-slider-thumb{ width:10px; height:10px; margin-top:-3.5px; }
+.bgm-ctl input[type="range"]::-moz-range-track{ height:3px; }
+.bgm-ctl input[type="range"]::-moz-range-thumb{ width:10px; height:10px; }
 .bgm-ctl-btn{
-  width:26px; height:26px; border-radius:50%;
+  width:20px; height:20px; border-radius:50%; flex-shrink:0;
+  font-size:11px; line-height:1;
   display:flex; align-items:center; justify-content:center;
   background:var(--bg-2); cursor:pointer;
   transition:background var(--t) var(--ease), transform var(--t-fast) var(--ease);
@@ -2840,20 +2865,21 @@ body.hand-collapsed .hand-area{
   transition:flex-basis var(--t-slow) var(--ease), height var(--t-slow) var(--ease),
              opacity var(--t) var(--ease), padding var(--t-slow) var(--ease);
 }
-/* 손패를 접으면 내 스탯창도 한 줄짜리 요약 높이로 줄어든다 —
-   그래야 "판이 넓어진다"는 목적이 실제로 달성된다. */
-/* 손패 줄 전체 높이를 못박는다. .zone-hand는 보드 격자의 한 행이라
-   자식만 줄여서는 행 높이가 따라 줄지 않는다 — 행 자체에 상한을 건다. */
-body.hand-collapsed .zone-hand{
-  max-height:104px; overflow:hidden;
-  transition:max-height var(--t-slow) var(--ease);
-}
-.zone-hand{ max-height:none; transition:max-height var(--t-slow) var(--ease); }
-body.hand-collapsed .zone-hand .seat-me{ max-height:92px; overflow:hidden; }
-body.hand-collapsed .zone-hand .seat-me .p-card{ min-height:0; }
-body.hand-collapsed .zone-hand-cards{ align-self:flex-start; }
-.hand-area{ transition:height var(--t-slow) var(--ease), opacity var(--t) var(--ease); }
+/* [Ver 12.5.2 버그수정] 접으면 내 스탯창이 잘려 나가던 문제
+   ---------------------------------------------------------------------
+   12.3은 "판이 넓어진다"를 높이 상한(max-height)으로 이루려 했다.
+   .zone-hand에 104px, .seat-me에 92px을 걸고 둘 다 overflow:hidden.
+   그런데 .p-card 안에는 이름 · 체력 · 쉴드 · 골드 · 상태칩이 세로로 쌓여 있어,
+   상한에 걸리는 순간 아랫줄이 그대로 **잘려 사라졌다.** 내 체력을 못 보는 건
+   손패를 접어 얻는 넓이보다 훨씬 비싸다.
+   애초에 상한은 필요 없었다 — .board의 hand 행은 grid-template-rows가 auto라
+   .hand-area가 0으로 접히는 것만으로 행 높이가 그만큼 알아서 줄어든다.
+   그래서 "자르는" 규칙을 전부 걷어내고, "늘어나려는 성질"만 끈다. */
 body.hand-collapsed .zone-hand{ padding-top:var(--sp-2); }
+/* min-height:100%는 접힌 줄에서도 스탯창을 다시 늘려버린다 — 이것만 해제한다.
+   (자르지는 않는다. 스탯창은 제 내용만큼의 높이를 온전히 갖는다) */
+body.hand-collapsed .zone-hand .seat-me .p-card{ min-height:0; }
+.hand-area{ transition:height var(--t-slow) var(--ease), opacity var(--t) var(--ease); }
 
 /* ---------- 카드 본문 ---------- */
 /* 등급 칩 — 알파벳 뒤의 색깔 사각형. 이 게임에서 가장 먼저 읽는 정보다. */
@@ -4820,8 +4846,10 @@ body.mobile-mode .nm-hub-btn small{ display:none; }
   .death-toast-layer,.ach-toast-layer{ left:12px; right:12px; top:52px; }
   .death-toast,.ach-toast{ min-width:0; max-width:none; }
   .lan-gchat{ left:12px; right:12px; width:auto; }
-  .bgm-ctl{ left:12px; right:12px; top:56px; }
-  .card-audio-ctl{ left:12px; right:12px; top:98px; }
+  /* [Ver 12.5.2] 음량 컨트롤은 더 이상 떠 있지 않다(손패 머리줄 안으로 들어갔다).
+     좁은 화면에서는 머리줄이 두 줄로 접히도록만 허용하고, 슬라이더를 조금 더 줄인다. */
+  .hand-head{ flex-wrap:wrap; row-gap:6px; }
+  .bgm-ctl input[type="range"]{ width:52px; }
 }
 
 /* ---- 아주 낮은 화면(가로 눕힘) — 세로로 쌓으면 아무것도 안 보인다 ---- */
@@ -5098,10 +5126,12 @@ body.paper-skin{ }
 
    <body class="ink"> 의 ink 한 단어만 지우면 12.0 원본으로 즉시 복귀한다.
    ===================================================================== */
+/* [Ver 12.5.2 버그수정] 여기에 body.ink.force-dark 두 줄이 같이 붙어 있었다.
+   그 두 줄 때문에 **다크 모드를 켜도 이 밝은 종이 팔레트가 그대로 적용됐다** —
+   설정의 다크 모드가 아무 일도 하지 않던 진짜 이유다(force-dark는 붙는데 무력화됨).
+   이제 밝은 팔레트는 밝을 때만 쓰고, 다크는 바로 아래 "밤 공책" 팔레트가 맡는다. */
 body.ink,
-body.ink .theme-light,
-body.ink.force-dark,
-body.ink.force-dark .theme-light{
+body.ink .theme-light{
   --bg:        #FBFAF6;
   --bg-panel:  #FFFFFF;
   --bg-2:      #F4F2EC;
@@ -5151,6 +5181,73 @@ body.ink.force-dark .theme-light{
   --font:         'Jua', 'Gowun Dodum', 'Noto Sans KR', sans-serif;
   --font-display: 'Jua', 'Gowun Dodum', 'Noto Sans KR', sans-serif;
   --card-bg: #FFFFFF;
+}
+/* =====================================================================
+   [Ver 12.5.2 신규] 밤 공책 — 공책 스킨의 다크 팔레트
+   ---------------------------------------------------------------------
+   12.x의 정체성은 '공책'이라, 다크 모드도 12.0 원본 다크로 되돌아가는 게 아니라
+   **어두운 종이에 밝은 잉크로 쓴 공책**이어야 한다. 그래서 토큰만 뒤집는다.
+   구조 · 글꼴 · 손그림 테두리는 body.ink 규칙이 그대로 이어받으므로 손대지 않는다.
+
+   선택자 우선순위: body.ink.force-dark(0,3,0) > body.ink(0,2,0),
+                   body.ink.force-dark .theme-light(0,3,1) > body.ink .theme-light(0,2,1).
+   게다가 위 블록보다 뒤에 있으니 두 겹으로 확실히 이긴다.
+
+   ※ 카드(--card-bg)는 흰 종이 그대로 둔다. 카드 고유 디자인 35종이 전부
+     흰 바탕을 전제로 맞춰져 있어, 여기서 뒤집으면 그게 통째로 깨진다.
+     어두운 판 위에 흰 카드가 놓인 그림은 그 자체로 자연스럽기도 하다. */
+body.ink.force-dark,
+body.ink.force-dark .theme-light{
+  --bg:        #16161A;
+  --bg-panel:  #1D1E23;
+  --bg-2:      #24262C;
+  --bg-3:      #2F323A;
+  --bg-hover:  rgba(236,239,244,0.06);
+  --bg-press:  rgba(236,239,244,0.12);
+
+  --fg:        #ECEFF4;
+  --fg-dim:    #A8B0BC;
+  --fg-faint:  #7C838F;
+  --white:     #FFFFFF;
+
+  /* 잉크선 — 밝은 쪽에서 rgba(43,43,43,·)이던 값을 그대로 뒤집는다 */
+  --line:      rgba(236,239,244,0.42);
+  --line-soft: rgba(236,239,244,0.20);
+  --line-hard: rgba(236,239,244,0.70);
+  --border:    var(--line);
+
+  --accent:      #E7E4DC;   /* 밝은 쪽 잉크색(#3A3937)의 반대편 — 연필심 대신 분필 */
+  --accent-dim:  #C6C2B8;
+  --accent-weak: rgba(231,228,220,0.12);
+  --accent-fg:   #16161A;
+  --danger:      #F2645A;
+
+  /* 어두운 바탕에서는 밝은 쪽 색이 가라앉는다 — 채도·명도를 올린 짝을 쓴다 */
+  --tone-red:        #F2645A;  --tone-red-soft:      #FF9C94;
+  --tone-yellow:     #E9B949;  --tone-yellow-soft:   #F5D58A;
+  --tone-green:      #4FC98A;  --tone-green-soft:    #93E4BA;
+  --tone-blue:       #6FA8FF;  --tone-blue-soft:     #A8C9FF;
+  --tone-brown:      #B98A63;  --tone-brown-soft:    #DCBB99;
+  --tone-purple:     #A98BEA;  --tone-purple-soft:   #CFBBF7;
+  --tone-orange:     #F0904A;  --tone-orange-soft:   #F8C193;
+  --tone-skyblue:    #4FC4DC;  --tone-skyblue-soft:  #9BE3F0;
+  --tone-pink:       #EE7BA8;  --tone-pink-soft:     #F7B2CE;
+  --tone-black:      #7A818C;  --tone-black-soft:    #C2C7CE;
+
+  /* 그림자는 밝은 쪽과 같은 '번짐 없는 덧그린 선' 문법을 유지하되 검정으로 */
+  --sh-1: 2px 2px 0 rgba(0,0,0,0.45);
+  --sh-2: 3px 4px 0 rgba(0,0,0,0.50);
+  --sh-3: 5px 7px 0 rgba(0,0,0,0.55);
+  --sh-ring: 0 0 0 1.6px var(--line);
+}
+/* 종이 위 하드코딩된 검정 잉크 몇 군데 — 토큰이 아니라 값이 박혀 있어 따로 뒤집는다 */
+body.ink.force-dark .nm-hero::after{ border-bottom-color:rgba(236,239,244,0.62); }
+body.ink.force-dark .nm-note::before{ box-shadow:inset 0 0 0 1px rgba(236,239,244,0.18); }
+/* 공책 줄 — 어두운 바탕에서 원래 농도로는 아예 안 보인다. 한 단계 올린다. */
+body.ink.force-dark .screen::before{
+  background-image:
+    linear-gradient(to right, transparent 0 71px, rgba(242,100,90,0.30) 71px 72.4px, transparent 72.4px),
+    repeating-linear-gradient(to bottom, transparent 0 31px, rgba(111,168,255,0.16) 31px 32px);
 }
 body.ink{
   background:var(--bg); color:var(--fg);
@@ -5425,7 +5522,7 @@ body.high-contrast.theme-light-shell{
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 12.5.1</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 12.5.2</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -6129,6 +6226,10 @@ body.high-contrast.theme-light-shell{
                접힌 상태는 저장돼서 다음 판에도 그대로 유지된다. -->
           <div class="hand-head">
             <div class="zone-subtitle hand-subtitle">내 손패</div>
+            <!-- [Ver 12.5.2] 음량 컨트롤 자리 — bgmRenderCtl / cardAudioRenderCtl이 여기에 넣는다.
+                 화면 위에 띄우면(position:fixed) 어디에 두든 결국 무언가와 겹친다.
+                 흐름 안에 자리를 잡아두면 겹칠 수가 없다. -->
+            <div class="hand-head-audio" id="handHeadAudio"></div>
             <button class="hand-toggle" id="handToggleBtn" onclick="toggleHandDock()"
                     title="손패 접기 / 펴기 (H)">
               <span class="hand-toggle-ic">▾</span><span class="hand-toggle-tx">접기</span>
@@ -6961,7 +7062,9 @@ function bgmRenderCtl(){
     ctl.className = 'bgm-ctl';
     ctl.innerHTML = '<button class="bgm-ctl-btn" id="bgmCtlBtn" onclick="bgmToggle()" title="BGM 켜기/끄기">🎵</button>'
       + '<input type="range" id="bgmCtlVol" min="0" max="100" step="1" oninput="bgmSetVolume(this.value)" title="BGM 음량">';
-    battle.appendChild(ctl);
+    /* [Ver 12.5.2] 손패 머리줄 안(화면 맨 아래)에 넣는다 — 겹침의 근본 해결.
+       독이 없는 예외 상황에서만 예전처럼 배틀 화면에 직접 붙인다. */
+    (document.getElementById('handHeadAudio') || battle).appendChild(ctl);
   }
   const btn = document.getElementById('bgmCtlBtn');
   const rng = document.getElementById('bgmCtlVol');
@@ -7518,7 +7621,8 @@ function cardAudioRenderCtl(){
     ctl.className = 'bgm-ctl card-audio-ctl';
     ctl.innerHTML = '<button class="bgm-ctl-btn" id="cardAudioCtlBtn" onclick="cardAudioToggle()" title="카드 효과음/BGM 켜기·끄기">🔊</button>'
       + '<input type="range" id="cardAudioCtlVol" min="0" max="100" step="1" oninput="cardAudioSetVolume(this.value)" title="카드 효과음/BGM 음량">';
-    battle.appendChild(ctl);
+    /* [Ver 12.5.2] BGM 컨트롤과 같은 독(손패 머리줄)에 나란히 놓는다 */
+    (document.getElementById('handHeadAudio') || battle).appendChild(ctl);
   }
   const btn = document.getElementById('cardAudioCtlBtn');
   const rng = document.getElementById('cardAudioCtlVol');
@@ -10120,8 +10224,12 @@ const DEFAULT_SETTINGS = {
   autoSave: true,
   introCinematic: true,
   eventSummary: true,
-  // [Ver 8.1.18] lowSpecMode/paper-skin 제거 → theme: 'dark' | 'light'
-  theme: 'dark',
+  /* [Ver 8.1.18] lowSpecMode/paper-skin 제거 → theme: 'dark' | 'light'
+     [Ver 12.5.2] 기본값을 light로 바꿨다. 12.x의 얼굴은 '공책'이고, 그동안 모두가
+     실제로 봐온 화면도 밝은 공책이다(다크가 작동하지 않았으므로).
+     이제 다크가 진짜로 동작하게 됐으니, 기본값이 dark로 남아 있으면
+     아무것도 누르지 않은 사람까지 전부 갑자기 어두워진다. 다크는 켜서 쓰는 것으로. */
+  theme: 'light',
   dragMode: false,
   peacefulMode: false,
   // [Ver 12.6] '시작 카드 8장'은 삭제됐다 — 시작 패는 언제나 기본 5장이다.
@@ -10853,7 +10961,18 @@ function loadSettingsFromStorage(){
   }catch(e){ settings = { ...DEFAULT_SETTINGS }; }
   // [Ver 8.1.18] 구버전 lowSpecMode 키 정리 — 더 이상 사용하지 않음
   if('lowSpecMode' in settings) delete settings.lowSpecMode;
-  if(settings.theme !== 'light' && settings.theme !== 'dark') settings.theme = 'dark';
+  if(settings.theme !== 'light' && settings.theme !== 'dark') settings.theme = 'light';
+  /* [Ver 12.5.2] 테마 1회 정리 — 12.5.1까지 다크 모드는 **켜도 아무 일도 하지 않았다**
+     (공책 스킨이 force-dark를 무력화하고 있었다). 그래서 저장돼 있는 theme:'dark'는
+     "어둡게 쓰고 싶다"는 뜻이 아니라 그냥 옛 기본값이 굳은 것이다.
+     그 값을 그대로 살리면, 다크가 고쳐지는 순간 아무것도 안 누른 사람까지 전부
+     화면이 어두워진다. 한 번만 지금 보고 있던 밝은 공책으로 맞춰두고,
+     이 뒤로 바꾸는 값은 진짜 선택이므로 그대로 존중한다. */
+  if(!settings.themeReset1252){
+    settings.theme = 'light';
+    settings.themeReset1252 = true;
+    try{ saveSettingsToStorage(); }catch(e){}
+  }
   document.body.classList.toggle('mobile-mode', !!settings.mobileMode);
   document.body.classList.remove('paper-skin'); // 페이퍼스킨 폐지
   if('startWith8Cards' in settings) delete settings.startWith8Cards; // [Ver 12.6] 삭제된 설정
@@ -10912,7 +11031,8 @@ function applyAppTheme(){
   document.body.classList.toggle('force-dark', !light);
   document.body.classList.remove('paper-skin');
   const meta = document.querySelector('meta[name="theme-color"]');
-  if(meta) meta.setAttribute('content', light ? '#FFFFFF' : '#0A0A0A');
+  /* [Ver 12.5.2] 공책 스킨의 실제 바탕색과 맞춘다 — 순백/순검정이 아니다 */
+  if(meta) meta.setAttribute('content', light ? '#FBFAF6' : '#16161A');
 }
 function setTheme(mode){
   settings.theme = (mode === 'light') ? 'light' : 'dark';
@@ -11164,24 +11284,17 @@ function renderSettingsScreen(){
   const specialBgmVolPct = Math.round(((typeof bgmVol !== 'undefined') ? bgmVol : 0.45) * 100);
   wrap.innerHTML = `
     <div class="settings-list">
+      <!-- [Ver 12.5.2] 다크 · 라이트 두 줄을 한 줄로 합쳤다.
+           서로의 반대일 뿐인 스위치가 둘이면 "둘 다 켜면?" 같은 헛갈림만 남는다.
+           끄면 라이트, 켜면 다크 — 스위치 하나로 충분하다. -->
       <div class="setting-row">
         <div class="setting-meta">
           <div class="setting-name">다크 모드</div>
-          <div class="setting-desc">검정 바탕·흰 글씨. 인게임 기본 테마입니다.</div>
+          <div class="setting-desc">어두운 종이에 밝은 잉크로 씁니다. 끄면 원래의 밝은 공책으로 돌아갑니다.</div>
         </div>
         <label class="setting-switch">
-          <input type="checkbox" ${!isLight ? 'checked' : ''} onchange="if(this.checked) setTheme('dark'); else setTheme('light')">
+          <input type="checkbox" ${!isLight ? 'checked' : ''} onchange="setTheme(this.checked ? 'dark' : 'light')">
           <span>${!isLight ? 'ON' : 'OFF'}</span>
-        </label>
-      </div>
-      <div class="setting-row">
-        <div class="setting-meta">
-          <div class="setting-name">라이트 모드</div>
-          <div class="setting-desc">흰 바탕·검정 글씨. 메뉴·전투 화면 전체를 밝은 테마로 전환합니다.</div>
-        </div>
-        <label class="setting-switch">
-          <input type="checkbox" ${isLight ? 'checked' : ''} onchange="if(this.checked) setTheme('light'); else setTheme('dark')">
-          <span>${isLight ? 'ON' : 'OFF'}</span>
         </label>
       </div>
       <div class="settings-audio-head">🎮 게임 플레이</div>
@@ -13680,7 +13793,17 @@ async function fbFetchTop(boardKey, n){
 const BACKUP_KEYS = ['stats','achievements','cardDex','cardMastery','masteryRank','evolved','titles',
                      'equippedTitle','artifacts','pickaxe','goldPickaxe','boxKeys','gachaTickets','pets','equippedPet',
                      'evoStones','evoClaws','evoPicks','profile','exp','ubinite','redeemed','mailbox',
-                     'bio','friendCode','friends'];   // [Ver 10.5] 상태메시지 · 친구 코드 · 친구 목록
+                     'bio','friendCode','friends',   // [Ver 10.5] 상태메시지 · 친구 코드 · 친구 목록
+                     /* [Ver 12.5.2 버그수정] 클래스 · 시즌 패스가 백업에서 통째로 빠져 있었다.
+                        11.5(클래스 · 시즌)와 11.8(패스 · 랩터코인 · 휘장 · 와일드 진화석) 때
+                        새 저장 키를 만들면서 이 목록에 추가하는 걸 잊었다. 그래서 기기를 옮기면
+                        클래스가 1로, 시즌 패스가 0레벨로 되돌아갔다.
+                        시즌 관련 키는 셋이 한 몸이라 같이 담는다 —
+                        seasonId · seasonMigrated · genesisSeasonSnap 중 하나만 빠져도
+                        복원한 기기에서 마이그레이션이 다시 돌아 클래스가 초기화된다. */
+                     'classState','pass','arcade','wildStones','frames','frameOn',
+                     'seasonStats','seasonId','seasonMigrated','genesisSeasonSnap',
+                     'tier','legacyBestTier'];
 /* [Ver 9.14] 백업을 뜨기 전에 메모리에만 있는 값을 전부 localStorage로 내려쓴다.
    백업은 localStorage를 읽어가므로, 아직 저장되지 않은 최신 진행도가 있으면 그대로 누락된다.
    (예: STATS는 10초 간격 타이머로만 저장돼, 직전 판의 기록이 빠질 수 있었다) */
@@ -13703,6 +13826,21 @@ function flushPersistentCaches(){
   call(typeof saveArtifacts    !== 'undefined' && saveArtifacts);
   call(typeof saveMailbox      !== 'undefined' && saveMailbox);
   call(typeof saveRedeemed     !== 'undefined' && saveRedeemed);
+  /* [Ver 12.5.2] 클래스 · 시즌 패스 계열도 메모리 캐시가 있다 —
+     여기서 내려쓰지 않으면 백업 목록에 넣어도 직전 판의 값이 빠진 채로 올라간다. */
+  call(typeof saveClassToStorage !== 'undefined' && saveClassToStorage);
+  call(typeof saveSeasonStats    !== 'undefined' && saveSeasonStats);
+  call(typeof saveTierToStorage  !== 'undefined' && saveTierToStorage);
+  /* ⚠ savePass() · saveArcade()는 캐시가 null이면 `{}`를 그대로 써버린다.
+     아직 패스/아케이드 화면을 한 번도 안 연 상태에서 곧장 저장하면
+     **저장돼 있던 진행도를 빈 객체로 덮어쓴다.** 반드시 먼저 읽어서 채운 뒤 쓴다. */
+  call(typeof loadPass           !== 'undefined' && loadPass);
+  call(typeof savePass           !== 'undefined' && savePass);
+  call(typeof loadArcade         !== 'undefined' && loadArcade);
+  call(typeof saveArcade         !== 'undefined' && saveArcade);
+  /* 이 둘은 save 안에서 load를 한 번 거치므로 그대로 불러도 안전하다 */
+  call(typeof saveWildStones     !== 'undefined' && saveWildStones);
+  call(typeof saveFrames         !== 'undefined' && saveFrames);
 }
 function buildBackupPayload(){
   try{ flushPersistentCaches(); }catch(e){}
@@ -13763,6 +13901,19 @@ function invalidatePersistentCaches(){
   }catch(e){}
   try{ loadStats(); }catch(e){}          // STATS도 통째로 다시 읽는다
   try{ loadAchievements(); }catch(e){}
+  /* [Ver 12.5.2] 클래스 · 시즌 패스 계열 — 백업 대상에 새로 들어왔으니
+     캐시 무효화도 같이 해줘야 한다. 안 그러면 "복원했는데 클래스가 그대로"가 된다.
+     ① 게으른 캐시는 null로 비운다(다음 load*()가 새로 읽는다) */
+  try{ PASSDATA = null; }catch(e){}
+  try{ ARCADE = null; }catch(e){}
+  try{ WILD_STONES = null; }catch(e){}
+  try{ OWNED_FRAMES = null; }catch(e){}
+  /* ② 시작할 때 한 번만 읽는 값 — load*()는 저장된 값이 없으면 기존 값을 그대로 두므로,
+        먼저 기본값으로 되돌린 뒤 읽어야 "백업에 없던 항목"이 옛 값으로 남지 않는다. */
+  try{ classState = { cls:1, exp:0 };            loadClassFromStorage(); }catch(e){}
+  try{ seasonStats = { wins:0, losses:0, games:0 }; loadSeasonStats(); }catch(e){}
+  try{ tierState = { rankIdx:0, points:0 };      loadTierFromStorage(); }catch(e){}
+  /* (frameOn은 equippedFrame()이 매번 localStorage를 직접 읽는다 — 캐시가 없어 안전) */
 }
 function applyBackupPayload(p){
   if(!p || !p.data) throw new Error('백업 데이터가 올바르지 않습니다.');
@@ -17105,6 +17256,17 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 12.5.2', date: '2026-08-22',
+    items: [
+      '\u{1F41B} <b>[버그수정] 손패를 접으면 내 스탯창이 잘려 나가던 문제</b>를 고쳤습니다. 접었을 때 손패 줄 높이를 <b>104px로 못박아</b> 두고 넘치는 부분을 잘라내고 있었는데, 스탯창 안에는 이름 · 체력 · 쉴드 · 골드 · 상태칩이 세로로 쌓여 있어 <b>아랫줄이 통째로 사라졌습니다.</b> 상한을 걷어냈고, 이제 접어도 내 상태는 전부 보입니다.',
+      '\u{1F509} <b>[재배치] 음량 컨트롤을 화면 맨 아래 손패 머리줄 안으로 옮겼습니다.</b> 오른쪽 아래 → 오른쪽 위로 옮겨봤지만, <b>화면 위에 떠 있는 한</b> 어디에 두든 결국 무언가와 겹쳤습니다. 이제 띄우지 않고 <b>손패 머리줄에 자리를 차지하고</b> 앉습니다 — 겹칠 수가 없습니다. 크기도 한 단계 줄였고(버튼 26→20px), 손패를 접어도 계속 보입니다.',
+      '\u{1F311} <b>[버그수정] 다크 모드를 켜도 아무 일도 일어나지 않던 문제</b>를 고쳤습니다. 공책 스킨이 <b>다크 모드를 무력화하는 규칙</b>을 갖고 있어서, 스위치는 켜지는데 화면은 그대로 밝았습니다. 이제 <b>어두운 종이에 밝은 잉크</b>로 쓴 “밤 공책”으로 제대로 바뀝니다. (카드는 흰 종이 그대로입니다 — 카드 고유 디자인이 흰 바탕을 전제로 맞춰져 있어서입니다)',
+      '\u{1F39B}️ <b>[정리] 설정의 다크 모드 · 라이트 모드 두 스위치를 <b>다크 모드 하나</b>로 합쳤습니다.</b> 서로의 반대일 뿐인 스위치가 둘이면 헛갈리기만 합니다. 끄면 라이트, 켜면 다크입니다. <b>기본값은 라이트</b>(지금까지 보시던 밝은 공책)이고, 다크는 켜서 쓰시면 됩니다.',
+      '\u{1F4BE} <b>[버그수정] 클래스 · 시즌 패스가 백업에 담기지 않던 문제</b>를 고쳤습니다. 11.5(클래스 · 시즌)와 11.8(패스 · 랩터코인 · 휘장 · 와일드 진화석) 때 새로 만든 저장 항목들이 <b>백업 목록에 추가되지 않아</b>, 기기를 옮기면 클래스가 1로 · 시즌 패스가 0레벨로 되돌아갔습니다. <b>클래스 · 시즌 패스 · 랩터코인 · 휘장 · 와일드 진화석 · 티어 · 시즌 전적</b>이 모두 백업 · 복원됩니다.',
+      '\u{1F524} <b>[버그수정] 코드 입력창에서 소문자를 쳐도 대문자로만 보이던 문제</b>를 고쳤습니다. 이 코드는 <b>대소문자를 구분</b>하는데 화면에서만 대문자로 바꿔 보여주고 있어서, 제대로 친 사람도 자기가 뭘 쳤는지 확인할 수 없었습니다. 이제 친 그대로 보입니다.'
+    ]
+  },
   {
     version: 'Ver 12.5.1', date: '2026-08-21',
     items: [
