@@ -960,6 +960,13 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 .nm-update-badge:hover{ background:var(--bg-2); color:var(--fg); transform:translateY(-1px); }
 .nmu-ic{ font-size:14px; }
 .nmu-tx{ font-size:11.5px; font-weight:600; }
+/* [Ver 13.0] 새 내용 표시 — 아직 안 본 신규 카드 · 밸런스 패치에만 붙는다 */
+.nm-new{
+  margin-left:5px; padding:1px 6px; border-radius:var(--r-pill);
+  background:var(--tone-red); color:#fff;
+  font-size:9px; font-weight:700; letter-spacing:0.04em; line-height:1.5;
+  animation:breathe 1.8s var(--ease-in-out) infinite;
+}
 
 /* ---------- 콘텐츠 허브 ----------
    12.0의 하단 고정 탭바를 대신한다. 떠 있지 않으므로 본문을 가리지 않고,
@@ -5101,38 +5108,132 @@ body.party-time-mode .nm-act3-play{ animation:beat 0.6s var(--ease-in-out) infin
 /* =====================================================================
    2. 모바일 모드 (수동 토글 · 화면 폭과 무관)
    ===================================================================== */
-body.mobile-mode #screen-battle{ padding:var(--sp-2) var(--sp-2) var(--sp-3); gap:var(--sp-2); }
-body.mobile-mode .board{
-  grid-template-columns:minmax(0,1fr);
-  grid-template-rows:132px auto auto auto;
-  grid-template-areas:"log" "bots" "table" "hand";
-  gap:var(--sp-2);
-  align-content:start;
+/* ==========================================================================
+   [Ver 13.0] 모바일 인게임 — 화면 한 장에 맞춘다
+   --------------------------------------------------------------------------
+   ▶ 무엇이 깨져 있었나 (375×812 실측)
+     · 격자를 `132px auto auto auto` 로 쌓아 **총 높이가 화면을 넘겼다.**
+       손패가 y=776에서 시작해 956에서 끝나 — 화면(812) 밖이라 카드를 보려면 스크롤해야 했다.
+     · 그 상태에서 액션 독(상점·연회장·진화)이 손패 카드 **위에 겹쳐** 보였다.
+     · 상대 줄이 x=-6 에서 시작해 왼쪽으로 삐져나갔다.
+     · 로그 칸이 26px로 짜부라져 한 줄도 제대로 안 보였다.
+   ▶ 어떻게 고쳤나
+     격자를 버리고 **세로 flex 한 줄**로 세운다. 위에서부터 로그 · 상대 · 테이블 · 손패를 놓고,
+     **테이블만 남는 높이를 전부 먹는다**(flex:1 + min-height:0). 나머지는 자기 높이를 지킨다.
+     이러면 화면이 아무리 작아도 손패가 화면 밖으로 밀려나지 않는다.
+   ⚠ `100dvh` 를 쓴다 — 모바일 브라우저 주소창이 접혔다 펴질 때 100vh 는 값이 튄다.
+   ========================================================================== */
+/* ⚠ `height:100dvh` 를 주면 안 된다. 이 화면 **위에 42px 짜리 헤더가 있어서**
+   화면 전체 높이를 그대로 먹으면 딱 헤더만큼 아래로 넘친다(실측 820 > 812).
+   부모(#app)가 이미 세로 flex 이므로, 남는 높이를 받아가게만 하면 숫자를 박을 필요가 없다. */
+body.mobile-mode #screen-battle{
+  padding:var(--sp-2) var(--sp-2) var(--sp-2); gap:6px;
+  /* ⚠ 높이를 CSS만으로는 정확히 못 맞춘다. 이 화면 위에 헤더가 있고 그 아래로 10px이 더 비는데,
+     flex 계산에는 그 10px이 안 잡혀 딱 그만큼 화면 아래로 넘쳤다(822 > 812).
+     그래서 **실제 위치를 재서** 남는 높이를 직접 넣는다(syncMobileBattleHeight).
+     var 가 아직 없을 때를 대비해 flex 로도 한 번 받쳐 둔다. */
+  /* ⚠ 세로 flex 안에서는 flex-grow 가 height 를 **덮어쓴다.** grow 를 남겨두면 위에서 잰 값이
+     아무 소용이 없다. 그래서 여기서는 grow 를 끄고 잰 높이를 그대로 쓴다. */
+  flex:0 0 auto; height:var(--battle-h, auto); min-height:0; max-height:none; overflow:hidden;
 }
-body.mobile-mode .zone-table{ min-height:auto; }
-body.mobile-mode .table-stage{ min-height:auto; }
-body.mobile-mode .zone-bots-row{ flex-direction:row; overflow-x:auto; overflow-y:hidden; }
-body.mobile-mode .zone-bots .seat{ flex:0 0 148px; }
-body.mobile-mode .zone-hand{ flex-direction:column; align-items:stretch; gap:var(--sp-2); }
+body.mobile-mode .board{
+  display:flex; flex-direction:column; gap:6px;
+  flex:1; min-height:0; overflow:hidden;
+}
+/* 위에서부터 로그 · 상대 · 테이블 · 손패 — 순서를 명시한다(격자 area 를 안 쓰므로) */
+/* 높이 배분 (375×812 기준으로 실측해 맞췄다)
+     상단바 48 + 로그 110 + 상대 118 + 테이블 190↑ + 손패 240 + 여백 = 약 730 < 812
+   ⚠ 로그를 22vh(=178)로 뒀더니 **테이블이 72px만 남아** 더미와 액션 독이 손패 위로
+     넘쳐 흘렀다. 로그는 짧게 못 박고, 남는 높이는 테이블이 가져간다. */
+/* 로그 칸 — 제목 · 초보 안내 · 로그 세 덩어리가 칸보다 커서 **로그 줄이 아래로 잘려 나갔다.**
+   (실측: 칸 114인데 내용 117 → 마지막 줄이 다음 구획에 가려짐)
+   제목을 납작하게, 안내는 두 줄로 묶고, 남는 높이는 로그가 가져가 스스로 스크롤한다. */
+body.mobile-mode .zone-log { order:1; flex:0 0 auto; height:clamp(84px, 14vh, 116px);
+  display:flex; flex-direction:column; overflow:hidden; }
+body.mobile-mode .zone-log .zone-title{ flex:0 0 auto; padding:5px 10px; font-size:10.5px; }
+body.mobile-mode #beginnerTipPanel{ flex:0 0 auto; max-height:42px; overflow:hidden; margin:0 8px; padding:5px 8px; font-size:10px; line-height:1.45; }
+body.mobile-mode #logArea{ flex:1 1 auto; min-height:0; overflow-y:auto; }
+body.mobile-mode .zone-bots{ order:2; flex:0 0 auto; }
+body.mobile-mode .zone-table{ order:3; flex:1 1 auto; min-height:176px; overflow:hidden; }
+/* 손패 높이 계산 (375×812 실측)
+     화면 812 − 위아래 여백 16 − 상단바 48 − 칸 사이 간격 24 = 보드에 쓸 수 있는 684
+     로그 114 + 상대 100 + 테이블 186 = 400 → 손패에 남는 건 **250**. 그 안에서
+     스탯창 79 + 머리줄 28 + 카드 줄이 나눠 쓴다. */
+body.mobile-mode .zone-hand{ order:4; flex:0 0 auto; max-height:250px; overflow:hidden; padding-top:6px; }
+
+body.mobile-mode .zone-table{ min-height:0; padding:var(--sp-2); gap:var(--sp-2); }
+body.mobile-mode .table-stage{ min-height:0; gap:8px 6px; }
+/* 상대 줄 — 가로 스크롤. 왼쪽으로 삐져나가지 않게 안쪽 여백을 0으로 못 박는다. */
+body.mobile-mode .zone-bots-row{
+  flex-direction:row; overflow-x:auto; overflow-y:hidden;
+  margin:0; padding:6px; scroll-snap-type:x proximity;
+}
+body.mobile-mode .zone-bots .seat{ flex:0 0 146px; scroll-snap-align:start; }
+body.mobile-mode .zone-hand{ flex-direction:column; align-items:stretch; gap:6px; }
 body.mobile-mode .zone-hand .seat-me{ width:auto; }
 body.mobile-mode .zone-hand-cards{ width:100%; max-width:100%; }
-body.mobile-mode .zone-table{ padding:var(--sp-2); gap:var(--sp-2); }
 body.mobile-mode .turn-summary-panel{ display:none; }
-body.mobile-mode .center-pile{ width:140px; height:196px; }
-body.mobile-mode .pile-card{ width:140px; min-height:196px; }
-body.mobile-mode .hand-card{ --card-w:110px; --card-h:160px; }
 body.mobile-mode .hc-flavor,
 body.mobile-mode .last-action{ display:none; }
-/* 액션 독은 흐름 안에 있으므로 좁아져도 알아서 접힌다.
-   여기서는 크기만 한 호수 줄인다 — 위치를 다시 잡을 일이 없다. */
-body.mobile-mode .draw-pile{ width:62px; }
-body.mobile-mode .dp-stack{ width:52px; height:70px; }
-body.mobile-mode .table-stage{ gap:8px 6px; }
-body.mobile-mode .shop-fab{ padding:8px 10px; gap:5px; }
-body.mobile-mode .shop-fab-icon{ font-size:14px; }
-body.mobile-mode .shop-fab-label{ font-size:10px; }
-body.mobile-mode .center-pile{ width:132px; height:184px; }
-body.mobile-mode .pile-card{ width:132px; height:184px; min-height:184px; max-height:184px; }
+
+/* 카드·더미는 남은 높이에 맞춰 줄어든다 — 고정 픽셀이면 작은 화면에서 반드시 넘친다 */
+body.mobile-mode .center-pile{ width:min(120px, 30vw); height:min(168px, 42vw); }
+body.mobile-mode .pile-card{ width:min(120px, 30vw); height:min(168px, 42vw); min-height:0; max-height:none; }
+/* 카드는 남는 127px 안에 들어가야 한다 — 넘치면 아래가 잘려 등급·이름이 안 보인다 */
+body.mobile-mode .hand-card{ --card-w:min(80px, 21vw); --card-h:min(116px, 31vw); }
+body.mobile-mode .draw-pile{ width:56px; }
+body.mobile-mode .dp-stack{ width:46px; height:62px; }
+body.mobile-mode .shop-fab{ padding:7px 9px; gap:4px; }
+body.mobile-mode .shop-fab-icon{ font-size:13px; }
+body.mobile-mode .shop-fab-label{ font-size:9.5px; }
+/* 액션 독은 세로 한 줄이면 208px이라 테이블을 통째로 넘긴다 — 모바일에서는 2열로 접는다 */
+body.mobile-mode .stage-dock{
+  display:grid; grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:5px; align-content:start; width:auto; max-width:150px;
+}
+body.mobile-mode .stage-dock > *{ width:100%; min-width:0; }
+body.mobile-mode .stage-dock > .draw-pile{ grid-column:1 / -1; width:100%; }
+
+/* 손패는 가로로 훑는다 — 세로로 쌓으면 화면을 다 먹는다
+   ⚠ 실제 카드가 담기는 곳은 `.hand-area` 다. `.zone-hand-cards` 는 그 위의 머리줄(.hand-head)까지
+     안고 있는 **세로 통**이라, 여기에 가로 flex 를 걸면 머리줄과 카드가 좌우로 갈라선다.
+     (한 번 그렇게 걸었다가 카드 줄이 통째로 화면 밖으로 밀려났다) */
+body.mobile-mode .zone-hand-cards{
+  display:flex; flex-direction:column; min-height:0; overflow:hidden;
+  padding:0; gap:4px;
+}
+body.mobile-mode .hand-head{ flex:0 0 auto; }
+body.mobile-mode .hand-area{
+  flex:1 1 auto; min-height:0;
+  display:flex; flex-wrap:nowrap; align-items:flex-start;
+  overflow-x:auto; overflow-y:hidden;
+  gap:5px; padding:2px 2px 4px; margin:0; scroll-snap-type:x proximity;
+}
+body.mobile-mode .hand-area > *{ margin-top:0; }
+body.mobile-mode .hand-area > *{ flex:0 0 auto; scroll-snap-align:center; }
+/* 내 스탯창은 한 줄로 납작하게 */
+body.mobile-mode .zone-hand .seat-me .p-card{ padding:8px 10px; }
+body.mobile-mode .zone-hand .pc-mods{ display:none; }
+/* 음량 버튼은 화면 아래 가운데에 떠 있어 **손패 카드를 정통으로 가린다.**
+   모바일에서는 오른쪽 위(턴 바 옆)로 올려 카드에서 떼어놓는다. */
+body.mobile-mode .avol-fab{
+  left:auto; right:10px; bottom:auto; top:56px; transform:none;
+  width:34px; height:34px;
+}
+
+/* ---------- 모바일 상점 · 도박 ----------
+   창 자체는 화면 안에 들어오지만, 도박 티어 한 칸이 99px라 한 화면에 두 개 반밖에 안 보였다.
+   글씨는 그대로 두고 여백만 줄여 네 개가 보이게 한다. */
+body.mobile-mode .shop-box{ width:min(94vw, 420px); max-height:88dvh; }
+body.mobile-mode .shop-tab-btn{ padding:8px 10px; font-size:11.5px; }
+body.mobile-mode .gamble-tier-grid{ gap:7px; }
+body.mobile-mode .gamble-tier{ padding:9px 11px; gap:5px; }
+body.mobile-mode .gamble-tier-name{ font-size:13px; }
+body.mobile-mode .gt-chip{ padding:2px 7px; font-size:9.5px; }
+body.mobile-mode .gamble-tier-cost{ font-size:11.5px; }
+body.mobile-mode .gamble-note{ font-size:10.5px; line-height:1.55; }
+/* 슬롯은 화면 폭에 맞춰 줄어든다 — 고정 폭이면 좁은 기기에서 세 칸이 안 들어간다 */
+body.mobile-mode .gslot{ width:min(91px, 26vw); height:min(124px, 36vw); }
 /* 이름표를 눌러 상세를 여는 동작은 끈다 — 지목하려다 상세창이 열리는 사고가 잦았다 */
 body.mobile-mode .p-name .tag,
 body.mobile-mode .p-title{ display:none; }
@@ -5819,9 +5920,8 @@ body.ink .nm-hero::after{
 /* ---------- [Ver 13.0] 메뉴 아이콘은 색을 그대로 둔다 ----------
    12.1 공책 테마는 메뉴의 이모지를 전부 "연필 톤"(grayscale)으로 눌러놨다. 종이 느낌은 살았지만
    버튼이 죄다 흑백이라 무엇이 무엇인지 구분이 안 됐다 — 이모지는 색이 곧 이름표다.
-   아이콘은 색을 되살리고, **프로필 사진(.usb-avatar)만** 연필 톤을 유지한다
-   (사진은 종이 위에 붙인 인화지처럼 보이는 편이 이 테마와 어울린다). */
-body.ink .usb-avatar{ filter:grayscale(1) contrast(1.12); }
+   [Ver 13.0] 프로필 사진도 색을 되살렸다 — 내 얼굴이 흑백일 이유는 없다. */
+/* (여기에 있던 body.ink 흑백 규칙 전체를 걷어냈다) */
 
 @media (prefers-reduced-motion:reduce){
   body.ink .nm-act3:hover,
@@ -6023,18 +6123,25 @@ body.high-contrast.theme-light-shell{
              💎우비나이트 배지를 업데이트 배지 앞에 끼워 넣는다. 11.1에서 ≡ 버튼이
              사라지며 그 조건이 깨져 배지가 엉뚱한 자리로 가 있었다 — 자리표만 남긴다. -->
         <!-- [Ver 13.0] ≡ 는 줄의 **맨 오른쪽**이다. 가운데 있으면 어디가 끝인지 알 수 없다. -->
-        <button class="nm-update-badge" id="nmUpdateBadge" onclick="goToChangelog()" title="업데이트 로그">
-          <span class="nmu-ic">🏆</span><span class="nmu-tx">업데이트</span>
+        <button class="nm-update-badge" id="nmUpdateBadge" onclick="openOnlineScreen('rank')" title="리더보드">
+          <span class="nmu-ic">🏆</span><span class="nmu-tx">리더보드</span>
         </button>
         <button class="nm-burger" id="nmBurger" onclick="toggleMenuDrawer()" title="정보 · 도구" aria-label="정보 · 도구">
           <span class="nm-burger-bars"><i></i><i></i><i></i></span>
         </button>
       </div>
 
-      <!-- [Ver 13.0] 빠른가기 줄(설정·온라인·우편함·코드·디스코드)은 ≡ 서랍으로 들어갔다.
-           메뉴 화면에 남는 것은 "지금 할 일" 하나뿐이어야 한다.
-           ⚠ 우편함 배지(#nmQbMailBadge)는 서랍 안으로 자리만 옮겼다 — id는 그대로다. -->
-      <nav class="nm-quickbar" id="nmQuickBar" style="display:none;"></nav>
+      <!-- [Ver 13.0] 리더보드 버튼 아래 줄 — 새 내용이 있으면 빨간 New 가 붙는다 -->
+      <nav class="nm-quickbar" id="nmQuickBar">
+        <button class="nm-qb-btn" id="nmQbNewCards" onclick="openNewCards()" title="신규 카드">
+          <span class="nm-qb-ic">🃏</span><span class="nm-qb-tx">신규 카드</span>
+          <span class="nm-new" id="nmNewCardsDot" style="display:none;">New</span>
+        </button>
+        <button class="nm-qb-btn" id="nmQbBalance" onclick="openBalancePatch()" title="밸런스 패치">
+          <span class="nm-qb-ic">⚖️</span><span class="nm-qb-tx">밸런스 패치</span>
+          <span class="nm-new" id="nmBalanceDot" style="display:none;">New</span>
+        </button>
+      </nav>
     </div>
 
     <div class="nm-wrap">
@@ -6126,23 +6233,14 @@ body.high-contrast.theme-light-shell{
         <div class="nm-sec">
           <div class="nm-sec-h">정보</div>
           <div class="nm-hub nm-hub-sm">
-            <button class="nm-hub-btn" onclick="openBalancePatch()">
-              <span class="nm-hub-ic">⚖️</span><b>밸런스 패치</b><small>이번 판 조정 내역</small>
-            </button>
-            <button class="nm-hub-btn" onclick="openNewCards()">
-              <span class="nm-hub-ic">🃏</span><b>신규 카드</b><small>새로 들어온 카드</small>
-            </button>
-            <button class="nm-hub-btn" onclick="goToChangelog()">
-              <span class="nm-hub-ic">🏆</span><b>업데이트 로그</b><small>버전별 변경 내역</small>
-            </button>
             <button class="nm-hub-btn" onclick="openMailbox()">
               <span class="nm-hub-ic">📬</span><b>우편함</b><small id="mailboxMenuSub">받지 않은 보상 확인</small>
             </button>
             <button class="nm-hub-btn" onclick="openBattleRecords()">
               <span class="nm-hub-ic">⚔️</span><b>전투 기록</b><small>최근 10판 기보</small>
             </button>
-            <button class="nm-hub-btn" onclick="goToSettings()">
-              <span class="nm-hub-ic">⚙️</span><b>설정</b><small>화면 · 소리 · 조작</small>
+            <button class="nm-hub-btn" onclick="openCodeInput()">
+              <span class="nm-hub-ic">🎟️</span><b>코드 입력</b><small>디스코드에서 받은 코드</small>
             </button>
           </div>
         </div>
@@ -6181,6 +6279,12 @@ body.high-contrast.theme-light-shell{
           <button class="nm-drawer-x" onclick="closeMenuDrawer()" aria-label="닫기">✕</button>
         </div>
         <!-- [Ver 13.0] 상단 빠른가기 줄이 여기로 들어왔다 -->
+        <button class="nm-drawer-item" onclick="closeMenuDrawer(); goToSettings();">
+          <span class="ic">⚙️</span><span class="tx"><b>설정</b><small>화면 · 소리 · 조작</small></span>
+        </button>
+        <button class="nm-drawer-item" onclick="closeMenuDrawer(); goToChangelog();">
+          <span class="ic">🏆</span><span class="tx"><b>업데이트 로그</b><small>버전별 변경 내역</small></span>
+        </button>
         <button class="nm-drawer-item" onclick="closeMenuDrawer(); openCodeInput();">
           <span class="ic">🎟️</span><span class="tx"><b>코드 입력</b><small>디스코드에서 받은 코드</small></span>
         </button>
@@ -9722,6 +9826,8 @@ const STORAGE_KEYS = {
   evoStones: 'gang_card_evo_stones_v1', // [Ver 9.10.1] 카드별 진화석 보유량
   evoClaws: 'gang_card_evo_claws_v1',   // [Ver 9.10.1] 우빈랩터 발톱 (69개 → 진화석 합성)
   evoPicks: 'gang_card_evo_picks_v1',   // [Ver 9.13.1] 등급 확정 진화석 뽑기권 { 등급: 장수 }
+  seenCards:   'gang_card_seen_newcards_v1',  // [Ver 13.0] 마지막으로 본 '신규 카드' 버전
+  seenBalance: 'gang_card_seen_balance_v1',   // [Ver 13.0] 마지막으로 본 '밸런스 패치' 버전
   quest:    'gang_card_quest_v1',       // [Ver 13.0] 일일 퀘스트 { day, prog, claimed }
   attend:   'gang_card_attend_v1',      // [Ver 13.0] 출석체크 { last, streak, total, devClaimed }
   newUserPrompted: 'gang_card_new_user_prompted_v1', // [편의] 신규 유저 튜토리얼 안내를 이미 보여줬는지 여부
@@ -11798,7 +11904,10 @@ function setTheme(mode){
   applyAppTheme();
   renderSettingsScreen();
 }
-function toggleMobileMode(on){ setSetting('mobileMode', !!on); }
+function toggleMobileMode(on){
+  setSetting('mobileMode', !!on);
+  try{ setTimeout(syncMobileBattleHeight, 0); }catch(e){}   // [Ver 13.0] 모드가 바뀌면 전투 화면 높이를 다시 잰다
+}
 function saveCardsToStorage(){
   try{ localStorage.setItem(STORAGE_KEYS.cards, JSON.stringify(cards)); }catch(e){}
 }
@@ -16446,6 +16555,7 @@ const NEW_CARDS = [
 ];
 let newCardsIdx = 0;
 function openNewCards(){
+  try{ markSeen(STORAGE_KEYS.seenCards, newCardsVersion()); renderNewBadges(); }catch(e){}   // [Ver 13.0]
   closeMenuDrawer();
   newCardsIdx = 0;
   showScreen('screen-newcards');
@@ -16503,6 +16613,7 @@ function renderNewCards(){
 }
 
 function openBalancePatch(){
+  try{ markSeen(STORAGE_KEYS.seenBalance, balanceVersion()); renderNewBadges(); }catch(e){}  // [Ver 13.0]
   closeMenuDrawer();
   balancePatchIdx = 0;
   showScreen('screen-balance');
@@ -17723,7 +17834,7 @@ function initPersistentSystems(){
   try{ syncPfpUnlocks(); }catch(e){}           // [Ver 12.6.1] 시즌 패스 50레벨 사진
   /* [Ver 13.0] 일일 퀘스트 — 켜는 것만으로 '로그인하기'가 완료된다. loadQuest()가 날짜도 함께 넘긴다. */
   try{ loadQuest(); questBump('login', 1); }catch(e){}
-  try{ renderTodoDot(); }catch(e){}
+  try{ renderTodoDot(); renderNewBadges(); }catch(e){}   // [Ver 13.0] 받을 보상 · 새 내용(New) 표시
   /* [Ver 10.5] 접속 상태 — 켤 때 한 번, 이후 화면이 보이는 동안 주기적으로.
      탭이 숨겨져 있으면 쓰지 않는다(요금 절약 + "접속 중"의 의미도 그게 맞다). */
   try{
@@ -17831,7 +17942,8 @@ function showScreen(id){
     if(meta) meta.setAttribute('content', isLight ? '#FFFFFF' : '#0A0A0A');
   }
   updatePostitForScreen(id); // [Ver 5.2.1] 시작 화면에서만 포스트잇 노출
-  if(id === 'screen-start'){ try{ renderTodoDot(); }catch(e){} }   // [Ver 13.0] 받을 보상이 있으면 점을 켠다
+  if(id === 'screen-battle'){ try{ syncMobileBattleHeight(); }catch(e){} }   // [Ver 13.0] 모바일 전투 높이
+  if(id === 'screen-start'){ try{ renderTodoDot(); renderNewBadges(); }catch(e){} }   // [Ver 13.0] 받을 보상·새 내용 표시
   // [편의] 메인 메뉴로 들어올 때마다 전광판이 항상 돌고 있도록 보장 (이미 돌고 있으면 startMenuTicker 내부에서 자연스럽게 이어짐)
   if(id === 'screen-start'){
     startMenuTicker();
@@ -18260,6 +18372,12 @@ const CHANGELOG = [
       '\u{1F5C2}\uFE0F <b>[메뉴] 접는 폴더를 없앴습니다.</b> 접어두면 아래가 통째로 비어서, <b>수집</b>(인벤토리 · 카드 뽑기 · 유물 광산 · 랩터마트24 · 아케이드 · 수상한 상자)과 <b>정보</b>(밸런스 패치 · 신규 카드 · 업데이트 로그 · 우편함 · 전투 기록 · 설정)를 <b>3×2 격자로 펼쳐</b> 놓았습니다.',
       '☰ <b>[개편] 설정 · 우편함 · 코드 · 디스코드 · 전투 기록이 ≡ 서랍으로 들어갔습니다.</b> ≡ 버튼은 줄의 <b>맨 오른쪽</b>으로 옮겼습니다.',
       '\u{1F464} <b>[메뉴] 프로필 사진을 키웠습니다.</b> (44 → 58px) 이 화면의 주인이 누구인지가 먼저 보여야 합니다.',
+      '\u{1F3C6} <b>[메뉴] 화면 위 트로피 버튼이 <u>리더보드</u>로 바뀌었습니다.</b> 업데이트 로그는 ≡ 서랍으로 옮겼습니다.',
+      '\u{1F195} <b>[메뉴] 신규 카드 · 밸런스 패치</b>를 리더보드 버튼 아래 줄로 꺼내고, <b>아직 안 본 내용이 있으면 빨간 New</b>가 붙습니다. 열어보면 사라집니다.',
+      '\u{1F4F1} <b>[버그수정] 모바일 인게임 화면이 심하게 깨지던 문제</b>를 고쳤습니다. 손패가 화면 밖(y=956 > 812)으로 밀려나 카드를 보려면 스크롤해야 했고, 액션 버튼이 카드 위에 겹쳤으며, 로그 줄은 잘려 보이지 않았습니다. 이제 <b>로그 · 상대 · 테이블 · 손패가 한 화면에</b> 들어가고, 남는 높이는 테이블이 가져갑니다.',
+      '\u{1F4CF} <b>[버그수정] 전투 화면 높이</b> — 화면 위 헤더 높이가 계산에서 빠져 딱 그만큼 아래로 넘쳤습니다. 이제 실제 위치를 재서 맞추므로 기기·주소창 높이가 달라도 어긋나지 않습니다.',
+      '\u{1F3B0} <b>[버그수정] 모바일 상점 · 도박 창</b>이 화면을 벗어나던 문제를 함께 고쳤습니다. 도박 티어도 촘촘해져 한 화면에 더 많이 보입니다.',
+      '\u{1F50A} <b>[모바일] 음량 버튼</b>이 손패 카드를 가리지 않도록 오른쪽 위로 옮겼습니다.',
       '\u{1F308} <b>[메뉴] 버튼 아이콘이 다시 색을 되찾았습니다.</b> 공책 테마가 메뉴 이모지를 전부 <b>연필 톤(흑백)</b>으로 눌러놓고 있었습니다. 종이 느낌은 살았지만 버튼이 죄다 흑백이라 무엇이 무엇인지 구분되지 않았습니다 — 이모지는 색이 곧 이름표입니다.',
       '\u{1F48E} <b>[개발자] 우비나이트 조절</b> — ≡ 서랍에 추가했습니다. ±100 · ±1,000 · ±10,000 버튼과 <b>정확한 값 지정</b>을 함께 제공합니다. (개발자 모드 전용)',
       '\u{1F4CB} <b>[신규] 퀘스트</b> — 메뉴 <b>할 일 → 퀘스트</b>. 일일 퀘스트 <b>8종</b>을 깨면 포인트가 쌓이고, <b>150 · 300 · 450 · 600 · 750P</b> 구간마다 보상을 받습니다. (곡괭이 · 상자 열쇠 · 우비나이트 · 개쩌는 곡괭이) <b>자정에 전부 초기화</b>됩니다.',
@@ -24628,6 +24746,49 @@ function doAttendCheck(){
   renderTodoDot();
 }
 
+/* ==========================================================================
+   [Ver 13.0] '신규 카드' · '밸런스 패치'의 New 표시
+   --------------------------------------------------------------------------
+   각 목록의 **맨 앞 버전**을 마지막으로 본 버전과 견준다. 열어보면 그 버전을 적어두고
+   표시가 사라진다. 버전 문자열만 비교하므로 새 패치가 올라오면 저절로 다시 켜진다.
+   ========================================================================== */
+function newCardsVersion(){ try{ return (NEW_CARDS[0] && NEW_CARDS[0].version) || ''; }catch(e){ return ''; } }
+function balanceVersion(){ try{ return (BALANCE_PATCHES[0] && BALANCE_PATCHES[0].version) || ''; }catch(e){ return ''; } }
+function seenValue(key){ try{ return localStorage.getItem(key) || ''; }catch(e){ return ''; } }
+function hasNewCardsBadge(){ const v = newCardsVersion(); return !!v && seenValue(STORAGE_KEYS.seenCards) !== v; }
+function hasBalanceBadge(){ const v = balanceVersion(); return !!v && seenValue(STORAGE_KEYS.seenBalance) !== v; }
+function markSeen(key, v){ try{ if(v) localStorage.setItem(key, v); }catch(e){} }
+function renderNewBadges(){
+  try{
+    const a = document.getElementById('nmNewCardsDot');
+    const b = document.getElementById('nmBalanceDot');
+    if(a) a.style.display = hasNewCardsBadge() ? '' : 'none';
+    if(b) b.style.display = hasBalanceBadge() ? '' : 'none';
+  }catch(e){}
+}
+
+/* ==========================================================================
+   [Ver 13.0] 모바일 전투 화면의 높이를 실제로 재서 맞춘다
+   --------------------------------------------------------------------------
+   화면 위 헤더 높이가 상황(모바일 모드 · 주소창 · 가로/세로)마다 달라, CSS의 100dvh 나
+   flex 계산만으로는 아래가 잘리거나 남았다. 화면의 실제 top 을 재서 남는 높이를 그대로 넣는다.
+   ▶ 모바일 모드가 아닐 때는 값을 지워 데스크톱 배치를 건드리지 않는다.
+   ========================================================================== */
+function syncMobileBattleHeight(){
+  try{
+    const sb = document.getElementById('screen-battle');
+    if(!sb) return;
+    if(!document.body.classList.contains('mobile-mode')){ sb.style.removeProperty('--battle-h'); return; }
+    const top = sb.getBoundingClientRect().top;
+    const h = Math.max(240, Math.round((window.innerHeight || 0) - top));
+    sb.style.setProperty('--battle-h', h + 'px');
+  }catch(e){}
+}
+try{
+  window.addEventListener('resize', syncMobileBattleHeight);
+  window.addEventListener('orientationchange', ()=> setTimeout(syncMobileBattleHeight, 120));
+}catch(e){}
+
 /* 메뉴 '할 일' 폴더 제목 옆 알림 점 — 받을 게 하나라도 있으면 켠다 */
 function renderTodoDot(){
   try{
@@ -26713,7 +26874,7 @@ function loadSampleCards(mergeMissing=false){
     {grade:'B', name:'배스킨라빈스 31', type:'SELF_STAT_BUNDLE', power:0, maxHpAdd:310, hpAdd:310, shieldAdd:310, pierce:'NONE',
      desc:'MaxHP +310, HP +310, 쉴드 +310', flavor:'정상에 올라오고 남은건 dirty one'},
     {grade:'S', name:'디아블로', color:'red', type:'DIABLO_PASSIVE', power:0, unplayable:true, pierce:'NONE',
-     desc:'(패시브) 소지 시, 자신의 체력이 낮을수록 공격력이 실시간으로 오른다. (HP 2,000 이상이면 0% · HP 1에서 최대 <b>+250%</b>)', flavor:'죽음이 가까울수록 강해진다'},
+     desc:'(패시브) 소지 시, 자신의 체력이 낮을수록 공격력이 실시간으로 오른다. (HP 2,000 이상이면 0% · HP 1에서 최대 <b>+250%</b>)', flavor:'my card like a pistol'},
     {grade:'S', name:'광전사', color:'red', type:'BERSERK_ON_HIT', power:0, atkPct:30, pierce:'NONE',
      desc:'앞으로 자신이 피격당할 때마다 1바퀴 동안 <b>[광전사]</b>가 된다. [광전사] 상태에서는 <b>모든 공격이 전체 공격</b>이 되고 공격력이 30% 증가한다.', flavor:'맞을수록 즐겁다'},
     {grade:'S', name:'쉴드 강타', attrs:['melee'], type:'SHIELD_BASH', power:600, breakPower:1500, pierce:'NONE',
@@ -26816,8 +26977,10 @@ function loadSampleCards(mergeMissing=false){
          BALANCE_RESYNC_NAMES를 그 패치의 카드로 갈아끼우면 된다.
        ====================================================================== */
     try{
-      const BALANCE_RESYNC_KEY   = 'gang_card_balance_resync_v12_7';
-      const BALANCE_RESYNC_NAMES = ['고독한 우빈랩터'];
+      /* ⚠ 키를 올릴 때는 **이전 목록도 함께 남긴다.** 12.7을 건너뛰고 올라온 사람은
+         그 패치를 아직 못 받았기 때문이다. (한 번 더 갈아끼워도 결과는 같다) */
+      const BALANCE_RESYNC_KEY   = 'gang_card_balance_resync_v13_0';
+      const BALANCE_RESYNC_NAMES = ['고독한 우빈랩터', '디아블로'];
       if(localStorage.getItem(BALANCE_RESYNC_KEY) !== '1'){
         const sampleByName3 = new Map();
         samples.forEach(x=>{ if(x && x.name) sampleByName3.set(x.name, x); });
