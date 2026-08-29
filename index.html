@@ -495,6 +495,7 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 .tone-green { color:var(--tone-green)  !important; }
 .tone-yellow{ color:var(--tone-yellow) !important; }
 .tone-blue  { color:var(--tone-blue)   !important; }
+.tone-pink  { color:var(--tone-pink)   !important; }   /* [Ver 12.7.1] 연인 칩 */
 .pfx-good,.pos,.up,.plus,.ok,.good{ color:var(--tone-green); }
 .pfx-bad,.neg,.down,.minus,.err,.bad,.danger{ color:var(--tone-red); }
 .pfx-neutral,.neu{ color:var(--fg-dim); }
@@ -1772,38 +1773,81 @@ body.ink .chip-b.chip-x{ background:rgba(163,124,28,0.20); color:#6B5210; }
 .zone-bots .pc-mod{ font-size:8.5px; padding:0 5px; }
 .zone-bots .pc-top{ gap:6px; }
 
-/* ---------- 업적 ---------- */
-.ach-header{ display:flex; align-items:baseline; gap:var(--sp-3); flex-wrap:wrap; }
-.ach-header-note{ font-size:11px; color:var(--fg-faint); }
-.ach-section-label{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
-.ach-section-label small{ font-size:10.5px; font-weight:400; color:var(--fg-faint); text-transform:none; letter-spacing:0; }
-.ach-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:var(--sp-2); }
-.ach-card{
-  position:relative; display:flex; align-items:center; gap:11px;
-  padding:12px; border-radius:var(--r); background:var(--bg-2);
-  transition:transform var(--t) var(--ease), background var(--t) var(--ease);
+/* ---------- 업적 [Ver 12.7 리스트 개편] ----------
+   격자 타일에서 **한 줄에 하나씩 쌓는 목록**으로 바꿨다.
+   타일은 이름/조건/보상이 매번 다른 위치에서 시작해 눈이 계속 다시 자리를 잡아야 했다.
+   목록은 프사·이름·조건·상태의 x좌표가 전부 고정되어, 위에서 아래로 한 번에 훑힌다.
+   ⚠ 이 블록보다 **뒤**에 같은 이름의 옛 규칙이 또 있으면 그쪽이 이긴다(12.6.1에서 실제로 그랬다).
+     ach-* 규칙은 이 블록 하나만 존재해야 한다. */
+/* ⚠ 이 패널이 들어가는 자리(.card-list-scroll · .usp-body)는 **세로 flex + overflow:auto**다.
+   flex 자식은 기본적으로 줄어들 수 있어서, 내용이 넘치면 얇은 요소가 **0px로 짜부라진다.**
+   실제로 진행 막대(.ach-bar 3px)가 화면에서 통째로 사라졌다. 세로로 쌓이는 덩어리에는
+   전부 flex:none을 박아 "쓴 높이 그대로" 두게 한다. */
+.ach-head{
+  flex:none;
+  display:flex; align-items:flex-end; justify-content:space-between;
+  gap:var(--sp-3); flex-wrap:wrap; margin-bottom:9px;
+}
+.ach-head-l{ min-width:0; display:flex; flex-direction:column; gap:3px; }
+.ach-head-t{ font-size:13.5px; font-weight:700; }
+.ach-head-note{ font-size:10.5px; color:var(--fg-faint); }
+.ach-count{ font-family:var(--font-mono); font-size:11px; color:var(--fg-faint); white-space:nowrap; }
+.ach-count b{ font-size:18px; color:var(--fg); letter-spacing:-0.02em; }
+.ach-bar{ flex:none; height:3px; border-radius:var(--r-pill); background:var(--bg-3); overflow:hidden; }
+.ach-bar>i{ display:block; height:100%; border-radius:inherit; background:var(--accent); transition:width var(--t-slow) var(--ease); }
+
+.ach-sec{ flex:none; margin-top:var(--sp-4); }
+.ach-sec-h{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; padding:0 12px 5px; }
+.ach-sec-t{ font-size:10px; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; color:var(--fg-faint); }
+.ach-sec-n{ font-size:10px; color:var(--fg-faint); opacity:0.75; }
+
+.ach-list{ flex:none; display:flex; flex-direction:column; }
+.ach-row{
+  flex:none;
+  position:relative; display:flex; align-items:center; gap:12px;
+  padding:11px 12px; border-radius:var(--r);
+  transition:background var(--t) var(--ease);
   animation:riseInSm var(--t-slow) var(--ease) both;
 }
-.ach-card:hover{ transform:translateY(-2px); background:var(--bg-3); }
-.ach-card-pfp{
-  flex-shrink:0; width:52px; height:52px; border-radius:26%;
+/* 칸 사이 실선 — 카드 테두리 대신 머리카락 한 줄로 끊는다 */
+.ach-row + .ach-row::before{
+  content:''; position:absolute; left:12px; right:12px; top:0;
+  height:1px; background:var(--line-soft);
+}
+.ach-row:hover{ background:var(--bg-2); }
+.ach-pfp{
+  flex-shrink:0; width:44px; height:44px; border-radius:26%;
   object-fit:cover; background:var(--bg-3);
   box-shadow:inset 0 0 0 1px var(--line);
 }
-.ach-card-pfp.locked{ filter:grayscale(1) brightness(0.75); opacity:0.55; }
-.ach-card-body{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
-.ach-card-name{ font-size:13px; font-weight:700; }
-.ach-card-desc{ font-size:10.5px; color:var(--fg-faint); line-height:1.55; }
-.ach-card-reward{ font-size:10px; color:var(--fg-dim); margin-top:2px; }
-.ach-card.unlocked{ box-shadow:inset 0 0 0 1px var(--accent); }
-.ach-card.locked .ach-card-name{ color:var(--fg-dim); }
-.ach-card-badge{
-  position:absolute; top:8px; right:9px;
-  font-size:9.5px; font-weight:700; color:var(--tone-green);
+.ach-row.locked .ach-pfp{ filter:grayscale(1) brightness(0.8); opacity:0.4; }
+.ach-body{ flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+.ach-nm{ display:flex; align-items:center; gap:6px; min-width:0; font-size:13px; font-weight:700; }
+.ach-row.locked .ach-nm{ color:var(--fg-dim); }
+.ach-tag{
+  flex-shrink:0; font-size:9px; font-weight:700; letter-spacing:0.03em;
+  padding:1px 6px; border-radius:var(--r-pill);
+  background:var(--bg-3); color:var(--fg-faint);
 }
-.ach-hidden.locked{ box-shadow:inset 0 0 0 1px rgba(169,139,234,0.35); }
-.ach-special.locked{ box-shadow:inset 0 0 0 1px rgba(233,185,73,0.35); }
-.ach-special.locked .ach-card-desc{ font-style:italic; }
+.ach-tag.t-hidden { color:var(--tone-purple); }
+.ach-tag.t-special{ color:var(--tone-yellow); }
+.ach-cond{ font-size:10.5px; color:var(--fg-faint); line-height:1.5; }
+.ach-row.k-special.locked .ach-cond{ font-style:italic; }
+.ach-side{ flex-shrink:0; display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+.ach-reward{ font-size:10px; color:var(--fg-dim); white-space:nowrap; }
+.ach-row.locked .ach-reward{ color:var(--fg-faint); }
+.ach-state{
+  font-size:9.5px; font-weight:700; letter-spacing:0.03em;
+  padding:2px 8px; border-radius:var(--r-pill); white-space:nowrap;
+}
+.ach-row.unlocked .ach-state{ background:rgba(79,201,138,0.16); color:var(--tone-green); }
+.ach-row.locked   .ach-state{ background:var(--bg-3); color:var(--fg-faint); }
+
+/* 좁은 화면 — 보상 이름은 접고 상태 배지만 남긴다 */
+@media (max-width:520px){
+  .ach-reward{ display:none; }
+  .ach-pfp{ width:38px; height:38px; }
+}
 
 /* 업적 달성 토스트 */
 .ach-toast-row{ display:flex; align-items:center; gap:10px; }
@@ -1944,27 +1988,10 @@ body.mobile-mode .zone-bots .status-icons{ flex-wrap:nowrap; overflow:hidden; }
 .menu-tier-label{ font-size:10.5px; color:var(--fg-faint); }
 .menu-tier-points{ font-family:var(--font-mono); font-size:12px; font-weight:600; }
 
-/* ---------- 업적 ---------- */
-.ach-header{ display:flex; align-items:center; justify-content:space-between; gap:var(--sp-3); margin-bottom:var(--sp-3); }
-.ach-section-label{ font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--fg-faint); margin:var(--sp-3) 0 var(--sp-1); }
-.ach-progress{ flex:1; max-width:230px; height:6px; }
-.ach-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:var(--sp-2); }
-.ach-card{
-  display:flex; flex-direction:column; gap:5px; padding:14px; border-radius:var(--r);
-  background:var(--bg-2);
-  transition:transform var(--t) var(--ease), background var(--t) var(--ease);
-  animation:riseInSm var(--t-slow) var(--ease) both;
-}
-.ach-card:hover{ transform:translateY(-2px); background:var(--bg-3); }
-.ach-card.locked,.ach-card.hidden-ach{ opacity:0.42; }
-.ach-card-top{ display:flex; align-items:center; gap:8px; }
-.ach-card-icon{ font-size:19px; }
-.ach-card-name{ flex:1; min-width:0; font-size:12.5px; font-weight:700; }
-.ach-card-badge{ font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:var(--r-pill); background:var(--bg-3); color:var(--fg-faint); }
-.ach-card.unlocked .ach-card-badge{ background:rgba(79,201,138,0.15); color:var(--tone-green); }
-.ach-card-desc{ font-size:11px; color:var(--fg-faint); line-height:1.65; }
-.ach-card-stars{ font-size:11px; letter-spacing:0.1em; }
-.gstar{ opacity:0.25; } .gstar.full{ opacity:1; }
+/* [Ver 12.7] 여기 있던 옛 업적 격자 규칙(12.0판)을 지웠다.
+   12.6.1에서 새 업적 CSS를 위쪽에 써놓고 이 블록을 안 지워서, **뒤에 있는 이 블록이
+   그대로 이겨** 새 디자인이 화면에 나오지 않았다. ach-* 규칙은 위쪽 한 곳에만 둔다. */
+.gstar{ opacity:0.25; } .gstar.on,.gstar.full{ opacity:1; }
 
 /* ---------- 밸런스 패치 · 신규 카드 ---------- */
 .bp-group,.nc-list{ display:flex; flex-direction:column; gap:var(--sp-2); }
@@ -5490,7 +5517,7 @@ body.high-contrast.theme-light-shell{
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 12.6.1</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 12.7.1</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -6333,6 +6360,13 @@ let shopLockOwnerId = null; // 상점 독점(SHOP_LOCK) 소유자 id
 let greenbeltIdx = -1, greenbeltOwnerId = null, greenbeltCardName = '';
 /* [Ver 10.5] 상점 영구 점거 — 이 사람 외에는 아무도 상점에 못 들어간다(판 끝까지). */
 let shopPermaMonopolyId = null;
+/* [Ver 12.7] 무정부 — 상점 가격이 0이 되는 대신, 카드를 가져갈 때마다 산 사람이 피해를 입는다.
+   판 전체에 걸리는 규칙이라 플레이어가 아니라 여기(전역)에 둔다. 판이 끝나면 풀린다. */
+let anarchyActive = false;
+let anarchyDamage = 300;
+/* [Ver 12.7] 사이비 — 골드 전액 가로채기의 "한도". 사실상 무제한이지만 Infinity를 쓰면
+   세이브(JSON)에서 null이 되어 기본값 500으로 되돌아가므로, 큰 유한수를 쓴다. */
+const CULT_GOLD_REDIRECT_CAP = 9e15;
 /* [Ver 10.5] DMZ — 켜지면 B등급 이하 카드 "위에" 공격 카드를 낼 수 없다.
    더미의 맨 위 카드가 무엇인지 알아야 하므로 마지막으로 놓인 카드의 등급을 따로 기억한다. */
 let dmzActive = false;
@@ -6435,6 +6469,71 @@ let devMode = false;
    개발자 모드만 되는 것: 이벤트 강제, 인벤토리 전체 해금. */
 let subDevMode = false;
 function devAnyMode(){ return !!(devMode || subDevMode); }
+/* ==========================================================================
+   [Ver 12.7] "이 사람이 지금 개발자 모드를 켜고 있는가"
+   --------------------------------------------------------------------------
+   개발자 모드는 **기기마다 따로 도는 로컬 상태**라, 남의 상태를 직접 볼 방법이 없다.
+   그래서 각자 자기 플레이어 객체에 devModeOn 표시를 남기고(syncDevFlagToMe),
+   랜서버에서는 참가자가 그 표시를 호스트에게 보낸다('devflag').
+   표시가 없으면 "안 켰다"로 본다 — 봇은 애초에 대상이 아니다.
+   ========================================================================== */
+/* ==========================================================================
+   [Ver 12.7.1] 이 사람의 "클래스" — 프로 게이머 카드의 위력을 정하는 값
+   --------------------------------------------------------------------------
+   클래스는 개발자 모드와 마찬가지로 **기기별 로컬 진행도**라, 남의 값을 직접 볼 수 없다.
+     · 내 것    → classState.cls
+     · 랜서버   → 참가자가 펫·유물과 같은 통로로 함께 보내준다(p.classLv)
+     · 봇       → 판이 시작될 때 사람 클래스 근처의 값을 심어준다(applyClassLvToGame)
+   그래도 값이 없으면 1로 본다 — 카드가 아예 못 쓰이는 것보다는 약하게라도 도는 편이 낫다.
+   ========================================================================== */
+function playerClassLevel(p){
+  try{
+    if(p && Number.isFinite(p.classLv) && p.classLv > 0) return Math.min(CLASS_MAX, Math.max(1, p.classLv|0));
+    if(p && isMyPlayer(p) && typeof classState !== 'undefined' && classState) return Math.max(1, classState.cls|0);
+  }catch(e){}
+  return 1;
+}
+/* 판 시작 시 1회 — 봇에게는 사람 클래스 ±2 범위의 값을, 나에게는 내 실제 클래스를 심는다. */
+function applyClassLvToGame(){
+  try{
+    if(!Array.isArray(players)) return;
+    const mine = Math.max(1, (typeof classState !== 'undefined' && classState) ? (classState.cls|0) : 1);
+    players.forEach(p=>{
+      if(!p) return;
+      if(p.isBot){
+        const jitter = Math.floor(Math.random()*5) - 2;   // -2 ~ +2
+        p.classLv = Math.min(CLASS_MAX, Math.max(1, mine + jitter));
+      } else if(isMyPlayer(p)){
+        p.classLv = mine;
+      }
+      /* 원격 참가자는 자기 기기에서 보내준 값을 그대로 둔다(lanHostAcceptPet). */
+    });
+  }catch(e){}
+}
+
+function isDevModePlayer(p){
+  if(!p || p.isBot) return false;
+  if(p.devModeOn) return true;
+  /* 혼자 하는 판에서는 내 전역 devMode가 곧 내 상태다.
+     (표시를 남기기 전 순간에도 판정이 어긋나지 않도록 이 줄을 둔다) */
+  try{ if(!(typeof lanMode!=='undefined' && lanMode) && isMyPlayer(p) && devAnyMode()) return true; }catch(e){}
+  return false;
+}
+/* 내 개발자 모드 상태를 내 플레이어 객체에 반영한다. 값이 바뀔 때만 움직인다. */
+function syncDevFlagToMe(){
+  try{
+    if(!Array.isArray(players) || players.length === 0) return;
+    const id = (typeof viewerIdNow === 'function') ? viewerIdNow() : 'p0';
+    const me = players.find(p=> p && p.id === id);
+    if(!me) return;
+    const on = !!devAnyMode();
+    if(!!me.devModeOn === on) return;
+    me.devModeOn = on;
+    if(typeof lanIsRemoteClient === 'function' && lanIsRemoteClient()){
+      lanSend({ t:'to_host', payload:{ action:'devflag', on: on } });
+    }
+  }catch(e){}
+}
 let __versionClicks = 0;
 let __versionClickTimer = null;
 function onVersionBadgeClick(){
@@ -6446,6 +6545,7 @@ function onVersionBadgeClick(){
     clearTimeout(__versionClickTimer);
     try{ document.getElementById('drawPile').classList.remove('dev-on'); }catch(e){}
     try{ updateDevMenuButtons(); renderDexScreen(); }catch(e){} // [Ver 9.12.1] 코드 확인 버튼·인벤 해금 표시 원복
+    try{ syncDevFlagToMe(); }catch(e){} // [Ver 12.7] 껐다는 사실을 판에 반영
     showModal(wasSub ? '부개발자 모드 OFF' : '개발자 모드 OFF', '권한이 해제되었습니다.', [{label:'확인', solid:true}]);
     return;
   }
@@ -6491,6 +6591,7 @@ function enableDevMode(kind){
   devMode = full; subDevMode = !full;
   try{ document.getElementById('drawPile').classList.add('dev-on'); }catch(e){}
   try{ updateDevMenuButtons(); renderDexScreen(); }catch(e){}
+  try{ syncDevFlagToMe(); }catch(e){} // [Ver 12.7] 켰다는 사실을 판에 반영
   if(!full){
     showModal('부개발자 모드 ON', '개발자 모드의 <b>축소판</b>이 활성화되었습니다.<br>· 카드 더미(DECK)를 누르면 원하는 카드를 직접 뽑을 수 있습니다.<br>· <b>X등급(개발자 전용) 카드는 뽑을 수 없습니다.</b><br>· 메뉴 ≡ 서랍에 <b>🔑 코드 확인</b>이 생깁니다.<br>· 인벤토리 전체 해금 · 이벤트 강제는 <b>제공되지 않습니다.</b><br><br>버전을 다시 한 번 누르면 꺼집니다.', [{label:'확인', solid:true}]);
     return;
@@ -9055,7 +9156,12 @@ const PASSIVE_HOLD_TYPES = ['DOTTUSA_COUNTER_PASSIVE','RAPTOR_FANCLUB_PASSIVE','
      ⚠ 통감자구이(HOT_POTATO_PASS)는 여기 넣지 않는다 — 들고 있으면 피해를 입지만 **내는 것이 본질**인
        카드라, 여기 넣으면 "아무 효과 없이 버려집니다" 경고가 뜨고 봇이 영영 넘기지 않는다.
        (금쪽같은 내새끼와 같은 이유·같은 처리다) */
-  'SOLO_LIFE_PASSIVE','FEW_ELITE_PASSIVE','MAGUNI_STRIP_PASSIVE'];
+  'SOLO_LIFE_PASSIVE','FEW_ELITE_PASSIVE','MAGUNI_STRIP_PASSIVE',
+  /* [Ver 12.7] 예토전생 — 들고만 있으면 마지막 순간에 저절로 발동한다 */
+  'EDO_TENSEI_REVIVE',
+  /* [Ver 12.7.1] 소지형 3종 — 포커·디아블로는 공격력이 실시간으로 붙고,
+     리베로는 자신의 공격에, 문이 열리네 요는 상점 진입에 걸린다. */
+  'POKER_PASSIVE','DIABLO_PASSIVE','LIBERO_PASSIVE','DOOR_OPENS_CURSE'];
 /* [Ver 9.14 버그수정] 아래 6종은 이름만 "…_PASSIVE"일 뿐, 실제로는 **카드를 내야** 발동한다
    (resolveCardEffect에 case가 있고 coachJoActive 같은 플래그를 그때 켠다).
    그런데 PASSIVE_HOLD_TYPES에 들어 있어서
@@ -12635,6 +12741,9 @@ const ARTIFACT_DEFS = [
   { key:'wallet',    rarity:'rare', icon:'👛', name:'우빈이의 지갑',        base:5,   per:5,
     fmt:v=>`게임 시작 골드 <b>+${v}</b>`,
     flavor:'두둑 하네요.' },
+  { key:'schoolbag', rarity:'rare', icon:'🎒', name:'우빈이가 정자에 두고온 책가방', base:1, per:0.25,
+    fmt:v=>`곡괭이 최대 보유 개수 <b>+${Math.floor(v)}</b>`,
+    flavor:'정자에 그대로 있더라고요.' },
   { key:'creditcard',rarity:'rare', icon:'💳', name:'우빈이의 신용카드',    base:2,   per:0.5,
     fmt:v=>`모든 사람의 턴마다 보유 골드의 <b>${v}%</b>를 획득`,
     flavor:'돈이 무한이 된다니까요' },
@@ -12673,6 +12782,10 @@ const ARTIFACT_DEFS = [
   { key:'pos',       rarity:'epic', icon:'🧾', name:'우빈 포스기',          base:25, per:5,
     fmt:v=>`카드 판매 시 <b>${v}%</b> 확률로 판매가 2배`,
     flavor:'마트에 있던걸 왜 들고왔죠?' },
+  /* ===== [Ver 12.7.1] 신규 유물 2종 — 둘 다 "판 밖"(광산) 쪽에 붙는다 ===== */
+  { key:'whetstone', rarity:'epic', icon:'🪨', name:'우빈이의 숫돌',        base:5,  per:1,
+    fmt:v=>`곡괭이 강화 성공 확률 <b>+${v}%p</b>`,
+    flavor:'쓱, 쓱. 날이 서네요.' },
   { key:'dad',       rarity:'epic', icon:'👨', name:'우빈 아빠',            base:5,  per:1,
     fmt:v=>`상점 구매가 <b>-${v}%</b>`,
     flavor:'Son😭' },
@@ -12913,7 +13026,17 @@ function artUbiniteMult(){ return 1 + artMine('ring')/100; }
    ▶ 저장 형식: { n: 보유수, at: 마지막 충전 기준 시각 }
      화면을 꺼둔 동안 지난 시간도 계산해 한꺼번에 채운다.
    ========================================================================== */
-const PICKAXE_CAP = 5;                       // 자동 충전이 차오르는 상한
+/* [Ver 12.7.1] 상한이 유물("우빈이가 정자에 두고온 책가방")로 늘어난다.
+   그래서 상수 하나를 그대로 읽던 자리를 전부 pickaxeCap()으로 바꿨다 —
+   한 군데라도 옛 상수를 읽으면 "표시는 8개인데 6개에서 멈추는" 어긋남이 생긴다. */
+const PICKAXE_CAP_BASE = 5;                  // 유물이 없을 때의 상한
+function pickaxeCap(){
+  let add = 0;
+  try{ add = Math.floor(artMine('schoolbag') || 0); }catch(e){}   // 소수는 버린다
+  return PICKAXE_CAP_BASE + Math.max(0, add);
+}
+/* [구버전 호환] 옛 이름을 읽는 코드가 남아 있어도 기본값은 보이게 둔다. */
+const PICKAXE_CAP = PICKAXE_CAP_BASE;        // 자동 충전이 차오르는 상한(기본값)
 const PICKAXE_REGEN_MS = 10 * 60 * 1000;     // 10분에 1개
 let PICKAXE = null;
 function loadPickaxe(){
@@ -12922,7 +13045,7 @@ function loadPickaxe(){
     const raw = localStorage.getItem(STORAGE_KEYS.pickaxe);
     PICKAXE = raw ? (JSON.parse(raw)||null) : null;
   }catch(e){ PICKAXE = null; }
-  if(!PICKAXE || typeof PICKAXE.n !== 'number') PICKAXE = { n: PICKAXE_CAP, at: Date.now() };
+  if(!PICKAXE || typeof PICKAXE.n !== 'number') PICKAXE = { n: pickaxeCap(), at: Date.now() };
   return PICKAXE;
 }
 function savePickaxe(){ try{ localStorage.setItem(STORAGE_KEYS.pickaxe, JSON.stringify(loadPickaxe())); }catch(e){} }
@@ -12938,12 +13061,13 @@ function tickPickaxeRegen(){
   const s = loadPickaxe();
   const now = Date.now();
   const REGEN = pickaxeRegenMs();
-  if(s.n >= PICKAXE_CAP){ s.at = now; savePickaxe(); return s.n; } // 가득(혹은 초과) — 시계만 맞춰둔다
+  const CAP = pickaxeCap();
+  if(s.n >= CAP){ s.at = now; savePickaxe(); return s.n; } // 가득(혹은 초과) — 시계만 맞춰둔다
   const elapsed = Math.max(0, now - (s.at || now));
   const gained = Math.floor(elapsed / REGEN);
   if(gained > 0){
-    s.n = Math.min(PICKAXE_CAP, s.n + gained);
-    s.at = (s.n >= PICKAXE_CAP) ? now : (s.at + gained * REGEN);
+    s.n = Math.min(CAP, s.n + gained);
+    s.at = (s.n >= CAP) ? now : (s.at + gained * REGEN);
     savePickaxe();
   }
   return s.n;
@@ -12952,7 +13076,7 @@ function pickaxeCount(){ tickPickaxeRegen(); return loadPickaxe().n; }
 /* 다음 1개까지 남은 밀리초. 가득 찼으면 null. */
 function pickaxeNextInMs(){
   const s = loadPickaxe();
-  if(s.n >= PICKAXE_CAP) return null;
+  if(s.n >= pickaxeCap()) return null;
   return Math.max(0, pickaxeRegenMs() - (Date.now() - (s.at || Date.now())));
 }
 function grantPickaxe(n){
@@ -12967,7 +13091,7 @@ function spendPickaxe(n){
   tickPickaxeRegen();
   const s = loadPickaxe();
   if(s.n < n) return false;
-  const wasFull = s.n >= PICKAXE_CAP;
+  const wasFull = s.n >= pickaxeCap();
   s.n -= n;
   // 가득 찬 상태에서 처음 쓴 순간부터 충전 시계가 다시 돈다
   if(wasFull) s.at = Date.now();
@@ -12992,7 +13116,14 @@ function fmtPickaxeWait(ms){
    ▶ 우빈이의 수상한 상자에서도 3% 확률로 나온다.
    ▶ 자동 충전이 없는 순수 소모품이라 개수(정수) 하나만 저장하면 된다.
    ========================================================================== */
-const GOLD_PICKAXE_UP_CHANCE = 0.25;    // 강화 성공 확률
+const GOLD_PICKAXE_UP_CHANCE = 0.25;    // 강화 성공 확률(기본값)
+/* [Ver 12.7.1] 유물 "우빈이의 숫돌"이 성공 확률을 올린다. 표시와 실제 판정이 어긋나지 않도록
+   화면·판정 양쪽 모두 이 함수 하나만 읽는다. 아무리 올려도 95%를 넘기지 않는다. */
+function goldPickaxeUpChance(){
+  let add = 0;
+  try{ add = artMine('whetstone') || 0; }catch(e){}
+  return Math.min(0.95, GOLD_PICKAXE_UP_CHANCE + add/100);
+}
 /* 개쩌는 곡괭이 전용 채굴 확률표. 등급 라벨·색은 일반 표와 같은 것을 쓴다. */
 const GOLD_MINE_RATES = { common:0, rare:0, epic:65, legendary:35 };
 let goldPickaxe = 0;
@@ -14509,6 +14640,18 @@ async function fbLookupRemoteCode(code){
    ########################################################################## */
 const BALANCE_PATCHES = [
   {
+    version: 'Ver 12.7', date: '2026-08-28',
+    groups: [
+      { title:'고독한 우빈랩터', kind:'card',
+        note:'자신의 <b>현재 체력</b>을 그대로 공격력으로 바꾸는 카드입니다. 체력이 높은 판 후반에는 한 장으로 판이 끝나 버려, 체력을 쌓는 것 말고 다른 선택지가 사라졌습니다. 비율을 내려 <b>여전히 강하지만 한 방은 아니게</b> 맞췄습니다.',
+        rows:[
+          { key:'고독한 우빈랩터', name:'고독한 우빈랩터', icon:'\u{1F5E1}\uFE0F', rows:[
+            { label:'공격력 = 현재 체력의', from:'90%', to:'70%', dir:'down' },
+          ]},
+        ]},
+    ]
+  },
+  {
     version: 'Ver 10.5.3', date: '2026-08-18',
     groups: [
       { title:'카드 뽑기 비용 인상', kind:'system',
@@ -15251,7 +15394,7 @@ function renderOnlineRank(){
       </div>
       ${rows.length ? (list ? `<div class="ol-list">${list}</div>` : '')
                     : `<div class="ol-empty">${onlineGenesisView ? '태초 시즌 온라인 기록이 없습니다.' : '아직 등록된 기록이 없습니다. <b>내 기록 올리기</b>를 눌러 첫 주자가 되어보세요.'}</div>`}
-      <div class="ol-note">${onlineGenesisView ? '태초 시즌(11.5 이전) 기록은 더 이상 갱신되지 않습니다 — 조회 전용입니다.' : '기록은 <b>내 기록 올리기</b>를 누를 때만 갱신됩니다. 이름을 누르면 그 사람의 <b>프로필</b>이 열립니다.'}</div>`;
+      <div class="ol-note">${onlineGenesisView ? '태초 시즌(11.5 이전) 기록은 더 이상 갱신되지 않습니다 — 조회 전용입니다.' : '기록은 <b>판이 끝날 때마다 자동으로</b> 갱신됩니다. 닉네임·상태메시지처럼 게임 밖에서 바꾼 내용을 바로 반영하려면 <b>내 기록 올리기</b>를 누르세요. 이름을 누르면 그 사람의 <b>프로필</b>이 열립니다.'}</div>`;
   }).catch(olError);
 }
 /* ##########################################################################
@@ -15334,6 +15477,47 @@ function openPlayerProfile(idx){
 function doSubmitScore(){
   olBusy('기록을 올리는 중...');
   fbSubmitScore().then(()=>{ renderOnlineRank(); }).catch(olError);
+}
+/* ==========================================================================
+   [Ver 12.7 신규] 판이 끝날 때마다 리더보드를 자동으로 올린다
+   --------------------------------------------------------------------------
+   ▶ 왜
+     여태 리더보드는 [내 기록 올리기]를 **직접 눌러야만** 갱신됐다. 그래서 화면의
+     순위는 "마지막으로 버튼을 누른 시점"의 박제였고, 아무리 이겨도 올리는 걸 잊으면
+     아무 일도 일어나지 않았다. 시즌 정산 보상까지 리더보드 조회에 묶여 있어 더 나빴다.
+   ▶ 어떻게
+     결과 화면이 뜨는 순간(showVictorySequence)에 한 번, 조용히 올린다.
+     화면을 막지 않고, 실패해도 아무 말 하지 않는다(오프라인·차단이 흔하다).
+   ▶ 주의한 것
+     · **정산이 끝난 뒤에 올려야 한다.** 클래스 경험치·시즌 승패는 결과 화면보다
+       늦게(settleTierForHuman) 확정되므로, 지연을 두고 올린다. 안 그러면 이번 판이
+       빠진 값이 올라간다.
+     · 판당 1회만. 결과 화면은 여러 경로에서 불릴 수 있다.
+     · 튜토리얼·놀이터처럼 전적에 안 들어가는 판은 건너뛴다.
+   ========================================================================== */
+let __autoSubmitDoneThisGame = false;
+const AUTO_SUBMIT_DELAY_MS = 2000;   // 정산(클래스·시즌)이 끝나고도 남을 만큼
+function autoSubmitScoreAfterGame(){
+  try{
+    if(__autoSubmitDoneThisGame) return;
+    __autoSubmitDoneThisGame = true;
+    if(typeof isBanned === 'function' && isBanned()) return;
+    if(typeof TUTORIAL !== 'undefined' && TUTORIAL && TUTORIAL.active) return;
+    if(typeof playgroundMode !== 'undefined' && playgroundMode) return;
+    setTimeout(()=>{
+      try{
+        fbSubmitScore()
+          .then(()=>{
+            /* 랭킹 탭을 마침 열어두고 있었다면 새 값으로 다시 그린다. */
+            try{
+              const scr = document.getElementById('screen-online');
+              if(scr && scr.classList.contains('active') && onlineTab === 'rank' && !onlineGenesisView) renderOnlineRank();
+            }catch(e){}
+          })
+          .catch(e=>{ console.info('[리더보드] 자동 갱신 실패 — 다음 판에 다시 시도합니다.', e); });
+      }catch(e){ console.info('[리더보드] 자동 갱신 호출 실패', e); }
+    }, AUTO_SUBMIT_DELAY_MS);
+  }catch(e){}
 }
 /* ==========================================================================
    [Ver 10.5] 친구 탭
@@ -15579,6 +15763,30 @@ let balancePatchIdx = 0;
    ########################################################################## */
 const NEW_CARDS = [
   {
+    version: 'Ver 12.7.1', date: '2026-08-29',
+    note: '<b>15종</b>이 들어왔습니다. "쓰는 순간 끝나는 카드"보다 <b>판이 흐르는 동안 값이 계속 변하는 카드</b>에 무게를 뒀습니다 — ' +
+          '포커 · 디아블로 · 폭주는 손패와 체력과 시간에 따라 공격력이 실시간으로 움직입니다.',
+    names: [
+      /* 실시간으로 변하는 것 */
+      '포커','디아블로','폭주','프로 게이머',
+      /* 맞고 나서 강해지는 것 */
+      '광전사','중지','유능제강',
+      /* 판을 비트는 것 */
+      '리베로','문이 열리네 요','AURA FARMING','우빈결혼식','힐러',
+      /* 단순하고 센 것 */
+      '쉴드 강타','박격포','배스킨라빈스 31'
+    ]
+  },
+  {
+    version: 'Ver 12.7', date: '2026-08-28',
+    note: '<b>8종</b>이 들어왔습니다. 판을 이기는 카드보다 <b>판의 규칙을 바꾸는</b> 카드 쪽에 무게를 뒀습니다 — ' +
+          '상점이 무법지대가 되고, 적이 아군이 되고, 마지막 1:1에서 한 번 더 일어납니다.',
+    names: [
+      '무정부','예토전생','다이아몬드 반지','자, 이제 서로 죽여라','치느님','사이비',
+      'POV : You are a discord mod','쏘리쏘리쏘리쏘리니가니가내게내게빠져빠져빠져베이베'
+    ]
+  },
+  {
     version: 'Ver 10.5', date: '2026-08-16',
     note: '한 번에 <b>50종</b>이 들어왔습니다. 상점을 묶고 점거하는 카드, 죽어도 다시 일어나는 카드, ' +
           '연인을 맺는 카드, 그리고 맞으면 사실상 게임이 끝나는 SSR 한 장까지.',
@@ -15805,7 +16013,7 @@ function renderMineScreen(){
     </div>
 
     <div class="gc-wallet">
-      <span class="gc-pick">⛏️ 곡괭이 <b id="minePickCount">${n.toLocaleString()}</b> / ${PICKAXE_CAP}</span>
+      <span class="gc-pick">⛏️ 곡괭이 <b id="minePickCount">${n.toLocaleString()}</b> / ${pickaxeCap()}</span>
       <span class="gc-goldpick">🪙 개쩌는 곡괭이 <b id="mineGoldCount">${gold.toLocaleString()}</b></span>
       <span class="gc-claw" id="mineRegen">${waitMs==null ? '가득 찼습니다' : `다음 곡괭이까지 ${fmtPickaxeWait(waitMs)}`}</span>
     </div>
@@ -15841,7 +16049,7 @@ function renderMineScreen(){
 
       <div class="gc-pulls gp-pulls">
         <button class="gc-pull gc-pull-gold" ${n < 1 ? 'disabled' : ''} onclick="doPickaxeUpgrade()">
-          <b>⚒️ 곡괭이 강화</b><small>⛏️ 1 · 성공 ${Math.round(GOLD_PICKAXE_UP_CHANCE*100)}%</small>
+          <b>⚒️ 곡괭이 강화</b><small>⛏️ 1 · 성공 ${Math.round(goldPickaxeUpChance()*100)}%</small>
         </button>
         <button class="gc-pull gc-pull-gold" ${gold < 1 ? 'disabled' : ''} onclick="doGoldMine(1)">
           <b>1회 채굴</b><small>🪙 1</small>
@@ -15852,15 +16060,15 @@ function renderMineScreen(){
       </div>
 
       <div class="gp-warn">
-        ⚠ 강화는 곡괭이 <b>1개를 걸고</b> 굴립니다. <b>${Math.round(GOLD_PICKAXE_UP_CHANCE*100)}%</b>로 개쩌는 곡괭이가 되고,
+        ⚠ 강화는 곡괭이 <b>1개를 걸고</b> 굴립니다. <b>${Math.round(goldPickaxeUpChance()*100)}%</b>로 개쩌는 곡괭이가 되고,
         실패하면 걸었던 곡괭이는 <b>파괴되어 사라집니다.</b> (돌려받는 것은 없습니다)
       </div>
     </div>
 
     <div class="mine-note">
-      곡괭이는 <b>${PICKAXE_CAP}개</b>까지 <b>10분에 1개씩</b> 저절로 찹니다.
+      곡괭이는 <b>${pickaxeCap()}개</b>까지 <b>10분에 1개씩</b> 저절로 찹니다.
       게임에서 <b>1등·2등</b>을 하면 30% 확률로 1개를 더 받습니다.
-      (보상으로 받은 곡괭이는 ${PICKAXE_CAP}개를 넘겨서도 쌓이지만, 넘긴 동안에는 저절로 차지 않습니다)
+      (보상으로 받은 곡괭이는 ${pickaxeCap()}개를 넘겨서도 쌓이지만, 넘긴 동안에는 저절로 차지 않습니다)
     </div>
 
     ${/* [Ver 9.16] 등급마다 레벨업 비용이 다르므로, 표를 광산 화면에 그대로 펼쳐 보여준다. */''}
@@ -15993,7 +16201,7 @@ function doGoldMine(count){
   count = Math.max(1, count|0);
   if(goldPickaxeCount() < count){
     showModal('🪙 개쩌는 곡괭이 부족', `개쩌는 곡괭이가 <b>${count}개</b> 필요합니다. (보유 ${goldPickaxeCount()}개)<br><br>
-      <span style="font-size:12px;color:var(--fg-dim);">곡괭이 강화(성공 ${Math.round(GOLD_PICKAXE_UP_CHANCE*100)}%)로 만들거나, 우빈이의 수상한 상자에서 얻을 수 있습니다.</span>`, [{label:'확인', solid:true}]);
+      <span style="font-size:12px;color:var(--fg-dim);">곡괭이 강화(성공 ${Math.round(goldPickaxeUpChance()*100)}%)로 만들거나, 우빈이의 수상한 상자에서 얻을 수 있습니다.</span>`, [{label:'확인', solid:true}]);
     return;
   }
   if(!spendGoldPickaxe(count)) return;
@@ -16019,7 +16227,7 @@ function doPickaxeUpgrade(){
   showModal('⚒️ 곡괭이 강화', `<div style="line-height:1.9;text-align:center;">
       <div style="font-size:34px;">⛏️ → 🪙</div>
       곡괭이 <b>1개</b>를 걸고 강화합니다.<br>
-      성공 확률은 <b>${Math.round(GOLD_PICKAXE_UP_CHANCE*100)}%</b>입니다.<br><br>
+      성공 확률은 <b>${Math.round(goldPickaxeUpChance()*100)}%</b>입니다.<br><br>
       <span style="color:#e05a4a;font-weight:800;">실패하면 곡괭이는 파괴되어 사라집니다.</span><br>
       <span style="font-size:12px;color:var(--fg-dim);">(보유 ⛏️ ${pickaxeCount()}개 · 🪙 ${goldPickaxeCount()}개)</span>
     </div>`, [
@@ -16031,7 +16239,7 @@ function runPickaxeUpgrade(){
   if(mineBusy) return;
   if(!spendPickaxe(1)) return;
   mineBusy = true;
-  const ok = Math.random() < GOLD_PICKAXE_UP_CHANCE;
+  const ok = Math.random() < goldPickaxeUpChance();
   showMineDigging(()=>{
     if(ok) grantGoldPickaxe(1);
     mineBusy = false;
@@ -16785,6 +16993,25 @@ document.addEventListener('keydown', (e)=>{
   if(isMenuDrawerOpen()) closeMenuDrawer();
 });
 
+/* [Ver 12.7] "어떻게 놀까?"에서 엔터 = 일반전 시작.
+   ──────────────────────────────────────────────────────────────────────
+   12.6.1에서는 창을 열 때 '일반전' 버튼에 포커스를 주는 것으로 대신했는데,
+   포커스는 너무 쉽게 풀린다 — 창을 한 번 클릭하거나(빈 곳을 눌러도 body로 옮겨간다)
+   다른 데서 focus를 가져가면 그 뒤로는 엔터가 아무것도 안 했다.
+   이제 **창이 떠 있는 동안의 엔터**를 직접 잡는다.
+   ▶ 탭으로 다른 모드 버튼에 옮겨간 상태면 그 버튼이 눌린다(기본 동작을 뺏지 않는다).
+   ▶ 그 외(포커스가 어디에 있든)에는 일반전으로 바로 들어간다. */
+document.addEventListener('keydown', (e)=>{
+  if(e.key !== 'Enter') return;
+  const bg = document.getElementById('gameModeBg');
+  if(!bg || !bg.classList.contains('show')) return;
+  // 모드 버튼에 포커스가 있으면 브라우저 기본 동작(그 버튼 클릭)에 맡긴다
+  const ae = document.activeElement;
+  if(ae && ae.closest && ae.closest('.gm-card')) return;
+  e.preventDefault();
+  pickGameMode('normal');
+});
+
 function toggleMenuFolder(headEl){
   const folder = headEl.closest('.nm-folder');
   if(!folder) return;
@@ -17386,6 +17613,48 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 12.7.1', date: '2026-08-29',
+    items: [
+      '\u{1F0CF} <b>[신규 카드 15종]</b> \u{1F3AE} 프로 게이머(D) · \u{1F6AA} 문이 열리네 요(E) · \u{1F0CF} 포커(A) · \u{1F595} 중지(B) · \u{1F3D0} 리베로(C) · \u{1F94B} 유능제강(S) · \u{1F368} 배스킨라빈스 31(B) · \u{1F608} 디아블로(S) · \u{1FA93} 광전사(S) · \u{1F6E1}️ 쉴드 강타(S) · \u{1F4A2} 폭주(?) · \u{1F49A} 힐러(D) · \u{1F4A3} 박격포(A) · \u{1F31F} AURA FARMING(S) · \u{1F492} 우빈결혼식(A)',
+      '\u{1F0CF} <b>[신규] 포커</b> — 소지만 하면 <b>손패 앞 5장</b>의 등급 조합이 곧 공격력이 됩니다. 원페어 +10% · 투페어 +20% · 트리플 +40% · 쿼드라플 +120% · 풀 하우스 +150% · 스트레이트 +200% · <b>빙고 +500%</b>. (손패가 4장 이하면 발동하지 않습니다) 지금 무슨 족보인지는 스탯창에 그대로 보입니다.',
+      '\u{1F608} <b>[신규] 디아블로</b> — 체력이 낮을수록 강해집니다. HP 2,000 이상이면 0%, HP 1에서 <b>+250%</b>까지 실시간으로 오릅니다.',
+      '\u{1F4A2} <b>[신규] 폭주</b> — 이 판이 끝날 때까지 <b>0.5초마다</b> 공격력이 10%씩 오르내립니다. 자신의 턴 동안에는 멈춥니다 — 고르는 사이에 위력이 계속 바뀌면 무엇을 낼지 판단할 수가 없기 때문입니다.',
+      '\u{1FA93} <b>[신규] 광전사</b> — 맞을 때마다 1바퀴 동안 <b>모든 공격이 전체 공격</b>이 되고 공격력이 30% 증가합니다.',
+      '\u{1F595} <b>[신규] 중지</b> — 낸 뒤로 자신을 때린 사람은 <b>[장부에 적힘]</b>이 됩니다. 장부에 적힌 상대에게 주는 피해가 <b>2배</b>가 됩니다.',
+      '\u{1F3D0} <b>[신규] 리베로</b> — 소지 시 자신의 공격이 상대의 <b>받는 피해량 증감을 전부 무시</b>하고 적힌 값 그대로 들어갑니다. (감소도 증가도 무시합니다)',
+      '\u{1F6AA} <b>[신규] 문이 열리네 요</b> — 낼 수 없습니다. 들고 있는 채로 <b>상점에 들어가면 즉사</b>하고, 3바퀴 뒤 무작위한 다른 사람에게 넘어갑니다.',
+      '\u{1F31F} <b>[신규] AURA FARMING</b> — 3바퀴 동안 <b>무적</b>이 되지만 그동안 공격 카드를 낼 수 없습니다.',
+      '\u{1F492} <b>[신규] 우빈결혼식</b> — 강제로 식을 올려 <b>[연인]</b>이 되고, 하객 전원에게서 축의금 100골드씩을 걷습니다. 못 내는 사람은 1,000의 피해를 입습니다.',
+      '\u{1F9EC} <b>[진화 카드 10종 추가]</b> 푸짐한똥+ · 재생+ · 대군주+ · 수은 보호막+ · 회심의 일격+ · 엽전+ · 불편+ · 흐릿한 결계+ · 잡았죠?+ · 느려+',
+      '\u{1F4A9} <b>[진화] 푸짐한똥+</b>는 <b>자결하지 않습니다.</b> 남들만 초기화시키고 자기는 멀쩡히 살아남으며, 10% 확률로 방구가 터져 100의 전체 피해가 추가로 들어갑니다.',
+      '\u{1F3DB}️ <b>[진화] 엽전+</b> — 3바퀴 동안 들고 있으면 박물관장이 찾아와 엽전을 가져가고 <b>무작위 카드 4장</b>을 두고 갑니다.',
+      '\u{1F62F} <b>[진화] 불편+</b> — 낼 필요가 없어집니다. 들고만 있으면 버프를 얻은 상대에게 <b>몇 번이든</b> 저절로 발동합니다.',
+      '⏩ <b>[진화] 느려+</b> — 반응 시간이 <b>0.3초</b>가 됩니다. 사실상 아무도 내 카드에 반응할 수 없습니다.',
+      '\u{1FAA8} <b>[신규 유물] 우빈이의 숫돌</b>(Epic) — 곡괭이 강화 성공 확률 <b>+5%p</b> (레벨당 +1%p).',
+      '\u{1F392} <b>[신규 유물] 우빈이가 정자에 두고온 책가방</b>(Rare) — 곡괭이 <b>최대 보유 개수 +1</b> (레벨당 +0.25, 소수는 버림).',
+      '\u{1F4CA} <b>[스탯창] 공격력 표기가 실제 위력과 맞습니다.</b> 예전에는 누적 %만 읽어서, 실시간으로 계산되는 증감(포커 · 디아블로 · 폭주 · 광전사 · 무의식 등)이 <b>화면에 전혀 보이지 않았습니다.</b> 이제 피해 계산이 쓰는 것과 같은 값을 그대로 보여줍니다.',
+    ]
+  },
+  {
+    version: 'Ver 12.7', date: '2026-08-28',
+    items: [
+      '\u{1F3C6} <b>[개편] 업적 화면을 목록으로 다시 짰습니다.</b> 격자 타일에서는 이름 \u00B7 조건 \u00B7 보상이 칸마다 다른 자리에서 시작해 눈이 계속 자리를 다시 잡아야 했습니다. 이제 <b>한 줄에 하나씩</b> 쌓이고, 프로필 사진 \u00B7 이름 \u00B7 조건 \u00B7 보상 \u00B7 달성 여부의 가로 위치가 전부 고정됩니다. 각 갈래 안에서 <b>달성한 업적이 위로</b> 올라옵니다.',
+      '\u{1F41B} <b>[버그수정] 12.6.1의 새 업적 디자인이 화면에 나오지 않던 문제</b> \u2014 새 CSS를 써놓고 <b>옛 CSS를 지우지 않아</b> 뒤에 있던 옛 규칙이 그대로 이기고 있었습니다. 옛 규칙을 걷어냈습니다.',
+      '\u{1F3AE} <b>[편의] \u201C어떻게 놀까?\u201D 창에서 엔터를 누르면 바로 일반전이 시작됩니다.</b> 12.6.1에서는 버튼에 커서를 얹어두는 것으로 대신했는데, 창을 한 번 클릭하기만 해도 커서가 풀려 엔터가 먹지 않았습니다. 이제 창이 떠 있는 동안의 엔터를 직접 받습니다. (탭으로 다른 모드를 골라둔 상태라면 그 모드가 시작됩니다)',
+      '\u2601\uFE0F <b>[온라인] 리더보드가 판이 끝날 때마다 자동으로 갱신됩니다.</b> 여태 순위는 <b>[내 기록 올리기]를 누른 그 순간</b>의 박제였습니다. 아무리 이겨도 올리는 걸 잊으면 아무 일도 일어나지 않았고, 시즌 정산 보상까지 리더보드 조회에 묶여 있었습니다. 이제 결과 화면이 뜨면 정산이 끝난 뒤 조용히 올라갑니다. (닉네임 \u00B7 상태메시지처럼 게임 밖에서 바꾼 것은 여전히 버튼으로 올립니다)',
+      '\u{1F5E1}\uFE0F <b>[밸런스] 고독한 우빈랩터 \u2014 현재 체력의 90% \u2192 70%</b>로 하향했습니다. 체력이 쌓이는 판 후반에는 한 장으로 판이 끝나 버려, 체력을 올리는 것 말고 다른 선택지가 사라졌습니다.',
+      '\u{1F0CF} <b>[신규 카드 8종]</b> \u{1F3F4} 무정부(C) \u00B7 \u26B0\uFE0F 예토전생(SR) \u00B7 \u{1F48D} 다이아몬드 반지(A) \u00B7 \u2694\uFE0F 자, 이제 서로 죽여라(D) \u00B7 \u{1F357} 치느님(A) \u00B7 \u{1F56F}\uFE0F 사이비(SR) \u00B7 \u{1F6E1}\uFE0F POV : You are a discord mod(E) \u00B7 \u{1F3B5} 쏘리쏘리쏘리쏘리니가니가내게내게빠져빠져빠져베이베(SSR)',
+      '\u{1F3F4} <b>[신규] 무정부</b> \u2014 상점이 무법지대가 됩니다. 이 판이 끝날 때까지 <b>모두가</b> 상점의 카드를 공짜로 가져갈 수 있지만, 가져간 카드 한 장마다 <b>300의 피해</b>를 입습니다. 시전자 자신도 예외가 아닙니다.',
+      '\u26B0\uFE0F <b>[신규] 예토전생</b> \u2014 소지한 채 사망했을 때 게임에 남은 생존자가 <b>1명뿐</b>이라면 즉시 최대 체력으로 부활합니다. 마지막 1:1을 한 번 더 만들어 주는 카드입니다. (카드는 소모됩니다)',
+      '\u{1F48D} <b>[신규] 다이아몬드 반지</b> \u2014 MaxHP +500 \u00B7 HP +500 \u00B7 공격력 +15% \u00B7 받는 피해 -100. 자신이 아닌 <b>상대에게 쓰면 그 상대와 아군</b>이 됩니다. (둘 중 한쪽이라도 이미 아군이 있으면 상대에게 쓸 수 없습니다) 판매가는 500골드입니다.',
+      '\u{1F56F}\uFE0F <b>[신규] 사이비</b> \u2014 상대의 공격력을 75% 올려 아군으로 삼습니다. 대신 그 상대는 앞으로 <b>도박과 드로우를 할 수 없고</b>, 그에게 들어오는 <b>돈은 전부 시전자에게</b> 들어갑니다.',
+      '\u{1F3B5} <b>[신규] 쏘리쏘리\u2026(SSR)</b> \u2014 보여주기 카드입니다. <b>자신을 향한 카드</b>가 발동될 때 보여주면 그 카드를 무효화하고 <b>시전자를 즉사</b>시킵니다. 공격 카드가 아니어도 됩니다.',
+      '\u{1F6E1}\uFE0F <b>[신규] POV : You are a discord mod</b> \u2014 게임 안에 <b>개발자 모드를 켜고 있는 사람</b>이 있다면 그 사람이 즉시 승리합니다. 이미 사망했다면 아무 일도 일어나지 않습니다.',
+      '\u{1F41B} <b>[버그수정] 업데이트 로그에서 강조 표시가 글자 그대로 보이던 문제</b>를 고쳤습니다. 이 화면만 태그를 그대로 escape하고 있어서 <b>&lt;b&gt;</b> 같은 표시가 본문에 섞여 나왔습니다.',
+      '\u{1F527} <b>[내부] 밸런스 조정이 기존 유저에게 반영되지 않던 구조를 고쳤습니다.</b> 카드 목록은 기기에 저장됐다 복원되는데, 그동안 \u201C없는 카드 추가\u201D와 음원 필드만 맞추고 있어서 <b>수치를 고쳐도 이미 저장된 카드에는 영영 반영되지 않았습니다.</b> 이제 밸런스가 바뀐 카드는 저장분을 최신 정의로 갈아끼웁니다.',
+    ]
+  },
   {
     version: 'Ver 12.6.1', date: '2026-08-28',
     items: [
@@ -21817,6 +22086,61 @@ const EVOLUTIONS = {
     cutscene:'야 이ㅅㄲ 핵쓰는데?'
   },
 
+  /* ===== [Ver 12.7.1] 추가 진화 카드 10종 =====
+     ▶ 숫자만 바뀌는 것(수은 보호막+ · 재생+ · 잡았죠?+ · 느려+)은 evoApplyStats에서,
+       "낸 뒤/맞은 뒤에 얹히는" 것(푸짐한똥+ · 대군주+ · 회심의 일격+ · 흐릿한 결계+)은
+       각자의 발동 지점에서 isEvoOf()로 갈라진다. */
+  '푸짐한똥': {
+    tier:'Normal',
+    bonus:'자결하지 않고, 10%의 확률로 방구를 뀌어 전체에 100의 피해를 입힌다.',
+    cutscene:'뿌지직'
+  },
+  '재생': {
+    tier:'Normal',
+    bonus:'회복 후 4턴 동안 매 턴 150씩 더 회복한다.',
+    cutscene:'살은 다시 차오른다.'
+  },
+  '대군주': {
+    tier:'Ancient',
+    bonus:'사용할 때 검을 내리쳐 전체에 400의 피해를 입힌다.',
+    cutscene:'고개를 들라.'
+  },
+  '수은 보호막': {
+    tier:'Normal',
+    bonus:'받는 피해가 영구적으로 100 감소한다.',
+    cutscene:'은빛이 흐른다.'
+  },
+  '회심의 일격': {
+    tier:'Normal',
+    bonus:'쉴드가 500 이상인 상대에게는 피해가 3배가 된다.',
+    cutscene:'거기다.'
+  },
+  '엽전': {
+    tier:'Universal',
+    bonus:'3바퀴 동안 들고 있으면 박물관장이 찾아와 이 카드를 가져가고, 대신 무작위 카드 4장을 준다.',
+    cutscene:'이건... 국보급인데요?'
+  },
+  '불편': {
+    tier:'Ephemeral',
+    bonus:'낼 필요가 없어진다 — 소지만 하고 있으면 버프를 얻은 상대에게 턴이 시작될 때마다 자동으로, 몇 번이든 발동한다.',
+    cutscene:'참 불편하네요'
+  },
+  '흐릿한 결계': {
+    tier:'Normal',
+    bonus:'이 쉴드가 처음으로 완전히 깨질 때 전체에 300의 추가 피해가 발생한다.',
+    cutscene:'결계가 무너진다.'
+  },
+  '잡았죠?': {
+    tier:'Normal',
+    bonus:'추가 피해가 쉴드를 관통한다.',
+    cutscene:'딱 걸렸어.'
+  },
+  '느려': {
+    tier:'Ephemeral',
+    bonus:'반응 시간이 0.3초가 되어, 사실상 아무도 자신의 카드에 반응할 수 없다.',
+    cutscene:'fast as f boi'
+  },
+
   /* ===== [Ver 9.13.1] 추가 진화 카드 15종 =====
      ※ '아이언랩터'만 등급 지정이 없어 Ancient로 잡았다. (SR 카드 + 비용 경감 계열 보너스) */
   '안죄송해': {
@@ -21976,6 +22300,12 @@ function evoApplyStats(c){
     case '도박':          c.winChance = (c.winChance||40) + 10; break;         // 성공률 +10%
     case '신고버튼':      c.deathChance = (c.deathChance||35) + 5; break;      // 신고 성공 +5%
     case '안죄송해':      c.successChance = (c.successChance||50) + 10; break; // 발동 확률 +10%
+    /* ===== [Ver 12.7.1] ===== */
+    case '재생':          c.regenTurns = 4; c.regenPerTurn = 150; break;      // 4턴 동안 150씩 추가 회복
+    case '수은 보호막':   c.flatReduceAdd = 100; break;                       // 받는 피해 영구 -100
+    case '잡았죠?':       c.gotchaPierce = true; break;                       // 추가 피해가 쉴드를 관통
+    case '느려':          c.slowReactMs = 300; break;                         // 반응 시간 0.3초
+    case '흐릿한 결계':   c.breakAoePower = 300; break;                       // 쉴드가 깨질 때 300 AOE
     /* 나머지는 숫자로 표현되지 않아 ②③④에서 처리한다. */
   }
   return c;
@@ -21984,6 +22314,11 @@ function evoApplyStats(c){
 /* ---- ② 명중 관련 ---- */
 /* 피해가 실제로 들어가기 직전 — 지금 내고 있는 카드의 진화 보정을 얹는다. */
 function evoOnHitBonus(caster, target, amount){
+  /* [Ver 12.7.1] 회심의 일격+ — 쉴드를 잔뜩 두른 상대일수록 아프다. */
+  if(castingIsEvoOf('회심의 일격') && target && (target.shield||0) >= 500){
+    log('highlight', `🎯 회심의 일격+ — ${J(target.name,'의','의')} 쉴드가 두꺼워(${(target.shield||0).toLocaleString()}) 피해가 <b>3배</b>가 됩니다!`);
+    return amount * 3;
+  }
   if(castingIsEvoOf('배트맨') && Math.random() < 0.05){
     log('highlight', `🦇 배트맨+ 홈런! ${J(target.name,'에게','에게')} 들어가는 피해가 200 증가합니다.`);
     return amount + 200;
@@ -22245,6 +22580,188 @@ function newCardsOnHit(caster, target){
       log('sys', `🌾 영계의 낫 — ${J(target.name,'이','가')} 빈사 상태(HP ${Math.round(pct)}%)라 1턴 스턴되었습니다.`);
     }
   }
+  /* [Ver 12.7.1] 힐러 — 공격이 꽂힐 때마다 자신과 아군을 회복한다.
+     회복량은 healAmountFor를 거쳐 맹독·회복감소 같은 기존 규칙을 그대로 탄다. */
+  if(caster.healerAura > 0 && caster.alive){
+    const crew = alivePlayers().filter(p=> p.id === caster.id || (p.team && p.team === caster.team));
+    let healedAny = 0;
+    crew.forEach(p=>{
+      if(noHealReviveExceptId && noHealReviveExceptId !== p.id) return;
+      const amt = (typeof healAmountFor === 'function') ? healAmountFor(p, caster.healerAura) : caster.healerAura;
+      if(amt <= 0) return;
+      const before = p.hp;
+      p.hp = Math.min(p.maxHp, p.hp + amt);
+      if(p.hp > before) healedAny++;
+    });
+    if(healedAny > 0) log('heal', `💚 "힐러" — ${J(caster.name,'이','가')} 공격에 성공해 ${healedAny}명이 HP ${caster.healerAura}씩 회복했습니다.`);
+  }
+}
+
+/* ==========================================================================
+   [Ver 12.7.1] 폭주 — 0.5초마다 공격력이 ±10%씩 흔들린다
+   --------------------------------------------------------------------------
+   ▶ 타이머는 **판 전체에 하나뿐**이다. 폭주 중인 사람이 한 명도 없거나 판이 끝나면
+     스스로 꺼진다(껐다 켜는 걸 잊어 다음 판까지 도는 사고를 막는다).
+   ▶ 자신의 턴 동안에는 멈춘다 — 지금 낼 카드의 위력이 고르는 사이에 계속 바뀌면
+     무엇을 낼지 판단할 수가 없다.
+   ▶ 화면 갱신은 4틱(2초)에 한 번만 한다. 0.5초마다 보드를 통째로 다시 그리면
+     손패 클릭·드래그가 끊긴다.
+   ========================================================================== */
+const RAMPAGE_TICK_MS = 500;
+const RAMPAGE_MIN_PCT = -90, RAMPAGE_MAX_PCT = 900;
+let __rampageTimer = null, __rampageTicks = 0;
+function rampageStopTimer(){ if(__rampageTimer){ clearInterval(__rampageTimer); __rampageTimer = null; } }
+function rampageEnsureTimer(){
+  if(__rampageTimer) return;
+  __rampageTicks = 0;
+  __rampageTimer = setInterval(()=>{
+    try{
+      if(!gameActive || !Array.isArray(players)){ rampageStopTimer(); return; }
+      const on = players.filter(p=> p && p.alive && p.rampageOn);
+      if(on.length === 0){ rampageStopTimer(); return; }
+      const cur = (typeof currentPlayer === 'function') ? currentPlayer() : null;
+      let moved = false;
+      on.forEach(p=>{
+        if(cur && cur.id === p.id) return;                 // 자신의 턴에는 멈춘다
+        const step = p.rampageStep || 10;
+        let v = (p.rampageAtkPct || 0) + (Math.random() < 0.5 ? step : -step);
+        if(v < RAMPAGE_MIN_PCT) v = RAMPAGE_MIN_PCT;
+        if(v > RAMPAGE_MAX_PCT) v = RAMPAGE_MAX_PCT;
+        p.rampageAtkPct = v;
+        moved = true;
+      });
+      if(moved && (++__rampageTicks % 4 === 0)){ try{ renderBoard(); }catch(e){} }
+    }catch(e){ rampageStopTimer(); }
+  }, RAMPAGE_TICK_MS);
+}
+
+/* ==========================================================================
+   [Ver 12.7.1] 문이 열리네 요 — 들고 상점에 들어가면 죽고, 3바퀴 뒤 남에게 넘어간다
+   ========================================================================== */
+/* 상점 문을 여는 순간 부른다. 죽었으면 true를 돌려줘 호출부가 그 자리에서 빠져나가게 한다. */
+function doorOpensOnShop(p){
+  try{
+    if(!p || !p.alive || !p.hand) return false;
+    if(!p.hand.some(c=> c && c.type === 'DOOR_OPENS_CURSE')) return false;
+    log('highlight', `🚪 ${J(p.name,'이','가')} "문이 열리네 요"를 든 채 상점 문을 열었습니다... 그대로 즉사합니다.`);
+    forceKillAbsolute(p, '"문이 열리네 요"를 든 채 상점 입장', '문이 열리네 요');
+    try{ renderBoard(); renderHand(); }catch(e){}
+    return true;
+  }catch(e){ return false; }
+}
+/* 바퀴가 넘어갈 때마다 — 기한이 없는 카드에 기한을 새기고, 기한이 찬 카드는 남에게 넘긴다.
+   (기한 부여 방식은 예언자(tickProphetCheck)와 같다 — 카드를 얻는 경로가 너무 많아
+    획득 지점마다 훅을 심는 대신 여기서 한 번에 처리한다) */
+function tickDoorOpensCard(){
+  if(!gameActive || !Array.isArray(players)) return;
+  players.forEach(p=>{
+    if(!p || !p.alive || !p.hand) return;
+    p.hand.forEach(c=>{
+      if(c && c.type === 'DOOR_OPENS_CURSE' && c.doorDueRound == null) c.doorDueRound = turnCount + (c.passRounds || 3);
+    });
+  });
+  let moved = false;
+  players.forEach(p=>{
+    if(!p || !p.alive || !p.hand) return;
+    for(let i = p.hand.length - 1; i >= 0; i--){
+      const c = p.hand[i];
+      if(!c || c.type !== 'DOOR_OPENS_CURSE') continue;
+      if(c.doorDueRound == null || turnCount < c.doorDueRound) continue;
+      const pool = alivePlayers().filter(x=> x.id !== p.id);
+      if(pool.length === 0){ c.doorDueRound = turnCount + (c.passRounds || 3); continue; }
+      const next = pool[Math.floor(Math.random()*pool.length)];
+      p.hand.splice(i, 1);
+      c.doorDueRound = turnCount + (c.passRounds || 3);
+      next.hand.push(c);
+      moved = true;
+      log('highlight', `🚪 "문이 열리네 요"가 ${J(p.name,'의','의')} 손을 떠나 ${J(next.name,'에게','에게')} 넘어갔습니다.`);
+    }
+  });
+  if(moved){ try{ renderHand(); renderBoard(); }catch(e){} }
+}
+
+/* ==========================================================================
+   [Ver 12.7.1] 진화 카드 3종의 지속 처리
+   ========================================================================== */
+/* ① 재생+ — 자기 턴이 시작될 때 4턴 동안 150씩 더 아문다. */
+function tickEvoRegen(p){
+  try{
+    if(!p || !p.alive || !(p.evoRegenTurns > 0)) return;
+    p.evoRegenTurns--;
+    if(noHealReviveExceptId && noHealReviveExceptId !== p.id) return;
+    const amt = (typeof healAmountFor === 'function') ? healAmountFor(p, p.evoRegenAmt || 150) : (p.evoRegenAmt || 150);
+    if(amt <= 0) return;
+    const before = p.hp;
+    p.hp = Math.min(p.maxHp, p.hp + amt);
+    if(p.hp > before) log('heal', `🌿 재생+ — ${J(p.name,'이','가')} HP ${p.hp - before} 회복했습니다. (남은 ${p.evoRegenTurns}턴)`);
+    if(p.evoRegenTurns <= 0) p.evoRegenAmt = 0;
+  }catch(e){}
+}
+
+/* ② 불편+ — 낼 필요가 없어진다. 소지만 하고 있으면 "버프를 얻은 상대"에게 저절로 발동한다.
+   ──────────────────────────────────────────────────────────────────────
+   ⚠ 이 게임에는 "버프를 얻는 순간"을 알려주는 훅이 없다(버프를 올리는 코드가 수십 군데다).
+     그래서 **턴이 시작될 때마다** 각자의 버프 총량을 적어두고, 지난번보다 늘어났으면
+     "버프를 얻었다"고 본다. 발동은 턴당 대상 한 명에 한 번뿐이라 폭주하지 않는다.
+   ========================================================================== */
+function evoUnpleasantScore(p){
+  return Math.max(0, p.atkMultiplier||0)
+       + Math.max(0, p.damageReductionPct||0)
+       + Math.max(0, p.tempAtkBuffMult||0)
+       + Math.max(0, p.shield||0);
+}
+function tickEvoUnpleasant(){
+  try{
+    if(!gameActive || !Array.isArray(players)) return;
+    const holders = players.filter(p=> p && p.alive && p.hand && p.hand.some(c=> isEvoOf(c, '불편')));
+    players.forEach(p=>{
+      if(!p || !p.alive) return;
+      const now = evoUnpleasantScore(p);
+      const before = (p.__unpBaseline == null) ? now : p.__unpBaseline;
+      p.__unpBaseline = now;
+      if(now <= before) return;                       // 버프가 늘지 않았다
+      const owner = holders.find(h=> h.id !== p.id);   // 자기 자신에게는 발동하지 않는다
+      if(!owner) return;
+      const stripped = [];
+      if((p.atkMultiplier||0) > 0){ stripped.push(`공격력 +${Math.round(p.atkMultiplier)}%`); p.atkMultiplier = 0; }
+      if((p.damageReductionPct||0) > 0){ stripped.push(`받는피해 -${p.damageReductionPct}%`); p.damageReductionPct = 0; }
+      if((p.tempAtkBuffMult||0) > 0){ stripped.push('임시 공격력 버프'); p.tempAtkBuffMult = 0; p.tempAtkBuffTurns = 0; }
+      if((p.shield||0) > 0){ stripped.push(`쉴드 ${p.shield}`); p.shield = 0; }
+      if(!p.debuffImmune){
+        p.stunLockTurns = Math.max(p.stunLockTurns||0, 2);
+        p.stunLockLabel = '불편';
+      }
+      p.__unpBaseline = evoUnpleasantScore(p);
+      log('highlight', `😑 불편+ — ${J(owner.name,'이','가')} ${J(p.name,'의','의')} 꼴을 못 봐줍니다! ${stripped.length?`버프 제거(${stripped.join(', ')}) + `:''}2턴 행동불능.`);
+    });
+    try{ renderBoard(); }catch(e){}
+  }catch(e){ console.error('[진화] 불편+ 처리 오류', e); }
+}
+
+/* ③ 엽전+ — 3바퀴 동안 들고 있으면 박물관장이 찾아와 가져가고 무작위 카드 4장을 주고 간다. */
+function tickEvoCoinMuseum(){
+  try{
+    if(!gameActive || !Array.isArray(players)) return;
+    players.forEach(p=>{
+      if(!p || !p.alive || !p.hand) return;
+      p.hand.forEach(c=>{ if(isEvoOf(c, '엽전') && c.museumDueRound == null) c.museumDueRound = turnCount + 3; });
+    });
+    players.forEach(p=>{
+      if(!p || !p.alive || !p.hand) return;
+      for(let i = p.hand.length - 1; i >= 0; i--){
+        const c = p.hand[i];
+        if(!isEvoOf(c, '엽전')) continue;
+        if(c.museumDueRound == null || turnCount < c.museumDueRound) continue;
+        p.hand.splice(i, 1);
+        log('highlight', `🏛️ 엽전+ — 박물관장이 찾아와 ${J(p.name,'의','의')} 엽전을 가져가고, 대신 무작위 카드 <b>4장</b>을 두고 갔습니다.`);
+        for(let k = 0; k < 4; k++){
+          const nc = (typeof drawCardRespectingGacha === 'function') ? drawCardRespectingGacha(p) : null;
+          if(nc) grantCardToPlayer(p, nc, '엽전+ 박물관장');
+        }
+      }
+    });
+    try{ renderHand(); renderBoard(); }catch(e){}
+  }catch(e){ console.error('[진화] 엽전+ 처리 오류', e); }
 }
 
 /* 1바퀴짜리 진화 버프 해제 — 라운드가 넘어갈 때 부른다. */
@@ -22712,44 +23229,64 @@ function renderAchievementsScreen(){
   const wrap = document.getElementById('achWrap');
   if(wrap) wrap.innerHTML = buildAchievementsPanelHtml();
 }
-/* [Ver 8.0] 업적 목록 HTML을 문자열로 반환 — 전용 화면과 유저스탯 패널 양쪽에서 재사용 */
+/* [Ver 8.0] 업적 목록 HTML을 문자열로 반환 — 전용 화면과 유저스탯 패널 양쪽에서 재사용
+   [Ver 12.7] 격자 타일 → **목록**. 한 줄에 하나씩 쌓고, 프사·이름·조건·보상·상태의
+   가로 위치를 전부 고정했다. 달성 여부는 카드 테두리가 아니라 오른쪽 배지 한 자리에서만 읽힌다.
+   ▶ 정렬: 각 갈래 안에서 **달성한 것을 위로** 올린다(같은 상태끼리는 정의 순서 유지). */
 function buildAchievementsPanelHtml(){
   loadAchievements();
-  const byKind = (k)=> ACHIEVEMENTS.filter(a=> (a.kind||'normal') === k);
+  const KIND_TAG = { normal:'일반', hidden:'히든', special:'스페셜' };
+  const byKind = (k)=>{
+    const list = ACHIEVEMENTS.filter(a=> (a.kind||'normal') === k);
+    return list.map((a,i)=>({a,i}))
+               .sort((x,y)=> ((ACH_UNLOCKED[y.a.id]?1:0) - (ACH_UNLOCKED[x.a.id]?1:0)) || (x.i - y.i))
+               .map(o=> o.a);
+  };
   const unlockedCount = ACHIEVEMENTS.filter(a=> ACH_UNLOCKED[a.id]).length;
+  const pct = ACHIEVEMENTS.length ? Math.round((unlockedCount / ACHIEVEMENTS.length) * 100) : 0;
 
-  /* [Ver 12.6.1] 업적 한 칸 = 보상 프로필 사진 + 이름 + 조건.
-     스페셜은 깨기 전까지 조건을 감추고 힌트만 준다. */
-  const cardHtml = (a)=>{
+  /* 업적 한 줄 = 보상 프로필 사진 + 이름(+갈래칩) + 조건 + 달성 배지 + 보상 이름.
+     스페셜은 깨기 전까지 이름을 ??? 로 감추고 힌트만 준다. */
+  const rowHtml = (a)=>{
     const unlocked = !!ACH_UNLOCKED[a.id];
     const kind = a.kind || 'normal';
     const secret = (kind === 'special') && !unlocked;
     const name = secret ? '???' : a.name;
-    const desc = secret ? (a.hint || '조건을 알 수 없습니다.') : (unlocked ? (a.real || a.desc) : a.desc);
-    const pic = a.pfp ? `<img class="ach-card-pfp${unlocked?'':' locked'}" src="${pfpSrc(a.pfp)}" alt="">` : '';
-    return `<div class="ach-card ${unlocked?'unlocked':'locked'} ach-${kind}">
+    const cond = secret ? (a.hint || '조건을 알 수 없습니다.') : (unlocked ? (a.real || a.desc) : a.desc);
+    const pic  = a.pfp ? `<img class="ach-pfp" src="${pfpSrc(a.pfp)}" alt="">` : '<div class="ach-pfp"></div>';
+    const tag  = (kind === 'normal') ? ''
+               : `<span class="ach-tag t-${kind}">${KIND_TAG[kind] || kind}</span>`;
+    return `<div class="ach-row ${unlocked?'unlocked':'locked'} k-${kind}">
       ${pic}
-      <div class="ach-card-body">
-        <div class="ach-card-name">${escapeHtml(name)}</div>
-        <div class="ach-card-desc">${escapeHtml(desc)}</div>
-        ${a.pfp?`<div class="ach-card-reward">\u{1F5BC}\uFE0F ${escapeHtml(pfpDefOf(a.pfp).name)}</div>`:''}
+      <div class="ach-body">
+        <div class="ach-nm">${escapeHtml(name)}${tag}</div>
+        <div class="ach-cond">${escapeHtml(cond)}</div>
       </div>
-      ${unlocked?'<div class="ach-card-badge">\u2714 달성</div>':''}
+      <div class="ach-side">
+        <span class="ach-state">${unlocked?'\u2714 달성':'미달성'}</span>
+        ${a.pfp?`<span class="ach-reward">\u{1F5BC}\uFE0F ${escapeHtml(pfpDefOf(a.pfp).name)}</span>`:''}
+      </div>
     </div>`;
   };
 
   const section = (label, note, list)=> list.length ? `
-    <div class="ach-section-label">${label}${note?`<small>${note}</small>`:''}</div>
-    <div class="ach-grid">${list.map(cardHtml).join('')}</div>` : '';
+    <div class="ach-sec">
+      <div class="ach-sec-h"><span class="ach-sec-t">${label}</span>${note?`<span class="ach-sec-n">${note}</span>`:''}</div>
+      <div class="ach-list">${list.map(rowHtml).join('')}</div>
+    </div>` : '';
 
   return `
-    <div class="ach-header">
-      <div class="ach-progress">달성 <b>${unlockedCount}</b> / ${ACHIEVEMENTS.length}</div>
-      <div class="ach-header-note">업적을 깨면 <b>프로필 사진</b>이 열립니다.</div>
+    <div class="ach-head">
+      <div class="ach-head-l">
+        <div class="ach-head-t">업적</div>
+        <div class="ach-head-note">업적을 깨면 <b>프로필 사진</b>이 열립니다.</div>
+      </div>
+      <div class="ach-count"><b>${unlockedCount}</b> / ${ACHIEVEMENTS.length}</div>
     </div>
-    ${section('일반 업적', '', byKind('normal'))}
-    ${section('히든 업적', '조건은 보이지만 달성이 까다롭습니다', byKind('hidden'))}
-    ${section('스페셜 업적', '조건을 알 수 없습니다 \u00B7 특정 카드와 관련되어 있습니다', byKind('special'))}`;
+    <div class="ach-bar"><i style="width:${pct}%"></i></div>
+    ${section('일반', '', byKind('normal'))}
+    ${section('히든', '조건은 보이지만 달성이 까다롭습니다', byKind('hidden'))}
+    ${section('스페셜', '조건을 알 수 없습니다 \u00B7 특정 카드와 관련되어 있습니다', byKind('special'))}`;
 }
 
 /* ===================== [Ver 5.9 → Ver 9.10] 카드 도감 → 인벤토리 =====================
@@ -23161,7 +23698,12 @@ function goToChangelog(){
           <span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--fg-faint); letter-spacing:0.3px;">${escapeHtml(entry.date)}</span>
         </div>
         <ul style="margin:0; padding-left:16px; display:flex; flex-direction:column; gap:6px;">
-          ${entry.items.map(t=>`<li style="font-size:12.5px; color:var(--fg-dim); line-height:1.55;">${escapeHtml(t)}</li>`).join('')}
+          ${/* [Ver 12.7 버그수정] 업데이트 로그의 <b> 태그가 글자 그대로 보이던 문제.
+                CHANGELOG 항목은 전부 소스에 직접 쓴 글이고 강조 태그를 전제로 쓰여 있는데,
+                이 화면만 escapeHtml을 통과시켜 "<b>[신규] …</b>"가 그대로 노출됐다.
+                (포스트잇은 9.12에서 이미 태그를 걷어내도록 고쳤지만, 이 화면은 남아 있었다)
+                외부 입력이 섞이지 않는 값이므로 그대로 넣는다. */''}
+          ${entry.items.map(t=>`<li style="font-size:12.5px; color:var(--fg-dim); line-height:1.55;">${t}</li>`).join('')}
         </ul>
       </div>
     </div>
@@ -23600,7 +24142,19 @@ function typeLabel(t){
     RAPTOR_EGG:'소지-2바퀴뒤 랜덤카드로 부화', NUTRIENT_GRADE_UP:'무한-손패1장 등급상승',
     NUTRIENT_GRADE_UP_PRO:'무한-손패1장 등급2상승(미사용시 원복)', UBIN_CIGARETTE:'무한-회복+니코틴중첩',
     UNTELL_SHIELD_ON_DEATH:'지속-사망시마다 쉴드획득', ANCESTRAL_RITE_TABLE:'대상 풀회복+지연피해',
-    SIN_PASSIVE:'패시브-치명타1회무효+탄핵', CHALK_SHOT:'공격(스턴해제·아군가능)', MENDEL_STEAL:'카드2장중 상위등급강탈'};
+    SIN_PASSIVE:'패시브-치명타1회무효+탄핵', CHALK_SHOT:'공격(스턴해제·아군가능)', MENDEL_STEAL:'카드2장중 상위등급강탈',
+    /* [Ver 12.7] 신규 타입 */
+    ANARCHY_FREE_SHOP:'판규칙-상점무료(구매시 자해)', EDO_TENSEI_REVIVE:'패시브-최후1인시 풀피부활',
+    DIAMOND_RING:'자가강화(+상대지목시 아군)', ALL_ATK_BUFF:'전원 공격력증가',
+    CULT_CONVERT:'상대 강화+아군화(도박/드로우봉인·수입강탈)', DISCORD_MOD_WIN:'개발자모드 소지자 즉시승리',
+    /* [Ver 12.7.1] 신규 타입 */
+    CLASS_SCALED_AOE:'광역-클래스비례', DOOR_OPENS_CURSE:'패시브-상점진입시즉사(3바퀴뒤이동)',
+    POKER_PASSIVE:'패시브-손패조합 공격력', REVENGE_LEDGER:'피격시 앙갚음표식(피해2배)',
+    LIBERO_PASSIVE:'패시브-상대 피해증감 무시', RETURN_LAST_DAMAGE_X2:'최근피해 2배 반사',
+    DIABLO_PASSIVE:'패시브-체력낮을수록 공격력', BERSERK_ON_HIT:'피격시 광전사(전체공격+30%)',
+    SHIELD_BASH:'공격(쉴드보유시 쉴드파괴 강타)', RAMPAGE_TICK:'0.5초마다 공격력 ±10%',
+    HEALER_AURA:'지속-명중시 아군회복', AURA_FARMING:'3바퀴 무적(공격불가)',
+    WEDDING_LOVER:'강제 연인+축의금 징수'};
   return map[t] || t;
 }
 function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -23813,7 +24367,7 @@ function loadSampleCards(mergeMissing=false){
     {grade:'B', name:'무신정변', type:'MUSIN_COUP_PASSIVE', power:1700, pierce:'NONE', desc:'(패시브) 자신이 3연속으로 카드의 대상이 되었을 때 체력을 전부 회복하고 1700 AOE 피해를 입힌다.', flavor:''},
     {grade:'D', name:'꽃향기만 남기고 갔단다', type:'FLOWER_SCENT_DEATH_BUFF', power:0, pierce:'NONE', atkBuffPct:80, desc:'자신이 사망했을 때 나머지 사람들이 꽃향기로 인해 공격력이 80% 증가한다.', flavor:''},
     {grade:'A', name:'비빔 대왕', type:'REDISTRIBUTE_HANDS_ALL', power:0, pierce:'NONE', desc:'모두(자신 포함)의 카드를 섞어 다시 재분배한다.', flavor:''},
-    {grade:'A', name:'고독한 우빈랩터', type:'SELF_HP_PERCENT_ATK', power:0, pct:90, pierce:'NONE', desc:'ATK — 자신의 현재 체력의 90%', flavor:'인생을 즐기라하시던 아버지의 표정은 고독하시지'},
+    {grade:'A', name:'고독한 우빈랩터', type:'SELF_HP_PERCENT_ATK', power:0, pct:70, pierce:'NONE', desc:'ATK — 자신의 현재 체력의 70%', flavor:'인생을 즐기라하시던 아버지의 표정은 고독하시지'},
     {grade:'B', name:'M24 막대수류탄 투척', attrs:['gun','ranged'], type:'MULTI_HIT_ATK', power:200, hitPower:200, hitCount:3, pierce:'NONE', desc:'ATK 200을 3회 투척한다.', flavor:''},
     {grade:'SR', name:'ABYSSAL HUNTER', attrs:['ranged'], color:'blue', type:'ATK', power:400000000, pierce:'NONE', bgm:'abyssalhunter', bgmHeld:true, desc:'ATK 400,000,000', flavor:'The Poseidon'},
     {grade:'D', name:'fish hunter', attrs:['ranged'], color:'blue', type:'ATK', power:400000000, fixedAcc:10, pierce:'NONE', bgm:'abyssalhunter', bgmHeld:true, desc:'ATK 400,000,000 (명중률 10%)', flavor:'The Fisher'},
@@ -24666,7 +25220,70 @@ function loadSampleCards(mergeMissing=false){
      desc:'HP -99,999,999,999,999,999,999', flavor:'선생님한테 걸렸다'},
 
     {grade:'SSR', name:'개쩌는 시그마 우빈권', attrs:['melee'], type:'SIGMA_ULTIMATE', power:69, sigmaPct:69.74, pierce:'PIERCE',
-     desc:'ATK 69. 그리고 명중한 적에게 — 고자·영구 탄핵·카드 전부 몰수·소지금 전부 강탈·상점 블랙리스트·드로우 봉인·회복량 6.974% 고정·공격력 69.74% 감소·받는 피해 69.74% 증가·화상(턴당 69)·1턴 스턴 및 경직·손패 은폐·E등급 카드 5장 지급·5바퀴 마비·쉴드 획득 불가, 그리고 <b>영구적으로 S등급 이상의 카드를 쓸 수 없게</b> 만든다.', flavor:'개쩐다'}
+     desc:'ATK 69. 그리고 명중한 적에게 — 고자·영구 탄핵·카드 전부 몰수·소지금 전부 강탈·상점 블랙리스트·드로우 봉인·회복량 6.974% 고정·공격력 69.74% 감소·받는 피해 69.74% 증가·화상(턴당 69)·1턴 스턴 및 경직·손패 은폐·E등급 카드 5장 지급·5바퀴 마비·쉴드 획득 불가, 그리고 <b>영구적으로 S등급 이상의 카드를 쓸 수 없게</b> 만든다.', flavor:'개쩐다'},
+
+    /* ==========================================================================
+       [Ver 12.7] 신규 카드 8종
+       --------------------------------------------------------------------------
+       판을 뒤집는 것보다 **판의 규칙을 바꾸는** 쪽에 무게를 뒀다.
+       상점이 무법지대가 되고(무정부), 적이 아군이 되고(다이아몬드 반지 · 사이비),
+       마지막 1:1에서 한 번 더 일어난다(예토전생).
+       ========================================================================== */
+    {grade:'C', name:'무정부', type:'ANARCHY_FREE_SHOP', power:0, anarchyDmg:300, pierce:'NONE',
+     desc:'상점이 무법지대가 된다. 이 판이 끝날 때까지 <b>모두가</b> 상점의 카드를 공짜로 훔쳐갈 수 있지만, 훔친 카드 한 장마다 300의 피해를 입는다.', flavor:'주인도 값도 없는 가게'},
+    {grade:'SR', name:'예토전생', type:'EDO_TENSEI_REVIVE', power:0, unplayable:true, pierce:'NONE',
+     desc:'(패시브) 이 카드를 소지한 채 사망했을 때 게임에 남은 생존자가 1명뿐이라면, 즉시 최대 체력으로 부활한다. (카드는 소모된다)', flavor:'다시 한 번 이 땅을 밟는다'},
+    {grade:'A', name:'다이아몬드 반지', type:'DIAMOND_RING', power:0, sellPriceOverride:500,
+     maxHpAdd:500, hpAdd:500, atkPct:15, flatReduce:100, pierce:'NONE',
+     desc:'MaxHP +500, HP +500, 공격력 15% 증가, 받는 피해 100 감소. 자신이 아닌 상대에게 쓰면 그 상대와 <b>아군</b>이 된다. (둘 중 한쪽이라도 이미 아군이 있으면 상대에게 쓸 수 없다) 판매가 500골드.', flavor:'받아줄래?'},
+    {grade:'D', name:'자, 이제 서로 죽여라', type:'ALL_ATK_BUFF', power:0, atkPct:500, pierce:'NONE',
+     desc:'자신을 포함한 <b>모두</b>의 공격력이 500% 증가한다.', flavor:'자, 이제 서로 죽여라'},
+    {grade:'A', name:'치느님', type:'HEAL', power:8000, pierce:'NONE',
+     desc:'HP +8,000', flavor:'오 치느님!'},
+    {grade:'SR', name:'사이비', type:'CULT_CONVERT', power:0, atkBuffPct:75, pierce:'NONE',
+     desc:'상대의 공격력을 75% 상승시키고 자신의 아군으로 만든다. 대신 그 상대는 앞으로 <b>도박과 드로우를 할 수 없고</b>, 그 상대에게 들어오는 돈은 <b>전부 자신에게</b> 들어온다.', flavor:'믿습니까'},
+    {grade:'E', name:'POV : You are a discord mod', type:'DISCORD_MOD_WIN', power:0, pierce:'NONE',
+     desc:'게임 안에 <b>개발자 모드를 켜고 있는 사람</b>이 있다면 그 사람이 즉시 승리한다. 그 사람이 이미 사망했다면 아무 일도 일어나지 않는다.', flavor:'권한을 쥔 자에게 상을'},
+    {grade:'SSR', name:'쏘리쏘리쏘리쏘리니가니가내게내게빠져빠져빠져베이베', type:'REACT_INSTAKILL', power:0, cost:0, killOnSelfTargeted:true, pierce:'NONE',
+     desc:'자신을 향한 카드가 발동될 때 보여주면, 그 카드를 무효화하고 시전자를 즉사시킨다.', flavor:'Sorry Sorry Sorry Sorry'},
+
+    /* ==========================================================================
+       [Ver 12.7.1] 신규 카드 15종
+       --------------------------------------------------------------------------
+       "쓰는 순간 끝나는 카드"보다 **판이 흘러가는 동안 계속 값이 변하는 카드**를 많이 넣었다.
+       포커 · 디아블로 · 폭주는 전부 공격력이 실시간으로 움직이며, 그 계산은
+       getTotalAtkPctBonus() 한 곳에 모여 있다(따로 갱신해 줄 필요가 없다).
+       ========================================================================== */
+    {grade:'D', name:'프로 게이머', type:'CLASS_SCALED_AOE', power:0, perClass:50, pierce:'NONE',
+     desc:'자신의 <b>클래스 × 50</b>의 피해를 전체에 입힌다. (클래스가 높을수록 강해진다)', flavor:'억대 연봉 프로게이머'},
+    {grade:'E', name:'문이 열리네 요', type:'DOOR_OPENS_CURSE', power:0, passRounds:3, unplayable:true, pierce:'NONE',
+     desc:'(패시브) 낼 수 없다. 이 카드를 든 채로 <b>상점에 들어가면 즉사</b>한다. 손에 들어온 지 3바퀴 뒤 무작위한 다른 사람에게 넘어간다.', flavor:'그대가 들어오죠'},
+    {grade:'A', name:'포커', type:'POKER_PASSIVE', power:0, unplayable:true, pierce:'NONE',
+     desc:'(패시브) 손패 <b>앞 5장</b>의 등급 조합에 따라 자신의 공격력이 실시간으로 변한다. 원페어 +10% · 투페어 +20% · 트리플 +40% · 쿼드라플 +120% · 풀 하우스 +150% · 스트레이트 +200% · <b>빙고 +500%</b>. (손패가 4장 이하면 발동하지 않는다)', flavor:'올인'},
+    {grade:'B', name:'중지', type:'REVENGE_LEDGER', power:0, pierce:'NONE',
+     desc:'이 카드를 쓴 뒤로 누군가에게 피격당하면 자신은 <b>[앙갚음장부]</b>를, 때린 상대는 <b>[장부에 적힘]</b>을 얻는다. [앙갚음장부]를 가진 사람이 [장부에 적힘] 상대를 공격하면 그 피해가 <b>100% 증가</b>한다.', flavor:'적어놨다'},
+    {grade:'C', name:'리베로', type:'LIBERO_PASSIVE', power:0, unplayable:true, pierce:'NONE',
+     desc:'(패시브) 소지 시, 자신의 공격은 상대의 <b>받는 피해량 증감</b>을 전부 무시하고 적힌 값 그대로 들어간다. (감소도 증가도 무시한다)', flavor:'수비만 하는 사람'},
+    {grade:'S', name:'유능제강', type:'RETURN_LAST_DAMAGE_X2', power:0, mult:2, pierce:'NONE',
+     desc:'가장 최근에 자신에게 피해를 입힌 상대에게, 그 피해의 <b>2배</b>를 그대로 돌려준다.', flavor:'柔能制剛 — 부드러움이 굳셈을 이긴다'},
+    {grade:'B', name:'배스킨라빈스 31', type:'SELF_STAT_BUNDLE', power:0, maxHpAdd:310, hpAdd:310, shieldAdd:310, pierce:'NONE',
+     desc:'MaxHP +310, HP +310, 쉴드 +310', flavor:'정상에 올라오고 남은건 dirty one'},
+    {grade:'S', name:'디아블로', color:'red', type:'DIABLO_PASSIVE', power:0, unplayable:true, pierce:'NONE',
+     desc:'(패시브) 소지 시, 자신의 체력이 낮을수록 공격력이 실시간으로 오른다. (HP 2,000 이상이면 0% · HP 1에서 최대 <b>+250%</b>)', flavor:'죽음이 가까울수록 강해진다'},
+    {grade:'S', name:'광전사', color:'red', type:'BERSERK_ON_HIT', power:0, atkPct:30, pierce:'NONE',
+     desc:'앞으로 자신이 피격당할 때마다 1바퀴 동안 <b>[광전사]</b>가 된다. [광전사] 상태에서는 <b>모든 공격이 전체 공격</b>이 되고 공격력이 30% 증가한다.', flavor:'맞을수록 즐겁다'},
+    {grade:'S', name:'쉴드 강타', attrs:['melee'], type:'SHIELD_BASH', power:600, breakPower:1500, pierce:'NONE',
+     desc:'ATK 600. 대상이 <b>쉴드를 가지고 있으면</b> 대신 1,500의 <b>쉴드파괴</b> 피해를 입힌다.', flavor:'방패는 때리라고 있는 것'},
+    {grade:'?', name:'폭주', color:'red', type:'RAMPAGE_TICK', power:0, step:10, pierce:'NONE',
+     desc:'통제를 잃는다. 이 판이 끝날 때까지 <b>0.5초마다</b> 자신의 공격력이 10%씩 오르거나 내린다. (자신의 턴 동안에는 멈춘다)', flavor:'멈출 수가 없다'},
+    {grade:'D', name:'힐러', type:'HEALER_AURA', power:0, healPerHit:150, pierce:'NONE',
+     desc:'앞으로 자신이 <b>공격을 명중시킬 때마다</b> 자신과 모든 아군의 HP가 150 회복된다. (지속 효과)', flavor:'뒤에서 열심히 하고 있어요'},
+    {grade:'A', name:'박격포', attrs:['ranged'], type:'ATK_AOE', power:600, pierce:'NONE',
+     desc:'ATK 600 (전체 공격)', flavor:'이 포탄이 이차함수 y=x^2꼴의 궤적으로 3초동안 날아갈때 이 포탄의 운동에너지와 속력은 얼마일것같냐'},
+    {grade:'S', name:'AURA FARMING', type:'AURA_FARMING', power:0, rounds:3, pierce:'NONE',
+     desc:'3바퀴 동안 <b>무적</b>이 된다. 대신 그동안 <b>공격 카드를 낼 수 없다.</b>', flavor:'가만히 있어도 아우라가 쌓인다'},
+    {grade:'A', name:'우빈결혼식', type:'WEDDING_LOVER', power:0, giftGold:100, gulPower:1000, pierce:'NONE',
+     desc:'한 명을 골라 강제로 식을 올려 <b>[연인]</b> 관계가 된다. 그리고 신랑·신부를 뺀 나머지 전원에게서 <b>축의금 100골드</b>씩을 걷는다. 낼 돈이 없는 사람은 1,000의 피해를 입는다.', flavor:'신부 입장'}
   ];
   if(mergeMissing){
     const existing = new Set(cards.map(c=> `${c.grade}::${c.name}::${c.type}`));
@@ -24740,6 +25357,40 @@ function loadSampleCards(mergeMissing=false){
         console.info('[화폐] 옛 단위(원)가 남아 있던 카드 ' + wonFixed + '장을 최신 정의로 되돌렸습니다.');
       }
     }catch(e){ console.error('[화폐] 옛 단위 정리 실패', e); }
+
+    /* ======================================================================
+       [Ver 12.7 신규] 밸런스 패치 재동기화
+       ----------------------------------------------------------------------
+       ⚠ 이 게임의 카드 목록은 localStorage에 저장됐다가 복원되고, 위의 병합은
+         "없는 카드 추가"만 한다. 그래서 **내장 정의에서 수치를 고쳐도 이미 저장된
+         카드에는 영영 반영되지 않는다.** (음원 필드만 따로 동기화하고 있었다)
+         실제로 고독한 우빈랩터를 90%→70%로 내려도, 기존 유저 화면에서는 계속 90%였다.
+       ▶ 그래서 "이번 패치에서 수치가 바뀐 카드 이름"을 아래에 적고, 그 카드만
+         id·cost를 유지한 채 내장 정의로 통째로 갈아끼운다. 표시(BALANCE_KEY)를
+         남겨 한 번만 돈다.
+       ▶ 다음에 밸런스를 조정할 땐 **BALANCE_RESYNC_KEY의 버전을 올리고**
+         BALANCE_RESYNC_NAMES를 그 패치의 카드로 갈아끼우면 된다.
+       ====================================================================== */
+    try{
+      const BALANCE_RESYNC_KEY   = 'gang_card_balance_resync_v12_7';
+      const BALANCE_RESYNC_NAMES = ['고독한 우빈랩터'];
+      if(localStorage.getItem(BALANCE_RESYNC_KEY) !== '1'){
+        const sampleByName3 = new Map();
+        samples.forEach(x=>{ if(x && x.name) sampleByName3.set(x.name, x); });
+        let resynced = 0;
+        cards.forEach((c,i)=>{
+          if(!c || BALANCE_RESYNC_NAMES.indexOf(c.name) === -1) return;
+          const src = sampleByName3.get(c.name);
+          if(!src) return;
+          cards[i] = { id: c.id, cost: c.cost || 0, ...src };   // id만 유지하고 전부 최신값으로
+          resynced++;
+        });
+        if(resynced > 0) saveCardsToStorage();
+        localStorage.setItem(BALANCE_RESYNC_KEY, '1');
+        if(resynced > 0) console.info('[밸런스] 조정된 카드 ' + resynced + '장을 최신 정의로 갱신했습니다.');
+      }
+    }catch(e){ console.error('[밸런스] 재동기화 실패', e); }
+
     window.__lastCardMergeCount = addedCount;
   } else {
     samples.forEach(s=> cards.push({id:'c'+Date.now()+Math.random().toString(36).slice(2,6), cost:0, ...s}));
@@ -25752,6 +26403,7 @@ function actuallyStartGame(){
   window.__creamAwarded = false;           // [Ver 11.8] 썬크림 1회 지급 가드 리셋
   window.__pickaxeAwardedThisGame = false; // [Ver 9.11] 판마다 곡괭이 1회 지급 가드 리셋
   window.__boxKeyAwardedThisGame = false;  // [Ver 9.16] 판마다 상자 열쇠 1회 지급 가드 리셋
+  __autoSubmitDoneThisGame = false;        // [Ver 12.7] 리더보드 자동 갱신 1회 가드 리셋
   reEventCount = 0;                        // [Ver 10.2] 랜덤 이벤트 희귀도 누적 리셋
   /* [Ver 10.0.2] DJ 쿨타임의 임시 바닥값·틱 정리 — 안 지우면 지난 판 값이 새 판까지 따라온다 */
   try{ __djLocalLastAt = 0; djStopTick(); }catch(e){}
@@ -25760,6 +26412,8 @@ function actuallyStartGame(){
   /* [Ver 10.5] 판 전체에 걸리는 신규 효과 초기화 — 다음 판으로 새어나가지 않게 한다. */
   greenbeltIdx = -1; greenbeltOwnerId = null; greenbeltCardName = '';
   shopPermaMonopolyId = null; dmzActive = false; lastPileGrade = null;
+  anarchyActive = false; anarchyDamage = 300;   // [Ver 12.7] 무정부는 판 단위 규칙이다
+  try{ rampageStopTimer(); }catch(e){}          // [Ver 12.7.1] 지난 판의 폭주 타이머가 남아 돌지 않게
   /* [Ver 10.5.1] 유물 없는 판은 랜서버 호스트가 켤 때만 유지된다.
      혼자 하는 판으로 넘어올 때 규칙이 새어나가지 않도록 여기서 항상 내린다.
      (랜 호스트는 lanHostStartGame이 이 뒤에 다시 세운다) */
@@ -25918,6 +26572,7 @@ function actuallyStartGame(){
   try{ assignBotPets(); }catch(e){ console.error('[지후펫/봇] 적용 오류', e); }        // [Ver 9.11] 봇도 30% 확률로 펫을 데려온다
   try{ assignBotPersonas(); }catch(e){ console.error('[봇 페르소나] 적용 오류', e); }   // [Ver 10.2] 봇 성격 (유저에게는 보이지 않는다)
   try{ applyArtifactsToGame(); }catch(e){ console.error('[유물] 적용 오류', e); }       // [Ver 9.11] 유물 — 시작 골드·MaxHP·쉴드 보정
+  try{ applyClassLvToGame(); }catch(e){ console.error('[클래스] 적용 오류', e); }       // [Ver 12.7.1] 프로 게이머의 위력 기준
   resetVitalsSnapshot(); // [Ver 9.10.2] 새 판 — 이전 판의 돈·체력 기준치가 남아 엉뚱한 변화량이 뜨지 않게
   try{ resetGoldFlashBaseline(); }catch(e){} // [Ver 9.12.1] 골드 점멸 기준값도 함께 초기화
   try{ rotateCardSeen(); }catch(e){}         // [Ver 9.12.1] 카드 등장 편중 완화 — 직전 판 목록으로 넘긴다
@@ -26998,6 +27653,9 @@ function mkPlayer(id,name,isBot){
     shopBanned:false, // 연쇄절도범: 앞으로 상점 입장 불가
     shopBlockDueRound:0, // [Ver 6.8] 봉쇄: 이 바퀴(turnCount)에 도달하기 전까지 상점 이용 불가
     tradeNoDraw:false, // 거래: 앞으로 카드 드로우 불가 (상점 이용 불가와는 별개)
+    cultNoDraw:false, cultNoGamble:false, // [Ver 12.7] 사이비에 포섭된 사람: 드로우·도박 봉인
+    goldRedirectLabel:null, // [Ver 12.7] 골드 가로채기의 출처 이름(로그 표기용). 없으면 "빚쟁이지후"
+    devModeOn:false, // [Ver 12.7] 이 사람이 개발자 모드를 켜고 있는가 (POV : You are a discord mod 판정용)
     fateChainWith:null, // 운명의 사슬: 이어진 상대의 id
     matrixId:null, // 매트릭스: 들어가 있는 매트릭스 인스턴스 id (null이면 일반 필드)
     matrixDueRound:0, // 매트릭스: 자동 복귀되는 turnCount
@@ -27568,7 +28226,11 @@ function statusChipHtml(c){
      방어력 = damageReductionPct (받는 피해 감소 %)
    0이면 줄 자체를 그리지 않는다. */
 function statModsHtml(p){
-  const atk = Math.round(p.atkMultiplier || 0);
+  /* [Ver 12.7.1] 예전엔 atkMultiplier(누적 %)만 읽어서, 포커·디아블로·폭주·광전사처럼
+     **실시간으로 계산되는** 증감이 스탯창에 전혀 보이지 않았다. 실제 피해 계산이 쓰는
+     것과 같은 함수를 읽어, 화면 숫자와 실제 위력을 일치시킨다. */
+  let atk = Math.round(p.atkMultiplier || 0);
+  try{ if(typeof getTotalAtkPctBonus === 'function') atk = Math.round(getTotalAtkPctBonus(p)); }catch(e){}
   const def = Math.round(p.damageReductionPct || 0);
   const row = (label, v)=>{
     if(!v) return '';
@@ -27732,6 +28394,31 @@ function getStatusChips(p){
   if(p.sell1gAll) addChip('💸', '짐바브웨', 'red');
   if(shopLockOwnerId === p.id) addChip('🔒', '상점 독점', 'yellow');
   if(p.shopBanned) addChip('🚫', p.tradeNoDraw ? '거래(상점·드로우 불가)' : '상점 입장불가', 'red');
+  /* ===== [Ver 12.7.1] 신규 카드 상태칩 =====
+     실시간으로 값이 변하는 카드일수록 "지금 몇 %인지"가 화면에 안 보이면 쓸 수가 없다. */
+  {
+    const pk = (typeof pokerHandOf === 'function') ? pokerHandOf(p) : null;
+    if(pk) addChip('🃏', `포커 · ${pk.label} (공격력 +${pk.pct}%)`, 'yellow');
+    else if(p.hand && p.hand.some(c=> c && c.type==='POKER_PASSIVE')) addChip('🃏', '포커 (족보 없음)', 'blue');
+  }
+  {
+    const db = (typeof diabloAtkPct === 'function') ? diabloAtkPct(p) : 0;
+    if(p.hand && p.hand.some(c=> c && c.type==='DIABLO_PASSIVE')) addChip('😈', `디아블로 (공격력 +${db}%)`, db > 0 ? 'red' : 'blue');
+  }
+  if(p.rampageOn) addChip('💢', `폭주 (공격력 ${(p.rampageAtkPct||0) >= 0 ? '+' : ''}${Math.round(p.rampageAtkPct||0)}% · 0.5초마다 변동)`, 'red');
+  if(typeof berserkActive === 'function' && berserkActive(p)) addChip('🪓', `광전사 (전체공격 · 공격력 +${p.berserkAtkPct||30}%) · ${Math.max(0,(p.berserkDueRound||0)-turnCount)}바퀴`, 'red');
+  else if(p.berserkOnHit) addChip('🪓', '광전사 대기 (맞으면 발동)', 'blue');
+  if(p.ledgerRevenge) addChip('📓', '앙갚음장부 (적힌 상대에게 피해 2배)', 'yellow');
+  if(p.ledgerMarked) addChip('✒️', '장부에 적힘 (받는 피해 2배)', 'red');
+  if(p.hand && p.hand.some(c=> c && c.type==='LIBERO_PASSIVE')) addChip('🏐', '리베로 (상대 피해증감 무시)', 'green');
+  if(p.healerAura > 0) addChip('💚', `힐러 (명중 시 아군 HP +${p.healerAura})`, 'green');
+  if(p.auraFarmDueRound && turnCount < p.auraFarmDueRound) addChip('🌟', `AURA FARMING (공격 불가) · ${p.auraFarmDueRound - turnCount}바퀴`, 'yellow');
+  if(p.hand && p.hand.some(c=> c && c.type==='DOOR_OPENS_CURSE')) addChip('🚪', '문이 열리네 요 (상점 입장 시 즉사)', 'red');
+  if(p.loverId){ const lv = players.find(x=>x.id===p.loverId); if(lv) addChip('💞', `연인 (${lv.name})`, 'pink'); }
+  /* [Ver 12.7] 사이비에 포섭된 상태 — 왜 도박·드로우 버튼이 안 먹는지 여기서 알 수 있어야 한다 */
+  if(p.cultNoDraw || p.cultNoGamble) addChip('🕯️', '사이비(도박·드로우 불가 · 수입 몰수)', 'red');
+  /* [Ver 12.7] 예토전생 — 소지 중이면 마지막 순간에 한 번 일어난다 */
+  if(p.hand && p.hand.some(c=> c && c.type==='EDO_TENSEI_REVIVE')) addChip('⚰️', '예토전생(최후 1인 남으면 부활)', 'blue');
   if((p.shopBlockDueRound||0) > turnCount) addChip('🚧', `봉쇄 (상점 ${Math.max(0,(p.shopBlockDueRound||0)-turnCount)}바퀴)`, 'red'); // [Ver 6.8]
   if(p.blueOceanActive) addChip('🌊', '블루오션 (1:1시 받는피해 -50%)', 'green'); // [Ver 6.8]
   /* ===== [Ver 9.14] 신규 카드 상태 칩 ===== */
@@ -28250,6 +28937,8 @@ function syncLoverFx(){
 
 function runTurnStart(){
   if(!gameActive) return;
+  try{ syncDevFlagToMe(); }catch(e){}   // [Ver 12.7] 개발자 모드 표시를 판에 계속 맞춘다
+  try{ tickEvoUnpleasant(); }catch(e){} // [Ver 12.7.1] 불편+ — 버프를 얻은 상대에게 자동 발동
   // [Ver 6.10] 예약된 드래프트 경매가 있으면, 이번 턴을 시작하기 전에 경매부터 연다.
   //   경매가 끝나면 이 함수를 다시 호출해 원래 흐름으로 복귀한다.
   if(draftMode && window.__draftAuctionPending){
@@ -28715,6 +29404,7 @@ function continueTurnStartAfterRefill(p){
     // [Ver 9.10.2] 지후펫 — 자기 턴에만 도는 판정(백수 용돈 · 점쟁이 점괘 · 의사 · 사기꾼 …)
     try{ petOnOwnTurnStart(p); }catch(e){ console.error('[지후펫] 턴 시작 판정 오류', e); }
     try{ artOnOwnTurnStart(p); }catch(e){ console.error('[유물] 턴 시작 판정 오류', e); } // [Ver 9.11] 과자·우빈 엄마
+    try{ tickEvoRegen(p); }catch(e){ console.error('[진화] 재생+ 처리 오류', e); }        // [Ver 12.7.1] 재생+
     try{ tickNewCardsOwnTurn(p); }catch(e){ console.error('[9.14] 자기 턴 판정 오류', e); } // 개쉐끼 랩터 · 경기 회복 · 우빈 리커버리
     /* [Ver 9.13.1] 턴 시작 판정으로 그 자리에서 죽을 수 있다 (점쟁이 지후의 <살> — 300 피해).
        죽은 사람으로 턴을 계속 진행하면 아래 로직이 전부 헛돌므로 여기서 턴을 넘긴다.
@@ -29479,18 +30169,25 @@ function grantGold(p, amount){
       if(take > 0){
         creditor.gold += take;
         p.goldRedirectRemaining = remain - take;
-        log('gold', `"빚쟁이지후" 효과로 ${J(p.name,'이','가')} 받을 예정이었던 돈 중 ${fmtWon(take)}가 ${creditor.name}에게 대신 지급되었습니다. (남은 독촉액 ${fmtWon(p.goldRedirectRemaining)})`);
+        /* [Ver 12.7] 가로채기의 출처가 여럿이 됐다(빚쟁이지후 · 사이비).
+           사이비는 한도가 사실상 없으므로 "남은 독촉액"을 적지 않는다. */
+        if(p.goldRedirectLabel){
+          log('gold', `"${p.goldRedirectLabel}" 효과로 ${J(p.name,'이','가')} 받을 예정이었던 ${fmtWon(take)}가 전부 ${creditor.name}에게 들어갔습니다.`);
+        } else {
+          log('gold', `"빚쟁이지후" 효과로 ${J(p.name,'이','가')} 받을 예정이었던 돈 중 ${fmtWon(take)}가 ${creditor.name}에게 대신 지급되었습니다. (남은 독촉액 ${fmtWon(p.goldRedirectRemaining)})`);
+        }
         const leftover = amount - take;
         if(leftover > 0) p.gold += leftover;
         if(p.goldRedirectRemaining <= 0){
-          p.goldRedirectTo = null; p.goldRedirectRemaining = 0;
-          log('sys', `"빚쟁이지후"의 독촉 금액을 모두 회수해 효과가 종료되었습니다.`);
+          const __lbl = p.goldRedirectLabel || '빚쟁이지후';
+          p.goldRedirectTo = null; p.goldRedirectRemaining = 0; p.goldRedirectLabel = null;
+          log('sys', `"${__lbl}"의 독촉 금액을 모두 회수해 효과가 종료되었습니다.`);
         }
         renderBoard();
         return leftover;
       }
     } else {
-      p.goldRedirectTo = null; p.goldRedirectRemaining = 0;
+      p.goldRedirectTo = null; p.goldRedirectRemaining = 0; p.goldRedirectLabel = null;
     }
   }
   p.gold += amount;
@@ -29776,6 +30473,8 @@ function advanceTurn(){
     tickBurn(); tickTribute(); tickRoundIncome();
     try{ petHitmanLapPenalty(); }catch(e){} // [Ver 9.11] 청부업자 — 한 바퀴 동안 의뢰를 방치했으면 자벌
     tickVoyagerShield(); tickProphetCheck();
+    try{ tickDoorOpensCard(); }catch(e){}   // [Ver 12.7.1] 문이 열리네 요 — 3바퀴 뒤 이동
+    try{ tickEvoCoinMuseum(); }catch(e){}   // [Ver 12.7.1] 엽전+ — 3바퀴 뒤 박물관장
     tickMatrixReturn(); tickHealMultExpire(); tickRomanticDoctorExpire(); tickTemptationExpire();
     try{ tickEvoTempExpire(); }catch(e){}   // [Ver 9.13.1] 1바퀴짜리 진화 버프 해제
     tickDoomStatuses();
@@ -30148,6 +30847,9 @@ function showVictorySequence(winners, forcedMessage){
     try{ if(sawDeveloperThisGame()) markGameAch('metDev'); }catch(e){}
     // [Ver 5.9] 업적 판정 — 이 게임의 임시 플래그 + 누적 통계로 일괄 평가
     try{ evaluateAchievements(!!window.__achWonThisGame); }catch(e){}
+    /* [Ver 12.7] 리더보드 자동 갱신 — 여기서 예약만 하고, 실제 전송은
+       클래스·시즌 정산(settleTierForHuman)이 끝난 뒤에 이뤄진다. */
+    try{ autoSubmitScoreAfterGame(); }catch(e){}
   }catch(e){}
   // [Ver 8.9.1] 실제 화면 그리기는 전부 grRenderResult가 담당한다.
   //   화면을 못 그렸더라도 위의 통계·업적 정산은 이미 끝난 뒤이므로 서로 영향을 주지 않는다.
@@ -32927,7 +33629,11 @@ function needsSingleTargetBase(type){ return [
   'ATK_ATK_DEBUFF_TEMP','ATK_SHIELD_ANNIHILATE','WATERMELON_SEED_ATK',
   'FATHER_JOB_ATK','PSYCHIC_ASSAULT','PROPOSE_LOVER','COOKIE_ALLY_OR_DEATH',
   'BREXIT_BREAK_ALLY','GUARDIAN_ANGEL','BONDAGE_ACC_LOCK','SIGMA_ULTIMATE',
-  'ATK','STUN','GOLD_STEAL','EXECUTE_CHAIN','VIEW_HAND','CARD_STEAL_RANDOM','CARD_MARK_STEAL','ATK_SUMMON','SECRET_SOCIETY','DELAYED_DEATH','ATK_GOLD_STEAL_PCT','ATK_DEATH_CHANCE','IMPEACH_RISKY','ACCURACY_DEBUFF','INFINITE_ATK_STEAL','INFINITE_ATK_DRAIN','ATK_BURN_CHANCE','CARD_GIFT','PARCEL_DELIVERY','PREVENT_REVIVE','HP_AVERAGE_SHARE','CARD_DISCARD_SELF_ATK','BOUNCE_ATK','ATK_STUN_TRIPLE','SHIELD_SEIZE','FATE_CHAIN','INFINITE_ATK_CHROMATIC','MATRIX_SEND','PARALLEL_UNIVERSE_SHIFTER','POISON_ATK','INFINITE_ATK_STUN_NO_REPEAT','MULTI_HIT_ATK','INFINITE_ATK_STEAL_PRO','SELF_RECOIL_ATK','INFINITE_HP_PERCENT_ATK','ATK_GOLD_COST','MUTATE_HIGHEST_TO_BLANK','BOUND_CURSE','CARD_MARK_STEAL_ALL','SYNC_LINK_DEBUFF','PROXY_LINK_DEBUFF','COMBO','REINFORCE_PIPE','GOLD_STEAL_HALF_INF','SWAP_HAND','CARD_SHARE_LINK','ATK_STUN_RIGID','MUTUAL_SELF_TARGET_DMG','FIRST_TURN_SHIELD_STRIP_HP1','BLIND_NEXT_ENEMY_ATK','HUNTER_MARK','ATK_AND_SELF_HEAL','INSTANT_KILL_TARGET','DETECTIVE_ATK_KILL_CRIMINAL','MUTUAL_HEAL_SELF_TARGET','CARROT_CHOICE','SANDS_ATK_DBLOCK','ZINGO_HP_BLIND','REDUCE_MAXHP_TARGET','EAGLE_ATK_EXCLUDE_FALL','PORTAL_SELF_EXCLUDE_DELAYED_ATK','MATRIX_EVAPORATE_DELAYED_ATK','SPACE_EXCLUDE_ONLY','INFINITE_PORTAL_SELF_EXCLUDE_DELAYED_ATK','ATK_LOCK_SELL_PRICE','ATK_FIXED_ACC_SELFDMG_ON_MISS','ATK_AND_CARD_STEAL_RANDOM','INFINITE_ATK_PLAIN','ATK_SELF_VULN_ATKBUFF','ATK_RANDOM_HEAL_ANY','PERMA_VULN_TARGET','ATK_AND_SELF_SHIELD','CARROT_SCAM_TRADE','CARROT_SCAM_VICTIM','DOUBLE_GOZA_BOTH','STALK_VIEW_HAND','ICBM_CONSUME_ATK','PIERCING_ATK_ALL_VULN','PULSE_BEAM_DELAYED_STUN','CARROT_HAND_MUTATE_ALL','MAGICIAN_HAND_MUTATE_RANDOM','LABOR_EXPLOITATION','RANDOM_CARD_SWAP_ONE','CHARGE_ATK_DOUBLE_ON_MISS','RANDOM_RECAST_ATK','PARALYZE_DEBUFF','RAPTOR_VIRUS_MARK','TIME_DOESNT_TREAT_ME_SPECIALLY','SYNC_STEAL_BUFFS','SUNBEAM_ATK_DEBUFF','RECKLESS_STABBING_ATK','GOLD_DEMAND_REDIRECT','DEFENSE_PROTOCOL','MUTUAL_ATK_BUFF_DEBUFF','NEXTLEVEL_ATK','NURSING_CLEANSE','NO_NULLIFY_ATK','GUIDED_MISSILE','KOKUSHIMUSOU','REPLACE_CARDS_SAME_GRADE','IMPEACH_TRANSFER','GOLD_THROW_ATK','ASSASSIN_JIHU','ATK_RESTART_FROM_SELF','ATK_SEND_LOW_GRADE','MUTATE_TARGET_ALL_TO_GRADE','DOCTOR_WHO_LASER','EAT_SWALLOW_BUFF_DELAYED_ATK','NON_GRATA_NEIGHBOR_ATK','UBIN_GREATSWORD_INFINITE','VULN_TARGET_SELF_HEAL','STEAL_ALL_GRADE_OR_KILL','IGNITE_STEAL_HALF_ON_CAST','HYPNOSIS_RANDOM_TARGET','INHERIT_REDISTRIBUTE','FORCED_ALLY_THEN_BETRAY','FISHING_ROD_BAIT','ROUTER_SHARE_ALL','FORCE_ALLY_ONE_TIME','SHOP_BAN_TARGET','COUPLE_TEE_ALLY','ATK_ATK_DEBUFF','SHOP_BAN_TARGET_TEMP','RUSSIAN_ROULETTE','SELF_HP_PERCENT_ATK','CULT_RECRUIT','REPORT_INSTAKILL_OR_SELFSTUN','GRANT_JUNK_CARDS','IMPEACH_ROUNDS','STEAL_ALL_OR_LOSE_ALL_50','ATK_AND_SELF_DAMAGE','HAND_MASK_TARGET','MOTHER_PROTECT','UBIN_BREATH_ATK','LOAN_SHARK','SPINE_FRACTURE','GIFT_CHOOSE_CARD','CHAT_TIMEOUT','ATK_VULN_PCT','ATK_STEAL_ALL_GOLD','VANISH_THEN_STEAL','ENCORE_LOCK_ONE','SONGPYEON_GIFT','HEAL','CLEANSE_HEAL','MAXHP_AND_HEAL','MAXHP_AND_HEAL_DIFF','HEAL_OVERFLOW_SHIELD','HEAL_GOLD_COST','MOM_CAPTURE_DEBUFF','MULTI_HIT_ATK_STUN','WHITETIGER_STRIKE','TELEKINESIS_CONTROL','POISON_DEATH_TARGET','POISON_DEATH_SELF','GRADE_LOCK_LOW','RAINBOW_DEATHNOTE','REPEAT_STEAL_UI','ATK_REMOVE_HIGH_GRADE','HONG_KICK_EXCLUDE_STUN','ASH_REVOLUTION','UBIN_STAB','CHALK_SHOT','ANCESTRAL_RITE_TABLE','MENDEL_STEAL','TEMU_EXPRESS_ATK','UBIN_STRAY_DOG_ATK'].includes(type); }
+  'ATK','STUN','GOLD_STEAL','EXECUTE_CHAIN','VIEW_HAND','CARD_STEAL_RANDOM','CARD_MARK_STEAL','ATK_SUMMON','SECRET_SOCIETY','DELAYED_DEATH','ATK_GOLD_STEAL_PCT','ATK_DEATH_CHANCE','IMPEACH_RISKY','ACCURACY_DEBUFF','INFINITE_ATK_STEAL','INFINITE_ATK_DRAIN','ATK_BURN_CHANCE','CARD_GIFT','PARCEL_DELIVERY','PREVENT_REVIVE','HP_AVERAGE_SHARE','CARD_DISCARD_SELF_ATK','BOUNCE_ATK','ATK_STUN_TRIPLE','SHIELD_SEIZE','FATE_CHAIN','INFINITE_ATK_CHROMATIC','MATRIX_SEND','PARALLEL_UNIVERSE_SHIFTER','POISON_ATK','INFINITE_ATK_STUN_NO_REPEAT','MULTI_HIT_ATK','INFINITE_ATK_STEAL_PRO','SELF_RECOIL_ATK','INFINITE_HP_PERCENT_ATK','ATK_GOLD_COST','MUTATE_HIGHEST_TO_BLANK','BOUND_CURSE','CARD_MARK_STEAL_ALL','SYNC_LINK_DEBUFF','PROXY_LINK_DEBUFF','COMBO','REINFORCE_PIPE','GOLD_STEAL_HALF_INF','SWAP_HAND','CARD_SHARE_LINK','ATK_STUN_RIGID','MUTUAL_SELF_TARGET_DMG','FIRST_TURN_SHIELD_STRIP_HP1','BLIND_NEXT_ENEMY_ATK','HUNTER_MARK','ATK_AND_SELF_HEAL','INSTANT_KILL_TARGET','DETECTIVE_ATK_KILL_CRIMINAL','MUTUAL_HEAL_SELF_TARGET','CARROT_CHOICE','SANDS_ATK_DBLOCK','ZINGO_HP_BLIND','REDUCE_MAXHP_TARGET','EAGLE_ATK_EXCLUDE_FALL','PORTAL_SELF_EXCLUDE_DELAYED_ATK','MATRIX_EVAPORATE_DELAYED_ATK','SPACE_EXCLUDE_ONLY','INFINITE_PORTAL_SELF_EXCLUDE_DELAYED_ATK','ATK_LOCK_SELL_PRICE','ATK_FIXED_ACC_SELFDMG_ON_MISS','ATK_AND_CARD_STEAL_RANDOM','INFINITE_ATK_PLAIN','ATK_SELF_VULN_ATKBUFF','ATK_RANDOM_HEAL_ANY','PERMA_VULN_TARGET','ATK_AND_SELF_SHIELD','CARROT_SCAM_TRADE','CARROT_SCAM_VICTIM','DOUBLE_GOZA_BOTH','STALK_VIEW_HAND','ICBM_CONSUME_ATK','PIERCING_ATK_ALL_VULN','PULSE_BEAM_DELAYED_STUN','CARROT_HAND_MUTATE_ALL','MAGICIAN_HAND_MUTATE_RANDOM','LABOR_EXPLOITATION','RANDOM_CARD_SWAP_ONE','CHARGE_ATK_DOUBLE_ON_MISS','RANDOM_RECAST_ATK','PARALYZE_DEBUFF','RAPTOR_VIRUS_MARK','TIME_DOESNT_TREAT_ME_SPECIALLY','SYNC_STEAL_BUFFS','SUNBEAM_ATK_DEBUFF','RECKLESS_STABBING_ATK','GOLD_DEMAND_REDIRECT','DEFENSE_PROTOCOL','MUTUAL_ATK_BUFF_DEBUFF','NEXTLEVEL_ATK','NURSING_CLEANSE','NO_NULLIFY_ATK','GUIDED_MISSILE','KOKUSHIMUSOU','REPLACE_CARDS_SAME_GRADE','IMPEACH_TRANSFER','GOLD_THROW_ATK','ASSASSIN_JIHU','ATK_RESTART_FROM_SELF','ATK_SEND_LOW_GRADE','MUTATE_TARGET_ALL_TO_GRADE','DOCTOR_WHO_LASER','EAT_SWALLOW_BUFF_DELAYED_ATK','NON_GRATA_NEIGHBOR_ATK','UBIN_GREATSWORD_INFINITE','VULN_TARGET_SELF_HEAL','STEAL_ALL_GRADE_OR_KILL','IGNITE_STEAL_HALF_ON_CAST','HYPNOSIS_RANDOM_TARGET','INHERIT_REDISTRIBUTE','FORCED_ALLY_THEN_BETRAY','FISHING_ROD_BAIT','ROUTER_SHARE_ALL','FORCE_ALLY_ONE_TIME','SHOP_BAN_TARGET','COUPLE_TEE_ALLY','ATK_ATK_DEBUFF','SHOP_BAN_TARGET_TEMP','RUSSIAN_ROULETTE','SELF_HP_PERCENT_ATK','CULT_RECRUIT','REPORT_INSTAKILL_OR_SELFSTUN','GRANT_JUNK_CARDS','IMPEACH_ROUNDS','STEAL_ALL_OR_LOSE_ALL_50','ATK_AND_SELF_DAMAGE','HAND_MASK_TARGET','MOTHER_PROTECT','UBIN_BREATH_ATK','LOAN_SHARK','SPINE_FRACTURE','GIFT_CHOOSE_CARD','CHAT_TIMEOUT','ATK_VULN_PCT','ATK_STEAL_ALL_GOLD','VANISH_THEN_STEAL','ENCORE_LOCK_ONE','SONGPYEON_GIFT','HEAL','CLEANSE_HEAL','MAXHP_AND_HEAL','MAXHP_AND_HEAL_DIFF','HEAL_OVERFLOW_SHIELD','HEAL_GOLD_COST','MOM_CAPTURE_DEBUFF','MULTI_HIT_ATK_STUN','WHITETIGER_STRIKE','TELEKINESIS_CONTROL','POISON_DEATH_TARGET','POISON_DEATH_SELF','GRADE_LOCK_LOW','RAINBOW_DEATHNOTE','REPEAT_STEAL_UI','ATK_REMOVE_HIGH_GRADE','HONG_KICK_EXCLUDE_STUN','ASH_REVOLUTION','UBIN_STAB','CHALK_SHOT','ANCESTRAL_RITE_TABLE','MENDEL_STEAL','TEMU_EXPRESS_ATK','UBIN_STRAY_DOG_ATK',
+  /* [Ver 12.7] 신규 지목 카드 — 다이아몬드 반지(자신 포함) · 사이비 */
+  'DIAMOND_RING','CULT_CONVERT',
+  /* [Ver 12.7.1] 쉴드 강타 · 우빈결혼식 (유능제강은 대상이 "최근에 나를 때린 사람"으로 자동 결정된다) */
+  'SHIELD_BASH','WEDDING_LOVER'].includes(type); }
 
 /* shared helper: who can legally be targeted by this card, for a given caster.
    used by both the human UI and the bot AI so the "no valid target" rule is defined in exactly one place. */
@@ -33007,6 +33713,17 @@ function healReceiverFor(caster, card, targetId){
 function getValidTargetsFor(caster, card){
   if(card && card.type === 'CULT_RECRUIT'){ // [Ver 6.19] 포교 대상: 아직 교주팀이 아닌 생존자
     return alivePlayers().filter(p=> p.id!==caster.id && !p.cult);
+  }
+  /* [Ver 12.7] 다이아몬드 반지 — **자기 자신도 대상이 된다.**
+     자신에게 쓰면 능력치만 오르고, 남에게 쓰면 거기에 아군 맺기가 얹힌다.
+     아군 맺기는 "둘 다 아직 아군이 없을 때"만 되므로, 이미 팀이 있는 쪽은
+     애초에 지목 후보에서 뺀다(그레이아웃 대신 고를 수 없게). */
+  if(card && card.type === 'DIAMOND_RING'){
+    return alivePlayers().filter(p=>{
+      if(p.id === caster.id) return true;
+      if(caster.team || p.team) return false;
+      return canTarget(caster, p);
+    });
   }
   // 논 그라타: 자신의 turnOrder상 이전 사람과 다음 사람만 대상으로 삼을 수 있다 (자신은 자동 제외)
   if(card.type==='NON_GRATA_NEIGHBOR_ATK'){
@@ -33114,6 +33831,15 @@ function cardUnusableReason(caster, card){
     if(caster.cultRecruitUsedTurn === (caster.turnsPlayed||0)) return '이번 턴에는 이미 포교했습니다.';
     if(!players.some(p=> p.alive && !p.cult && p.id !== caster.id)) return '포교할 대상이 없습니다.';
     return null;
+  }
+  /* [Ver 12.7.1] 유능제강 — 아직 아무에게도 맞지 않았으면 돌려줄 것이 없다. */
+  if(card.type === 'RETURN_LAST_DAMAGE_X2'){
+    const src = caster.lastHitFromId ? players.find(p=>p.id===caster.lastHitFromId) : null;
+    if(!src || !src.alive || !(caster.lastHitAmount > 0)) return '아직 돌려줄 피해가 없습니다. (누군가에게 맞은 뒤에 쓸 수 있습니다)';
+  }
+  /* [Ver 12.7.1] AURA FARMING — 무적인 동안에는 공격 카드를 낼 수 없다(그게 값이다). */
+  if(caster.auraFarmDueRound && turnCount < caster.auraFarmDueRound && isAtkLikeCard(card)){
+    return `"AURA FARMING" 중에는 공격 카드를 낼 수 없습니다. (${Math.max(0, caster.auraFarmDueRound - turnCount)}바퀴 남음)`;
   }
   if(card.railgunCond && caster.tookDamageLastTurn) return '직전 턴에 피해를 입어 이 카드를 사용할 수 없습니다.';
   if(caster.unconsciousActive && !isAtkLikeCard(card)) return '무의식 상태에서는 공격 계열 카드만 사용할 수 있습니다.';
@@ -34730,6 +35456,15 @@ function openReactionWindow(caster, card, targetId, onResolve){
   const __instaKillCard = reactor && reactor.hand.find(c=>{
     if(c.type!=='REACT_INSTAKILL') return false;
     if(Array.isArray(c.killOnNames) && c.killOnNames.length) return c.killOnNames.includes(card.name);
+    /* [Ver 12.7] 쏘리쏘리… — 카드 종류를 가리지 않고 **자신을 향한 것**이면 발동한다.
+       판정은 안죄송해(REACT_NOT_SORRY)와 똑같이: 지목 대상이 나거나, 광역처럼
+       내가 실제로 영향을 받는 카드면 된다. */
+    if(c.killOnSelfTargeted){
+      try{
+        if(targetId === reactor.id) return true;
+        return computeAffectedTargets(caster, card, targetId).some(t=> t && t.id === reactor.id);
+      }catch(e){ return targetId === reactor.id; }
+    }
     return isAtkLikeCard(card);
   });
   const hasInstaKill = !!__instaKillCard;
@@ -36066,16 +36801,26 @@ function resolveCardEffect(caster, card, targetId, onDone){
       break;
     }
     case 'SELF_SACRIFICE_RESET_OTHERS': {
-      log('sys', `${caster.name}이(가) "${card.name}"을(를) 사용했습니다! 푸짐하게 똥을 싸고 장렬하게 자결합니다!`);
+      /* [Ver 12.7.1] 푸짐한똥+ — 자결하지 않는다. 대신 10% 확률로 방구가 터져 100 AOE가 더 들어간다. */
+      const __evoPoop = isEvoOf(card, '푸짐한똥');
+      log('sys', `${caster.name}이(가) "${card.name}"을(를) 사용했습니다! 푸짐하게 똥을 ${__evoPoop ? '쌌습니다.' : '싸고 장렬하게 자결합니다!'}`);
       const others = alivePlayers().filter(p=>p.id!==caster.id);
       currentAttackContext = { attackerName: caster.name, attackerId: caster.id, cardName: card.name };
-      forceKillWithRevive(caster, `${caster.name}의 "${card.name}" 자결`, card.name);
+      if(!__evoPoop) forceKillWithRevive(caster, `${caster.name}의 "${card.name}" 자결`, card.name);
       others.forEach(p=>{
         p.shield = 0;
         p.hp = Math.min(100, p.maxHp);
       });
       log('sys', `남은 생존자 전원의 쉴드가 전부 제거되고 HP가 100이 되었습니다.`);
+      if(__evoPoop){
+        if(Math.random() < 0.10){
+          log('highlight', `💨 푸짐한똥+ — 방구가 터졌습니다! 전체에 100의 추가 피해.`);
+          alivePlayers().filter(p=>p.id!==caster.id).forEach(p=> applyDamageToPlayer(p, 100, 'NONE'));
+        }
+        log('sys', `💩 푸짐한똥+ — ${J(caster.name,'은','는')} 자결하지 않고 멀쩡히 살아 있습니다.`);
+      }
       renderBoard(); renderHand();
+      if(checkWinCondition()){ onDone({}); return; }
       onDone({});
       break;
     }
@@ -37753,8 +38498,10 @@ function resolveCardEffect(caster, card, targetId, onDone){
       renderBoard(); onDone({}); break;
     }
     case 'SLOW_REACTION_SELF': { // 느려 — 자신이 내는 카드의 반응 시간 단축
-      caster.fastReactionMs = 1500;
-      log('highlight', `⏩ ${J(caster.name,'이','가')} "${card.name}"! 앞으로 자신이 내는 카드의 반응 시간이 1.5초로 줄어듭니다.`);
+      /* [Ver 12.7.1] 느려+ — 1.5초가 아니라 0.3초. 사실상 아무도 반응할 수 없다. */
+      const __slowMs = card.slowReactMs || 1500;
+      caster.fastReactionMs = __slowMs;
+      log('highlight', `⏩ ${J(caster.name,'이','가')} "${card.name}"! 앞으로 자신이 내는 카드의 반응 시간이 ${(__slowMs/1000).toFixed(1)}초로 줄어듭니다.`);
       renderBoard(); onDone({}); break;
     }
     case 'NO_REVIVE_AURA_PASSIVE':
@@ -39316,6 +40063,7 @@ function resolveCardEffect(caster, card, targetId, onDone){
     }
     case 'GOTCHA_NEXT_ATK_BONUS': {
       caster.gotchaBonusPending = true;
+      caster.gotchaPierceNext = !!card.gotchaPierce;   // [Ver 12.7.1] 잡았죠?+ — 추가 피해가 쉴드를 관통
       log('sys', `${J(caster.name,'이','가')} "${card.name}"을(를) 사용했습니다! 다음 공격 카드에 1200의 추가 피해가 실리지만, 상대가 죽지 않으면(무의식 등 포함) 자신이 대신 사망합니다.`);
       renderBoard();
       onDone({});
@@ -39329,6 +40077,13 @@ function resolveCardEffect(caster, card, targetId, onDone){
       const healAmt = healAmountFor(healRecv, card.power);
       healRecv.hp = Math.min(healRecv.maxHp, healRecv.hp + healAmt);
       log('heal', `${J(caster.name,'이','가')} ${healRecv.id!==caster.id?J(healRecv.name,'에게','에게')+' ':''}HP ${healAmt} 회복 (현재 ${healRecv.hp})`);
+      /* [Ver 12.7.1] 재생+ — 그 자리에서 끝나지 않고 4턴 동안 조금씩 더 아문다.
+         실제 회복은 자기 턴이 시작될 때 artOnOwnTurnStart 옆에서 처리한다. */
+      if(card.regenTurns && card.regenPerTurn){
+        healRecv.evoRegenTurns = Math.max(healRecv.evoRegenTurns||0, card.regenTurns);
+        healRecv.evoRegenAmt = Math.max(healRecv.evoRegenAmt||0, card.regenPerTurn);
+        log('heal', `🌿 재생+ — 앞으로 ${card.regenTurns}턴 동안 매 턴 ${card.regenPerTurn}씩 더 회복합니다.`);
+      }
       if(healRecv.id!==caster.id) cultBumpSuspicion(healRecv, caster, 'heal'); // [Ver 6.19]
       renderBoard();
       showFloatNumber(healRecv.id, '+'+healAmt.toLocaleString(), 'heal');
@@ -39568,6 +40323,11 @@ function resolveCardEffect(caster, card, targetId, onDone){
       shRecv.shield += card.power;
       /* [Ver 9.13.1] 다이아몬드 방벽+ — 이 쉴드가 처음으로 전부 깨질 때까지 받는 피해량 2.5% 감소.
          깨지는 순간 applyDamageToPlayer가 이 보정을 되돌린다(evoDiamondDr). */
+      /* [Ver 12.7.1] 흐릿한 결계+ — 이 쉴드가 "처음 완전히 깨지는" 순간 300 AOE.
+         실제 발동은 applyDamageToPlayer의 쉴드 소진 지점(evoDiamondDr 옆)에서 처리한다. */
+      if(isEvoOf(card, '흐릿한 결계') && card.breakAoePower){
+        shRecv.evoBarrierBreakAoe = card.breakAoePower;
+      }
       if(isEvoOf(card, '다이아몬드 방벽') && !shRecv.evoDiamondDr){
         shRecv.evoDiamondDr = 2.5;
         shRecv.damageReductionPct = (shRecv.damageReductionPct||0) + 2.5;
@@ -39590,6 +40350,11 @@ function resolveCardEffect(caster, card, targetId, onDone){
       }
       const selfDmg = card.hpCost||300;
       log('sys', `${J(caster.name,'이','가')} "${card.name}"을(를) 사용해 쉴드 ${card.power||680}을 얻으려 했지만, 그 대가로 HP ${selfDmg}이 깎입니다.`);
+      /* [Ver 12.7.1] 수은 보호막+ — 은빛이 몸에 남아 받는 피해가 영구적으로 100 줄어든다. */
+      if(card.flatReduceAdd){
+        caster.permaFlatReduce = (caster.permaFlatReduce||0) + card.flatReduceAdd;
+        log('sys', `🪞 수은 보호막+ — ${J(caster.name,'의','의')} 받는 피해가 영구적으로 ${card.flatReduceAdd} 감소합니다. (누적 -${caster.permaFlatReduce})`);
+      }
       applyDamageToPlayer(caster, selfDmg, 'PIERCE');
       renderBoard();
       onDone({});
@@ -40688,13 +41453,222 @@ function resolveCardEffect(caster, card, targetId, onDone){
       // 고독한 우빈랩터: 자신의 "현재 체력"의 %를 그대로 공격력으로 삼는다. (자신의 HP는 소모되지 않음)
       const target = players.find(p=>p.id===targetId);
       if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
-      const pct = card.pct || 90;
+      const pct = card.pct || 70;   // [Ver 12.7 하향] 90% → 70%
       const dmg = Math.max(0, Math.floor(caster.hp * (pct/100)));
       log('sys', `${J(caster.name,'의','의')} "${card.name}"! 자신의 현재 HP ${caster.hp.toLocaleString()}의 ${pct}%인 ${dmg.toLocaleString()} 피해로 공격합니다.`);
       if(dmg > 0) dealDamage(caster, target, dmg, card.pierce, false, 0, null, card.fixedAcc);
       else log('sys', '체력이 너무 낮아 아무런 피해도 주지 못했습니다.');
       onDone({});
       break;
+    }
+
+    /* ##########################################################################
+       [Ver 12.7] 신규 카드 효과 5종
+       (치느님=HEAL · 쏘리쏘리…=REACT_INSTAKILL · 예토전생=사망 훅 — 이 셋은
+        기존 배선을 그대로 물려받으므로 여기에 case가 없다)
+       ########################################################################## */
+    case 'ANARCHY_FREE_SHOP': {
+      /* 무정부 — 상점 가격을 없애는 대신 "값 대신 피"를 받는다.
+         공짜라서 누구나 집어가지만 한 장마다 300씩 깎이므로, 체력이 낮은 쪽은
+         오히려 상점 앞에서 멈춰야 한다. **시전자 자신에게도 똑같이 적용된다.** */
+      const dmg = card.anarchyDmg || 300;
+      if(anarchyActive){
+        log('sys', `상점은 이미 무법지대입니다. "${card.name}"은(는) 아무 일도 하지 않았습니다.`);
+        onDone({}); break;
+      }
+      anarchyActive = true;
+      anarchyDamage = dmg;
+      log('highlight', `🏴 ${J(caster.name,'이','가')} "${card.name}"를 선포했습니다! 이제 <b>누구나</b> 상점의 카드를 공짜로 가져갈 수 있지만, 한 장마다 <b>${dmg.toLocaleString()}</b>의 피해를 입습니다.`);
+      renderBoard();
+      try{ const sb = document.getElementById('shopBg'); if(sb && sb.classList.contains('show')) renderShopBuy(); }catch(e){}
+      onDone({}); break;
+    }
+    case 'DIAMOND_RING': {
+      /* 다이아몬드 반지 — 능력치는 **항상 시전자에게** 붙고,
+         자신이 아닌 사람을 지목했을 때만 거기에 "아군 맺기"가 얹힌다.
+         (양쪽 다 아군이 없어야 한다 — 지목 후보 단계에서 이미 걸러지지만,
+          봇·랜서버 대리 처리로 들어오는 경로가 있어 여기서 한 번 더 본다) */
+      const target = players.find(p=>p.id===targetId);
+      const msgs = [];
+      if(card.maxHpAdd){ caster.maxHp += card.maxHpAdd; msgs.push(`MaxHP +${card.maxHpAdd.toLocaleString()}`); }
+      if(card.hpAdd){ caster.hp = Math.min(caster.maxHp, caster.hp + card.hpAdd); msgs.push(`HP +${card.hpAdd.toLocaleString()}`); }
+      if(card.atkPct){ caster.atkMultiplier = (caster.atkMultiplier||0) + card.atkPct; msgs.push(`공격력 +${card.atkPct}%`); }
+      if(card.flatReduce){ caster.permaFlatReduce = (caster.permaFlatReduce||0) + card.flatReduce; msgs.push(`받는 피해 -${card.flatReduce}(고정)`); }
+      log('sys', `💍 ${J(caster.name,'이','가')} "${card.name}"을(를) 꼈습니다! ${msgs.join(', ')} (영구)`);
+      if(target && target.alive && target.id !== caster.id){
+        if(caster.team || target.team){
+          log('sys', `이미 아군이 있어 ${J(target.name,'과','와')} 아군이 되지는 못했습니다. 반지의 능력치만 남습니다.`);
+        } else {
+          makeAllyWithCaster(caster, target);
+          log('highlight', `💍 ${J(caster.name,'이','가')} ${J(target.name,'에게','에게')} 반지를 건넸습니다. 두 사람은 이제 <b>아군</b>입니다!`);
+        }
+      }
+      renderBoard(); onDone({}); break;
+    }
+    case 'ALL_ATK_BUFF': {
+      /* 자, 이제 서로 죽여라 — 예외 없이 생존자 전원(자신 포함)에게 같은 배수를 얹는다.
+         버프이지만 판을 정리하는 카드다. 공격력이 6배가 되면 다음 한 바퀴에 대부분 정리된다. */
+      const pct = card.atkPct || 500;
+      const list = alivePlayers();
+      list.forEach(p=>{ p.atkMultiplier = (p.atkMultiplier||0) + pct; });
+      log('highlight', `⚔️ "${card.name}" — 생존자 ${list.length}명 <b>전원</b>의 공격력이 ${pct}% 증가했습니다!`);
+      renderBoard(); onDone({}); break;
+    }
+    case 'CULT_CONVERT': {
+      /* 사이비 — 상대를 강하게 만들어 아군으로 삼되, 그 대가로 상대의 경제를 통째로 뺏는다.
+         ▶ 골드는 grantGold()의 goldRedirect 배선을 그대로 재사용한다(빚쟁이지후와 같은 길).
+           다만 한도가 없으므로 아주 큰 수를 넣는다 — Infinity는 세이브(JSON)에서 null이 되어
+           기본값 500으로 되돌아가 버린다. */
+      const target = players.find(p=>p.id===targetId);
+      if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
+      const pct = card.atkBuffPct || 75;
+      target.atkMultiplier = (target.atkMultiplier||0) + pct;
+      target.cultNoGamble = true;
+      target.cultNoDraw = true;
+      target.goldRedirectTo = caster.id;
+      target.goldRedirectRemaining = CULT_GOLD_REDIRECT_CAP;
+      target.goldRedirectLabel = card.name;
+      makeAllyWithCaster(caster, target);
+      log('highlight', `🕯️ ${J(caster.name,'이','가')} "${card.name}"로 ${J(target.name,'을','를')} 포섭했습니다! ${target.name}의 공격력이 ${pct}% 증가하고 두 사람은 <b>아군</b>이 되었지만, ${J(target.name,'은','는')} 앞으로 <b>도박·드로우를 할 수 없고</b> 버는 돈은 전부 ${caster.name}에게 들어갑니다.`);
+      renderBoard(); renderHand(); onDone({}); break;
+    }
+    /* ##########################################################################
+       [Ver 12.7.1] 신규 카드 효과
+       (박격포=ATK_AOE · 배스킨라빈스 31=SELF_STAT_BUNDLE 은 기존 배선을 그대로 쓴다.
+        포커 · 디아블로 · 리베로 · 문이 열리네 요는 낼 수 없는 소지형이라 case가 없다.)
+       ########################################################################## */
+    case 'CLASS_SCALED_AOE': {
+      /* 프로 게이머 — 위력이 카드가 아니라 **사람**에게서 나온다.
+         클래스는 기기별 로컬 값이라, 봇·원격 참가자 몫은 playerClassLevel()이 대신 정한다. */
+      const lv = playerClassLevel(caster);
+      const dmg = Math.max(0, lv * (card.perClass || 50));
+      const targets = getTargetsForAoe(caster);
+      log('highlight', `🎮 ${J(caster.name,'의','의')} "${card.name}"! 클래스 ${lv} × ${card.perClass||50} = <b>${dmg.toLocaleString()}</b>의 전체 공격.`);
+      if(targets.length === 0){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); break; }
+      targets.forEach(t=> dealDamage(caster, t, dmg, card.pierce, true));
+      renderBoard(); onDone({}); break;
+    }
+    case 'REVENGE_LEDGER': {
+      /* 중지 — 지금 당장은 아무 일도 없다. "다음에 나를 때린 사람"부터 장부에 적힌다.
+         실제 표식은 applyDamageToPlayer의 피격 훅(onHurtHooks)에서 붙는다. */
+      caster.ledgerArmed = true;
+      log('highlight', `🖕 ${J(caster.name,'이','가')} "${card.name}"를 들었습니다. 앞으로 자신을 때린 사람은 <b>[장부에 적힘]</b>이 되고, 그 상대에게 주는 피해가 100% 증가합니다.`);
+      renderBoard(); onDone({}); break;
+    }
+    case 'RETURN_LAST_DAMAGE_X2': {
+      /* 유능제강 — 대상을 고르지 않는다. "마지막으로 나를 때린 사람"이 곧 대상이다. */
+      const src = caster.lastHitFromId ? players.find(p=>p.id===caster.lastHitFromId) : null;
+      const amt = Math.max(0, Math.floor((caster.lastHitAmount||0) * (card.mult||2)));
+      if(!src || !src.alive || src.id === caster.id || amt <= 0){
+        log('sys', `아직 되돌려줄 피해가 없어 "${card.name}" 효과가 무산되었습니다.`);
+        onDone({}); break;
+      }
+      log('highlight', `🥋 ${J(caster.name,'이','가')} "${card.name}"! 방금 받은 ${(caster.lastHitAmount||0).toLocaleString()}의 <b>2배</b>인 ${amt.toLocaleString()}을 ${J(src.name,'에게','에게')} 그대로 돌려줍니다.`);
+      dealDamage(caster, src, amt, card.pierce);
+      renderBoard(); onDone({}); break;
+    }
+    case 'BERSERK_ON_HIT': {
+      caster.berserkOnHit = true;
+      caster.berserkAtkPct = card.atkPct || 30;
+      log('highlight', `🪓 ${J(caster.name,'이','가')} "${card.name}"! 앞으로 맞을 때마다 1바퀴 동안 <b>[광전사]</b>가 되어, 모든 공격이 전체 공격이 되고 공격력이 ${card.atkPct||30}% 증가합니다.`);
+      renderBoard(); onDone({}); break;
+    }
+    case 'SHIELD_BASH': {
+      const target = players.find(p=>p.id===targetId);
+      if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
+      const hasShield = (target.shield||0) > 0;
+      const dmg = hasShield ? (card.breakPower||1500) : (card.power||600);
+      if(hasShield) log('sys', `🛡️ ${J(target.name,'이','가')} 쉴드를 두르고 있습니다! "${card.name}"이 ${dmg.toLocaleString()}의 <b>쉴드파괴</b> 피해로 바뀝니다.`);
+      dealDamage(caster, target, dmg, hasShield ? 'BREAK' : (card.pierce||'NONE'));
+      renderBoard(); onDone({}); break;
+    }
+    case 'RAMPAGE_TICK': {
+      /* 폭주 — 판이 끝날 때까지 도는 0.5초 타이머 하나에 올라탄다.
+         타이머는 rampageEnsureTimer()가 필요할 때만 켜고, 아무도 폭주 중이 아니면 스스로 꺼진다. */
+      if(caster.rampageOn){ log('sys', `${J(caster.name,'은','는')} 이미 폭주 중입니다.`); onDone({}); break; }
+      caster.rampageOn = true;
+      caster.rampageStep = card.step || 10;
+      caster.rampageAtkPct = caster.rampageAtkPct || 0;
+      try{ rampageEnsureTimer(); }catch(e){}
+      log('highlight', `💢 ${J(caster.name,'이','가')} "${card.name}"! 이제 <b>0.5초마다</b> 공격력이 ${card.step||10}%씩 오르내립니다. (자신의 턴 동안에는 멈춥니다)`);
+      renderBoard(); onDone({}); break;
+    }
+    case 'HEALER_AURA': {
+      caster.healerAura = card.healPerHit || 150;
+      log('highlight', `💚 ${J(caster.name,'이','가')} "${card.name}"! 앞으로 공격을 명중시킬 때마다 자신과 아군의 HP가 ${card.healPerHit||150}씩 회복됩니다.`);
+      renderBoard(); onDone({}); break;
+    }
+    case 'AURA_FARMING': {
+      /* AURA FARMING — 기존 무적 시스템(invincible/invincibleTurns)을 그대로 쓰고,
+         "그동안 공격 카드 금지"만 얹는다. 금지 판정은 cardUnusableReason이 맡는다. */
+      const rounds = card.rounds || 3;
+      caster.invincible = true;
+      caster.invincibleTurns = Math.max(caster.invincibleTurns||0, rounds);
+      caster.auraFarmDueRound = Math.max(caster.auraFarmDueRound||0, turnCount + rounds);
+      log('highlight', `🌟 ${J(caster.name,'이','가')} "${card.name}"! ${rounds}바퀴 동안 <b>무적</b>이 되지만, 그동안 공격 카드를 낼 수 없습니다.`);
+      renderBoard(); onDone({}); break;
+    }
+    case 'WEDDING_LOVER': {
+      /* 우빈결혼식 — 프러포즈(PROPOSE_LOVER)와 같은 [연인] 배선을 쓰되,
+         "강제"라 상대의 동의를 묻지 않고, 하객들에게 축의금을 걷는다. */
+      const target = players.find(p=>p.id===targetId);
+      if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
+      if(target.id === caster.id){ log('sys','혼자서는 식을 올릴 수 없습니다.'); onDone({}); return; }
+      if(caster.loverId || target.loverId){ log('sys', `이미 연인이 있어 "${card.name}" 효과가 무산되었습니다.`); onDone({}); return; }
+      makeAllyWithCaster(caster, target);
+      caster.loverId = target.id; target.loverId = caster.id;
+      log('highlight', `💒 ${J(caster.name,'이','가')} ${target.name}과(와) 강제로 식을 올렸습니다! 둘은 아군이 되었고 <b>[연인]</b> 관계가 되었습니다.`);
+      try{ syncLoverFx(); }catch(e){}
+      /* 하객(신랑·신부를 뺀 생존자) — 축의금을 내거나, 못 내면 매를 맞는다. */
+      const gift = card.giftGold || 100;
+      const guests = alivePlayers().filter(p=> p.id !== caster.id && p.id !== target.id);
+      let collected = 0;
+      const broke = [];
+      guests.forEach(g=>{
+        if((g.gold||0) >= gift){
+          g.gold -= gift;
+          collected += gift;
+        } else {
+          broke.push(g);
+        }
+      });
+      if(collected > 0){
+        grantGold(caster, collected);
+        log('gold', `💌 축의금 ${fmtWon(collected)}가 ${J(caster.name,'에게','에게')} 들어왔습니다. (하객 ${guests.length - broke.length}명 × ${fmtWon(gift)})`);
+      }
+      if(broke.length > 0){
+        log('sys', `💢 축의금 ${fmtWon(gift)}를 내지 못한 ${broke.map(g=>g.name).join(', ')}${Jp(broke[broke.length-1].name,'이','가')} ${(card.gulPower||1000).toLocaleString()}의 피해를 입습니다.`);
+        currentAttackContext = { attackerName: caster.name, attackerId: caster.id, cardName: card.name };
+        broke.forEach(g=> applyDamageToPlayer(g, card.gulPower || 1000, 'NONE'));
+        currentAttackContext = null;
+      }
+      renderBoard();
+      if(checkWinCondition()){ onDone({}); return; }
+      onDone({}); break;
+    }
+    case 'POKER_PASSIVE':
+    case 'DIABLO_PASSIVE':
+    case 'LIBERO_PASSIVE':
+    case 'DOOR_OPENS_CURSE': {
+      log('sys', `${J(card.name,'은','는')} 손패에 들고 있는 동안 효과가 있는 카드입니다. 지금 내면 아무 효과가 없습니다.`);
+      onDone({}); break;
+    }
+
+    case 'DISCORD_MOD_WIN': {
+      /* POV : You are a discord mod — 개발자 모드를 켜고 있는 사람에게 승리를 넘긴다.
+         개발자 모드는 기기별 로컬 상태라 남의 것을 직접 볼 수 없어서, 각자 자기
+         플레이어 객체에 표시(devModeOn)를 남기는 방식으로 판별한다(isDevModePlayer 참고). */
+      try{ syncDevFlagToMe(); }catch(e){}
+      const mods = alivePlayers().filter(p=> isDevModePlayer(p));
+      if(mods.length === 0){
+        log('sys', `"${card.name}" — 개발자 모드를 켜고 있는 사람이 없거나 이미 사망해, 아무 일도 일어나지 않았습니다.`);
+        onDone({}); break;
+      }
+      const winner = mods[0];
+      log('highlight', `🛡️ "${card.name}" — ${J(winner.name,'이','가')} 권한을 들켰습니다. <b>즉시 승리</b>합니다!`);
+      players.forEach(o=>{ if(o.id !== winner.id && o.alive){ o.alive = false; onPlayerDeath(o, `${winner.name}의 "${card.name}"`, card.name); } });
+      try{ renderBoard(); checkWinCondition(); }catch(e){}
+      onDone({}); break;
     }
     case 'REDISTRIBUTE_HANDS_ALL': {
       // 비빔 대왕: 자신을 포함한 생존자 전원의 카드를 한데 섞어 균등 재분배한다.
@@ -43393,7 +44367,18 @@ function resolveCardEffect(caster, card, targetId, onDone){
       caster.permaImpeached = true; // "영구" 탄핵 — 다른 탄핵 부여/정화 효과로도 해제되지 않는 진짜 영구 락
       try{ cardAudioTriggerKey('bgm', 'impeached', caster.id); }catch(e){} // [Ver 8.1.3] 탄핵 디버프 발동 시 BGM
       log('sys', `${J(caster.name,'이','가')} "${card.name}"으로 쉴드 ${card.power||3500}을(를) 얻었습니다! 대신 영구 탄핵당합니다.`);
+      /* [Ver 12.7.1] 대군주+ — 쉴드만 두르고 끝나지 않는다. 검을 내리쳐 전체를 함께 친다. */
+      if(isEvoOf(card, '대군주')){
+        const __ov = getTargetsForAoe(caster);
+        if(__ov.length){
+          log('highlight', `👑 대군주+ — 검을 내리쳐 전체에 400의 피해를 입힙니다!`);
+          currentAttackContext = { attackerName: caster.name, attackerId: caster.id, cardName: card.name };
+          __ov.forEach(t=> applyDamageToPlayer(t, 400, 'NONE'));
+          currentAttackContext = null;
+        }
+      }
       renderBoard();
+      if(checkWinCondition()){ onDone({}); return; }
       onDone({});
       break;
     }
@@ -44953,6 +45938,35 @@ function onPlayerDeath(deadPlayer, cause, cardName){
       return;
     }
   }
+  /* ==========================================================================
+     [Ver 12.7] 예토전생 — 소지한 채 죽었고, 남은 생존자가 정확히 1명일 때만 일어난다.
+     --------------------------------------------------------------------------
+     ▶ 왜 여기인가: onPlayerDeath는 전투사·즉사·도박·자폭까지 **모든 사망 경로가
+       반드시 지나는 유일한 관문**이다. applyDamageToPlayer의 부활 사슬에 넣으면
+       "피해로 죽은 경우"에만 걸린다.
+     ▶ 탈락 순번(eliminationOrder)에 넣기 **전에** 판정한다. forceKillAbsolute처럼
+       미리 넣고 들어오는 경로가 있으므로, 되살릴 땐 그 기록도 도로 빼준다(트릭과 같은 처리).
+     ▶ 카드는 소모한다. 안 그러면 1:1에서 서로 영원히 부활해 판이 끝나지 않는다.
+     ========================================================================== */
+  {
+    const __edoIdx = (deadPlayer.hand||[]).findIndex(c=> c && c.type === 'EDO_TENSEI_REVIVE');
+    const __edoBlocked = deadPlayer.cannotRevive
+      || (typeof noHealReviveExceptId !== 'undefined' && noHealReviveExceptId && noHealReviveExceptId !== deadPlayer.id)
+      || players.some(p=> p.alive && p.hand && p.hand.some(c=> c && c.type === 'NO_REVIVE_AURA_PASSIVE'));
+    if(__edoIdx !== -1 && !__edoBlocked && alivePlayers().length === 1){
+      const __edoCard = deadPlayer.hand[__edoIdx];
+      deadPlayer.hand.splice(__edoIdx, 1);
+      deadPlayer.alive = true;
+      deadPlayer.hp = deadPlayer.maxHp;
+      deadPlayer.unconsciousActive = false;
+      deadPlayer.unconsciousReady = false;
+      const __eoIdx = eliminationOrder.indexOf(deadPlayer.id);
+      if(__eoIdx !== -1) eliminationOrder.splice(__eoIdx, 1);
+      log('highlight', `⚰️ ${J(deadPlayer.name,'이','가')} "${__edoCard.name}"으로 흙을 털고 다시 일어났습니다! (HP ${deadPlayer.maxHp.toLocaleString()} · 마지막 한 명만 남은 순간이었습니다)`);
+      try{ renderBoard(); renderHand(); }catch(e){}
+      return;
+    }
+  }
   if(!eliminationOrder.includes(deadPlayer.id)) eliminationOrder.push(deadPlayer.id);
   // [Ver 5.3 버그수정] "윤지후님이 제 카드를 알아봐주실까"(은밀한 사망 즉시승리)는 사망 그 자체로 승패가 완전히
   // 뒤집히는 특수 판정이므로, 아래의 일반 사망 처리(티어 정산 settleTierForHuman, 게임 결과창)보다 반드시 먼저
@@ -45407,9 +46421,70 @@ function tickBurn(){
        caster.nextAtkCritChance(2배 크리티컬)는 위력 자체가 아닌 "특수 조건부 연산"이므로 순서상 나중에 개별 적용한다.
    ▶ 새 카드/버프를 추가할 때 "공격력 X% 증가/감소"라면 반드시 위 필드 중 하나에 가산(+=/-=)하고,
      새로운 곱연산 배율 필드를 만들지 말 것. */
+/* ==========================================================================
+   [Ver 12.7.1] 실시간으로 움직이는 공격력 3종 — 포커 · 디아블로 · 폭주
+   --------------------------------------------------------------------------
+   전부 getTotalAtkPctBonus() 안에서 **매번 다시 계산**된다. 그래서 손패가 바뀌거나
+   체력이 깎이는 순간 곧바로 반영되고, 따로 갱신해 주는 코드가 필요 없다.
+   (플레이어 필드에 값을 심어두는 방식이었다면 "지금 몇 %인지"가 늘 한 박자 늦는다)
+   ========================================================================== */
+/* 포커 — 손패 앞 5장의 등급 조합. 4장 이하면 발동하지 않는다. */
+const POKER_HANDS = [
+  { key:'bingo',    label:'빙고',       pct:500 },
+  { key:'straight', label:'스트레이트', pct:200 },
+  { key:'fullhouse',label:'풀 하우스',  pct:150 },
+  { key:'quad',     label:'쿼드라플',   pct:120 },
+  { key:'triple',   label:'트리플',     pct:40  },
+  { key:'twopair',  label:'투페어',     pct:20  },
+  { key:'onepair',  label:'원페어',     pct:10  },
+];
+/* 지금 손패가 어떤 족보인지. 없으면 null. */
+function pokerHandOf(p){
+  try{
+    if(!p || !p.hand || !p.hand.some(c=> c && c.type === 'POKER_PASSIVE')) return null;
+    if(p.hand.length < 5) return null;                     // 4장 이하면 발동하지 않는다
+    const five = p.hand.slice(0, 5);                       // "가장 앞에 있는 5개"
+    const counts = {};
+    five.forEach(c=>{ const g = (c && c.grade) || '?'; counts[g] = (counts[g]||0) + 1; });
+    const shape = Object.values(counts).sort((a,b)=> b-a);  // 예: [3,2] = 풀 하우스
+    const find = k => POKER_HANDS.find(h=> h.key === k);
+    if(shape[0] === 5) return find('bingo');
+    /* 스트레이트 — 다섯 등급이 전부 다르고, 등급표에서 연속일 때.
+       '?'처럼 등급표에 없는 카드가 섞이면 성립하지 않는다(gradeRankOf가 99를 준다). */
+    if(shape.length === 5){
+      const ranks = five.map(c=> gradeRankOf(c && c.grade)).sort((a,b)=> a-b);
+      if(ranks[4] < 90 && ranks.every((r,i)=> i === 0 || r === ranks[i-1] + 1)) return find('straight');
+    }
+    if(shape[0] === 3 && shape[1] === 2) return find('fullhouse');
+    if(shape[0] === 4) return find('quad');
+    if(shape[0] === 3) return find('triple');
+    if(shape[0] === 2 && shape[1] === 2) return find('twopair');
+    if(shape[0] === 2) return find('onepair');
+    return null;
+  }catch(e){ return null; }
+}
+function pokerAtkPct(p){ const h = pokerHandOf(p); return h ? h.pct : 0; }
+/* 디아블로 — HP 2,000 이상이면 0%, HP 1에서 +250%. 그 사이는 직선으로 잇는다. */
+const DIABLO_HP_CEIL = 2000, DIABLO_MAX_PCT = 250;
+function diabloAtkPct(p){
+  try{
+    if(!p || !p.hand || !p.hand.some(c=> c && c.type === 'DIABLO_PASSIVE')) return 0;
+    const hp = Math.max(1, p.hp || 1);
+    if(hp >= DIABLO_HP_CEIL) return 0;
+    return Math.round(DIABLO_MAX_PCT * (DIABLO_HP_CEIL - hp) / (DIABLO_HP_CEIL - 1));
+  }catch(e){ return 0; }
+}
+/* 광전사 — 맞을 때마다 켜지는 1바퀴짜리 버프. */
+function berserkActive(p){ return !!(p && p.berserkDueRound && turnCount < p.berserkDueRound); }
+
 function getTotalAtkPctBonus(caster){
   let pct = 0;
   if(caster.atkMultiplier) pct += caster.atkMultiplier;
+  /* [Ver 12.7.1] 실시간 3종 + 광전사. 전부 "지금 이 순간"의 값이다. */
+  try{ pct += pokerAtkPct(caster); }catch(e){}
+  try{ pct += diabloAtkPct(caster); }catch(e){}
+  if(caster.rampageAtkPct) pct += caster.rampageAtkPct;
+  if(berserkActive(caster)) pct += (caster.berserkAtkPct || 30);
   if(caster.chromaticMultiplier) pct += caster.chromaticMultiplier;
   if(caster.tempAtkBuffTurns > 0 && caster.tempAtkBuffMult) pct += caster.tempAtkBuffMult;
   if(caster.matrixId != null && caster.matrixAtkMod) pct += caster.matrixAtkMod;
@@ -45706,6 +46781,11 @@ function dealDamage(caster, target, amount, pierce, isAoe, deathChance, onHitRes
     gotchaActive = true;
     caster.gotchaBonusPending = false;
     amount = amount + 1200;
+    /* [Ver 12.7.1] 잡았죠?+ — 이 한 방이 쉴드를 관통한다. */
+    if(caster.gotchaPierceNext){
+      caster.gotchaPierceNext = false;
+      if(pierce === 'NONE'){ pierce = 'PIERCE'; log('sys', `🎯 잡았죠?+ — 이 공격이 쉴드를 관통합니다.`); }
+    }
   }
   /* [Ver 9.10.2] 지후펫 — 공격을 "시도"하는 이 시점에 굴린다.
        · 어쌔신 지후 : 15% 확률로 이 공격의 위력 200% 증가(=3배)
@@ -46040,6 +47120,23 @@ function dealDamage(caster, target, amount, pierce, isAoe, deathChance, onHitRes
   try{ evoAfterHit(caster, target, amount); }catch(e){ console.error('[진화] 명중 후 처리 오류', e); }
   // [Ver 9.14] 불타는남자(화상 중첩) · 영계의 낫(빈사 스턴)
   try{ newCardsOnHit(caster, target); }catch(e){ console.error('[9.14] 명중 후 처리 오류', e); }
+  /* [Ver 12.7.1] 광전사 — 버프가 켜져 있는 동안에는 **단일 대상 공격이 전체 공격이 된다.**
+     ⚠ 번짐이 또 번짐을 부르지 않도록 가드를 둔다(SOLEMN [화이트] 스플래시와 같은 방식).
+     ⚠ 연타 카드는 타격마다 번진다 — "모든 공격이 AOE가 된다"는 설명 그대로다. */
+  if(!window.__berserkSplashing && !isAoe && amount > 0 && berserkActive(caster) && target && target.id !== caster.id){
+    const __rest = alivePlayers().filter(x=> x.id !== caster.id && x.id !== target.id);
+    if(__rest.length > 0){
+      window.__berserkSplashing = true;
+      try{
+        log('sys', `🪓 [광전사] — 공격이 ${__rest.map(x=>x.name).join(', ')}에게도 번집니다.`);
+        __rest.forEach(x=>{
+          currentAttackContext = { attackerName: caster.name, attackerId: caster.id, cardName: (currentStatCardName||'공격') + ' (광전사)' };
+          applyDamageToPlayer(x, amount, effectivePierce);
+        });
+      } finally { window.__berserkSplashing = false; }
+      try{ renderBoard(); checkWinCondition(); }catch(e){}
+    }
+  }
 
   // 인성질: 이 효과를 보유한 캐스터의 공격이 명중할 때마다 대상의 영구 공격력이 누적 감소
   if(caster.vengeanceAuraPct > 0 && target && target.alive && target.id !== caster.id){
@@ -46550,15 +47647,42 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
   }
   if(amount > 0 && isMyPlayer(target) && gameAchFlags) gameAchFlags.tookAnyDamage = true; // [Ver 5.9] 완벽주의
   let remaining = amount + (target.permaDamageBonus||0);
-  if(target.rigidTurns > 0){
+  /* [Ver 12.7.1] 리베로 — 공격하는 쪽이 이 카드를 들고 있으면, 대상의 "받는 피해량 증감"을
+     **양쪽 방향 모두** 없는 셈 친다. 경직·취약·피해감소·블루오션이 전부 통과한다.
+     (감소만 무시하는 기존 UFM(__ignoreDamageReduction)과는 다른 축이라 따로 둔다) */
+  const __libero = (function(){
+    try{
+      const aId = currentAttackContext && currentAttackContext.attackerId;
+      if(!aId || aId === target.id) return false;
+      const a = players.find(p=>p.id===aId);
+      return !!(a && a.hand && a.hand.some(c=> c && c.type === 'LIBERO_PASSIVE'));
+    }catch(e){ return false; }
+  })();
+  if(__libero && target.rigidTurns > 0){
+    /* 경직도 "받는 피해 증가"라 함께 무시된다 — 로그로 한 번만 알린다 */
+    log('sys', `🏐 "리베로" — ${J(target.name,'의','의')} 받는 피해 증감이 전부 무시됩니다.`);
+  }
+  /* [Ver 12.7.1] 중지 — [앙갚음장부]를 든 사람이 [장부에 적힘] 상대를 칠 때 피해 2배.
+     세 갈래의 공격력 계산 경로 어디를 타든 반드시 이 함수를 지나므로, 여기 한 곳에서만 곱한다. */
+  if(target.ledgerMarked && remaining > 0){
+    try{
+      const aId2 = currentAttackContext && currentAttackContext.attackerId;
+      const a2 = (aId2 && aId2 !== target.id) ? players.find(p=>p.id===aId2) : null;
+      if(a2 && a2.ledgerRevenge){
+        remaining = remaining * 2;
+        log('sys', `🖕 "중지" — 장부에 적힌 ${J(target.name,'에게','에게')} 주는 피해가 <b>2배</b>가 됩니다.`);
+      }
+    }catch(e){}
+  }
+  if(!__libero && target.rigidTurns > 0){
     remaining = Math.round(remaining * 2);
     log('sys', `${J(target.name,'은','는')} 경직 상태라 받는 피해량이 2배로 적용됩니다!`);
   }
-  if(target.vulnPct > 0 && turnCount < target.vulnDueRound){
+  if(!__libero && target.vulnPct > 0 && turnCount < target.vulnDueRound){
     remaining = Math.round(remaining * (1 + target.vulnPct/100));
   }
   // [Ver 8.8] "흥분"(우빈바): 받는 피해 증가
-  if(target.excitedVulnPct > 0 && turnCount < target.excitedDueRound){
+  if(!__libero && target.excitedVulnPct > 0 && turnCount < target.excitedDueRound){
     remaining = Math.round(remaining * (1 + target.excitedVulnPct/100));
   }
   // [Ver 5.0 버그수정] 음수 damageReductionPct(받는 피해 증가)가 `> 0` 가드에 걸려 전혀 적용되지 않던 문제 —
@@ -46575,7 +47699,7 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
       if(__attacker && __attacker.hp > target.hp) underdogDR = __underdogCard.drPct||40;
     }
   }
-  const __effectiveDR = (target.damageReductionPct||0) + antiplazaDR + underdogDR;
+  const __effectiveDR = __libero ? 0 : ((target.damageReductionPct||0) + antiplazaDR + underdogDR);
   const __ignoreDR = !!window.__ignoreDamageReduction && __effectiveDR > 0;
   // [Ver 6.3 버그수정] 인생네방컷(DR100_UNTIL_5HITS): damageReductionPct와는 독립된 100% 무효화 트랙.
   // "무시하고 들어오는" 공격(__ignoreDamageReduction)이 아닌 한, 실제 피해 시도가 있을 때마다 완전히 막아내되
@@ -46605,7 +47729,7 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
   /* [Ver 9.14 버그수정] 예전엔 blueOceanActive 플래그만 봤는데, 그 플래그는 **턴이 시작될 때만** 갱신된다.
      그래서 누군가 죽어 1:1이 된 그 턴 안에서는 계속 꺼져 있었고, 정작 필요한 순간에 발동하지 않았다.
      레드오션이 "소지만 하면 켜지는" 카드인 것처럼, 블루오션도 **맞는 그 순간에 손패를 직접 확인**한다. */
-  if(remaining > 0 && !window.__ignoreDamageReduction &&
+  if(remaining > 0 && !window.__ignoreDamageReduction && !__libero &&
      (target.blueOceanActive || (target.hand||[]).some(c=> c && c.type==='BLUE_OCEAN_PASSIVE'))){
     try{
       if(alivePlayers().length === 2){
@@ -46750,6 +47874,21 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
   }
   /* [Ver 9.13.1] 다이아몬드 방벽+ — 쉴드가 처음으로 전부 사라지는 순간 2.5% 경감이 풀린다.
      관통·파괴·제거 어느 경로로 0이 되든 잡히도록 위 분기 밖에서 확인한다. */
+  /* [Ver 12.7.1] 흐릿한 결계+ — 쉴드가 처음으로 완전히 사라지는 순간 전체에 300이 터진다. */
+  if(target.evoBarrierBreakAoe && (target.shield||0) <= 0){
+    const __aoe = target.evoBarrierBreakAoe;
+    target.evoBarrierBreakAoe = 0;
+    setTimeout(()=>{ try{
+      if(!gameActive) return;
+      const __vic = alivePlayers().filter(x=> x.id !== target.id);
+      if(!__vic.length) return;
+      log('highlight', `🔮 흐릿한 결계+ — ${J(target.name,'의','의')} 결계가 무너지며 전체에 ${__aoe}의 피해가 터집니다!`);
+      currentAttackContext = { attackerName: target.name, attackerId: target.id, cardName: '흐릿한 결계+' };
+      __vic.forEach(x=> applyDamageToPlayer(x, __aoe, 'NONE'));
+      currentAttackContext = null;
+      renderBoard(); checkWinCondition();
+    }catch(e){} }, 30);
+  }
   if(target.evoDiamondDr && (target.shield||0) <= 0){
     target.damageReductionPct = (target.damageReductionPct||0) - target.evoDiamondDr;
     target.evoDiamondDr = 0;
@@ -47016,6 +48155,35 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
   // [Ver 5.0] 이 호출에서 실제로 적용된 총 피해량(쉴드 흡수 + HP 피해)을 기록 — dealDamage의 통계 집계용.
   // 재귀 호출(방어 프로토콜 전가/선인장 가시 등)이 먼저 값을 덮어써도, 바깥 호출이 마지막에 자기 값으로 갱신하므로 안전하다.
   window.__lastDamageApplied = shieldAbsorbedAmount + __hpDamageApplied;
+  /* ==========================================================================
+     [Ver 12.7.1] 피격 훅 — "맞은 그 순간"에만 성립하는 것들을 여기 한 곳에 모았다.
+     dealDamage가 아니라 여기인 이유: 화상·자폭·반사처럼 dealDamage를 거치지 않고
+     들어오는 피해도 전부 이 함수를 지나기 때문이다.
+     ========================================================================== */
+  try{
+    const __hurtAmt = shieldAbsorbedAmount + __hpDamageApplied;
+    if(__hurtAmt > 0 && target){
+      const __fromId = currentAttackContext && currentAttackContext.attackerId;
+      const __from = (__fromId && __fromId !== target.id) ? players.find(p=>p.id===__fromId) : null;
+      /* ① 유능제강 — "가장 최근에 받은 피해"와 그 상대를 기억해 둔다. */
+      if(__from){
+        target.lastHitAmount = __hurtAmt;
+        target.lastHitFromId = __from.id;
+      }
+      /* ② 광전사 — 맞을 때마다 1바퀴짜리 버프가 새로 걸린다(맞을수록 계속 유지된다). */
+      if(target.berserkOnHit && target.alive){
+        const wasOn = berserkActive(target);
+        target.berserkDueRound = turnCount + 1;
+        if(!wasOn) log('sys', `🪓 ${J(target.name,'이','가')} 맞고 <b>[광전사]</b>가 되었습니다! (1바퀴 · 모든 공격이 전체 공격 · 공격력 +${target.berserkAtkPct||30}%)`);
+      }
+      /* ③ 중지 — 나를 때린 사람을 장부에 적는다. 장부는 계속 열려 있어 여러 명이 적힐 수 있다. */
+      if(target.ledgerArmed && __from && __from.alive && !__from.ledgerMarked){
+        __from.ledgerMarked = true;
+        target.ledgerRevenge = true;
+        log('sys', `🖕 "중지" — ${J(target.name,'이','가')} <b>[앙갚음장부]</b>를 펼치고, ${J(__from.name,'을','를')} <b>[장부에 적힘]</b>으로 적었습니다.`);
+      }
+    }
+  }catch(e){ console.error('[12.7.1] 피격 훅 오류', e); }
   // [Ver 5.6] 통계: 사람(뷰어) 기준 가한/받은 피해와 한 방 최대 피해 기록
   try{
     const dealtBy = currentAttackContext && currentAttackContext.attackerId;
@@ -47228,6 +48396,8 @@ function botShopBuyStep(bot){
   if((bot.shopBlockDueRound||0) > turnCount) return 'done'; // [Ver 6.8] 봉쇄 — 봇도 동일하게 상점 이용 불가
   if(bot.matrixId != null) return 'done';
   if(bot.unconsciousActive) return 'done';
+  /* [Ver 12.7.1] 문이 열리네 요 — 봇도 사람과 같은 값을 치른다. */
+  if(doorOpensOnShop(bot)) return 'dead';
   // [Ver 5.6] 봇도 암시장을 이용한다: A등급 이상 카드 할인 구매 + 가끔 패키지/방해공작.
   if(blackMarketActive){ return botUseBlackMarketStep(bot); }
   // [Ver 8.7.1] 봇도 사람과 똑같이 "진열된 5칸"(shopSlots)에서만 산다.
@@ -47237,8 +48407,14 @@ function botShopBuyStep(bot){
   const already = bot.__shopBuysThisTurn || 0;
   const maxPurchases = bot.gold >= 200 ? 3 : 2;
   if(already >= maxPurchases) return 'done';
-  if(bot.gold < 60) return 'done';
-  if(Math.random() >= (bot.gold >= 150 ? 0.7 : 0.5)) return 'done';
+  /* [Ver 12.7] 무정부 중에는 값이 0이라 "돈이 없어서 안 산다"는 판단이 성립하지 않는다.
+     대신 카드 한 장에 anarchyDamage를 무는 셈이므로, 그걸 감당할 체력이 있을 때만 집는다. */
+  if(anarchyActive){
+    if(bot.hp <= anarchyDamage * 1.5) return 'done';
+  } else {
+    if(bot.gold < 60) return 'done';
+    if(Math.random() >= (bot.gold >= 150 ? 0.7 : 0.5)) return 'done';
+  }
   const i = botPickShopSlotIndex(bot);
   if(i < 0) return 'done'; // 진열대에 살 만한 칸이 없다
   // [Ver 9.0] 봇도 재단을 쓰므로, 사람과 완전히 같은 shopSlotsFor/shopSlotPrice 규약을 탄다
@@ -47258,6 +48434,14 @@ function botShopBuyStep(bot){
   }
   grantCardToPlayer(bot, mkUidCard(slot.card), '봇 상점 구매');
   log('gold', `${J(bot.name,'이','가')} 상점에서 ${J(slot.card.name,'을','를')} ${wasFree?(raptorFree?'"랩터 팬클럽" 효과로 무료로':'무료로'):fmtWon(price)+'에'} 구매했습니다.`);
+  /* [Ver 12.7] 무정부 — 봇도 사람과 똑같이 값을 몸으로 치른다. */
+  if(anarchyActive && bot.alive){
+    log('sys', `🏴 "무정부" — ${J(bot.name,'이','가')} 카드를 훔쳐 ${anarchyDamage.toLocaleString()}의 피해를 입습니다.`);
+    currentAttackContext = { attackerName:'무정부', attackerId:null, cardName:'무정부' };
+    applyDamageToPlayer(bot, anarchyDamage, 'NONE');
+    currentAttackContext = null;
+    if(!bot.alive){ markShopSlotSold(bot, i, false); renderHand(); renderBoard(); return 'dead'; }
+  }
   // [Ver 9.0] 매물의 재단 Lv5(30%)도 "영수증"과 같은 환급 판정에 합산된다 (사람 쪽과 동일)
   const __botRefund = (bot.shopRefundChance||0) + fdnShopRefundChance(bot);
   if(!wasFree && price>0 && __botRefund>0 && Math.random()*100 < __botRefund){
@@ -47582,7 +48766,7 @@ function botTurnAction(bot){
     setTimeout(advanceTurn, 400);
     return;
   }
-  if(bot.tradeNoDraw && wantsDraw){
+  if((bot.tradeNoDraw || bot.cultNoDraw) && wantsDraw){   // [Ver 12.7] 사이비 봉인 포함
     setTimeout(advanceTurn, 400);
     return;
   }
@@ -47612,7 +48796,7 @@ function botTurnAction(bot){
     }
     if(altIdx >= 0 && altScore >= 0.5){
       idx = altIdx; card = bot.hand[idx];
-    } else if(bot.hand.length < 7 && !bot.tradeNoDraw && !bot.unconsciousActive){
+    } else if(bot.hand.length < 7 && !bot.tradeNoDraw && !bot.cultNoDraw && !bot.unconsciousActive){
       // 마땅한 보조 카드도 없으면 드로우로 상황을 지켜본다 (첫 턴 등 정보가 없을 때)
       log('sys', `${J(bot.name,'은','는')} 아직 누구를 노려야 할지 몰라 조심스럽게 드로우합니다.`);
       performDrawAnimation(bot.id, ()=>{
@@ -47784,7 +48968,7 @@ function botPlay(){
     /* [Ver 10.2] 성격에 따라 도박 성향이 달라진다.
        과감한 투자 ×2.8 / 트롤 ×1.5 / 방어적 ×0.7 / 중립적 ×0.25 (드로우를 선호) */
     const __gm = (function(){ try{ const P = botPersona(bot); return P ? (P.gambleMult||1) : 1; }catch(e){ return 1; } })();
-    const wantsGamble = !bot.gambleUsedThisTurn && bot.gold >= 10 && Math.random() < (0.18 * __gm)
+    const wantsGamble = !bot.gambleUsedThisTurn && !bot.cultNoGamble && bot.gold >= 10 && Math.random() < (0.18 * __gm)
       && !shopClosedForever
       && !(shopLockOwnerId && shopLockOwnerId !== bot.id) && !bot.shopBanned
       && !((bot.shopBlockDueRound||0) > turnCount) && (bot.hp / Math.max(1,bot.maxHp)) > 0.3;
@@ -47930,6 +49114,10 @@ function onDrawClick(){
   }
   if(me && me.tradeNoDraw){
     showModal('드로우 불가', '"거래"의 효과로 앞으로 카드를 드로우할 수 없습니다.', [{label:'확인', solid:true}]);
+    return;
+  }
+  if(me && me.cultNoDraw){   // [Ver 12.7] 사이비에 포섭된 사람
+    showModal('드로우 불가', '"사이비"에 포섭되어 앞으로 카드를 드로우할 수 없습니다.', [{label:'확인', solid:true}]);
     return;
   }
   /* [버그수정] 드로우 버튼 연타 방지 — 카드를 낼 때는 turnActed가 즉시 true로 잠기지만
@@ -50131,6 +51319,10 @@ function shopSlotsFor(p){
 function shopSlotPrice(me, slot){
   if(!me || !slot || !slot.card) return 0;
   const base = shopBasePrice(slot.card.grade);
+  /* [Ver 12.7] 무정부 — 값이 사라진다. 대신 buyShopSlot/botShopBuyStep이 구매 직후
+     anarchyDamage만큼 산 사람을 때린다. 값 계산은 여기 한 곳뿐이므로 사람·봇·표시가
+     자동으로 같은 값을 본다. */
+  if(anarchyActive) return 0;
   if(hasRaptorFanclub(me) && isRaptorNamedCard(slot.card)) return 0;
   const priceMult = (me.sabPriceMult && me.sabPriceMult > 1) ? me.sabPriceMult : 1;
   let price = blackMarketActive
@@ -50477,7 +51669,11 @@ const BOT_AVOID_DRAW_TYPES = [
   'SAMSARA_RESET_ON_LOW_GRADE','NULEUKKI_TIER_ROULETTE','RYURAI_STRAWBERRY_FARM','PAGLIACCI_PASSIVE',
   // 부활류
   'DELICIOUS_HEAL_AND_DEATH_REVIVE','REGEN_INFINITE_REVIVE_AURA','REVIVE_ALL_DEAD','REVIVE_CHARGE_SELF',
-  'REVIVE_RANDOM_DEAD','SPARE_KEY_REVIVE_AURA'
+  'REVIVE_RANDOM_DEAD','SPARE_KEY_REVIVE_AURA',
+  'EDO_TENSEI_REVIVE',  // [Ver 12.7] 소지형 부활 — 봇은 이걸 쓸 줄 모르니 굳이 사러 가지 않는다
+  /* [Ver 12.7.1] 소지형 패시브 — 봇이 상점에서 굳이 집어가지 않도록.
+     '문이 열리네 요'는 들고 있으면 오히려 죽는 카드라 더더욱 피해야 한다. */
+  'POKER_PASSIVE','DIABLO_PASSIVE','LIBERO_PASSIVE','DOOR_OPENS_CURSE'
 ];
 function isBotAvoidCardType(type){ return BOT_AVOID_DRAW_TYPES.includes(type); }
 function botRandomShopCard(){
@@ -50698,6 +51894,12 @@ function openShop(){
   const me = viewer();
   // [Ver 8.2] 지뢰: 상점 버튼을 처음 누른 사람이 밟는다
   try{ if(triggerMineIfArmed('MINE_SHOP', me.id)) return; }catch(e){}
+  /* [Ver 12.7.1] 문이 열리네 요 — 들고 있으면 문을 여는 순간 죽는다. 상점은 열리지 않는다. */
+  if(doorOpensOnShop(me)){
+    try{ if(checkWinCondition()) return; }catch(e){}
+    setTimeout(()=>{ try{ if(gameActive) advanceTurn(); }catch(e){} }, 600);
+    return;
+  }
   // [Ver 8.2] 앙코르에 묶였거나 딱지남 러시안룰렛을 들고 있으면 상점을 이용할 수 없다
   if(me.encoreLockUid){ showModal('상점 불가', '"앙코르"에 묶여 이번 턴에는 상점을 이용할 수 없습니다.', [{label:'확인',solid:true}]); return; }
   if(me.hand && me.hand.some(isRouletteCard)){ showModal('상점 불가', '"딱지남 러시안룰렛"을 들고 있는 동안에는 상점을 이용할 수 없습니다.', [{label:'확인',solid:true}]); return; }
@@ -50905,7 +52107,7 @@ function renderShopBuy(){
     html += `<div class="shop-slot ${glow}">
       <div class="shop-slot-top">
         <span class="shop-slot-grade">${escapeHtml(displayGrade(slot.card))}</span>
-        ${slot.personal ? '<span class="shop-sale-badge">🏛️ 개인 매물</span>' : (blackMarketActive ? '<span class="shop-sale-badge">🖤 암시장 -40%</span>' : (raptorFree ? '<span class="shop-sale-badge">랩터 팬클럽 무료</span>' : (slot.sale ? '<span class="shop-sale-badge">50% SALE</span>' : '')))}
+        ${anarchyActive ? `<span class="shop-sale-badge">🏴 무정부 · 공짜 (-${anarchyDamage.toLocaleString()} HP)</span>` : (slot.personal ? '<span class="shop-sale-badge">🏛️ 개인 매물</span>' : (blackMarketActive ? '<span class="shop-sale-badge">🖤 암시장 -40%</span>' : (raptorFree ? '<span class="shop-sale-badge">랩터 팬클럽 무료</span>' : (slot.sale ? '<span class="shop-sale-badge">50% SALE</span>' : ''))))}
       </div>
       <div class="shop-slot-name">${escapeHtml(slot.card.name)}</div>
       <div class="shop-slot-desc">${escapeHtml(slot.card.desc||'')}</div>
@@ -51267,6 +52469,23 @@ function buyShopSlot(i){
     }
     if(isMyPlayer(me)){ bumpStat('cardsBought'); gameAchFlags.cardsBought = (gameAchFlags.cardsBought||0) + 1; } // [Ver 5.6] 통계 / [Ver 5.9] 업적
     log('gold', `${J(me.name,'이','가')} ${blackMarketActive?'암시장':'상점'}에서 ${J(slot.card.name,'을','를')} ${wasFree?(raptorFree?'"랩터 팬클럽" 효과로 무료로':'무료로'):fmtWon(price)+'에'} 구매했습니다.`);
+    /* [Ver 12.7] 무정부 — 훔친 값을 몸으로 치른다. 여기서 죽을 수 있으므로,
+       바로 아래에 이미 있는 "구매 중 사망" 처리와 같은 흐름을 타도록 순서를 맞춘다. */
+    if(anarchyActive && me.alive){
+      log('sys', `🏴 "무정부" — ${J(me.name,'이','가')} 카드를 훔쳐 ${anarchyDamage.toLocaleString()}의 피해를 입습니다.`);
+      currentAttackContext = { attackerName:'무정부', attackerId:null, cardName:'무정부' };
+      applyDamageToPlayer(me, anarchyDamage, 'NONE');
+      currentAttackContext = null;
+      if(!me.alive){
+        markShopSlotSold(me, i);
+        shopBusy = false;
+        renderHand(); renderBoard();
+        closeShop();
+        if(checkWinCondition()) return;
+        advanceTurn();
+        return;
+      }
+    }
     /* v6.4.2 영수증: 구매할 때마다 일정 확률로 지불한 돈 전액 환급
        [Ver 9.0] 매물의 재단 Lv5(30%)도 같은 환급 판정에 합산된다. */
     const __fdnRefund = fdnShopRefundChance(me);
@@ -51484,11 +52703,12 @@ function renderShopGamble(){
     const limitLeft = t.limitField ? me[t.limitField] : null;
     const poor      = me.gold < t.cost;
     const outOfUse  = !!(t.limitField && limitLeft<=0);
-    const disabled  = me.gambleUsedThisTurn || poor || outOfUse || t.blockedByCheap;
+    const disabled  = me.gambleUsedThisTurn || poor || outOfUse || t.blockedByCheap || me.cultNoGamble;
     const colorCls  = 'gamble-c-' + (t.key||'low');
     const range = (t.minGrade && t.maxGrade) ? `${t.minGrade} ~ ${t.maxGrade}` : '';
     // 못 쓰는 이유를 카드 위에 직접 적는다 (예전엔 그냥 흐려지기만 해서 왜인지 알 수 없었다)
-    const blockTx = t.blockedByCheap ? '박리다매로 이용 불가'
+    const blockTx = me.cultNoGamble ? '사이비 — 도박 불가'
+                  : t.blockedByCheap ? '박리다매로 이용 불가'
                   : me.gambleUsedThisTurn ? '이번 턴 사용 완료'
                   : outOfUse ? '남은 횟수 없음'
                   : poor ? '골드 부족' : '';
@@ -51522,7 +52742,9 @@ function renderShopGamble(){
     </div>`;
   });
   html += `</div>`;
-  html += me.gambleUsedThisTurn
+  html += me.cultNoGamble
+    ? `<div class="gamble-note warn">"<b>사이비</b>"에 포섭되어 더 이상 도박을 할 수 없습니다.</div>`
+    : me.gambleUsedThisTurn
     ? `<div class="gamble-note warn">이번 턴에 이미 도박을 했습니다. <b>다음 턴</b>에 다시 이용할 수 있습니다.</div>`
     : `<div class="gamble-note">모든 도박은 <b>3장</b>을 뽑아 그중 정해진 수만큼 가져갑니다. <b>?등급</b>은 등급대와 무관하게 어느 도박에서든 나옵니다.
          각 슬롯은 낮은 확률로 <b>도뜨사</b>로 바뀌며, 공개되는 즉시 즉사합니다.</div>`;
@@ -51532,6 +52754,7 @@ function startGamble(key){
   if(typeof lanIsRemoteClient==='function' && lanIsRemoteClient()){ lanSend({ t:'to_host', payload:{ action:'shop', op:'gamble', key:key } }); return; }
   const me = viewer();
   if(me.gambleUsedThisTurn) return;
+  if(me.cultNoGamble) return;   // [Ver 12.7] 사이비에 포섭된 사람은 도박을 할 수 없다
   const tier = getEffectiveGambleTiers(me).find(t=>t.key===key);
   if(!tier) return;
   if(tier.blockedByCheap) return;
@@ -55664,7 +56887,9 @@ function lanClientAnnouncePet(){
     const petOk  = !pet || !!(me && me.pet);
     const artOk  = !hasArts || !!(me && me.artifacts && Object.keys(me.artifacts).length);
     if((petOk && artOk) || ++tries > 14){ clearInterval(LAN.__petTimer); LAN.__petTimer=null; return; }
-    try{ lanSend({ t:'to_host', payload:{ action:'pet', pet, artifacts: arts } }); }catch(e){}
+    /* [Ver 12.7.1] 클래스도 같은 통로로 함께 보낸다 — '프로 게이머'의 위력이 사람마다 달라야 한다.
+       (개발자 모드 표시와 달리 판 시작 때 한 번이면 되므로 새 통로를 만들지 않았다) */
+    try{ lanSend({ t:'to_host', payload:{ action:'pet', pet, artifacts: arts, cls: (typeof classState!=='undefined' && classState) ? (classState.cls|0) : 1 } }); }catch(e){}
   };
   LAN.__petTimer = setInterval(tick, 1400);
   setTimeout(tick, 900);
@@ -56172,7 +57397,13 @@ function lanHostHandleInput(slot, payload){
        pet  — 판이 시작되기 전(로딩 중)에 도착한다. 여기서 버리면 그 사람 지후펫이 통째로 사라진다.
        proxy_modal — 선택 창을 띄워둔 채 사망하는 경우가 있다. 여기서 버리면 그 판이 60초간 멈춘다.
      (예전에는 둘 다 `!p.alive` 검사 뒤에 있어서 조용히 유실됐다) */
-  if(payload.action === 'pet'){ lanHostAcceptPet(pid, payload.pet, payload.artifacts); return; }
+  if(payload.action === 'pet'){ lanHostAcceptPet(pid, payload.pet, payload.artifacts, payload.cls); return; }
+  /* [Ver 12.7] 참가자의 개발자 모드 표시 — 죽었든 살았든, 판이 시작되기 전이든 그냥 받는다.
+     아무 게임 로직도 건드리지 않고 플래그 하나만 세운다. */
+  if(payload.action === 'devflag'){
+    try{ const pp = players.find(x=>x.id===pid); if(pp) pp.devModeOn = !!payload.on; lanHostBroadcast(); }catch(e){}
+    return;
+  }
   /* [Ver 11.4] 온라인 퀴즈 모드 — 참가자가 보낸 정답을 호스트가 채점한다.
      퀴즈 모드는 players/gameActive를 쓰지 않으므로 아래의 !p.alive 등 카드게임 검사보다
      먼저, 그리고 완전히 별도로 처리하고 빠져나간다. */
@@ -56334,10 +57565,15 @@ function lanHostHandleInput(slot, payload){
      참가자 쪽도 확인될 때까지 몇 번 더 보내 패킷 유실에 대비한다.
    ========================================================================== */
 /* [Ver 9.11] 유물도 각자 기기의 데이터라 펫과 같은 통로로 함께 받는다. */
-function lanHostAcceptPet(pid, petKey, artifacts){
+function lanHostAcceptPet(pid, petKey, artifacts, cls){
   if(!LAN.__pendingPets) LAN.__pendingPets = {};
   const cur = LAN.__pendingPets[pid] || {};
   if(petDefOf(petKey)) cur.pet = petKey;
+  /* [Ver 12.7.1] 참가자의 클래스 — 프로 게이머의 위력 기준. 값이 이상하면 그냥 무시한다. */
+  {
+    const lv = parseInt(cls, 10);
+    if(Number.isFinite(lv) && lv >= 1) cur.cls = Math.min(CLASS_MAX, lv);
+  }
   if(artifacts && typeof artifacts === 'object'){
     const clean = {};
     Object.keys(artifacts).forEach(k=>{
@@ -56368,6 +57604,7 @@ function lanHostFlushPets(){
       p.pet = info.pet;
       try{ applyPetGameStart(p); }catch(e){ console.error('[지후펫/랜서버] 적용 오류', e); }
     }
+    if(info.cls) p.classLv = info.cls;   // [Ver 12.7.1] 프로 게이머용 클래스
     delete pend[pid];
   });
   try{ renderBoard(); }catch(e){}
