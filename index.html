@@ -813,8 +813,52 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 .nm-mart:hover{ transform:translateY(-2px); background:var(--bg-2); box-shadow:var(--sh-ring), var(--sh-2); }
 .nm-mart > .ic{ font-size:17px; }
 .nm-mart > .tx{ font-size:14px; font-weight:700; }
-/* [Ver 13.1] 테두리·배경 없이 자리만 잡는다. 여기 들어올 것은 일러스트지 상자가 아니다. */
-.nm-stage{ flex:1; min-height:220px; }
+/* [Ver 13.1] 테두리·배경 없이 자리만 잡는다. 여기 들어올 것은 일러스트지 상자가 아니다.
+   [Ver 13.2] 기본 문구와 일러스트를 겹쳐 두고 서로 페이드로 바뀐다. */
+.nm-stage{
+  position:relative; flex:1; min-height:220px;
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.nm-stage-default{
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:14px; padding:18px;
+  text-align:center; opacity:1; transition:opacity var(--t) var(--ease);
+}
+.nm-stage-default.off{ opacity:0; }
+.nm-stage-hero{
+  font-family:var(--font-display); font-size:clamp(15px,1.7vw,21px); font-weight:400;
+  line-height:1.5; color:var(--fg-dim); max-width:22em;
+}
+.nm-stage-tip{
+  font-size:11.5px; line-height:1.6; color:var(--fg-faint); max-width:24em;
+  opacity:1;
+}
+/* ⚠ **opacity 를 애니메이션하지 않는다.** 애니메이션이 멈춰 있는 상황(탭이 숨겨졌을 때 등)에는
+   진행 중인 애니메이션의 첫 프레임 값이 그대로 적용된다 — opacity:0 으로 시작하면 팁이
+   영영 안 보인다(fill-mode 를 빼도 마찬가지다. 활성 구간 안에서 멈춰 있기 때문).
+   그래서 **위치만** 움직인다. 멈추더라도 4px 아래에 있을 뿐 글씨는 보인다. */
+@keyframes nmTipSwap{ from{ transform:translateY(5px); } to{ transform:none; } }
+.nm-stage-tip.swap{ animation:nmTipSwap 0.4s var(--ease); }
+/* 일러스트 — 원본은 검은 선 + 투명 배경이다.
+   ⚠ 다크 테마에서는 그대로 두면 검은 선이 안 보이므로 통째로 반전한다.
+     그래서 배경이 투명해야 한다(흰 배경이면 검은 판이 된다). */
+.nm-stage-art{
+  position:absolute; inset:0; margin:auto;
+  max-width:88%; max-height:88%; width:auto; height:auto;
+  object-fit:contain; opacity:0; pointer-events:none; user-select:none;
+  transition:opacity var(--t) var(--ease), transform var(--t) var(--ease-spring);
+  transform:scale(0.97);
+}
+.nm-stage-art.on{ opacity:1; transform:scale(1); }
+/* ⚠ 테마 판정이 조금 꼬여 있다 — `body.ink` 는 **밝은 종이색**이고,
+     `body.ink.force-dark` 가 어두운 팔레트다(12.4.3 참고). 기본 설정은 theme:'dark' 라
+     실제 body 는 대개 `ink force-dark` 다. 그래서 **어두울 때만** 반전하도록 못박는다. */
+.nm-stage-art{ filter:invert(1); }                       /* 기본(:root) = 다크 */
+body.ink:not(.force-dark) .nm-stage-art,
+body.theme-light-shell:not(.force-dark) .nm-stage-art,
+.theme-light .nm-stage-art{ filter:none; }               /* 밝은 배경 = 원본 그대로 */
+body.force-dark .nm-stage-art,
+body.ink.force-dark .nm-stage-art{ filter:invert(1); }   /* 강제 다크는 언제나 반전 */
 
 /* ---------- C열 : 키우는 것 ---------- */
 .nm-big{
@@ -940,7 +984,8 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 }
 .pw-slot-x:hover{ color:var(--tone-red); }
 .pw-slot-plus{ font-size:22px; }
-.pw-slot-ic{ font-size:24px; line-height:1.1; }
+.pw-slot-ic{ display:block; width:38px; height:38px; }
+.pw-slot-ic .pw-img-fb{ font-size:24px; }
 .pw-slot-nm{ font-size:12.5px; font-weight:700; text-align:center; }
 .pw-slot-sub{ font-size:10.5px; color:var(--fg-faint); font-family:var(--font-mono); }
 
@@ -967,22 +1012,28 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
   margin-left:auto; font-family:var(--font-mono); font-size:11px; color:var(--fg-dim);
   padding:2px 9px; border-radius:var(--r-pill); background:var(--bg-2);
 }
-.pw-group-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(224px,1fr)); gap:var(--sp-3); }
+/* 2단이 되면서 카드가 가로로 길어졌다 — 한 칸을 더 넓게 잡는다 */
+.pw-group-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); gap:var(--sp-3); }
 .pw-empty{ padding:26px; text-align:center; font-size:12.5px; color:var(--fg-faint); }
+/* [Ver 13.2] 왼쪽 그림 · 오른쪽 글 2단 */
 .pw-card{
-  display:flex; flex-direction:column; gap:7px; padding:13px 14px; border-radius:var(--r);
+  display:flex; flex-direction:row; align-items:stretch; gap:11px;
+  padding:11px; border-radius:var(--r); overflow:hidden;
   background:var(--bg-panel); box-shadow:inset 0 0 0 1.5px var(--pwc, var(--line));
   cursor:pointer; transition:transform var(--t) var(--ease);
 }
 .pw-card:hover{ transform:translateY(-2px); }
 .pw-card.locked{ opacity:0.42; }
 .pw-card.equipped{ box-shadow:inset 0 0 0 2px var(--accent); }
-.pw-card-top{ display:flex; align-items:center; gap:8px; }
-.pw-card-ic{ font-size:19px; }
-.pw-card-nm{ flex:1; font-size:13.5px; font-weight:700; }
+/* 카드 폭의 45% — "절반보다 조금 적게" */
+.pw-card-art{ flex:0 0 45%; align-self:stretch; min-height:96px; }
+.pw-card-art .pw-img{ height:100%; border-radius:var(--r-xs); }
+.pw-card-art .pw-img-fb{ font-size:34px; background:#fff; border-radius:var(--r-xs); }
+.pw-card-body{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:6px; }
+.pw-card-nm{ font-size:13.5px; font-weight:700; line-height:1.3; }
 /* [Ver 13.1] 카드 안 등급칩은 뺐다 — 이제 묶음 제목이 등급을 말해준다 */
 .pw-card-eq{ color:var(--accent); font-weight:700; font-family:var(--font-mono); }
-.pw-card-desc{ font-size:11.5px; line-height:1.65; color:var(--fg-dim); min-height:38px; }
+.pw-card-desc{ flex:1 1 auto; font-size:11.5px; line-height:1.6; color:var(--fg-dim); }
 .pw-card-foot{ display:flex; align-items:center; gap:8px; font-size:10.5px; color:var(--fg-faint); font-family:var(--font-mono); }
 .pw-card-lv{ margin-left:auto; font-weight:700; color:var(--fg-dim); }
 .pw-card-lv.none{ color:var(--fg-faint); font-weight:400; }
@@ -1004,10 +1055,24 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
   display:flex; align-items:center; gap:9px; padding:10px 12px; border-radius:var(--r-sm);
   background:var(--bg-2); box-shadow:inset 0 0 0 1.5px var(--pwc, var(--line));
 }
-.pw-got-ic{ font-size:17px; }
+.pw-got-ic{ display:block; flex-shrink:0; width:28px; height:28px; }
+.pw-got-ic .pw-img-fb{ font-size:17px; }
 .pw-got-nm{ flex:1; font-size:13px; font-weight:700; }
 .pw-got-r{ font-size:10.5px; color:var(--pwc, var(--fg-dim)); font-weight:700; }
 .pw-got-tag{ font-family:var(--font-mono); font-size:10px; color:var(--fg-faint); }
+
+/* ---------- 아이콘 그림 ----------
+   원본이 흰 배경이라 어두운 테마에서 네모가 도드라진다. 살짝 둥글려 카드처럼 앉힌다.
+   그림을 못 불러오면 .pw-img-fb(이모지)로 대체된다 — 크기를 맞춰 둔다. */
+.pw-img{
+  display:block; width:100%; height:100%; object-fit:cover;
+  border-radius:calc(var(--r-xs) - 1px); background:#fff;
+  user-select:none; -webkit-user-drag:none;
+}
+.pw-img-fb{ display:flex; align-items:center; justify-content:center; width:100%; height:100%; }
+.pw-modal-ic{ width:74px; height:74px; margin:0 auto 8px; }
+.pw-modal-ic .pw-img{ border-radius:var(--r-sm); }
+.pw-modal-ic .pw-img-fb{ font-size:34px; }
 
 /* ---------- 인게임 바 (손패 머리줄) ---------- */
 .pw-bar{ display:flex; align-items:center; gap:5px; margin-left:auto; }
@@ -1022,7 +1087,9 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 .pw-cell.empty{ opacity:0.3; cursor:default; pointer-events:none; }
 .pw-cell.dead{ opacity:0.4; cursor:not-allowed; }
 .pw-cell.ready{ box-shadow:inset 0 0 0 2px var(--pwc, var(--accent)), 0 0 9px -1px var(--pwc, var(--accent)); }
-.pw-ic{ font-size:16px; line-height:1; z-index:1; }
+/* 인게임 칸은 34px — 그림이 칸을 꽉 채우고, 그 위에 쿨 막대와 키캡이 얹힌다 */
+.pw-ic{ position:absolute; inset:2px; z-index:1; }
+.pw-ic .pw-img-fb{ font-size:16px; }
 .pw-key{
   position:absolute; top:0; left:2px; z-index:2;
   font-family:var(--font-mono); font-size:8px; font-weight:700; color:var(--fg-faint);
@@ -1057,7 +1124,8 @@ body.pw-targeting .p-card.pw-pick{
   background:var(--bg-panel); box-shadow:var(--sh-ring), var(--sh-3);
   animation:dropIn var(--t) var(--ease);
 }
-.pw-tb-ic{ font-size:17px; }
+.pw-tb-ic{ display:block; width:26px; height:26px; }
+.pw-tb-ic .pw-img-fb{ font-size:17px; }
 .pw-tb-tx{ font-size:13px; }
 .pw-tb-x{
   padding:5px 12px; border-radius:var(--r-pill); background:var(--bg-2);
@@ -1083,7 +1151,8 @@ body.pw-targeting .p-card.pw-pick{
 
 @media (max-width:760px){
   .pw-altar-row,.pw-slot-row{ grid-template-columns:minmax(0,1fr); }
-  .pw-group-grid{ grid-template-columns:repeat(auto-fill,minmax(168px,1fr)); }
+  .pw-group-grid{ grid-template-columns:minmax(0,1fr); }
+  .pw-card-art{ flex-basis:40%; min-height:82px; }
 }
 
 /* ---------- 포스트잇 (업데이트 요약) — 12.2에서 화면에서 내렸다 ----------
@@ -3555,7 +3624,23 @@ body.dragging-card-no-target .p-card{ opacity:0.5; }
   to  { opacity:1; transform:none; }
 }
 .hand-card.deal-in{ animation:dealIn 0.34s var(--ease-spring) var(--deal-delay,0s) both; }
-.draw-anim-card{ animation:dealIn var(--draw-duration,0.34s) var(--ease-spring) both; }
+/* [Ver 13.1] 드로우 연출 — 더미에서 **실제로 날아간다.**
+   ⚠ 예전에는 이 요소가 dealIn(제자리 페이드)을 쓰고 있었다. --dx/--dy 를 JS가 계산해
+     꽂아주는데도 아무도 쓰지 않아, 카드가 더미 위에서 2초간 가만히 떠 있다가 사라졌다.
+     "눌러도 한참 아무 일도 안 일어난다"의 정체가 이것이었다. */
+@keyframes drawFly{
+  0%  { opacity:0;   transform:translate3d(0,0,0) scale(0.82); }
+  18% { opacity:1; }
+  100%{ opacity:0.15; transform:translate3d(var(--dx,0), var(--dy,0), 0) scale(0.5); }
+}
+.draw-anim-card{ animation:drawFly var(--draw-duration,0.42s) var(--ease) both; }
+/* 방금 뽑아 손에 들어온 카드 — 한 번 톡 튀어 어느 카드가 새로 왔는지 알려준다 */
+@keyframes drawIn{
+  0%  { opacity:0; transform:translate3d(0,30px,0) scale(0.86); }
+  62% { opacity:1; transform:translate3d(0,-6px,0) scale(1.04); }
+  100%{ opacity:1; transform:none; }
+}
+.hand-card.draw-in{ animation:drawIn 0.42s var(--ease-spring) both; }
 .lan-pile-in{ animation:popIn var(--t) var(--ease-spring) both; }
 .shared-card{ box-shadow:inset 0 0 0 2px #B79BF0; }
 .recalling{ animation:popIn var(--t-slow) var(--ease-spring) both; }
@@ -6108,7 +6193,7 @@ body.high-contrast.theme-light-shell{
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.1</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.2</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -6208,55 +6293,64 @@ body.high-contrast.theme-light-shell{
             <div class="usb-chev">›</div>
           </div>
 
-          <button class="nm-mode nm-mode-play" onclick="openGameModePicker()" title="일반전 · 클래식 · 팀전 · 튜토리얼">
+          <button class="nm-mode nm-mode-play" data-art="normal" onclick="openGameModePicker()" title="일반전 · 클래식 · 팀전 · 튜토리얼">
             <span class="ic">▶</span><span class="tx">일반 모드</span>
           </button>
-          <button class="nm-mode" onclick="openOnlinePicker()">
+          <button class="nm-mode" data-art="online" onclick="openOnlinePicker()">
             <span class="ic">🌐</span><span class="tx">온라인</span>
           </button>
-          <button class="nm-mode" onclick="openLanPicker()">
+          <button class="nm-mode" data-art="lan" onclick="openLanPicker()">
             <span class="ic">📶</span><span class="tx">LAN</span>
           </button>
-          <button class="nm-mode" onclick="openArcade()">
+          <button class="nm-mode" data-art="arcade" onclick="openArcade()">
             <span class="ic">🕹️</span><span class="tx">아케이드</span>
           </button>
         </div>
 
         <!-- ===== B열 : 일러스트 자리만 ===== -->
         <div class="nm-col nm-col-b">
-          <!-- ⚠ 비워둘 것. 추후 버튼 호버 일러스트가 들어올 자리다. 테두리도 없다. -->
-          <div class="nm-stage" id="nmArtStage" aria-hidden="true"></div>
+          <!-- [Ver 13.2] 버튼에 커서를 올리면 그 콘텐츠의 일러스트가 여기 뜬다.
+               아무 데도 안 올려놓으면 기본 문구(밈 한 줄 + 팁)가 보인다.
+               ⚠ 그림은 art/{key}.png (투명 배경). 어느 버튼이 어느 그림인지는
+                 버튼의 data-art 속성이 정한다. -->
+          <div class="nm-stage" id="nmArtStage" aria-hidden="true">
+            <div class="nm-stage-default" id="nmStageDefault">
+              <div class="nm-stage-hero" id="nmStageHero"></div>
+              <div class="nm-stage-tip" id="nmStageTip"></div>
+            </div>
+            <img class="nm-stage-art" id="nmStageArt" alt="" draggable="false">
+          </div>
         </div>
 
         <!-- ===== C열 : 키우는 것 (랩터마트24가 맨 위) ===== -->
         <div class="nm-col nm-col-c">
-          <button class="nm-mart" onclick="openRaptorMart()">
+          <button class="nm-mart" data-art="mart" onclick="openRaptorMart()">
             <span class="ic">🏪</span><span class="tx">랩터마트24</span>
           </button>
-          <button class="nm-big" onclick="openMineScreen()">
+          <button class="nm-big" data-art="mine" onclick="openMineScreen()">
             <span class="ic">⛏️</span><b>유물</b><small>곡괭이로 캐는 영구 능력</small>
           </button>
-          <button class="nm-big" onclick="openGachaScreen()">
+          <button class="nm-big" data-art="gacha" onclick="openGachaScreen()">
             <span class="ic">🎴</span><b>카드 진화석 뽑기</b><small>진화석 · 랩터 발톱</small>
           </button>
-          <button class="nm-big" onclick="openPowerScreen()">
+          <button class="nm-big" data-art="power" onclick="openPowerScreen()">
             <span class="ic">👑</span><b>랩터의 권능</b><small>액티브 스킬 · 최대 3개 장착</small>
           </button>
         </div>
 
         <!-- ===== D열 : 할 일 · 소지품 ===== -->
         <div class="nm-col nm-col-d">
-          <button class="nm-tile" onclick="openQuestScreen()">
+          <button class="nm-tile" data-art="quest" onclick="openQuestScreen()">
             <span class="ic">📋</span><b>퀘스트/<wbr>업적</b>
             <span class="nm-s2-n" id="nmQuestN"></span>
           </button>
           <!-- ⚠ renderPassBar()가 이 버튼의 innerHTML을 통째로 갈아끼운다 -->
-          <button class="nm-tile" id="nmPassBar" onclick="openPassScreen()"></button>
-          <button class="nm-tile" onclick="openAttendScreen()">
+          <button class="nm-tile" id="nmPassBar" data-art="pass" onclick="openPassScreen()"></button>
+          <button class="nm-tile" data-art="attend" onclick="openAttendScreen()">
             <span class="ic">📅</span><b>출석부</b>
             <span class="nm-s2-n" id="nmAttendN"></span>
           </button>
-          <button class="nm-tile" onclick="goToDex()">
+          <button class="nm-tile" data-art="dex" onclick="goToDex()">
             <span class="ic">🎒</span><b>인벤토리</b>
           </button>
           <button class="nm-log" onclick="goToChangelog()">
@@ -7013,6 +7107,9 @@ let currentStatCardName = null; // 지금 처리 중인 카드의 이름 (MVP �
 let currentAttackContext = null; // 지금 발생한 피해의 원인 설명 (사망 사유 문구 조립용) — {attackerName, cardName} 또는 null
 let awaitingReaction = false;
 let pendingDealAnimation = false; // true면 다음 renderHand() 때 손패가 카드더미에서 날아오는 연출을 1회 재생
+/* [Ver 13.1] 방금 뽑아서 들어온 카드의 uid — 다음 renderHand() 한 번만 .draw-in 을 붙인다.
+   (붙이고 나면 지운다. 안 지우면 그 카드는 렌더될 때마다 계속 튄다) */
+let justDrawnUids = new Set();
 let armedCardIdx = -1; // 대상 없이 즉시 발동되는 카드를 실수로 못 내도록: 한 번 누르면 "확정 대기" 상태가 되고, 같은 카드를 한 번 더 눌러야 실제로 발동한다
 let armedCardUid = null; // [FIX #18] 인덱스 대신 카드 uid로 armed 상태를 추적해, 손패 순서가 바뀌어도 오폭이 발생하지 않게 한다
 let armedCardTimer = null;
@@ -11151,6 +11248,19 @@ function awardPickaxeForPlacement(placement){
   log('highlight', `⛏️ ${placement}등 보상으로 곡괭이 1개를 획득했습니다! (보유 ${pickaxeCount()}개)`);
   return 1;
 }
+/* [Ver 13.1] 유물 "우빈이의 객기" — **1등일 때만** 확률로 개쩌는 곡괭이를 준다.
+   판 밖에서 쓰는 보상이라 artOf(플레이어)가 아니라 artMine()(내 기기 기준)을 본다. */
+function awardGoldPickaxeOnWin(placement){
+  if(window.__gutsPickAwardedThisGame) return 0;
+  window.__gutsPickAwardedThisGame = true;
+  if(placement !== 1) return 0;
+  let pct = 0;
+  try{ pct = Number(artMine('winpick')) || 0; }catch(e){}
+  if(pct <= 0 || Math.random()*100 >= pct) return 0;
+  grantGoldPickaxe(1);
+  log('highlight', `😤 "우빈이의 객기" — 승리 보상으로 <b>개쩌는 곡괭이</b> 1개를 얻었습니다! (보유 ${goldPickaxeCount()}개)`);
+  return 1;
+}
 /* [Ver 9.16] 1등 8개 · 2등 4개의 상자 열쇠. 곡괭이와 달리 **확률이 아니라 확정**이다.
    [Ver 10.5.3 밸런스] 2등 보상 2개 → 4개로 상향.
    (일반전이든 랜서버든 settleTierForHuman 한 곳을 지나므로 여기서만 지급하면 된다) */
@@ -11803,6 +11913,7 @@ function settleTierForHuman(placement, cause){
   /* [Ver 11.8] 썬크림은 모드를 가리지 않는다 — 1등이면 어디서든 들어온다. */
   try{ awardCreamForPlacement(placement); }catch(e){}
   try{ awardPickaxeForPlacement(placement); }catch(e){}  // [Ver 9.11] 1~2등 30% 확률로 곡괭이
+  try{ awardGoldPickaxeOnWin(placement); }catch(e){}     // [Ver 13.1] 유물 '객기' — 1등 확률 보상
   try{ awardBoxKeysForPlacement(placement); }catch(e){}  // [Ver 10.5.3] 1등 8개 · 2등 4개 상자 열쇠
   /* [Ver 10.0.2] 판이 끝났으니 진행도를 클라우드에 조용히 올려둔다.
      여기가 "한 판 분량의 진행도가 확정되는" 유일한 지점이라 백업 시점으로 가장 알맞다. */
@@ -12593,7 +12704,7 @@ function enterReadyPhase(p, opts={}){
     document.getElementById('headerStat').textContent = (actor.id!==p.id)
       ? `${actor.name}이(가) ${p.name}을(를) 조종 중 — 카드를 선택하세요` : '카드를 선택하세요';
     maybeStartFirstTurnTutorial(p);
-    if(lanIsHostGame()) lanStartTurnTimer(p);
+    if(turnTimerShouldRun()) lanStartTurnTimer(p);
   }
 }
 
@@ -12605,6 +12716,18 @@ let __lanTurnTimer = null;
    들르는 턴은 시간에 쫓겨 자동 넘김으로 날아가는 일이 잦았다. */
 const LAN_TURN_LIMIT_MS = 180000;
 function lanClearTurnTimer(){ if(__lanTurnTimer){ clearTimeout(__lanTurnTimer); __lanTurnTimer=null; } }
+/* [Ver 13.1] 제한시간을 **일반 모드에도** 건다.
+   예전에는 랜서버 호스트 게임에서만 돌아서, 혼자 하는 판은 자리를 비우면 영원히 멈춰 있었다.
+   ▶ 랜서버 참가자(원격)는 제외한다 — 강제 진행은 언제나 호스트가 한다.
+   ▶ 봇 턴은 애초에 lanStartTurnTimer 안에서 걸러진다. */
+function turnTimerShouldRun(){
+  try{
+    if(!gameActive) return false;
+    if(typeof lanIsRemoteClient === 'function' && lanIsRemoteClient()) return false;
+    if(lanMode) return lanIsHostGame();
+    return true;                       // 일반 · 아케이드 · 핫시트 등 로컬 판 전부
+  }catch(e){ return false; }
+}
 
 /* ==========================================================================
    [Ver 10.2 신규] 턴 제한시간 표시 — 모든 참가자 화면에
@@ -12632,7 +12755,7 @@ function lanTurnClockPaint(){
 /* renderBoard가 끝날 때마다 불린다 — 턴이 바뀌었으면 시계를 다시 건다. */
 function lanTurnClockSync(){
   try{
-    if(!lanMode || !gameActive){ lanTurnClockStop(); return; }
+    if(!gameActive || !turnTimerShouldRun()){ lanTurnClockStop(); return; }
     const cur = (typeof currentPlayer === 'function') ? currentPlayer() : null;
     if(!cur || cur.isBot || !cur.alive){ lanTurnClockStop(); return; }
     if(__lanClockState.turn !== totalIndividualTurns){
@@ -12651,7 +12774,7 @@ function lanStartTurnTimer(p){
   __lanTurnTimer = setTimeout(()=>{
     __lanTurnTimer = null;
     // 타이머가 걸린 그 턴이 아직 그대로인지 확인 (그 사이 카드를 내 턴이 넘어갔으면 무시)
-    if(!lanIsHostGame() || !gameActive) return;
+    if(!turnTimerShouldRun()) return;
     if(totalIndividualTurns !== guardTurn) return;
     const cur = currentPlayer();
     if(!cur || cur.id !== guardId || cur.isBot || !cur.alive) return;
@@ -12661,7 +12784,7 @@ function lanStartTurnTimer(p){
         그대로 두면 효과가 처리되는 도중에 카드를 한 장 더 내버려 판이 두 갈래로 갈라진다)
        그 창에는 그 창대로 무응답 자동 결정이 걸려 있으니, 여기서는 잠시 뒤 다시 본다. */
     try{ if(typeof __lanPm!=='undefined' && __lanPm){ lanStartTurnTimer(cur); return; } }catch(e){}
-    log('sys', `⏱️ ${J(cur.name,'이','가')} 60초 동안 행동하지 않아 자동으로 진행합니다.`);
+    log('sys', `⏱️ ${J(cur.name,'이','가')} ${Math.round(LAN_TURN_LIMIT_MS/1000)}초 동안 행동하지 않아 자동으로 진행합니다.`);
     lanAutoPlayForPlayer(cur);
   }, LAN_TURN_LIMIT_MS);
 }
@@ -13228,6 +13351,7 @@ function renderMenuNote(){
   // [Ver 9.9] 랩터마트24 / 유물 광산 버튼은 메모 밖(.nm-side-links)으로 나갔다 — 여기서 그리지 않는다.
   try{ renderBoxKeyBadge(); }catch(e){}   // [Ver 9.16] 상자 버튼의 열쇠 개수
   try{ renderTopResources(); }catch(e){}  // [Ver 11.0] 우측 상단 재화 배지(열쇠·곡괭이·개쩌는 곡괭이)
+  try{ nmStageBind(); }catch(e){}         // [Ver 13.2] 메뉴 일러스트 무대
 }
 /* [Ver 11.0 신규] 우측 상단 재화 배지 3종(🔑열쇠 · ⛏️곡괭이 · 🪙개쩌는 곡괭이) 갱신.
    상자 버튼 열쇠 숫자(renderBoxKeyBadge)와 같은 값을 쓰지만 표시 위치가 다르므로 따로 그린다.
@@ -13572,7 +13696,9 @@ const POWER_DEFS = [
     run:(me,t,v)=>{ pwEnemies(me).forEach(e=>{ e.atkMultiplier = (e.atkMultiplier||0) - v;
         e.pwRoarUndo = { pct:v, dueRound: turnCount + 2 }; });
       pwLog(`🦁 ${J(me.name,'의','의')} 포효! 2바퀴 동안 모든 상대의 공격력이 ${v}% 떨어집니다.`); } },
-  { key:'grind', rarity:'rare', icon:'⛏️', name:'노가다', target:'self', cd:3, amt:1, up:{k:'cd',per:0.1},
+  /* quiet:true — 쿨이 3초라 쓸 때마다 로그를 남기면 로그창이 노가다로만 가득 찬다.
+     판마다 처음 한 번만 알린다(pwFire 참고). */
+  { key:'grind', rarity:'rare', icon:'⛏️', name:'노가다', target:'self', cd:3, amt:1, up:{k:'cd',per:0.1}, quiet:true,
     desc:v=>`골드 <b>1</b>을 얻습니다. 쿨타임이 아주 짧습니다.`,
     run:(me,t,v)=>{ grantGold(me, 1); } },
   { key:'wager', rarity:'rare', icon:'🎲', name:'도박', target:'self', cd:84, amt:50, up:{k:'amt',per:1},
@@ -13752,6 +13878,20 @@ const POWER_DEFS = [
     run:(me,t,v)=>{ me.pwEcho = { dueRound: turnCount + 1 }; pwLog(`🔁 ${J(me.name,'이','가')} 1바퀴 동안 낸 카드를 되돌려 받습니다.`); } },
 ];
 function powerDefOf(key){ return POWER_DEFS.find(d=> d.key===key) || null; }
+/* ==========================================================================
+   [Ver 13.1] 권능 아이콘 — `pw/{key}.jpg` (46종, 손그림)
+   --------------------------------------------------------------------------
+   ⚠ **배포할 때 `pw/` 폴더를 통째로 같이 올려야 한다.** (pfp/ 와 같다)
+   ▶ 그림이 없으면(파일 누락·경로 문제) onerror 로 **원래 이모지로 되돌아간다.**
+     그래서 폴더를 빠뜨려도 화면이 비지는 않는다.
+   ▶ 원본은 흰 배경이라, 어두운 테마에서도 그림이 뜨도록 CSS에서 흰 판을 깔아준다.
+   ========================================================================== */
+function powerIconHtml(def, cls){
+  if(!def) return '';
+  const fb = String(def.icon || '👑').replace(/'/g, "\\'");
+  return `<img class="pw-img ${cls||''}" src="pw/${def.key}.jpg" alt="" draggable="false"
+    onerror="this.outerHTML='<span class=&quot;pw-img-fb ${cls||''}&quot;>${fb}</span>';">`;
+}
 function pwAmt(def, lv){
   if(!def) return 0;
   const per = (def.up && def.up.k === 'amt') ? def.up.per : 0;
@@ -13831,10 +13971,16 @@ function equippedPowerCount(){ return loadEquippedPowers().filter(Boolean).lengt
    15개 : 전설 확정
    ▶ 그래서 한 번에 최대 4개까지 나온다. 등급마다 그 등급 안에서 무작위로 하나씩.
    ========================================================================== */
+/* [Ver 13.1 밸런스] 확률을 전반적으로 낮췄다.
+     1개  : 영웅 25 → **15** · 전설 10 → **5**   (희귀 55는 그대로)
+     5개  : 영웅 **확정 → 35** · 전설 30 → **25**  (확정은 일반·희귀만)
+     15개 : 전설 확정은 그대로 두되 **영웅 50 · 희귀 50** 보너스를 새로 얹었다
+   ▶ 15개가 "전설 한 장"으로 끝나 15개를 모을 이유가 약했다. 이제 평균 2장이 나온다.
+   ▶ 보너스는 등급마다 **따로** 굴린다(서로 배타적이지 않다). 그래서 한 번에 최대 4개까지 나온다. */
 const POWER_ALTAR_OFFERS = [
-  { teeth:1,  label:'이빨 1개',  fixed:['normal'],                 bonus:[['rare',55],['epic',25],['legend',10]] },
-  { teeth:5,  label:'이빨 5개',  fixed:['normal','rare','epic'],   bonus:[['legend',30]] },
-  { teeth:15, label:'이빨 15개', fixed:['legend'],                 bonus:[] },
+  { teeth:1,  label:'이빨 1개',  fixed:['normal'],         bonus:[['rare',55],['epic',15],['legend',5]] },
+  { teeth:5,  label:'이빨 5개',  fixed:['normal','rare'],  bonus:[['epic',35],['legend',25]] },
+  { teeth:15, label:'이빨 15개', fixed:['legend'],         bonus:[['epic',50],['rare',50]] },
 ];
 function powersOfRarity(r){ return POWER_DEFS.filter(d=> d.rarity === r); }
 function pickPowerOfRarity(r){
@@ -13920,7 +14066,7 @@ function renderPowerScreen(){
         const rd = powerRarityDef(d.rarity);
         return `<button class="pw-slot ${rd.cls}${picking?' picking':''}" onclick="pwSlotClick(${i})">
           <span class="pw-slot-key">${KEYS[i]}</span>
-          <span class="pw-slot-ic">${d.icon}</span>
+          <span class="pw-slot-ic">${powerIconHtml(d)}</span>
           <span class="pw-slot-nm">${escapeHtml(d.name)}</span>
           <span class="pw-slot-sub">Lv${lv} · 쿨 ${pwCd(d,lv)}초</span>
           <span class="pw-slot-x" onclick="event.stopPropagation(); pwUnequip(${i});">✕</span>
@@ -13972,22 +14118,24 @@ function powerCardHtml(d){
   const need = own ? powerNeedFor(lv, d.rarity) : null;
   const canUp = own && need != null && dup >= need;
   const eqAt = loadEquippedPowers().indexOf(d.key);
+  /* [Ver 13.2] 가로 2단 — 왼쪽이 그림, 오른쪽이 글이다.
+     그림이 작으면 뭘 그린 건지 안 보여서, 카드 폭의 **45%**를 통째로 내줬다. */
   return `<div class="pw-card ${rd.cls}${own?'':' locked'}${eqAt>=0?' equipped':''}" onclick="pwCardClick('${d.key}')">
-    <div class="pw-card-top">
-      <span class="pw-card-ic">${d.icon}</span>
-      <span class="pw-card-nm">${escapeHtml(d.name)}</span>
+    <div class="pw-card-art">${powerIconHtml(d)}</div>
+    <div class="pw-card-body">
+      <div class="pw-card-nm">${escapeHtml(d.name)}</div>
+      <div class="pw-card-desc">${own ? powerDescOf(d, lv) : powerDescOf(d, 1)}</div>
+      <div class="pw-card-foot">
+        <span class="pw-card-cd">⏱ ${pwCd(d, own?lv:1)}초</span>
+        ${own ? `<span class="pw-card-lv">Lv${lv}${lv>=POWER_MAX_LV?' MAX':''}</span>` : '<span class="pw-card-lv none">미보유</span>'}
+        ${eqAt>=0 ? `<span class="pw-card-eq">${['Q','W','E'][eqAt]}</span>` : ''}
+      </div>
+      ${own && need != null ? `<div class="pw-card-up">
+        <div class="pw-card-bar"><i style="width:${Math.min(100, Math.round(dup/need*100))}%"></i></div>
+        <button class="pw-up-btn${canUp?' on':''}" ${canUp?'':'disabled'}
+          onclick="event.stopPropagation(); doPowerUpgrade('${d.key}')">⬆ ${dup}/${need}</button>
+      </div>` : ''}
     </div>
-    <div class="pw-card-desc">${own ? powerDescOf(d, lv) : powerDescOf(d, 1)}</div>
-    <div class="pw-card-foot">
-      <span class="pw-card-cd">⏱ ${pwCd(d, own?lv:1)}초</span>
-      ${own ? `<span class="pw-card-lv">Lv${lv}${lv>=POWER_MAX_LV?' MAX':''}</span>` : '<span class="pw-card-lv none">미보유</span>'}
-      ${eqAt>=0 ? `<span class="pw-card-eq">${['Q','W','E'][eqAt]}</span>` : ''}
-    </div>
-    ${own && need != null ? `<div class="pw-card-up">
-      <div class="pw-card-bar"><i style="width:${Math.min(100, Math.round(dup/need*100))}%"></i></div>
-      <button class="pw-up-btn${canUp?' on':''}" ${canUp?'':'disabled'}
-        onclick="event.stopPropagation(); doPowerUpgrade('${d.key}')">⬆ ${dup}/${need}</button>
-    </div>` : ''}
   </div>`;
 }
 function pwSetFilter(v){ pwRarityFilter = v || ''; renderPowerScreen(); }
@@ -13999,7 +14147,8 @@ function pwUnequip(i){ equipPower(i, null); renderPowerScreen(); }
 function pwCardClick(key){
   if(!ownsPower(key)){
     const d = powerDefOf(key);
-    showModal(`${d.icon} ${escapeHtml(d.name)}`, `<div style="line-height:1.8">
+    showModal(`${escapeHtml(d.name)}`, `<div style="line-height:1.8">
+      <div class="pw-modal-ic">${powerIconHtml(d)}</div>
       <div style="font-size:12px;color:var(--fg-dim);margin-bottom:8px;">${powerRarityDef(d.rarity).label} · 쿨타임 ${pwCd(d,1)}초</div>
       ${powerDescOf(d, 1)}
       <div style="margin-top:12px;font-size:12px;color:var(--fg-faint);">
@@ -14023,7 +14172,7 @@ function doPowerUpgrade(key){
   const d = powerDefOf(key);
   renderPowerScreen();
   showModal('⬆ 권능 강화', `<div style="text-align:center;line-height:1.9;">
-      <div style="font-size:34px;">${d.icon}</div>
+      <div class="pw-modal-ic">${powerIconHtml(d)}</div>
       <div style="font-size:15px;font-weight:700;">${escapeHtml(d.name)}</div>
       <div style="font-size:22px;font-weight:900;margin:4px 0;">Lv${res.lv}</div>
       <div style="font-size:12.5px;color:var(--fg-dim);">${powerDescOf(d, res.lv)}</div>
@@ -14039,7 +14188,7 @@ function doAltarOffer(teeth){
   const rows = res.results.slice().sort((a,b)=> order[a.rarity] - order[b.rarity]).map(r=>{
     const d = powerDefOf(r.key), rd = powerRarityDef(r.rarity);
     return `<div class="pw-got ${rd.cls}">
-      <span class="pw-got-ic">${d.icon}</span>
+      <span class="pw-got-ic">${powerIconHtml(d)}</span>
       <span class="pw-got-nm">${escapeHtml(d.name)}</span>
       <span class="pw-got-r">${rd.label}</span>
       <span class="pw-got-tag">${r.isNew ? 'NEW' : `+1 (${r.dup})`}</span>
@@ -14079,12 +14228,14 @@ function applyPowersToGame(){
       while(picks.length < POWER_SLOTS && bag.length){
         picks.push(bag.splice(Math.floor(Math.random()*bag.length), 1)[0]);
       }
+      p.__pwQuietSeen = {};
       p.pwSlots = [0,1,2].map(i=>{
         const d = picks[i]; if(!d) return null;
         const lv = 1 + Math.floor(Math.random()*2);
         return { key:d.key, lv, left: pwCd(d, lv)*1000, dead:false };
       });
     } else if(isMyPlayer(p)){
+      p.__pwQuietSeen = {};   // [Ver 13.1] 판마다 '조용한 권능' 최초 로그를 다시 허용
       p.pwSlots = loadEquippedPowers().map(k=>{
         if(!k) return null;
         const d = powerDefOf(k); if(!d) return null;
@@ -14149,11 +14300,32 @@ function pwFire(p, slot, targetId){
   }
   s.left = pwCd(def, s.lv) * 1000;
   p.__pwUsingSlot = slot;                       // '노쿨'이 자기 자신은 비켜가도록
+  /* [Ver 13.1 버그수정] 남이 권능을 쓸 때마다 renderHand()가 **내 손패를 통째로 다시 그려서**
+     카드가 계속 튀어 보였다("뿅뿅"). 손패 DOM은 innerHTML을 통째로 갈아엎기 때문에,
+     내 카드가 실제로 바뀌지 않았는데도 전부 새로 만들어졌다.
+     → 내 손패가 **정말 달라졌을 때만** 다시 그린다. */
+  const __meNow = viewer();
+  const __handBefore = (__meNow && Array.isArray(__meNow.hand))
+    ? __meNow.hand.map(c=> c && c.uid).join(',') : '';
   try{ def.run(p, tgt, pwAmt(def, s.lv)); }
   catch(e){ console.error('[권능] 실행 오류', def.key, e); }
   p.__pwUsingSlot = null;
-  log('sys', `👑 ${J(p.name,'이','가')} 권능 <b>${escapeHtml(def.name)}</b>을(를) 사용했습니다.`);
-  try{ renderHand(); renderBoard(); renderPowerBar(); checkWinCondition(); }catch(e){}
+  /* [Ver 13.1] '노가다'처럼 쿨이 아주 짧은 권능은 로그를 도배한다.
+     def.quiet 가 붙은 권능은 **판마다 처음 한 번만** 알리고 그 뒤로는 조용히 넘어간다. */
+  let __sayIt = true;
+  if(def.quiet){
+    if(!p.__pwQuietSeen) p.__pwQuietSeen = {};
+    if(p.__pwQuietSeen[def.key]) __sayIt = false;
+    else p.__pwQuietSeen[def.key] = true;
+  }
+  if(__sayIt) log('sys', `👑 ${J(p.name,'이','가')} 권능 <b>${escapeHtml(def.name)}</b>을(를) 사용했습니다.`);
+  try{
+    const __meAfter = viewer();
+    const __handAfter = (__meAfter && Array.isArray(__meAfter.hand))
+      ? __meAfter.hand.map(c=> c && c.uid).join(',') : '';
+    if(__handAfter !== __handBefore) renderHand();
+    renderBoard(); renderPowerBar(); checkWinCondition();
+  }catch(e){}
   return true;
 }
 /* 내가 누른 경우 — 랜서버 참가자는 호스트에 slot만 넘긴다 */
@@ -14205,7 +14377,7 @@ function pwBeginTargeting(slot, def){
     bar.className = 'pw-target-bar';
     document.body.appendChild(bar);
   }
-  bar.innerHTML = `<span class="pw-tb-ic">${def.icon}</span>
+  bar.innerHTML = `<span class="pw-tb-ic">${powerIconHtml(def)}</span>
     <span class="pw-tb-tx"><b>${escapeHtml(def.name)}</b> — 대상을 고르세요</span>
     <button class="pw-tb-x" onclick="pwCancelTargeting()">취소</button>`;
 }
@@ -14227,39 +14399,78 @@ function pwEndTargeting(){
 /* ==========================================================================
    인게임 권능 바 — 손패 머리줄 오른쪽의 작은 정사각형 셋
    ========================================================================== */
+/* [Ver 13.1 버그수정] 예전에는 **0.25초마다 innerHTML을 통째로 새로 썼다.**
+   칸 셋이 매번 파괴·재생성되니 아이콘이 끊임없이 깜빡였다("뿅뿅").
+   이제 **틀은 한 번만 짓고**, 이후에는 쿨 막대 높이·남은 초·ready 클래스만 손댄다.
+   틀을 다시 지어야 하는 때는 슬롯 구성이 바뀌었을 때뿐이다(장착 변경·침묵). */
+let __pwBarShape = '';
 function renderPowerBar(){
   const host = document.getElementById('pwBar');
   if(!host) return;
   const me = viewer();
   if(!powersActive() || !me || !Array.isArray(me.pwSlots) || !me.pwSlots.some(Boolean)){
-    host.innerHTML = ''; host.style.display = 'none'; return;
+    if(__pwBarShape !== ''){ host.innerHTML = ''; __pwBarShape = ''; }
+    host.style.display = 'none';
+    return;
   }
   host.style.display = '';
   const KEYS = ['Q','W','E'];
-  host.innerHTML = me.pwSlots.map((s,i)=>{
-    if(!s){ return `<div class="pw-cell empty"><span class="pw-key">${KEYS[i]}</span></div>`; }
-    const def = powerDefOf(s.key);
-    if(!def) return `<div class="pw-cell empty"><span class="pw-key">${KEYS[i]}</span></div>`;
-    const rd = powerRarityDef(def.rarity);
+  /* 구성이 바뀌었는지 — 키·레벨·침묵 여부만 본다. 남은 쿨은 여기 넣지 않는다(매 틱 달라진다) */
+  const shape = me.pwSlots.map(s=> s ? `${s.key}:${s.lv}:${s.dead?1:0}` : '-').join('|');
+  if(shape !== __pwBarShape){
+    __pwBarShape = shape;
+    host.innerHTML = me.pwSlots.map((s,i)=>{
+      if(!s) return `<div class="pw-cell empty"><span class="pw-key">${KEYS[i]}</span></div>`;
+      const def = powerDefOf(s.key);
+      if(!def) return `<div class="pw-cell empty"><span class="pw-key">${KEYS[i]}</span></div>`;
+      const rd = powerRarityDef(def.rarity);
+      return `<button class="pw-cell ${rd.cls}${s.dead?' dead':''}" data-slot="${i}"
+                onclick="usePower(${i})" title="${escapeHtml(def.name)} Lv${s.lv}">
+        <span class="pw-ic">${powerIconHtml(def)}</span>
+        <span class="pw-key">${KEYS[i]}</span>
+        ${s.dead ? '<span class="pw-x">🤐</span>' : '<span class="pw-cool"></span><span class="pw-secs"></span>'}
+      </button>`;
+    }).join('');
+  }
+  /* 여기부터는 **있는 요소의 값만 고친다** — DOM을 새로 만들지 않는다 */
+  me.pwSlots.forEach((s,i)=>{
+    if(!s || s.dead) return;
+    const cell = host.querySelector(`.pw-cell[data-slot="${i}"]`);
+    if(!cell) return;
+    const def = powerDefOf(s.key); if(!def) return;
     const total = pwCd(def, s.lv) * 1000;
     const pct = total > 0 ? Math.max(0, Math.min(100, (s.left / total) * 100)) : 0;
-    const ready = !s.dead && s.left <= 0;
-    const secs = Math.ceil(s.left / 1000);
-    return `<button class="pw-cell ${rd.cls}${ready?' ready':''}${s.dead?' dead':''}"
-              onclick="usePower(${i})" title="${escapeHtml(def.name)} Lv${s.lv}">
-      <span class="pw-ic">${def.icon}</span>
-      <span class="pw-key">${KEYS[i]}</span>
-      ${s.dead ? '<span class="pw-x">🤐</span>' : (ready ? '' : `<span class="pw-cool" style="height:${pct}%"></span><span class="pw-secs">${secs}</span>`)}
-    </button>`;
-  }).join('');
+    const ready = s.left <= 0;
+    cell.classList.toggle('ready', ready);
+    const cool = cell.querySelector('.pw-cool');
+    const secs = cell.querySelector('.pw-secs');
+    if(cool) cool.style.height = ready ? '0%' : pct + '%';
+    if(secs){
+      const t = ready ? '' : String(Math.ceil(s.left / 1000));
+      if(secs.textContent !== t) secs.textContent = t;   // 같은 값이면 건드리지 않는다
+    }
+  });
 }
 
 /* ==========================================================================
    봇 — 쿨이 차면 쓴다. 사람만 쓰면 사람이 그냥 세 배 세진다.
    대상이 필요한 권능은 살아있는 상대 중 하나를 무작위로 고른다.
    ========================================================================== */
+/* 지금 화면에 연출이나 창이 떠 있는가 — 그동안 봇은 권능을 쓰지 않는다.
+   [Ver 13.1] 랜덤 이벤트(베팅·잡상인 등)가 도는 중에 봇이 0.25초마다 권능을 터뜨리면
+   그때마다 화면을 다시 그려서 **이벤트 UI가 끊임없이 깜빡였다.** 연출은 연출대로 끝나야 한다. */
+function pwSceneBusy(){
+  try{
+    if(awaitingReaction) return true;
+    if(typeof randomEventState !== 'undefined' && randomEventState && !randomEventState.closed) return true;
+    if(typeof __lanPm !== 'undefined' && __lanPm) return true;
+    if(document.querySelector('.modal-bg.show, .shop-bg.show, .re-overlay, .auction-overlay, .roulette-overlay, .cm-overlay, .victory-overlay, .mine-dig-ov')) return true;
+  }catch(e){}
+  return false;
+}
 function botMaybeUsePowers(){
   if(!powersActive() || !Array.isArray(players)) return;
+  if(pwSceneBusy()) return;
   players.forEach(p=>{
     if(!p || !p.isBot || !p.alive || !Array.isArray(p.pwSlots)) return;
     p.pwSlots.forEach((s,i)=>{
@@ -14391,6 +14602,17 @@ const ARTIFACT_DEFS = [
   { key:'aegis',     rarity:'legendary', icon:'🛡️', name:'우빈이의 방어막',        base:500, per:100,
     fmt:v=>`판마다 <b>처음 죽을 때</b> HP 1로 버티고 쉴드 <b>${v}</b> 획득`,
     flavor:'한 번은 봐준다는 뜻입니다.' },
+  /* ===== [Ver 13.1] 이름을 되살린 2종 =====
+     13.1에서 지운 '잠재력'·'객기'와 **이름만 같고 효과는 완전히 다르다.**
+     ⚠ 그래서 **키를 새로 팠다**(evoluck · winpick). 옛 키(potential · guts)를 그대로 쓰면
+       PROJECTSIMP 환급표(REMOVED_ARTIFACTS_13_1)와 부딪힌다 — 환급이 새로 캔 유물까지
+       지워버리기 때문이다. 옛 키는 환급 전용으로 그대로 남겨둔다. */
+  { key:'evoluck',   rarity:'legendary', icon:'🌟', name:'우빈이의 잠재력',        base:10,  per:3,
+    fmt:v=>`손패 카드가 진화형으로 <b>변이할 확률 +${v}%</b>`,
+    flavor:'누구에게나 그럴싸한 계획이 있다. 맞기 전까지는.' },
+  { key:'winpick',   rarity:'legendary', icon:'😤', name:'우빈이의 객기',          base:5,   per:1,
+    fmt:v=>`게임에서 <b>승리</b>할 때 <b>${v}%</b> 확률로 개쩌는 곡괭이 획득`,
+    flavor:'맞기 싫으면 안 맞으면 되는 거 아닌가요?' },
 ];
 function artDefOf(key){ return ARTIFACT_DEFS.find(d=> d.key===key) || null; }
 /* 그 레벨에서의 실제 수치. 소수점이 붙는 유물(0.5·2.5 등)이 있어 반올림 자리를 정리한다. */
@@ -15031,7 +15253,30 @@ function spendTeeth(n){
   n = n || 1;
   if(raptorTeeth < n) return false;
   raptorTeeth -= n; saveTeeth();
+  /* [Ver 13.1] 이빨을 쓰는 순간이 곧 **되돌릴 수 없는 진행도 변화**다(재단 뽑기).
+     여기서 백업해 두지 않으면, 뽑고 나서 브라우저 데이터가 날아갔을 때
+     "이빨도 없고 권능도 없는" 상태가 된다. 판이 끝날 때까지 기다리지 않는다. */
+  try{ backupAfterTeethSpend(); }catch(e){}
   return true;
+}
+/* 이빨 소비 직후의 조용한 백업.
+   ⚠ autoBackupAfterGame()과 **가드를 공유한다**(__lastAutoBackupAt). 재단을 연달아 돌릴 때
+     매번 올리면 같은 데이터를 몇 초 사이에 여러 번 쓰게 되기 때문이다.
+   ⚠ 실패해도 사용자를 막지 않는다 — 뽑기 자체는 이미 끝났다. 우편함 경고는
+     autoBackupAfterGame() 쪽이 계속 세고 있으므로 여기서는 조용히 넘어간다. */
+let __lastTeethBackupAt = 0;
+function backupAfterTeethSpend(){
+  try{
+    if(typeof fbAvailable !== 'function' || !fbAvailable()) return;   // file:// · 설정 없음
+    if(typeof isBanned === 'function' && isBanned()) return;
+    const now = Date.now();
+    if(now - __lastTeethBackupAt < 15000) return;                     // 15초에 한 번이면 충분하다
+    __lastTeethBackupAt = now;
+    fbBackupNow().catch(err=>{
+      __lastTeethBackupAt = 0;                                        // 다음 소비 때 다시 시도
+      console.warn('[이빨 백업] 실패', err);
+    });
+  }catch(e){}
 }
 /* 우비나이트로 이빨을 산다. n개를 한 번에 살 수 있다. */
 function buyTeeth(n){
@@ -15656,6 +15901,11 @@ const BACKUP_KEYS = ['stats','achievements','cardDex','cardMastery','masteryRank
                         함께 백업한다. */
                      'classState','seasonStats','seasonMigrated','seasonId','genesisSeasonSnap',
                      'arcade','wildStones','pass',
+                     /* [Ver 13.1 버그수정] **출석부와 일일 퀘스트가 백업 목록에 아예 없었다.**
+                        13.0에서 둘을 추가하면서 여기 넣는 걸 빠뜨려서, 기기를 옮기거나 복원하면
+                        연속 출석일·누적 출석일(30일 개발자의 선물 진행도)·오늘의 퀘스트가
+                        통째로 사라졌다. = "업데이트할 때마다 출석부가 초기화된다" */
+                     'attend','quest',
                      /* [Ver 13.0 버그수정] 프로필 사진이 백업에서 통째로 빠져 있었다.
                         12.6.1에서 휘장(frames/frameOn)을 프로필 사진으로 갈아치우면서 이 목록만
                         안 고쳐서, **기기를 옮기거나 복원하면 모아둔 사진이 전부 사라졌다.**
@@ -15694,6 +15944,9 @@ function flushPersistentCaches(){
   call(typeof saveEquippedPowers!== 'undefined' && saveEquippedPowers);
   call(typeof saveTeeth         !== 'undefined' && saveTeeth);
   call(typeof savePfps          !== 'undefined' && savePfps);
+  /* [Ver 13.1] 출석부·일일 퀘스트 — 메모리에만 있던 오늘 기록이 백업에서 빠지지 않게 */
+  call(typeof saveAttend        !== 'undefined' && saveAttend);
+  call(typeof saveQuest         !== 'undefined' && saveQuest);
 }
 function buildBackupPayload(){
   try{ flushPersistentCaches(); }catch(e){}
@@ -15753,6 +16006,10 @@ function invalidatePersistentCaches(){
   try{ ARCADE = null; }catch(e){}
   try{ WILD_STONES = null; }catch(e){}
   try{ PASSDATA = null; }catch(e){}
+  /* [Ver 13.1] 출석부·일일 퀘스트도 게으른 캐시다. 여기서 안 비우면 복원해도 옛 기록이
+     메모리에 남아 있다가, 출석 도장을 찍는 순간 saveAttend()가 복원분을 덮어쓴다. */
+  try{ ATTEND = null; }catch(e){}
+  try{ QUEST = null; }catch(e){}
   /* [Ver 13.0] 프로필 사진 캐시 — 이게 빠져 있으면 복원해도 옛 목록이 그대로 남는다.
      (OWNED_FRAMES 는 12.6.1에서 사라진 휘장 시절 변수라 함께 정리했다) */
   try{ OWNED_PFPS = null; }catch(e){}
@@ -19303,15 +19560,27 @@ function exitPlaygroundBar(){
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
   {
+    version: 'Ver 13.2', date: '2026-08-31',
+    items: [
+      '\u{1F5BC}️ <b>[신규] 메뉴 버튼에 커서를 올리면 <u>일러스트</u>가 뜹니다.</b> 가운데 빈 자리에 그 콘텐츠의 손그림이 나타납니다. <b>일반 모드 · 온라인 · LAN · 아케이드 · 랩터마트24 · 유물 · 카드 진화석 뽑기 · 랩터의 권능 · 퀘스트 · 패스 · 출석부 · 인벤토리</b> 12종입니다.',
+      '\u{1F4AC} <b>[복귀] 메뉴 문구가 돌아왔습니다.</b> 아무 버튼에도 커서를 올리지 않으면, 13.0에서 사라졌던 <b>메인 문구 한 줄</b>과 <b>게임 팁</b>이 그 자리에 뜹니다. 팁은 몇 초마다 바뀝니다.',
+      '\u{1F311} <b>[화면] 일러스트는 테마를 따라갑니다.</b> 어두운 화면에서는 선이 <b>하얗게 반전</b>되어 보입니다.',
+      '\u{1F451} <b>[권능] 목록 카드를 다시 배치했습니다.</b> 그림이 너무 작아 무엇을 그린 건지 알아보기 어려웠습니다. 이제 <b>카드 왼쪽 절반 가까이를 그림이</b> 차지하고, 오른쪽에 설명과 강화가 들어갑니다.',
+    ]
+  },
+  {
     version: 'Ver 13.1', date: '2026-08-30',
     items: [
       '\u{1F451} <b>[신규 시스템] 랩터의 권능</b> — 지후펫이 <b>패시브</b>라면 권능은 <b>액티브 스킬</b>입니다. 판에 <b>3개</b>까지 장착하고 인게임에서 <b>Q · W · E</b>로 씁니다. <b>자기 턴이 아닐 때도</b> 쓸 수 있지만, <b>자기 턴 동안에는 자기 쿨타임이 멈춥니다</b>(시간끌기 방지). 일반 4 · 희귀 9 · 영웅 14 · 전설 19, 모두 <b>46종</b>입니다. 봇도 씁니다.',
       '\u{1F9B7} <b>[신규 재화] 랩터의 이빨</b> — <b>랩터의 재단</b>에 제물로 바쳐 권능을 받습니다. <b>1개</b>면 일반 확정(+희귀 55% · 영웅 25% · 전설 10%), <b>5개</b>면 일반·희귀·영웅 확정(+전설 30%), <b>15개</b>면 <b>전설 확정</b>입니다. 한 번에 최대 4개까지 나옵니다.',
+      '\u{1F3A8} <b>[신규] 랩터의 권능 46종에 <u>손그림 아이콘</u>이 붙었습니다.</b> 권능 화면 · 장착 칸 · 인게임 Q·W·E 칸 · 재단 뽑기 결과까지 전부 그림으로 바뀌었습니다.',
+      '\u{1F3B2} <b>[밸런스] 랩터의 재단 확률 조정.</b> <b>1개</b> — 영웅 25%→<b>15%</b> · 전설 10%→<b>5%</b>. <b>5개</b> — 영웅이 확정에서 <b>35%</b>로, 전설 30%→<b>25%</b>(확정은 일반·희귀). <b>15개</b> — 전설 확정은 그대로 두고 <b>영웅 50% · 희귀 50%</b>를 새로 얹었습니다. 15개가 "전설 한 장"으로 끝나 모을 이유가 약했는데, 이제 <b>평균 2장</b>이 나옵니다.',
       '⏱️ <b>[밸런스] 권능 쿨타임을 전부 <u>30% 낮췄습니다.</u></b> 직접 해보니 한 판에 두어 번 쓰고 끝나 손이 심심했습니다. (예: 할퀴기 100초 → <b>70초</b> · 핵미사일 240초 → <b>168초</b> · 저격 300초 → <b>210초</b>) 원래도 아주 짧던 <b>노가다(3초)</b>만 그대로 뒀습니다.',
       '\u{1F5C2}️ <b>[권능] 목록을 등급별로 나눴습니다.</b> 46종이 한 덩어리로 늘어서 있어 무엇이 어느 등급인지 알 수 없었습니다. 이제 <b>일반 · 희귀 · 영웅 · 전설</b> 묶음마다 제목과 <b>보유 개수 · 강화 비용</b>이 함께 보입니다.',
       '⬆️ <b>[권능 강화]</b> 같은 권능을 모아 <b>Lv10</b>까지 올립니다. 필요 개수는 등급마다 다릅니다 — <b>일반 5·10·15… / 희귀 3·6·9… / 영웅 2·4·6… / 전설 1·2·3…</b> 강화하면 위력이 오르거나 쿨타임이 줄어듭니다.',
       '\u{1F9EC} <b>[개편] 카드 진화가 <u>저절로</u> 일어납니다.</b> 이제 🧬 진화 버튼을 누르지 않습니다. <b>진화석으로 해금해 둔 카드</b>가 손패에 들어오면 <b>2초 뒤 25% 확률</b>로 스스로 진화형으로 <b>변이</b>합니다. 판당 횟수 제한이 사라진 대신, 어느 카드를 진화시킬지 고를 수는 없습니다. (일반 모드 · LAN 일반모드)',
       '\u{1F5D1}️ <b>[삭제] 유물 16종을 없앴습니다.</b> 보건선생님 · 신용카드 · 패딩 · 흑염룡 · 과자 · 알바지원서 · 용돈 · 나루토돌진 · 금고 · 포스기 · 아빠 · 단단한 머리 · 불법도박사이트 · 잠재력 · 객기 · 엄마. 유물이 31종이나 되어 무엇이 켜져 있는지 아무도 알 수 없었습니다. 남은 <b>15종</b>은 그대로입니다.',
+      '\u{1F31F} <b>[신규 유물 2종]</b> 이름은 익숙하지만 <b>효과는 완전히 새것</b>입니다. <b>우빈이의 잠재력</b>(전설) — 손패 카드가 진화형으로 <b>변이할 확률 +10%</b>(강화 시 +3%p). <b>우빈이의 객기</b>(전설) — <b>승리</b>할 때 <b>5%</b> 확률로 개쩌는 곡괭이(강화 시 +1%p). 유물은 다시 <b>17종</b>이 되었습니다.',
       '\u{1F396}️ <b>[삭제] 칭호 시스템</b>이 사라졌습니다. 랩터마트24의 <b>칭호 탭 자리에는 <u>재화</u> 탭</b>이 들어와, <b>150 우비나이트</b>에 랩터의 이빨을 하나씩 살 수 있습니다.',
       '⏸️ <b>[임시 중단] 카드 마스터리 · 파밍 모드 · 사이비 모드 · 10인 난투전 · 클래식 모드</b>가 잠시 내려갔습니다. <b>없어진 게 아니라 정리 중</b>이며, 단순화 작업이 끝나면 다시 열립니다.',
       '\u{1F3E0} <b>[개편] 메뉴 화면을 네 칸으로 다시 세웠습니다.</b> 왼쪽부터 <b>내 정보·모드 / 일러스트 자리 / 랩터마트24·유물·카드 진화석 뽑기·랩터의 권능 / 퀘스트·패스·출석부·인벤토리</b>입니다. 스크롤 없이 한 화면에 들어옵니다. 나머지(리더보드 · 신규 카드 · 밸런스 패치 · 카드 뽑기 · 수상한 상자 · 우편함 · 전투 기록 · 계정 지키기 · 내 기록)는 오른쪽 위 <b>≡</b> 안으로 모았습니다.',
@@ -19319,8 +19588,15 @@ const CHANGELOG = [
       '\u{1F39F}️ <b>[보상] 코드 <u>PROJECTSIMP</u></b> — <b>우비나이트 3,000개</b>와, <b>삭제된 유물을 캐는 데 쓴 곡괭이 전부</b>를 돌려드립니다. (레벨을 올리며 태운 중복분까지 셉니다) 코드 입력창은 <b>≡ → 코드 입력</b>에 있습니다.',
       '\u{1F39F}️ <b>[코드] <u>GETTEETH</u></b> — <b>랩터의 이빨 30개</b>를 드립니다. 재단에 바치면 첫 권능을 바로 받아볼 수 있습니다. ⚠ <b>2026년 9월 7일까지만</b> 쓸 수 있는 기간 한정 코드입니다.',
       '\u{1F381} <b>[보상] 이빨을 여기저기 심었습니다.</b> <b>출석 7일차</b> → 이빨 10개 · <b>일일 퀘스트 750P</b> → 이빨 3개 + 개쩌는 곡괭이 · <b>30일 개발자의 선물</b>의 소소한 날들 일부 → 이빨 3개 · <b>시즌 패스 50레벨</b> → 이빨 10개.',
+      '\u{1F0CF} <b>[개선] 카드를 뽑으면 <u>즉시</u> 손에 들어옵니다.</b> 예전에는 스페이스바를 눌러도 <b>2초 동안 아무 일도 일어나지 않다가</b> 카드가 들어왔습니다. 게다가 그 2초짜리 연출은 카드가 더미 위에 가만히 떠 있기만 했습니다. 이제 <b>누르는 즉시</b> 손패에 들어오고, 카드가 더미에서 <b>손패로 날아오는 연출</b>과 함께 새 카드가 톡 튑니다.',
+      '✨ <b>[버그수정] 화면이 계속 깜빡이던 현상</b>을 고쳤습니다. ① <b>상대가 권능을 쓸 때마다</b> 내 손패를 통째로 다시 그려 카드가 튀었고 ② <b>권능 칸이 0.25초마다</b> 새로 그려지고 있었습니다. ③ <b>베팅 · 잡상인 같은 랜덤 이벤트가 도는 중에도</b> 봇이 권능을 터뜨려 이벤트 창까지 깜빡였습니다. 이제 <b>정말 바뀐 것만</b> 다시 그리고, <b>연출 중에는 봇이 권능을 쓰지 않습니다.</b>',
+      '⏱️ <b>[신규] 일반 모드에도 턴 제한시간 180초</b>가 생겼습니다. 예전에는 온라인·LAN에만 있어서, 혼자 하는 판은 자리를 비우면 영원히 멈춰 있었습니다. 남은 시간은 <b>▶ TURN 배지</b>에 함께 뜹니다.',
+      '\u{1F4B0} <b>[버그수정] 상대 골드가 스탯창에 아예 안 보이던 문제</b>를 고쳤습니다. 골드 줄이 <b>내 카드에만</b> 그려지고 있었습니다. 이제 모두의 스탯창에 보입니다. (시야 차단에 걸렸을 때는 체력과 같이 가려집니다)',
+      '\u{1F4CB} <b>[버그수정] 출석부가 초기화되던 문제</b>를 고쳤습니다. <b>출석부와 일일 퀘스트가 백업 목록에 아예 빠져 있어서</b>, 기기를 옮기거나 복원하면 <b>연속 출석일 · 누적 출석일(30일 개발자의 선물 진행도)</b>이 통째로 사라졌습니다.',
+      '⛏️ <b>[편의] 권능 <u>노가다</u>는 첫 사용만 로그에 남깁니다.</b> 쿨타임이 3초라 쓸 때마다 남기면 로그창이 노가다로만 가득 찼습니다.',
       '\u{1F4BE} <b>[버그수정] 시즌 패스가 저절로 초기화되던 문제</b>를 고쳤습니다. <b>계정을 복원하거나 동기화한 뒤 판을 한 번 끝내면</b>, 자동 백업 과정에서 <b>썬크림 · 수령 기록 · Pro 해금이 통째로 비워지고</b> 있었습니다. <b>랩터코인</b>도 같은 이유로 사라졌습니다. 원인을 잡아 이제 복원해도 그대로 남습니다.',
       '☁️ <b>[버그수정] 백업 안정화</b> — <b>랩터의 권능 · 이빨</b>이 백업·복원 목록에서 빠져 있어 기기를 옮기면 사라질 수 있었습니다. 또한 복원 직후 화면을 새로고침하기 전에 권능을 만지면 <b>복원된 내용이 옛 것으로 되돌아가던</b> 문제도 함께 고쳤습니다.',
+      '\u{1F9B7} <b>[안전] 랩터의 이빨을 쓰면 그 자리에서 자동 백업</b>합니다. 재단 뽑기는 되돌릴 수 없는데, 판이 끝날 때까지 기다렸다가 그 사이 브라우저 데이터가 날아가면 <b>이빨도 권능도 없는</b> 상태가 되기 때문입니다.',
       '\u{1F5D3}️ <b>[버그수정] 시즌 종료일이 화면과 실제가 달랐습니다.</b> 화면에는 <b>9월 30일까지</b>라고 떠 있는데 실제로는 <b>9월 17일</b>에 시즌 패스가 밀리게 되어 있었습니다. 화면에 적힌 <b>9월 30일</b>이 맞습니다.',
       '\u{1F3B0} <b>[버그수정] 도박 슬롯머신 연출이 망가져 있던 것</b>을 고쳤습니다. ① 돌리는 동안 <b>슬롯 칸이 통째로 빙글빙글 돌아가던</b> 문제 ② 가만히 있어야 할 <b>물음표가 계속 떨리던</b> 문제입니다. 이제 원래대로 <b>테두리가 달아오르고 숫자만 빠르게 깜빡이다가</b>, 멈출 때 톡 튀며 공개됩니다.',
       '\u{1F4F1} <b>[모바일] 전투 화면을 <u>위아래로 자유롭게 스크롤</u></b>할 수 있습니다. 예전에는 모든 칸을 한 화면에 우겨넣느라 <b>테이블의 카드 더미가 위아래로 잘려</b> 무엇이 깔렸는지 보이지 않았습니다. 대신 <b>카드와 버튼을 한 치수씩 줄여</b> 한 화면에 보이는 양은 그대로 지켰습니다.',
@@ -25469,7 +25745,15 @@ function loadQuest(){
   }
   return QUEST;
 }
-function saveQuest(){ try{ localStorage.setItem(STORAGE_KEYS.quest, JSON.stringify(QUEST)); }catch(e){} }
+/* ⚠ saveAttend 와 같은 이유로 loadQuest() 를 거친다.
+   ⚠ loadQuest() 는 날짜가 바뀌었으면 그 안에서 saveQuest() 를 부른다. 그때는 QUEST 가
+     이미 채워져 있어 한 겹에서 멈춘다(무한 재귀가 아니다). */
+function saveQuest(){
+  try{
+    if(!QUEST) loadQuest();
+    localStorage.setItem(STORAGE_KEYS.quest, JSON.stringify(QUEST || {}));
+  }catch(e){}
+}
 function questDefOf(id){ return DAILY_QUESTS.find(q=> q.id === id) || null; }
 function questProgress(id){ const q = loadQuest(); return Math.max(0, q.prog[id] || 0); }
 function questIsDone(id){ const d = questDefOf(id); return !!d && questProgress(id) >= d.goal; }
@@ -25576,7 +25860,15 @@ function loadAttend(){
   if(!Array.isArray(ATTEND.devClaimed)) ATTEND.devClaimed = [];
   return ATTEND;
 }
-function saveAttend(){ try{ localStorage.setItem(STORAGE_KEYS.attend, JSON.stringify(ATTEND)); }catch(e){} }
+/* ⚠ [Ver 13.1] 예전에는 `JSON.stringify(ATTEND)` 였다. ATTEND 가 null 인 채로 불리면
+   저장소에 문자열 "null" 이 들어가고, 다음 loadAttend() 가 그걸 읽어 **출석 기록을 새로 만든다.**
+   savePass/saveArcade 와 같은 사고였다. 반드시 loadAttend() 를 거친다. */
+function saveAttend(){
+  try{
+    if(!ATTEND) loadAttend();
+    localStorage.setItem(STORAGE_KEYS.attend, JSON.stringify(ATTEND || {}));
+  }catch(e){}
+}
 function attendCheckedToday(){ return loadAttend().last === questDayKey(); }
 /* 오늘 출석 도장을 찍는다. 이미 찍었으면 false. */
 function attendClaimToday(){
@@ -25929,6 +26221,78 @@ function goToDex(){
   showScreen('screen-dex');
   renderDexScreen();
 }
+/* ==========================================================================
+   [Ver 13.2] 메뉴 일러스트 무대 (#nmArtStage)
+   --------------------------------------------------------------------------
+   버튼에 커서를 올리면 그 콘텐츠의 그림이 뜨고, 떼면 기본 문구로 돌아간다.
+   ▶ 어느 버튼이 어느 그림인지는 **버튼의 data-art** 하나로 정해진다(art/{값}.png).
+     새 버튼에 그림을 붙이고 싶으면 data-art 만 달면 된다 — 여기 코드는 안 건드려도 된다.
+   ▶ 마우스가 없는 기기를 위해 **포커스(focusin)** 에도 같은 것을 건다.
+   ▶ 기본 상태 = 밈 한 줄(MENU_HERO_LINES) + 팁(MENU_TICKER_LINES).
+     13.0에서 메뉴를 정리하며 사라졌던 문구들을 여기로 되살렸다.
+   ⚠ 그림은 다크 테마에서 CSS filter:invert(1) 로 뒤집어 쓴다. 그래서 원본 배경이
+     **반드시 투명**이어야 한다(흰 배경이면 반전 시 검은 판이 된다).
+   ========================================================================== */
+let __nmArtKey = null, __nmTipTimer = null;
+function nmStageShow(key){
+  const art = document.getElementById('nmStageArt');
+  const def = document.getElementById('nmStageDefault');
+  if(!art || !def || key === __nmArtKey) return;
+  __nmArtKey = key;
+  if(!key){
+    art.classList.remove('on');
+    def.classList.remove('off');
+    return;
+  }
+  /* src를 바꾸면 잠깐 빈 칸이 보인다 — 새 그림이 준비된 뒤에 보여준다 */
+  art.classList.remove('on');
+  art.onload = ()=>{ if(__nmArtKey === key) art.classList.add('on'); };
+  art.onerror = ()=>{ if(__nmArtKey === key){ art.classList.remove('on'); def.classList.remove('off'); } };
+  art.src = 'art/' + key + '.png';
+  if(art.complete && art.naturalWidth) art.classList.add('on');
+  def.classList.add('off');
+}
+function nmStageClear(){ nmStageShow(null); }
+/* 기본 문구 — 밈 한 줄은 켤 때 한 번, 팁은 6초마다 돌아간다 */
+function nmStageDefaultStart(){
+  const hero = document.getElementById('nmStageHero');
+  const tip = document.getElementById('nmStageTip');
+  if(!hero || !tip) return;
+  try{ hero.textContent = MENU_HERO_LINES[Math.floor(Math.random()*MENU_HERO_LINES.length)]; }catch(e){}
+  if(__nmTipTimer){ clearInterval(__nmTipTimer); __nmTipTimer = null; }
+  const roll = ()=>{
+    try{
+      let t = MENU_TICKER_LINES[Math.floor(Math.random()*MENU_TICKER_LINES.length)];
+      let guard = 0;
+      while(t === tip.dataset.last && MENU_TICKER_LINES.length > 1 && guard++ < 20){
+        t = MENU_TICKER_LINES[Math.floor(Math.random()*MENU_TICKER_LINES.length)];
+      }
+      tip.dataset.last = t;
+      tip.textContent = 'TIP · ' + t;
+      tip.classList.remove('swap'); void tip.offsetWidth; tip.classList.add('swap');
+    }catch(e){}
+  };
+  roll();
+  __nmTipTimer = setInterval(roll, 6000);
+}
+/* 메뉴 판 전체에 한 번만 건다 — 버튼이 늘어도 여기는 그대로다 */
+function nmStageBind(){
+  const board = document.querySelector('.nm-board');
+  if(!board || board.dataset.artBound) return;
+  board.dataset.artBound = '1';
+  const pick = (e)=>{
+    const el = e.target && e.target.closest ? e.target.closest('[data-art]') : null;
+    if(el) nmStageShow(el.getAttribute('data-art'));
+  };
+  board.addEventListener('mouseover', pick);
+  board.addEventListener('focusin', pick);
+  board.addEventListener('mouseleave', nmStageClear);
+  board.addEventListener('focusout', (e)=>{
+    if(!board.contains(e.relatedTarget)) nmStageClear();
+  });
+  nmStageDefaultStart();
+}
+
 /* [Ver 13.1] 메뉴의 <카드 진화> 버튼 — 인벤토리를 열되 "진화 가능" 필터를 미리 걸어준다.
    진화 화면을 따로 만들지 않은 이유: 해금·진화석·마스터리가 전부 인벤토리 카드 칸에 붙어
    있어서, 화면을 나누면 같은 목록을 두 벌 그려야 한다. */
@@ -29034,6 +29398,7 @@ function actuallyStartGame(){
   window.__creamAwarded = false;           // [Ver 11.8] 썬크림 1회 지급 가드 리셋
   window.__pickaxeAwardedThisGame = false; // [Ver 9.11] 판마다 곡괭이 1회 지급 가드 리셋
   window.__boxKeyAwardedThisGame = false;  // [Ver 9.16] 판마다 상자 열쇠 1회 지급 가드 리셋
+  window.__gutsPickAwardedThisGame = false; // [Ver 13.1] 판마다 유물 '객기' 1회 지급 가드 리셋
   __autoSubmitDoneThisGame = false;        // [Ver 12.7] 리더보드 자동 갱신 1회 가드 리셋
   reEventCount = 0;                        // [Ver 10.2] 랜덤 이벤트 희귀도 누적 리셋
   /* [Ver 10.0.2] DJ 쿨타임의 임시 바닥값·틱 정리 — 안 지우면 지난 판 값이 새 판까지 따라온다 */
@@ -34342,7 +34707,7 @@ function renderBoard(){
     const __isNextUp = gameActive && !__isActiveNow && __nextPForTurn && __nextPForTurn.id===p.id;
     card.innerHTML = `
       ${__isActiveNow ? `<div class="turn-now-badge">▶ TURN${
-          (lanMode && !p.isBot) ? ` <i class="lan-turn-clock" id="lanTurnClock">60</i>` : ''
+          (!p.isBot && turnTimerShouldRun()) ? ` <i class="lan-turn-clock" id="lanTurnClock">${Math.round(LAN_TURN_LIMIT_MS/1000)}</i>` : ''
         }</div>` : ''}
       ${__isNextUp ? `<div class="next-turn-badge">NEXT</div>` : ''}
       ${__hasBgm ? bgmVizHtml() : ''}
@@ -34366,7 +34731,10 @@ function renderBoard(){
             </div>
             <span class="stat-num" style="${isHpBlinded?'background:#000;color:#000;border-radius:3px;':''}">${isHpBlinded ? '■■' : p.shield}</span>
           </div>` : ''}
-          ${isMeCard?`<div class="p-gold" data-pid="${p.id}">골드 : ${fmtWon(p.gold)}</div>`:''}
+          ${/* [Ver 13.1 버그수정] 예전에는 isMeCard 일 때만 골드를 그려서 **상대 골드가 아예 안 보였다.**
+                이제 모두에게 그린다. 시야 차단(징오징오)에 걸렸으면 체력과 같은 규칙으로 가린다.
+                data-pid 는 flashGoldChange() 가 찾는 손잡이라 그대로 둔다. */''}
+          <div class="p-gold" data-pid="${p.id}">골드 : ${isHpBlinded ? '■■■' : fmtWon(p.gold)}</div>
         </div>
       </div>
       <div class="pc-bottom">
@@ -35113,6 +35481,9 @@ function renderHand(){
 
   const doDealAnim = pendingDealAnimation;
   pendingDealAnimation = false;
+  /* 이번 렌더에서 쓰고 비운다 — 한 번만 튀게 하려는 것이다 */
+  const __justDrawn = justDrawnUids;
+  justDrawnUids = new Set();
   try{ syncHandDockBtn(); }catch(e){}   // [Ver 12.3] 접힌 상태에서도 장수는 보이게
 
   me.hand.forEach((c,i)=>{
@@ -35134,6 +35505,7 @@ function renderHand(){
     if(pendingCard && pendingCard.card && pendingCard.card.uid === c.uid) cls += ' targeting-pending';
     if(firstTurnTutorial.active && firstTurnTutorial.cardUid === c.uid) cls += ' tutorial-guide-card';
     if(doDealAnim) cls += ' deal-in';
+    else if(__justDrawn.has(c.uid)) cls += ' draw-in';   // [Ver 13.1] 방금 뽑은 카드
     el.className = cls;
     el.dataset.uid = c.uid;
     el.style.setProperty('--i', i - (me.hand.length-1)/2);
@@ -51934,7 +52306,13 @@ function onDrawClick(){
   //   애니메이션은 2초 뒤 콜백을 부르는데 그 사이 __actAs가 풀려 카드가 호스트에게 잘못 들어가던 버그가 있었다.
   //   대행 모드에서는 애니메이션을 건너뛰고 드로우 로직을 즉시(동기) 실행해 올바른 참가자에게 지급한다.
   const __lanProxyDraw = (typeof LAN!=='undefined' && LAN.__actAs);
-  const __doDrawAnim = __lanProxyDraw ? ((pid,cb)=>cb()) : performDrawAnimation;
+  /* [Ver 13.1] **카드를 즉시 손에 넣는다.** 연출은 그 위에 얹힐 뿐 로직을 붙잡지 않는다.
+     예전에는 performDrawAnimation 의 2초 콜백 안에서 드로우가 일어나, 스페이스바를 눌러도
+     2초 동안 아무 일도 일어나지 않는 것처럼 보였다. */
+  const __doDrawAnim = (pid, cb)=>{
+    if(!__lanProxyDraw){ try{ performDrawAnimation(pid, null); }catch(e){} }
+    cb();
+  };
   // [Ver 9.10.7] 카드가 날아갈 목적지는 "뽑는 사람의 자리"다. 예전엔 p0로 못박혀 있어
   //   랜서버 호스트가 슬롯 0이 아니면 카드가 엉뚱한 사람 쪽으로 날아갔다.
   __doDrawAnim(viewerIdNow(), ()=>{
@@ -51976,6 +52354,7 @@ function onDrawClick(){
     const newCard = drawCardRespectingGacha(me);
     if(newCard){
       grantCardToPlayer(me, newCard, '드로우');
+      try{ justDrawnUids.add(newCard.uid); }catch(e){}   // [Ver 13.1] 손패에서 톡 튀게
       log('sys', `${J(me.name,'이','가')} 카드를 뽑았습니다. (${newCard.name})`);
     }
     /* [Ver 9.0] 드로우의 재단 Lv4 — 30% 확률로 추가 드로우.
@@ -51986,6 +52365,7 @@ function onDrawClick(){
         const bonus = drawCardRespectingGacha(me);
         if(bonus){
           grantCardToPlayer(me, bonus, '드로우의 재단');
+          try{ justDrawnUids.add(bonus.uid); }catch(e){}
           log('highlight', `🃏 드로우의 재단 발동! ${J(me.name,'이','가')} 카드를 한 장 더 뽑았습니다. (${bonus.name})`);
         }
       }
@@ -52021,12 +52401,15 @@ function onDrawClick(){
   });
 }
 
+/* [Ver 13.1] 기본 2000ms → 420ms. 그리고 **onComplete 는 없어도 된다.**
+   드로우 로직은 더 이상 이 연출이 끝나기를 기다리지 않는다(onDrawClick 참고). */
 function performDrawAnimation(playerId, onComplete, durationMs){
-  const duration = durationMs || 2000;
+  const duration = durationMs || 420;
+  const done = (typeof onComplete === 'function') ? onComplete : null;
   const board = document.getElementById('board');
   const drawPile = document.getElementById('drawPile');
   const targetEl = document.getElementById('pcard-'+playerId);
-  if(!board || !drawPile || !targetEl){ setTimeout(onComplete, 400); return; }
+  if(!board || !drawPile || !targetEl){ if(done) setTimeout(done, 0); return; }
 
   const boardRect = board.getBoundingClientRect();
   const pileRect = drawPile.getBoundingClientRect();
@@ -52046,7 +52429,7 @@ function performDrawAnimation(playerId, onComplete, durationMs){
   anim.style.setProperty('--draw-duration', duration+'ms');
   board.appendChild(anim);
 
-  setTimeout(()=>{ anim.remove(); onComplete(); }, duration);
+  setTimeout(()=>{ try{ anim.remove(); }catch(e){} if(done) done(); }, duration);
 }
 
 /* 손패가 0장이 되어 5장을 한꺼번에 리필할 때: 카드가 한 장씩 연속으로 더미에서 날아와 손에 쌓이는 연출.
@@ -53875,7 +54258,7 @@ function updateFoundationGoldBadge(pulse){
      ▶ 진화석으로 **영구 해금해 둔** 카드가 손패에 들어오면, 2초 뒤에 **25%** 확률로
        스스로 진화형으로 **변이**한다.
      ▶ 횟수 제한이 없다. 대신 어느 카드를 진화시킬지 고를 수 없다.
-     ▶ 확률은 언제나 25%다. (판당 횟수를 늘려주던 유물 "잠재력"은 13.1에서 삭제됐다)
+     ▶ 기본 확률은 25%. 유물 <b>우빈이의 잠재력</b>(evoluck)이 여기에 더해진다.
      ▶ 한 카드는 손에 있는 동안 **딱 한 번만** 굴린다. 안 나오면 그걸로 끝이다.
 
    ▶ "손패에 들어온 것"을 어떻게 아는가
@@ -53903,8 +54286,13 @@ function canEvolveHandCard(card){
   if(!isEvolvableCardName(card.name)) return false;
   return isCardEvolved(card.name);   // 인벤토리에서 영구 해금해 둔 카드만
 }
-/* 변이 확률(%) — 지금은 언제나 25다. 확률을 올릴 수단이 생기면 여기에 더한다. */
-function evoMutateChance(me){ return EVO_MUTATE_BASE_PCT; }
+/* 변이 확률(%) — 기본 25 + 유물 "우빈이의 잠재력".
+   ⚠ 봇/원격 참가자는 p.artifacts 를, 나는 내 실제 레벨을 보므로 artOf() 하나로 통일된다. */
+function evoMutateChance(me){
+  let pct = EVO_MUTATE_BASE_PCT;
+  try{ pct += Number(artOf(me, 'evoluck')) || 0; }catch(e){}
+  return Math.max(0, Math.min(100, pct));
+}
 /* 이 판에서 변이가 일어나는가 — 재단과 같은 모드 범위(일반 · LAN 일반모드) */
 function isEvoMutationActive(){
   try{ return !!(gameActive && isFoundationModeActive()); }catch(e){ return false; }
