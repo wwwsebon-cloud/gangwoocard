@@ -3320,6 +3320,146 @@ body.reversed .turn-direction-ring svg{ animation-direction:reverse; }
 .br-roster-fab-label{ font-size:9px; font-weight:700; }
 .br-roster-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:var(--sp-2); }
 
+/* =====================================================================
+   [Ver 13.3.1] 뽑기 개봉 연출 (.rv-*) — 재단(권능)·광산(유물) 공용
+   ---------------------------------------------------------------------
+   결과를 목록으로 한꺼번에 뱉던 것을 **한 장씩 열어 보여준다.**
+   등급이 높을수록 차오르는 시간이 길고 빛이 세다 — 기다리는 그 순간이 재미다.
+   ▶ 색은 전부 --rvc(그 장의 등급색) 하나로 흐른다. 등급별 규칙을 새로 만들지 말 것.
+   ▶ ⚠ **쉬는 상태의 opacity 를 애니메이션으로 만들지 않는다.** 탭이 숨겨져 애니메이션이
+     멈추면 진행 중인 키프레임 값에서 굳어, 카드가 영영 안 보이게 된다.
+     그래서 보이기/숨기기는 클래스(.on)가 직접 정하고, 애니메이션은 **transform 만** 만진다.
+   ===================================================================== */
+.rv-ov{
+  position:fixed; inset:0; z-index:9200;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+  background:rgba(8,9,12,0.90); backdrop-filter:blur(3px);
+  opacity:0; pointer-events:none; transition:opacity 0.22s var(--ease);
+}
+.rv-ov.on{ opacity:1; pointer-events:auto; }
+.rv-count{
+  font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:0.08em;
+  color:rgba(255,255,255,0.55);
+}
+.rv-stage{
+  position:relative; width:min(340px, 84vw); height:min(380px, 52vh);
+  display:flex; align-items:center; justify-content:center;
+}
+/* ---- 차오르는 구슬 (개봉 직전) ---- */
+.rv-orb{
+  position:absolute; width:74px; height:74px; border-radius:50%;
+  background:radial-gradient(circle at 50% 45%, #fff 0%, var(--rvc,#888) 55%, transparent 72%);
+  opacity:0; transform:scale(0.2);
+}
+.rv-orb.go{ opacity:1; animation:rvCharge var(--rvms,600ms) var(--ease-in-out) forwards; }
+@keyframes rvCharge{
+  0%  { transform:scale(0.2)  rotate(0deg); }
+  70% { transform:scale(1.05) rotate(180deg); }
+  100%{ transform:scale(2.6)  rotate(360deg); }
+}
+.rv-ring{
+  position:absolute; width:74px; height:74px; border-radius:50%;
+  border:2px solid var(--rvc,#888); opacity:0;
+}
+.rv-ring.go{ opacity:1; animation:rvRing var(--rvms,600ms) var(--ease) infinite; }
+@keyframes rvRing{ from{ transform:scale(0.6); opacity:0.85; } to{ transform:scale(3.2); opacity:0; } }
+/* ---- 결과 카드 ---- */
+.rv-card{
+  position:relative; width:100%; height:100%;
+  display:none; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+  padding:26px 22px; border-radius:var(--r-lg);
+  background:var(--bg-panel);
+  box-shadow:inset 0 0 0 2px var(--rvc,var(--line)), 0 0 44px -8px var(--rvc,transparent), var(--sh-3);
+}
+.rv-card.on{ display:flex; animation:rvPop 0.42s var(--ease-spring); }
+@keyframes rvPop{
+  0%  { transform:scale(0.72) rotateY(90deg); }
+  60% { transform:scale(1.04) rotateY(0deg); }
+  100%{ transform:scale(1); }
+}
+.rv-card-ic{ width:104px; height:104px; display:flex; align-items:center; justify-content:center; font-size:66px; }
+.rv-card-ic img{ width:100%; height:100%; object-fit:cover; border-radius:var(--r); }
+.rv-card-r{
+  font-size:11px; font-weight:800; letter-spacing:0.14em; color:var(--rvc,var(--fg-faint));
+}
+.rv-card-nm{ font-family:var(--font-display); font-size:23px; font-weight:400; text-align:center; line-height:1.25; }
+.rv-card-tag{
+  font-family:var(--font-mono); font-size:11px; font-weight:700;
+  padding:3px 10px; border-radius:var(--r-pill);
+  background:var(--rvc,var(--bg-3)); color:#0d0f13;
+}
+.rv-card-sub{ font-size:11.5px; color:var(--fg-faint); text-align:center; }
+/* 전설·영웅은 뒤에서 빛살이 돈다 */
+.rv-rays{
+  position:absolute; inset:-40%; border-radius:50%; display:none; pointer-events:none;
+  background:conic-gradient(from 0deg, transparent 0 6%, var(--rvc) 7%, transparent 8% 20%,
+             var(--rvc) 21%, transparent 22% 36%, var(--rvc) 37%, transparent 38% 55%,
+             var(--rvc) 56%, transparent 57% 72%, var(--rvc) 73%, transparent 74%);
+  opacity:0.16; animation:spin 9s linear infinite;
+}
+.rv-card.tier3 .rv-rays, .rv-card.tier2 .rv-rays{ display:block; }
+.rv-card.tier3{ animation:rvPop 0.42s var(--ease-spring), rvBreathe 1.8s var(--ease-in-out) 0.5s infinite; }
+@keyframes rvBreathe{
+  0%,100%{ box-shadow:inset 0 0 0 2px var(--rvc), 0 0 44px -8px var(--rvc), var(--sh-3); }
+  50%    { box-shadow:inset 0 0 0 2px var(--rvc), 0 0 78px 2px var(--rvc), var(--sh-3); }
+}
+/* ---- 개봉 순간의 화면 섬광 ---- */
+.rv-flash{
+  position:fixed; inset:0; z-index:9210; pointer-events:none;
+  background:radial-gradient(circle at 50% 50%, var(--rvc,#fff) 0%, transparent 62%);
+  opacity:0; animation:rvFlash 0.5s var(--ease) forwards;
+}
+@keyframes rvFlash{ 0%{ opacity:0; } 14%{ opacity:0.55; } 100%{ opacity:0; } }
+/* ---- 아래 버튼줄 ---- */
+.rv-btns{ display:flex; gap:10px; }
+.rv-btns .btn{ min-width:104px; }
+.rv-hint{ font-size:11px; color:rgba(255,255,255,0.38); }
+body.mobile-mode .rv-stage{ width:86vw; height:46vh; }
+body.mobile-mode .rv-card-ic{ width:82px; height:82px; font-size:52px; }
+body.mobile-mode .rv-card-nm{ font-size:19px; }
+
+/* =====================================================================
+   [Ver 13.3.1] 곡괭이 일괄 강화 (.pu-*) · 광산 확률 보조줄
+   ===================================================================== */
+.pu-wrap{ display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center; }
+.pu-hero{ font-size:36px; letter-spacing:4px; }
+.pu-line{ font-size:13.5px; line-height:1.7; }
+.pu-warn{
+  font-size:12px; line-height:1.6; color:var(--tone-red);
+  padding:8px 12px; border-radius:var(--r-sm); background:rgba(224,90,74,0.10);
+}
+.pu-pick{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:center; }
+.pu-n{
+  display:flex; align-items:baseline; gap:3px; min-width:74px; justify-content:center;
+  padding:6px 10px; border-radius:var(--r-sm); background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--line);
+}
+.pu-n b{ font-family:var(--font-mono); font-size:22px; font-weight:800; }
+.pu-n small{ font-size:11px; color:var(--fg-faint); }
+.pu-exp{ font-size:12px; color:var(--fg-dim); }
+.pu-go{ width:100%; max-width:280px; }
+.pu-have{ font-size:11.5px; color:var(--fg-faint); }
+/* 결과 */
+.pu-res{ display:flex; flex-direction:column; align-items:center; gap:7px; text-align:center; }
+.pu-res-ic{ font-size:46px; }
+.pu-res-big{ font-size:17px; font-weight:800; margin-bottom:4px; }
+.pu-res-row{
+  display:flex; justify-content:space-between; width:100%; max-width:250px;
+  padding:5px 12px; border-radius:var(--r-xs); background:var(--bg-2);
+  font-size:12.5px;
+}
+.pu-res-row b{ font-family:var(--font-mono); }
+.pu-res-row.ok b { color:var(--tone-green); }
+.pu-res-row.bad b{ color:var(--tone-red); }
+.pu-res-sub{ margin-top:5px; font-size:11.5px; color:var(--fg-faint); }
+/* "하나를 콕 집어 노릴 때" 줄 — 위 등급표보다 한 단계 조용하게 둔다 */
+.gc-rates-one{ margin-top:-4px; opacity:0.9; }
+.gc-rates-one .gc-rate-lbl{
+  font-size:11px; font-weight:700; color:var(--fg-faint); align-self:center; margin-right:2px;
+}
+.gc-rates-one .gc-rate em{
+  font-style:normal; font-size:9.5px; opacity:0.6; margin-left:4px;
+}
+
 /* ---------- 반응 타이머 ---------- */
 #reactionBar{
   display:none; flex-shrink:0; flex-direction:column; gap:8px;
@@ -13987,7 +14127,11 @@ const POWER_DEFS = [
       const nc = pwCardOfGrade(pwGradeShift(me.hand[i].grade, 1)); if(!nc) return;
       pwLog(`🌱 "${escapeHtml(me.hand[i].name)}"이(가) <b>${escapeHtml(nc.name)}</b>(으)로 자랐습니다.`);
       me.hand[i] = nc; } },
-  { key:'summon', rarity:'epic', icon:'🌀', name:'소환', target:'self', cd:77, amt:0, up:{k:'cd',per:5},
+  /* [Ver 13.3.1] 쿨 77 → 40. 카드 한 장 얻자고 77초를 비워두느니 다른 걸 끼는 게 나았다.
+     ⚠ 강화폭은 0.5초다. 기본 쿨을 40으로 내린 마당에 per를 크게 두면 고레벨에서
+       pwCd의 하한(0.5초)에 닿아 레벨 차이가 사라지고 무한 카드 생성기가 된다.
+       지금은 Lv1 40초 → Lv10 35.5초. 강화는 "조금 빨라지는" 정도로만 둔다. */
+  { key:'summon', rarity:'epic', icon:'🌀', name:'소환', target:'self', cd:40, amt:0, up:{k:'cd',per:0.5},
     desc:v=>`무작위 카드 <b>한 장</b>을 얻습니다.`,
     run:(me,t,v)=>{ const c = drawCard(me); if(c){ grantCardToPlayer(me, c, '권능 소환'); pwLog(`🌀 ${J(me.name,'이','가')} 카드 한 장을 소환했습니다.`); } } },
   { key:'recall', rarity:'epic', icon:'↩️', name:'리콜', target:'self', cd:84, amt:0, up:{k:'cd',per:5},
@@ -14288,7 +14432,7 @@ function equippedPowerCount(){ return loadEquippedPowers().filter(Boolean).lengt
    ▶ 보너스는 등급마다 **따로** 굴린다(서로 배타적이지 않다). 그래서 한 번에 최대 4개까지 나온다. */
 const POWER_ALTAR_OFFERS = [
   { teeth:1,  label:'이빨 1개',  fixed:['normal'],         bonus:[['rare',40],['epic',10],['legend',3]] },
-  { teeth:5,  label:'이빨 5개',  fixed:['normal','rare'],  bonus:[['epic',22],['legend',12]] },
+  { teeth:5,  label:'이빨 5개',  fixed:['normal','rare'],  bonus:[['epic',22],['legend',25]] },   // [Ver 13.3.1] 전설 12 → 25
   { teeth:15, label:'이빨 15개', fixed:['legend'],         bonus:[['epic',30],['rare',30]] },
 ];
 function powersOfRarity(r){ return POWER_DEFS.filter(d=> d.rarity === r); }
@@ -14488,25 +14632,153 @@ function doPowerUpgrade(key){
       <div style="font-size:11.5px;color:var(--fg-faint);margin-top:6px;">쿨타임 ${pwCd(d,res.lv)}초</div>
     </div>`, [{label:'확인', solid:true}]);
 }
-/* 재단에 바친다 — 결과를 등급 순으로 보여준다 */
+/* ##########################################################################
+   [Ver 13.3.1] 뽑기 개봉 연출 — 재단(권능) · 광산(유물) 공용
+   --------------------------------------------------------------------------
+   결과를 목록으로 한꺼번에 뱉던 것을 **한 장씩 열어** 보여준다.
+   등급이 높을수록 차오르는 시간이 길고 빛이 세다 — 기다리는 그 순간이 재미다.
+
+   revealSequence(items, opts)
+     items[i] = { icon:HTML, name, rarity:'라벨', tier:0~3, color:'#rrggbb',
+                  tag:'NEW'|'+1 (3)', sub:'설명 한 줄' }
+     opts     = { title, onDone }
+
+   ▶ tier 가 연출의 세기를 정한다. 0 일반 · 1 희귀 · 2 영웅 · 3 전설.
+   ▶ ⚠ **아무 데서나 클릭하면 건너뛴다.** 20연차를 한 장씩 보고 있을 수는 없다.
+     '전부 열기'는 남은 것을 즉시 요약 모달로 넘긴다.
+   ########################################################################## */
+const RV_CHARGE_MS = [340, 480, 760, 1150];   // tier 별 차오르는 시간
+const RV_HOLD_MS   = [520, 640, 900, 1400];   // 열고 나서 머무는 시간
+function revealSequence(items, opts){
+  opts = opts || {};
+  const list = Array.isArray(items) ? items.slice() : [];
+  if(!list.length){ if(opts.onDone) opts.onDone(); return; }
+
+  let ov = document.getElementById('rvOv');
+  if(ov){ try{ ov.remove(); }catch(e){} }
+  ov = document.createElement('div');
+  ov.id = 'rvOv';
+  ov.className = 'rv-ov';
+  ov.innerHTML = `
+    <div class="rv-count" id="rvCount"></div>
+    <div class="rv-stage" id="rvStage">
+      <span class="rv-ring" id="rvRing"></span>
+      <span class="rv-orb"  id="rvOrb"></span>
+      <div class="rv-card" id="rvCard"></div>
+    </div>
+    <div class="rv-btns">
+      <button class="btn" id="rvSkip">전부 열기</button>
+    </div>
+    <div class="rv-hint">화면을 누르면 다음 장으로 넘어갑니다</div>`;
+  document.body.appendChild(ov);
+  /* ⚠ rAF 만으로 켜면 **탭이 뒤에 있을 때 영영 안 켜진다**(rAF 는 그때 멈춘다).
+     그러면 오버레이가 opacity:0 · pointer-events:none 인 채로 남아, 결과가 눈에도 안 보이고
+     클릭도 안 먹는다. setTimeout 을 같이 걸어 어느 쪽이든 반드시 켜지게 한다. */
+  requestAnimationFrame(()=> requestAnimationFrame(()=> ov.classList.add('on')));
+  setTimeout(()=>{ try{ ov.classList.add('on'); }catch(e){} }, 30);
+
+  const $ = id => ov.querySelector('#' + id);
+  let i = -1, timer = null, closing = false, waiting = false;
+
+  const clear = ()=>{ if(timer){ clearTimeout(timer); timer = null; } };
+  const finish = ()=>{
+    if(closing) return;
+    closing = true; clear();
+    ov.classList.remove('on');
+    setTimeout(()=>{ try{ ov.remove(); }catch(e){} }, 240);
+    if(opts.onDone) opts.onDone();
+  };
+
+  const step = ()=>{
+    clear();
+    i++;
+    if(i >= list.length){ finish(); return; }
+    const it = list[i];
+    const tier = Math.max(0, Math.min(3, it.tier || 0));
+    const chargeMs = RV_CHARGE_MS[tier];
+    ov.style.setProperty('--rvc', it.color || '#9aa0a6');
+    ov.style.setProperty('--rvms', chargeMs + 'ms');
+    $('rvCount').textContent = `${i+1} / ${list.length}`;
+
+    /* 1) 차오른다 — 클래스를 뗐다 붙여 애니메이션을 처음부터 다시 돌린다 */
+    const card = $('rvCard'), orb = $('rvOrb'), ring = $('rvRing');
+    card.className = 'rv-card';
+    card.innerHTML = '';
+    orb.classList.remove('go'); ring.classList.remove('go');
+    void orb.offsetWidth;
+    orb.classList.add('go'); ring.classList.add('go');
+    waiting = true;
+
+    /* 2) 열린다 */
+    timer = setTimeout(()=>{
+      orb.classList.remove('go'); ring.classList.remove('go');
+      card.innerHTML = `
+        <span class="rv-rays"></span>
+        <span class="rv-card-ic">${it.icon || ''}</span>
+        <span class="rv-card-r">${escapeHtml(it.rarity || '')}</span>
+        <span class="rv-card-nm">${escapeHtml(it.name || '')}</span>
+        ${it.tag ? `<span class="rv-card-tag">${escapeHtml(it.tag)}</span>` : ''}
+        ${it.sub ? `<span class="rv-card-sub">${it.sub}</span>` : ''}`;
+      card.className = 'rv-card on tier' + tier;
+      if(tier >= 2){
+        const f = document.createElement('div');
+        f.className = 'rv-flash';
+        f.style.setProperty('--rvc', it.color || '#fff');
+        document.body.appendChild(f);
+        setTimeout(()=>{ try{ f.remove(); }catch(e){} }, 520);
+      }
+      try{ if(typeof UISfx === 'object' && UISfx && UISfx.tap) UISfx.tap(); }catch(e){}
+      waiting = false;
+      timer = setTimeout(step, RV_HOLD_MS[tier]);
+    }, chargeMs);
+  };
+
+  /* 아무 데나 누르면 다음 장. 차오르는 중이면 곧바로 연다. */
+  ov.addEventListener('click', (e)=>{
+    if(e.target && e.target.id === 'rvSkip') return;
+    if(waiting){ clear(); i--; step(); }   // 차오름 생략 → 같은 장을 즉시 연다
+    else step();
+  });
+  $('rvSkip').addEventListener('click', (e)=>{ e.stopPropagation(); finish(); });
+
+  step();
+}
+
+/* 등급 → 연출 세기·색. 재단과 광산이 같은 눈금을 쓴다. */
+const PW_RARITY_TIER  = { normal:0, rare:1, epic:2, legend:3 };
+const ART_RARITY_TIER = { common:0, rare:1, epic:2, legendary:3 };
+const RV_TIER_COLOR   = ['#9aa0a6', '#4FC4DC', '#A98BEA', '#E9B949'];
+
+/* 재단에 바친다 — [Ver 13.3.1] 결과를 한 장씩 연다. 낮은 등급부터 열어 끝이 가장 뜨겁게. */
 function doAltarOffer(teeth){
   const res = offerToAltar(teeth);
   if(!res.ok){ showModal('🦴 랩터의 재단', res.reason, [{label:'확인', solid:true}]); return; }
   renderPowerScreen();
-  const order = { legend:0, epic:1, rare:2, normal:3 };
-  const rows = res.results.slice().sort((a,b)=> order[a.rarity] - order[b.rarity]).map(r=>{
+  const asc = res.results.slice().sort((a,b)=> (PW_RARITY_TIER[a.rarity]||0) - (PW_RARITY_TIER[b.rarity]||0));
+  const items = asc.map(r=>{
     const d = powerDefOf(r.key), rd = powerRarityDef(r.rarity);
-    return `<div class="pw-got ${rd.cls}">
-      <span class="pw-got-ic">${powerIconHtml(d)}</span>
-      <span class="pw-got-nm">${escapeHtml(d.name)}</span>
-      <span class="pw-got-r">${rd.label}</span>
-      <span class="pw-got-tag">${r.isNew ? 'NEW' : `+1 (${r.dup})`}</span>
-    </div>`;
-  }).join('');
-  showModal('🦴 랩터의 재단', `<div class="pw-got-wrap">
-      <div class="pw-got-sum">이빨 <b>${teeth}</b>개를 바쳐 권능 <b>${res.results.length}</b>개를 받았습니다.</div>
-      ${rows}
-    </div>`, [{label:'확인', solid:true}]);
+    const tier = PW_RARITY_TIER[r.rarity] || 0;
+    return { icon: powerIconHtml(d), name: d.name, rarity: rd.label, tier, color: RV_TIER_COLOR[tier],
+             tag: r.isNew ? 'NEW' : `중복 +1 (${r.dup})`,
+             sub: r.isNew ? `Lv${r.lv} · 쿨타임 ${pwCd(d, r.lv)}초` : `강화용으로 쌓입니다` };
+  });
+  revealSequence(items, { onDone: ()=>{
+    const order = { legend:0, epic:1, rare:2, normal:3 };
+    const rows = res.results.slice().sort((a,b)=> order[a.rarity] - order[b.rarity]).map(r=>{
+      const d = powerDefOf(r.key), rd = powerRarityDef(r.rarity);
+      return `<div class="pw-got ${rd.cls}">
+        <span class="pw-got-ic">${powerIconHtml(d)}</span>
+        <span class="pw-got-nm">${escapeHtml(d.name)}</span>
+        <span class="pw-got-r">${rd.label}</span>
+        <span class="pw-got-tag">${r.isNew ? 'NEW' : `+1 (${r.dup})`}</span>
+      </div>`;
+    }).join('');
+    const news = res.results.filter(r=> r.isNew).length;
+    showModal('🦴 랩터의 재단', `<div class="pw-got-wrap">
+        <div class="pw-got-sum">이빨 <b>${teeth}</b>개를 바쳐 권능 <b>${res.results.length}</b>개를 받았습니다. (새 권능 <b>${news}</b>개)</div>
+        ${rows}
+      </div>`, [{label:'확인', solid:true}]);
+  }});
 }
 
 /* ==========================================================================
@@ -15911,6 +16183,12 @@ function mailRewardText(r){
   if(r.pickaxe) parts.push(`⛏️ 곡괭이 ${r.pickaxe.toLocaleString()}개`);          // [Ver 9.11]
   if(r.teeth) parts.push(`🦷 랩터의 이빨 ${r.teeth.toLocaleString()}개`);          // [Ver 13.1]
   if(r.goldPickaxe) parts.push(`🪙 개쩌는 곡괭이 ${r.goldPickaxe.toLocaleString()}개`); // [Ver 9.16]
+  /* [Ver 13.3.1] 권능 보상 — { power:{ key:'summon', n:10 } }
+     같은 권능을 n개 준다(첫 개는 습득, 나머지는 강화용 중복으로 쌓인다). */
+  if(r.power && r.power.key){
+    const __pd = (typeof powerDefOf === 'function') ? powerDefOf(r.power.key) : null;
+    parts.push(`${__pd ? __pd.icon : '👑'} ${__pd ? __pd.name : r.power.key} ${(r.power.n||1).toLocaleString()}개`);
+  }
   if(r.boxKeys) parts.push(`🔑 상자 열쇠 ${r.boxKeys.toLocaleString()}개`);        // [Ver 9.16]
   if(r.cream) parts.push(`☀️ 썬크림 ${r.cream.toLocaleString()}개`);              // [Ver 12.4.4]
   // [Ver 9.13.1] 등급 확정 진화석 뽑기권 — { tier:'Ephemeral', n:1 }
@@ -15931,6 +16209,12 @@ function claimMail(id){
     if(m.reward.pickaxe) grantPickaxe(m.reward.pickaxe);      // [Ver 9.11] 곡괭이
     if(m.reward.teeth) grantTeeth(m.reward.teeth);            // [Ver 13.1] 랩터의 이빨
     if(m.reward.goldPickaxe) grantGoldPickaxe(m.reward.goldPickaxe); // [Ver 9.16] 개쩌는 곡괭이
+    /* [Ver 13.3.1] 권능 보상 — 한 번에 n개. grantPower가 첫 개는 Lv1로, 나머지는 중복으로 쌓는다.
+       ⚠ 반드시 grantPower를 n번 부를 것. loadPowers()를 직접 만지면 세 곳 등록 규칙이 깨진다. */
+    if(m.reward.power && m.reward.power.key){
+      const __n = Math.max(1, m.reward.power.n || 1);
+      for(let i=0; i<__n; i++){ try{ grantPower(m.reward.power.key); }catch(e){} }
+    }
     if(m.reward.boxKeys) grantBoxKeys(m.reward.boxKeys);      // [Ver 9.16] 상자 열쇠
     if(m.reward.cream) grantCream(m.reward.cream);            // [Ver 12.4.4] 시즌 패스 썬크림
     if(m.reward.pfp) grantPfp(m.reward.pfp);                  // [Ver 12.6.1] 프로필 사진
@@ -17070,6 +17354,27 @@ async function fbLookupRemoteCode(code){
    새 패치를 넣을 땐 BALANCE_PATCHES 맨 앞에 한 덩어리를 추가하면 된다.
    ########################################################################## */
 const BALANCE_PATCHES = [
+  {
+    version: 'Ver 13.3.1', date: '2026-08-31',
+    groups: [
+      { title:'소환 — 77초를 비워둘 값어치가 없었다', kind:'power',
+        note:'무작위 카드 한 장을 얻자고 77초를 비워두느니 다른 권능을 끼는 게 나았습니다. 40초로 내립니다. <b>레벨당 감소폭은 0.5초</b>입니다 — 기본 쿨이 낮아진 만큼 강화폭까지 크면 고레벨에서 쿨타임 하한(0.5초)에 닿아 레벨 차이가 사라지고, 사실상 무한 카드 생성기가 됩니다.',
+        rows:[
+          { name:'소환', icon:'\u{1F300}', rows:[
+            { label:'쿨타임',        from:'77초', to:'40초',   dir:'up' },
+            { label:'레벨당 감소',   from:'5초',  to:'0.5초',  dir:'down' },
+            { label:'Lv10 쿨타임',   from:'32초', to:'35.5초', dir:'down' },
+          ]},
+        ]},
+      { title:'재단 — 중간 제물을 고를 이유가 없었다', kind:'system',
+        note:'이빨 5개는 확정 보상이 15개보다 낮은데 전설 보너스까지 12%라, 이빨이 모이면 그냥 15개를 기다리는 게 나았습니다. 전설 보너스를 올려 <b>"조금씩 자주 바치는 길"</b>을 열어둡니다.',
+        rows:[
+          { name:'이빨 5개', icon:'\u{1F9B7}', rows:[
+            { label:'전설 보너스', from:'12%', to:'25%', dir:'up' },
+          ]},
+        ]},
+    ]
+  },
   {
     version: 'Ver 13.3', date: '2026-08-31',
     groups: [
@@ -18532,10 +18837,24 @@ function renderMineScreen(){
       <button class="gc-pull gc-pull-mine" ${n < 5 ? 'disabled' : ''} onclick="doMine(5)">
         <b>5회 채굴</b><small>⛏️ 5</small>
       </button>
+      <button class="gc-pull gc-pull-mine" ${n < 10 ? 'disabled' : ''} onclick="doMine(10)">
+        <b>10회 채굴</b><small>⛏️ 10</small>
+      </button>
     </div>
 
     <div class="gc-rates">
       ${ARTIFACT_RARITIES.map(r=>`<span class="gc-rate ${r.cls}">${r.label} <i>${r.rate}%</i></span>`).join('')}
+    </div>
+    ${/* [Ver 13.3.1] "등급 4%"만 적어두면 실제 체감과 어긋난다 — 그 등급 안에서 또
+          여러 종을 나눠 갖기 때문이다. **특정 유물 하나를 노릴 때의 확률**을 같이 적는다.
+          13.1 환급이 어긋났던 것도 이 차이를 아무도 눈여겨보지 않아서였다. */''}
+    <div class="gc-rates gc-rates-one">
+      <span class="gc-rate-lbl">유물 <b>하나</b>를 콕 집어 노릴 때</span>
+      ${ARTIFACT_RARITIES.map(r=>{
+        const cnt = ARTIFACT_DEFS.filter(d=> d.rarity === r.key).length;
+        const one = cnt ? (r.rate / cnt) : 0;
+        return `<span class="gc-rate ${r.cls}">${r.label} <i>${one.toFixed(2)}%</i><em>${cnt}종</em></span>`;
+      }).join('')}
     </div>
 
     ${/* [Ver 9.16] 개쩌는 곡괭이 — 강화(도박)와 전용 채굴을 한 상자 안에 묶어둔다.
@@ -18726,45 +19045,86 @@ function doGoldMine(count){
   }, 'gold');
 }
 /* [Ver 9.16] 곡괭이 강화 — 곡괭이 1개를 걸고 25%. 실패하면 그대로 소멸한다. */
+/* ==========================================================================
+   [Ver 13.3.1] 곡괭이 강화 — **원하는 개수만큼 한 번에.**
+   --------------------------------------------------------------------------
+   예전엔 한 번에 1개뿐이라, 곡괭이 20개를 태우려면 모달을 20번 열고 닫아야 했다.
+   이제 개수를 고르면 그만큼 **독립 판정**을 한꺼번에 굴리고 결과를 한 장에 요약한다.
+   ⚠ 확률은 판마다 독립이다. "10개 걸면 하나는 나온다" 같은 보정은 없다 — 그렇게
+     읽히지 않도록 결과창에 성공/실패 개수를 그대로 적는다.
+   ========================================================================== */
 function doPickaxeUpgrade(){
   if(mineBusy) return;
-  if(pickaxeCount() < 1){
-    showModal('⛏️ 곡괭이 부족', `강화하려면 곡괭이가 <b>1개</b> 필요합니다. (보유 ${pickaxeCount()}개)`, [{label:'확인', solid:true}]);
+  const have = pickaxeCount();
+  if(have < 1){
+    showModal('⛏️ 곡괭이 부족', `강화하려면 곡괭이가 <b>1개</b> 필요합니다. (보유 ${have}개)`, [{label:'확인', solid:true}]);
     return;
   }
-  showModal('⚒️ 곡괭이 강화', `<div style="line-height:1.9;text-align:center;">
-      <div style="font-size:34px;">⛏️ → 🪙</div>
-      곡괭이 <b>1개</b>를 걸고 강화합니다.<br>
-      성공 확률은 <b>${Math.round(goldPickaxeUpChance()*100)}%</b>입니다.<br><br>
-      <span style="color:#e05a4a;font-weight:800;">실패하면 곡괭이는 파괴되어 사라집니다.</span><br>
-      <span style="font-size:12px;color:var(--fg-dim);">(보유 ⛏️ ${pickaxeCount()}개 · 🪙 ${goldPickaxeCount()}개)</span>
-    </div>`, [
-      { label:'그만두기' },
-      { label:'강화하기', solid:true, action: runPickaxeUpgrade }
-    ]);
+  const pct = Math.round(goldPickaxeUpChance()*100);
+  showModal('⚒️ 곡괭이 강화', `<div class="pu-wrap">
+      <div class="pu-hero">⛏️ → 🪙</div>
+      <div class="pu-line">곡괭이를 걸고 <b>개쩌는 곡괭이</b>로 만듭니다. 성공 확률 <b>${pct}%</b>.</div>
+      <div class="pu-warn">실패하면 걸었던 곡괭이는 <b>파괴되어 사라집니다.</b> 판정은 <b>1개씩 따로</b> 굴립니다.</div>
+      <div class="pu-pick">
+        <button class="btn btn-sm pu-minus" onclick="puStep(-10)">−10</button>
+        <button class="btn btn-sm pu-minus" onclick="puStep(-1)">−1</button>
+        <div class="pu-n"><b id="puN">1</b><small>개</small></div>
+        <button class="btn btn-sm" onclick="puStep(1)">+1</button>
+        <button class="btn btn-sm" onclick="puStep(10)">+10</button>
+        <button class="btn btn-sm" onclick="puStep('max')">전부</button>
+      </div>
+      <div class="pu-exp" id="puExp"></div>
+      <button class="btn btn-solid pu-go" id="puGo" onclick="puConfirm()">강화하기</button>
+      <div class="pu-have">보유 ⛏️ <b>${have}</b>개 · 🪙 <b>${goldPickaxeCount()}</b>개</div>
+    </div>`, [{ label:'그만두기' }]);
+  window.__puN = 1;
+  puStep(0);
 }
-function runPickaxeUpgrade(){
+/* 개수 조절 — 보유량을 넘지 않게 잘라낸다 */
+function puStep(d){
+  const have = pickaxeCount();
+  let n = window.__puN || 1;
+  if(d === 'max') n = have;
+  else n = n + d;
+  n = Math.max(1, Math.min(have, n));
+  window.__puN = n;
+  const el = document.getElementById('puN');
+  if(el) el.textContent = n;
+  const exp = document.getElementById('puExp');
+  if(exp){
+    const p = goldPickaxeUpChance();
+    /* 기댓값과 "하나도 못 건질 확률"을 함께 적는다. 도박이라는 걸 숨기지 않는다. */
+    const none = Math.pow(1 - p, n) * 100;
+    exp.innerHTML = `기대 성공 <b>${(n*p).toFixed(1)}개</b> · 하나도 못 건질 확률 <b>${none < 0.1 ? '0.1% 미만' : none.toFixed(1)+'%'}</b>`;
+  }
+  const go = document.getElementById('puGo');
+  if(go) go.textContent = `⛏️ ${n}개 걸고 강화하기`;
+}
+function puConfirm(){
+  const n = Math.max(1, Math.min(pickaxeCount(), window.__puN || 1));
+  try{ closeModal(); }catch(e){}
+  runPickaxeUpgrade(n);
+}
+function runPickaxeUpgrade(n){
   if(mineBusy) return;
-  if(!spendPickaxe(1)) return;
+  n = Math.max(1, Math.min(pickaxeCount(), n|0 || 1));
+  if(!spendPickaxe(n)) return;
   mineBusy = true;
-  const ok = Math.random() < goldPickaxeUpChance();
+  let ok = 0;
+  for(let i=0; i<n; i++){ if(Math.random() < goldPickaxeUpChance()) ok++; }
   showMineDigging(()=>{
-    if(ok) grantGoldPickaxe(1);
+    if(ok > 0) grantGoldPickaxe(ok);
     mineBusy = false;
     renderMineScreen();
-    showModal(ok ? '✨ 강화 성공!' : '💥 강화 실패', ok
-      ? `<div style="text-align:center;line-height:1.9;">
-          <div style="font-size:44px;">🪙</div>
-          <div style="font-size:17px;font-weight:900;margin:4px 0;">개쩌는 곡괭이</div>
-          <div style="font-size:13px;">곡괭이가 <b>개쩌는 곡괭이</b>로 진화했습니다!</div>
-          <div style="font-size:12px;color:var(--fg-dim);margin-top:6px;">Epic 65% · Legendary 35%로만 채굴합니다. (보유 ${goldPickaxeCount()}개)</div>
-        </div>`
-      : `<div style="text-align:center;line-height:1.9;">
-          <div style="font-size:44px;">💥</div>
-          <div style="font-size:15px;font-weight:800;margin:4px 0;">곡괭이가 부서졌습니다</div>
-          <div style="font-size:12.5px;color:var(--fg-dim);">걸었던 곡괭이 1개가 사라졌습니다. (남은 ⛏️ ${pickaxeCount()}개)</div>
-        </div>`,
-      [{label:'확인', solid:true}]);
+    const fail = n - ok;
+    showModal(ok > 0 ? '✨ 강화 결과' : '💥 강화 실패', `<div class="pu-res">
+        <div class="pu-res-ic">${ok > 0 ? '🪙' : '💥'}</div>
+        <div class="pu-res-big">${ok > 0 ? `개쩌는 곡괭이 <b>${ok}</b>개` : '하나도 건지지 못했습니다'}</div>
+        <div class="pu-res-row"><span>걸었던 곡괭이</span><b>⛏️ ${n}개</b></div>
+        <div class="pu-res-row ok"><span>성공</span><b>${ok}개</b></div>
+        <div class="pu-res-row bad"><span>파괴</span><b>${fail}개</b></div>
+        <div class="pu-res-sub">보유 ⛏️ ${pickaxeCount()}개 · 🪙 ${goldPickaxeCount()}개</div>
+      </div>`, [{label:'확인', solid:true}]);
     /* [Ver 11.3.1] 곡괭이 강화 직후 자동 백업 — 무한 백업 후 곡괭이 무한 사용을
        막기 위해 다른 훅(상자·뽑기·채굴)과 동일하게 여기서도 진행도를 조용히 올린다. */
     try{ autoBackupAfterGame(); }catch(e){}
@@ -18794,7 +19154,23 @@ function showMineDigging(onDone, mode){
     onDone();
   }, MINE_DIG_MS);
 }
+/* [Ver 13.3.1] 채굴 결과도 한 장씩 연다. 목록은 다 연 뒤에 요약으로 남긴다. */
 function showMineResult(got, isGold){
+  const asc = got.slice().sort((a,b)=>
+    (ART_RARITY_TIER[artDefOf(a.key).rarity]||0) - (ART_RARITY_TIER[artDefOf(b.key).rarity]||0));
+  const items = asc.map(g=>{
+    const d = artDefOf(g.key), rd = artRarityDef(d.rarity);
+    const tier = ART_RARITY_TIER[d.rarity] || 0;
+    const need = artNeedFor(g.res.lv, d.rarity);
+    return { icon: d.icon, name: d.name, rarity: rd.label, tier, color: RV_TIER_COLOR[tier],
+             tag: g.res.isNew ? 'NEW' : `중복 +1 (${g.res.dup})`,
+             sub: g.res.isNew ? `Lv1 획득` :
+                  (g.res.lv >= ARTIFACT_MAX_LV ? `이미 MAX 레벨입니다`
+                   : `Lv${g.res.lv} · 다음 레벨까지 ${Math.max(0, need - g.res.dup)}개`) };
+  });
+  revealSequence(items, { onDone: ()=> showMineResultList(got, isGold) });
+}
+function showMineResultList(got, isGold){
   const rows = got.map(g=>{
     const d = artDefOf(g.key);
     const rd = artRarityDef(d.rarity);
@@ -20170,6 +20546,18 @@ const CHANGELOG = [
       '\u{1F0CF} <b>[UI] 손패의 세로 폭을 조금 줄였습니다</b> — 그만큼 위쪽 스탯창이 넓어집니다.',
       '\u{1F5C2}️ <b>[UI] 메뉴 화면이 화면에 꽉 찹니다</b> — 판 높이가 500px에서 멈춰 위아래로 검은 여백만 넓던 것을 고쳤습니다. 버튼과 그 안의 글자·아이콘이 함께 커졌습니다.',
       '\u{1F451} <b>[UI] 상태칩의 지속시간 배지</b>(3R · 2턴 …) 글자를 <b>흰색</b>으로 바꿨습니다. 어두운 스탯창 위에서 배경에 묻혀 몇 바퀴 남았는지 보이지 않았습니다.',
+      '\u{1F469} <b>[사과] 우빈 엄마 환급이 너무 적었습니다.</b> 13.1 환급은 <b>그 유물을 몇 개 캤는지</b>만 셌습니다. 그런데 곡괭이 1개는 유물 1개가 아닙니다 — 전설은 등급 확률 4%에 9종이라, <b>우빈 엄마 하나를 특정해서 뽑을 확률은 0.444%</b>였습니다. 곡괭이 <b>약 225개</b>(10분에 1개씩 차오르니 약 37시간어치)를 들여 캔 것을 <b>곡괭이 1개</b>로 돌려드린 셈입니다. 캔 개수가 아니라 <b>캐는 데 든 비용</b>으로 셌어야 했습니다.',
+      '\u{1F39F}️ <b>[보상] 코드 <u>UBINMOMREFUND</u></b> — <b>권능 \\u0027소환\\u0027 10개</b>와 <b>개쩌는 곡괭이 5개</b>를 드립니다. <b>PROJECTSIMP를 이미 쓰셨든 아니든 똑같이 받으실 수 있습니다.</b> (환급하며 유물 기록이 지워져 개인별 재계산이 불가능해, 정액으로 드립니다)',
+      '\u{1F300} <b>[밸런스] 소환</b> 권능의 쿨타임을 <b>77초 → 40초</b>로 내렸습니다. 카드 한 장 얻자고 77초를 비워두느니 다른 권능을 끼는 게 나았습니다. 대신 <b>레벨당 감소폭은 0.5초</b>입니다 — 기본 쿨이 낮아진 만큼 강화폭까지 크면 고레벨에서 사실상 무한 카드 생성기가 됩니다.',
+      '\u{1F0CF} <b>[신규 카드 4종]</b> 유저 아이디어를 그대로 넣었습니다. <b>급가속</b>(S) · <b>뺑소니</b>(B) · <b>trinitrotoluene</b>(S) · <b>비겁한 일격</b>(SR).',
+      '\u{1F3CE}️ <b>급가속</b> (S) — 쓸 때마다 <b>회피율이 영구히 2.5%</b> 오릅니다. (이 카드로는 최대 <b>50%</b>까지) 그리고 이 카드는 사라지고 <b>[뺑소니]</b> 1장이 손에 들어옵니다.',
+      '\u{1F697} <b>뺑소니</b> (B) — <b>700 피해</b>. <b>5%</b>로 차가 터져 <b>대상과 자신이 함께 즉사</b>하고, <b>7%</b>로 경찰에게 잡혀 <b>골드 전액 압수 + 1바퀴 스턴</b>입니다.',
+      '\u{1F9E8} <b>trinitrotoluene</b> (S) — 상대에게 화약을 바릅니다. 그 뒤로 그 사람은 <b>카드를 낼 때마다 20% 확률</b>로 터져 <b>1000 피해</b>를 입습니다. <b>해제되지 않습니다.</b>',
+      '\u{1F52B} <b>비겁한 일격</b> (SR) — <b>1대1에서만</b> 쓸 수 있습니다. 상대의 <b>최대 체력을 1</b>로 만들고 <b>3바퀴 기절</b>시킵니다. <b>공격 카드가 아닌 S등급 이상</b> 카드를 소모해 상쇄할 수 있습니다.',
+      '\u{1F9B7} <b>[밸런스] 재단</b> — <b>이빨 5개</b>의 <b>전설 보너스 12% → 25%</b>. 중간 제물이 큰 제물의 열화판이라 고를 이유가 없었습니다.',
+      '✨ <b>[UI] 뽑기 개봉 연출</b> — 재단과 광산 결과가 목록으로 한꺼번에 뜨던 것을 <b>한 장씩 여는</b> 연출로 바꿨습니다. 등급이 높을수록 차오르는 시간이 길고 빛이 셉니다. <b>화면을 누르면 넘어가고, "전부 열기"</b>로 건너뛸 수 있습니다.',
+      '⛏️ <b>[편의] 곡괭이를 원하는 개수만큼 한 번에 강화</b>할 수 있습니다. 예전엔 1개씩이라 20개를 태우려면 창을 20번 열어야 했습니다. 고르는 창에 <b>기대 성공 개수</b>와 <b>하나도 못 건질 확률</b>도 함께 보여줍니다. (판정은 여전히 1개씩 독립입니다)',
+      '\u{1F4CA} <b>[편의] 광산에 "유물 하나를 콕 집어 노릴 때"의 확률</b>을 함께 적었습니다. "Legendary 4%"는 <b>등급</b> 확률이고, 특정 유물 하나는 그 안에서 또 나뉩니다. <b>10회 채굴</b> 버튼도 생겼습니다.',
     ]
   },
   {
@@ -25697,6 +26085,21 @@ const REDEEM_CODES = {
                                 desc:'단순화 작업으로 카드 마스터리 · 파밍 · 사이비 · 10인 난투 · 클래식 모드가 잠시 내려갔고, 유물 16종이 삭제되었습니다. 그동안 캐신 만큼 돌려드립니다.',
                                 once:true, noExpire:true,
                                 make:()=>({ ubinite:3000, pickaxe: projectSimplifyRefund() }) },
+  /* ==========================================================================
+     [Ver 13.3.1] 우빈 엄마 환급 — PROJECTSIMP 환급이 너무 적었던 것에 대한 보상
+     --------------------------------------------------------------------------
+     13.1 환급(PROJECTSIMP)은 "그 유물을 **몇 개** 캤나"를 세서 그만큼 곡괭이를 줬다.
+     그런데 곡괭이 1개 ≠ 유물 1개다. 13.0 기준 전설은 등급 확률 4%에 9종이라,
+     **우빈 엄마 하나를 특정해서 뽑을 확률은 4% ÷ 9 = 0.444%** — 기댓값 약 225곡괭이,
+     10분에 1개씩 차오르니 약 37시간어치다. 그걸 곡괭이 1개로 돌려줬으니 약 225배 부족했다.
+     ⚠ 개인별 재계산은 **불가능하다.** projectSimplifyRefund()가 환급하면서 유물 기록을
+       지워버려서, 이미 PROJECTSIMP를 쓴 사람은 "엄마 Lv7이었다"는 증거가 남아 있지 않다.
+       그래서 개인별 정산 대신 **정액 보상**으로 간다. PROJECTSIMP와 별개 코드라
+       이미 쓴 사람도 안 쓴 사람도 똑같이 받는다. */
+  'UBINMOMREFUND':            { title:'우빈 엄마 환급',
+                                desc:'유물 삭제 환급이 캔 개수만 세는 바람에, 어렵게 캐신 만큼을 돌려드리지 못했습니다. 늦었지만 다시 보내드립니다.',
+                                once:true, noExpire:true,
+                                reward:{ power:{ key:'summon', n:10 }, goldPickaxe:5 } },
 };
 let REDEEMED_CODES = null;
 function loadRedeemed(){
@@ -27775,6 +28178,9 @@ function typeLabel(t){
     /* [Ver 8.9] 신규 타입 */
     HEAL_PERCENT_MAXHP:'무한-최대체력%회복', HUNBALROM_CURSE:'자가저주(피해증가+치유감소+고자+탄핵)',
     UBIN_STAB:'공격+확률고자(S등급방어시 반동)', EGO_RED_MIST:'예약-다음자기턴 회복+카드획득',
+    /* [Ver 13.3.1] 유저 아이디어 카드 4종 */
+    NOS_EVASION_STACK:'자가-영구회피율누적+카드교체', HITRUN_ATK:'공격+확률자폭/경찰',
+    TNT_POWDER_MARK:'표식-카드낼때마다 확률폭발', COWARD_SHOT:'1대1전용-최대체력1+스턴',
     RAPTOR_EGG:'소지-2바퀴뒤 랜덤카드로 부화', NUTRIENT_GRADE_UP:'무한-손패1장 등급상승',
     NUTRIENT_GRADE_UP_PRO:'무한-손패1장 등급2상승(미사용시 원복)', UBIN_CIGARETTE:'무한-회복+니코틴중첩',
     UNTELL_SHIELD_ON_DEATH:'지속-사망시마다 쉴드획득', ANCESTRAL_RITE_TABLE:'대상 풀회복+지연피해',
@@ -28919,7 +29325,18 @@ function loadSampleCards(mergeMissing=false){
     {grade:'S', name:'AURA FARMING', type:'AURA_FARMING', power:0, rounds:3, pierce:'NONE',
      desc:'3바퀴 동안 <b>무적</b>이 된다. 대신 그동안 <b>공격 카드를 낼 수 없다.</b>', flavor:'가만히 있어도 아우라가 쌓인다'},
     {grade:'A', name:'우빈결혼식', type:'WEDDING_LOVER', power:0, giftGold:100, gulPower:1000, pierce:'NONE',
-     desc:'한 명을 골라 강제로 식을 올려 <b>[연인]</b> 관계가 된다. 그리고 신랑·신부를 뺀 나머지 전원에게서 <b>축의금 100골드</b>씩을 걷는다. 낼 돈이 없는 사람은 1,000의 피해를 입는다.', flavor:'신부 입장'}
+     desc:'한 명을 골라 강제로 식을 올려 <b>[연인]</b> 관계가 된다. 그리고 신랑·신부를 뺀 나머지 전원에게서 <b>축의금 100골드</b>씩을 걷는다. 낼 돈이 없는 사람은 1,000의 피해를 입는다.', flavor:'신부 입장'},
+
+    /* ----- [Ver 13.3.1] 유저 아이디어 카드 ----- */
+    {grade:'S', name:'급가속', type:'NOS_EVASION_STACK', power:0, evaStep:2.5, evaCap:50, spawnName:'뺑소니', pierce:'NONE',
+     desc:'사용할 때마다 자신의 <b>회피율이 영구적으로 2.5% 증가</b>한다. (이 카드로는 <b>최대 50%</b>까지) 그리고 이 카드는 사라지고 <b>[뺑소니]</b> 1장을 얻는다.', flavor:'Nitrous Oxide Systems.'},
+    {grade:'B', name:'뺑소니', type:'HITRUN_ATK', power:700, blowChance:5, copChance:7, copStunRounds:1, pierce:'NONE',
+     desc:'상대를 차로 친 뒤 도주해 <b>700 피해</b>를 입힌다. <b>5%</b> 확률로 차가 터져 <b>대상과 자신이 함께 즉사</b>하고, <b>7%</b> 확률로 경찰에게 잡혀 <b>골드 전액을 압수</b>당하고 <b>1바퀴간 스턴</b>된다.', flavor:'???: 보험처리 하시죠?'},
+    {grade:'S', name:'trinitrotoluene', type:'TNT_POWDER_MARK', power:1000, tntChance:20, pierce:'NONE',
+     desc:'상대에게 화약을 바른다. 이후 그 상대는 <b>카드를 낼 때마다 20% 확률</b>로 화약이 터져 <b>1000 피해</b>를 입는다. (해제되지 않는다)', flavor:'C7H5N3O6'},
+    {grade:'SR', name:'비겁한 일격', type:'COWARD_SHOT', power:0, onlyDuel:true, stunRounds:3,
+     blockMinGrade:'S', blockNonAtkOnly:true, pierce:'NONE',
+     desc:'<b>1대1에서만</b> 쓸 수 있다. 상대에게 비겁하게 총을 쏴 <b>최대 체력을 1</b>로 만들고 <b>3바퀴간 기절</b>시킨다. <b>공격 카드가 아닌 S등급 이상</b>의 카드를 소모해 상쇄할 수 있다.', flavor:'갱우카에서 가장 정상적인 무기 사용법.'}
   ];
   if(mergeMissing){
     const existing = new Set(cards.map(c=> `${c.grade}::${c.name}::${c.type}`));
@@ -31457,6 +31874,8 @@ function mkPlayer(id,name,isBot){
     antiplazaDRPct:0, antiplazaDueRound:0, // [Ver 6.3] 안티프라자: 유료로 재적용하는 별도 트랙의 임시 받는피해감소
     freezeOnBigHit:false, // 빙하기: ATK 600 이상 카드로 명중시킬 때마다 상대를 2턴간 얼림(쉴드 보유 중이면 무시)
     huntedBy:null, // 사냥꾼: 이 값이 있으면 이 사람이 받는 모든 데미지는 1000으로 고정되고, 죽으면 해당 id의 사람이 100골드를 받는다
+    tntPowder:false, tntPowderBy:null, tntPowderPct:20, tntPowderDmg:1000, // [Ver 13.3.1] trinitrotoluene 화약 표식
+    __nosEva:0,        // [Ver 13.3.1] 급가속으로 올린 회피율 누적치(상한 50%를 재기 위함)
     virusMarked:false, // 랩터바이러스: [바이러스] 표식. 이 표식을 가진 사람이 사망하면 표식을 건 사람을 제외한 모두에게 [숙주] 디버프가 걸린다
     virusMarkedBy:null, // 랩터바이러스: 표식을 건 사람의 id (사망 시 그 사람을 제외하기 위함)
     hostBurdened:false, // 랩터바이러스: [숙주] 디버프. 한 사람의 턴마다(자기 턴 시작 시) 250 데미지를 입는다
@@ -32120,6 +32539,8 @@ function getStatusChips(p){
   if(p.lowGradeInsurance) addChip('🪙', '운빨보험(E~C +15G)', 'yellow');
   if(p.lonelyManBonus) addChip('🖤', '고독한남자(현재HP 16%)', 'yellow');
   if(p.virusMarked) addChip('🦠', '바이러스 표식', 'red');
+  // [Ver 13.3.1] 화약 표식 — 해제되지 않으므로 남은 바퀴 배지가 없다
+  if(p.tntPowder) addChip('🧨', `화약 (카드 사용 시 ${p.tntPowderPct||20}%로 ${(p.tntPowderDmg||1000).toLocaleString()})`, 'red');
   if(p.hostBurdened) addChip('🧟', '숙주(매턴 250 피해)', 'red');
   if((p.butterflyStacks||0) > 0) addChip('🦋', `나비 ${p.butterflyStacks}중첩(자기 턴마다 ${90*p.butterflyStacks} 피해)`, 'red');
   if(shopPartyDiscountStacks > 0) addChip('🪩', `파티 타임(상점가 ×${Math.pow(0.5,shopPartyDiscountStacks).toFixed(shopPartyDiscountStacks>2?3:2)})`, 'yellow');
@@ -36757,6 +37178,11 @@ function powerLine(c){
   if(c.type==='HEAL_PERCENT_MAXHP') return `<div class="hc-power">HP + 최대 체력의 ${c.healPct||1}% (무한 사용)</div>`;
   if(c.type==='HUNBALROM_CURSE') return `<div class="hc-power">자신 · 받는 피해 +${c.vulnPct||99}% · 회복 -${c.healCutPct||99}% · 고자 · 영구 탄핵</div>`;
   if(c.type==='UBIN_STAB') return `<div class="hc-power">ATK ${(c.power||300).toLocaleString()} · ${c.gozaChance||50}% 고자(쉴드시 -${c.shieldGozaPenalty||20}%) · ${c.blockMinGrade||'S'}등급 이상 방어시 반동${pierceTag(c)}</div>`;
+  /* [Ver 13.3.1] 유저 아이디어 카드 */
+  if(c.type==='NOS_EVASION_STACK') return `<div class="hc-power">회피율 +${c.evaStep||2.5}% 영구 (최대 ${c.evaCap||50}%) · [${c.spawnName||'뺑소니'}] 획득</div>`;
+  if(c.type==='HITRUN_ATK') return `<div class="hc-power">ATK ${(c.power||700).toLocaleString()} · ${c.blowChance||5}% 동반 즉사 · ${c.copChance||7}% 골드 압수+스턴${pierceTag(c)}</div>`;
+  if(c.type==='TNT_POWDER_MARK') return `<div class="hc-power">화약 표식 · 대상이 카드 낼 때마다 ${c.tntChance||20}%로 ${(c.power||1000).toLocaleString()}</div>`;
+  if(c.type==='COWARD_SHOT') return `<div class="hc-power">1대1 전용 · MaxHP 1 + ${c.stunRounds||3}바퀴 기절 · ${c.blockMinGrade||'S'}등급 이상 비공격 카드로 상쇄</div>`;
   if(c.type==='EGO_RED_MIST') return `<div class="hc-power">다음 자기 턴 · 현재 HP의 50% 회복 + "대절단 가로" 획득</div>`;
   if(c.type==='RAPTOR_EGG') return `<div class="hc-power">낼 수 없음 · ${c.hatchRounds||2}바퀴 뒤 랜덤 카드로 부화</div>`;
   if(c.type==='NUTRIENT_GRADE_UP') return `<div class="hc-power">손패 랜덤 1장 등급 +${c.gradeUp||1} (무한 사용)</div>`;
@@ -37319,6 +37745,8 @@ function needsSingleTargetBase(type){ return [
   'FATHER_JOB_ATK','PSYCHIC_ASSAULT','PROPOSE_LOVER','COOKIE_ALLY_OR_DEATH',
   'BREXIT_BREAK_ALLY','GUARDIAN_ANGEL','BONDAGE_ACC_LOCK','SIGMA_ULTIMATE',
   'ATK','STUN','GOLD_STEAL','EXECUTE_CHAIN','VIEW_HAND','CARD_STEAL_RANDOM','CARD_MARK_STEAL','ATK_SUMMON','SECRET_SOCIETY','DELAYED_DEATH','ATK_GOLD_STEAL_PCT','ATK_DEATH_CHANCE','IMPEACH_RISKY','ACCURACY_DEBUFF','INFINITE_ATK_STEAL','INFINITE_ATK_DRAIN','ATK_BURN_CHANCE','CARD_GIFT','PARCEL_DELIVERY','PREVENT_REVIVE','HP_AVERAGE_SHARE','CARD_DISCARD_SELF_ATK','BOUNCE_ATK','ATK_STUN_TRIPLE','SHIELD_SEIZE','FATE_CHAIN','INFINITE_ATK_CHROMATIC','MATRIX_SEND','PARALLEL_UNIVERSE_SHIFTER','POISON_ATK','INFINITE_ATK_STUN_NO_REPEAT','MULTI_HIT_ATK','INFINITE_ATK_STEAL_PRO','SELF_RECOIL_ATK','INFINITE_HP_PERCENT_ATK','ATK_GOLD_COST','MUTATE_HIGHEST_TO_BLANK','BOUND_CURSE','CARD_MARK_STEAL_ALL','SYNC_LINK_DEBUFF','PROXY_LINK_DEBUFF','COMBO','REINFORCE_PIPE','GOLD_STEAL_HALF_INF','SWAP_HAND','CARD_SHARE_LINK','ATK_STUN_RIGID','MUTUAL_SELF_TARGET_DMG','FIRST_TURN_SHIELD_STRIP_HP1','BLIND_NEXT_ENEMY_ATK','HUNTER_MARK','ATK_AND_SELF_HEAL','INSTANT_KILL_TARGET','DETECTIVE_ATK_KILL_CRIMINAL','MUTUAL_HEAL_SELF_TARGET','CARROT_CHOICE','SANDS_ATK_DBLOCK','ZINGO_HP_BLIND','REDUCE_MAXHP_TARGET','EAGLE_ATK_EXCLUDE_FALL','PORTAL_SELF_EXCLUDE_DELAYED_ATK','MATRIX_EVAPORATE_DELAYED_ATK','SPACE_EXCLUDE_ONLY','INFINITE_PORTAL_SELF_EXCLUDE_DELAYED_ATK','ATK_LOCK_SELL_PRICE','ATK_FIXED_ACC_SELFDMG_ON_MISS','ATK_AND_CARD_STEAL_RANDOM','INFINITE_ATK_PLAIN','ATK_SELF_VULN_ATKBUFF','ATK_RANDOM_HEAL_ANY','PERMA_VULN_TARGET','ATK_AND_SELF_SHIELD','CARROT_SCAM_TRADE','CARROT_SCAM_VICTIM','DOUBLE_GOZA_BOTH','STALK_VIEW_HAND','ICBM_CONSUME_ATK','PIERCING_ATK_ALL_VULN','PULSE_BEAM_DELAYED_STUN','CARROT_HAND_MUTATE_ALL','MAGICIAN_HAND_MUTATE_RANDOM','LABOR_EXPLOITATION','RANDOM_CARD_SWAP_ONE','CHARGE_ATK_DOUBLE_ON_MISS','RANDOM_RECAST_ATK','PARALYZE_DEBUFF','RAPTOR_VIRUS_MARK','TIME_DOESNT_TREAT_ME_SPECIALLY','SYNC_STEAL_BUFFS','SUNBEAM_ATK_DEBUFF','RECKLESS_STABBING_ATK','GOLD_DEMAND_REDIRECT','DEFENSE_PROTOCOL','MUTUAL_ATK_BUFF_DEBUFF','NEXTLEVEL_ATK','NURSING_CLEANSE','NO_NULLIFY_ATK','GUIDED_MISSILE','KOKUSHIMUSOU','REPLACE_CARDS_SAME_GRADE','IMPEACH_TRANSFER','GOLD_THROW_ATK','ASSASSIN_JIHU','ATK_RESTART_FROM_SELF','ATK_SEND_LOW_GRADE','MUTATE_TARGET_ALL_TO_GRADE','DOCTOR_WHO_LASER','EAT_SWALLOW_BUFF_DELAYED_ATK','NON_GRATA_NEIGHBOR_ATK','UBIN_GREATSWORD_INFINITE','VULN_TARGET_SELF_HEAL','STEAL_ALL_GRADE_OR_KILL','IGNITE_STEAL_HALF_ON_CAST','HYPNOSIS_RANDOM_TARGET','INHERIT_REDISTRIBUTE','FORCED_ALLY_THEN_BETRAY','FISHING_ROD_BAIT','ROUTER_SHARE_ALL','FORCE_ALLY_ONE_TIME','SHOP_BAN_TARGET','COUPLE_TEE_ALLY','ATK_ATK_DEBUFF','SHOP_BAN_TARGET_TEMP','RUSSIAN_ROULETTE','SELF_HP_PERCENT_ATK','CULT_RECRUIT','REPORT_INSTAKILL_OR_SELFSTUN','GRANT_JUNK_CARDS','IMPEACH_ROUNDS','STEAL_ALL_OR_LOSE_ALL_50','ATK_AND_SELF_DAMAGE','HAND_MASK_TARGET','MOTHER_PROTECT','UBIN_BREATH_ATK','LOAN_SHARK','SPINE_FRACTURE','GIFT_CHOOSE_CARD','CHAT_TIMEOUT','ATK_VULN_PCT','ATK_STEAL_ALL_GOLD','VANISH_THEN_STEAL','ENCORE_LOCK_ONE','SONGPYEON_GIFT','HEAL','CLEANSE_HEAL','MAXHP_AND_HEAL','MAXHP_AND_HEAL_DIFF','HEAL_OVERFLOW_SHIELD','HEAL_GOLD_COST','MOM_CAPTURE_DEBUFF','MULTI_HIT_ATK_STUN','WHITETIGER_STRIKE','TELEKINESIS_CONTROL','POISON_DEATH_TARGET','POISON_DEATH_SELF','GRADE_LOCK_LOW','RAINBOW_DEATHNOTE','REPEAT_STEAL_UI','ATK_REMOVE_HIGH_GRADE','HONG_KICK_EXCLUDE_STUN','ASH_REVOLUTION','UBIN_STAB','CHALK_SHOT','ANCESTRAL_RITE_TABLE','MENDEL_STEAL','TEMU_EXPRESS_ATK','UBIN_STRAY_DOG_ATK',
+  /* [Ver 13.3.1] 유저 아이디어 카드 — 지목형 3종 (급가속은 자가사용이라 넣지 않는다) */
+  'HITRUN_ATK','TNT_POWDER_MARK','COWARD_SHOT',
   /* [Ver 12.7] 신규 지목 카드 — 다이아몬드 반지(자신 포함) · 사이비 */
   'DIAMOND_RING','CULT_CONVERT',
   /* [Ver 12.7.1] 쉴드 강타 · 우빈결혼식 (유능제강은 대상이 "최근에 나를 때린 사람"으로 자동 결정된다) */
@@ -37504,6 +37932,12 @@ function cardUnusableReason(caster, card){
   }
   // [Ver 8.1.3] 대부: 12바퀴째부터 사용 가능(그 전까지는 그레이아웃).
   if(card.minRound && turnCount < card.minRound) return `${card.minRound}바퀴째부터 사용할 수 있습니다. (현재 ${turnCount}바퀴)`;
+  /* [Ver 13.3.1] 비겁한 일격 — 살아있는 사람이 둘일 때만. 여럿이 남은 판에서
+     최대 체력 1 + 3바퀴 기절은 사실상 즉사라 1대1로 못박는다. */
+  if(card.onlyDuel){
+    const __n = alivePlayers().length;
+    if(__n !== 2) return `1대1 상황에서만 사용할 수 있습니다. (현재 ${__n}명 생존)`;
+  }
   // [Ver 11.4] 파밍 모드 — 첫 3바퀴("파밍 시간")는 공격 카드를 낼 수 없다.
   if(farmingMode && turnCount < 3 && isAtkLikeCard(card)){
     return `파밍 시간(첫 3바퀴)에는 공격 카드를 낼 수 없습니다. (현재 ${turnCount+1}바퀴째)`;
@@ -38265,6 +38699,11 @@ function playCard(playerId, handIdx, targetId, isChainCast, sourceOwnerId){
   try{ cardAudioPlayNow(p, card); }catch(e){} // [Ver 7.2] 특수 음원 — 카드가 손패에서 떨어지는 즉시 재생
   playedCardHistory.push({ ...card, __casterId: p.id, __round: turnCount }); // [Ver 5.9.1] 딱풀/강력접착제: "앞카드"를 정확히 찾기 위해 낸 사람도 함께 기록 / [Ver 8.8] 프린터기: 낸 바퀴(turnCount)도 기록
   if(playedCardHistory.length > 500) playedCardHistory.shift();
+  /* [Ver 13.3.1] trinitrotoluene — 화약을 뒤집어쓴 사람은 **카드를 낼 때마다** 굴린다.
+     ⚠ 자리를 여기로 잡은 이유: 카드가 손패에서 확실히 떨어진 뒤이고, 반응창·효과 해결
+       어느 쪽으로 갈라지든 반드시 지나는 지점이라 한 번만 굴린다.
+       (resolveCardEffect 쪽에 걸면 무효화된 카드에서 안 터지고, 연쇄 시전에서 두 번 터진다) */
+  try{ tntPowderRoll(p, card); }catch(e){}
   renderBoard(); renderHand();
 
   if(targetId){
@@ -38612,9 +39051,13 @@ const ATK_LIKE_TYPES = ['ATK','ATK_AOE','ATK_AOE_COND','NEXT_PERSON','NEXT_TWO',
   /* [Ver 10.5] 신규 공격 카드 — 봇의 판단·불문율(첫 턴 제한)·소수정예 2배 판정이 이 목록을 본다 */
   'ATK_IGNORE_DR','FUNERAL_PORTRAIT_ATK','ATK_ATK_DEBUFF_TEMP','ATK_SHIELD_ANNIHILATE',
   'WATERMELON_SEED_ATK','FATHER_JOB_ATK','PSYCHIC_ASSAULT',
-  'UKA_COLA_PASS','SIGMA_ULTIMATE','UPRISING_SACRIFICE_AOE'];
+  'UKA_COLA_PASS','SIGMA_ULTIMATE','UPRISING_SACRIFICE_AOE',
+  /* [Ver 13.3.1] 뺑소니는 순수 공격 카드다(블로킹·반사·불문율 판정 대상).
+     ⚠ trinitrotoluene 과 비겁한 일격은 **여기 넣지 않는다** — 표식/상태이상 카드라
+       "공격 카드"로 치면 블로킹·라크로스 반사에 그대로 걸려 설명과 어긋난다. */
+  'HITRUN_ATK'];
 /* [Ver 8.9] "손패의 카드를 소모해 막을 수 있는" 공격 카드 타입들. (와!샌즈!·풍차 계열 + 우빈 찌르기) */
-const SANDS_BLOCK_TYPES = ['SANDS_ATK_DBLOCK','UBIN_STAB'];
+const SANDS_BLOCK_TYPES = ['SANDS_ATK_DBLOCK','UBIN_STAB','COWARD_SHOT'];   // [Ver 13.3.1] 비겁한 일격
 function isAtkLikeCard(card){
   // [Ver 5.9.3] SOLEMN LAMENT는 이제 듀얼 모드도 ATK 200 공격을 포함하므로,
   //   세 모드 모두 공격 카드로 취급한다 (ZEUS/반사 등 공격 반응 정상 발동).
@@ -39181,12 +39624,16 @@ function openReactionWindow(caster, card, targetId, onResolve){
   //   - blockMinGrade가 있으면 "그 등급 이상" 아무 카드나 소모해 막을 수 있다 (우빈 찌르기)
   //   - 없으면 기존대로 blockGrade와 "정확히 같은 등급"의 카드만 쓸 수 있다 (와!샌즈!/풍차)
   //   [버그수정] 기존 doSandsBlock이 blockGrade를 무시하고 늘 A등급만 찾아, 풍차(E등급 방어)가 실제로는 막히지 않았다.
-  const sandsBlockPool = (reactor && SANDS_BLOCK_TYPES.includes(card.type))
+  let sandsBlockPool = (reactor && SANDS_BLOCK_TYPES.includes(card.type))
     ? (card.blockMinGrade
         ? reactor.hand.filter(c=> gradeRankOf(c.grade) >= GRADE_RANK[card.blockMinGrade])
         : reactor.hand.filter(c=> c.grade === (card.blockGrade||'A')))
     : [];
-  const sandsBlockLabel = card.blockMinGrade ? `${card.blockMinGrade}등급 이상` : `${card.blockGrade||'A'}등급`;
+  /* [Ver 13.3.1] 비겁한 일격 — "공격 카드가 아닌" S등급 이상으로만 상쇄할 수 있다.
+     총에 맞서 총을 드는 게 아니라, 몸값이 되는 무언가를 던져 막는다는 뜻이다. */
+  if(card.blockNonAtkOnly) sandsBlockPool = sandsBlockPool.filter(c=> !isAtkLikeCard(c));
+  const sandsBlockLabel = (card.blockMinGrade ? `${card.blockMinGrade}등급 이상` : `${card.blockGrade||'A'}등급`)
+                        + (card.blockNonAtkOnly ? ' 비공격' : '');
   const hasSandsBlock = sandsBlockPool.length > 0;
   // [Ver 5.5] 기습공격: 4초 내 아무 카드 소비로 방어
   // [Ver 5.8] TRIANGULAR FUNCTION: 같은 타입을 쓰되 defendGrade가 지정되면 그 등급 카드로만 방어할 수 있다.
@@ -42140,6 +42587,76 @@ function resolveCardEffect(caster, card, targetId, onDone){
       }
       renderBoard(); checkWinCondition();
       onDone({}); break;
+    }
+    /* ================= [Ver 13.3.1] 유저 아이디어 카드 4종 ================= */
+    case 'NOS_EVASION_STACK': { // 급가속 — 영구 회피율 누적(상한 50) + 뺑소니로 교체
+      const step = card.evaStep || 2.5, cap = card.evaCap || 50;
+      const had = caster.__nosEva || 0;
+      const add = Math.max(0, Math.min(step, cap - had));
+      if(add > 0){
+        caster.__nosEva = had + add;
+        caster.evasionPct = (caster.evasionPct||0) + add;
+        log('highlight', `🏎️ ${J(caster.name,'이','가')} "${card.name}"! 회피율이 영구적으로 <b>${add}%</b> 올랐습니다. (이 카드로 누적 ${caster.__nosEva}% / 최대 ${cap}%)`);
+      } else {
+        log('sys', `🏎️ "${card.name}" — 이 카드로 올릴 수 있는 회피율(${cap}%)은 이미 다 채웠습니다.`);
+      }
+      /* 이 카드는 사라지고 뺑소니가 남는다. (사용한 카드는 이미 손패에서 빠져 있다) */
+      const hrDef = (typeof cards!=='undefined' && cards) ? cards.find(c=> c.name === (card.spawnName||'뺑소니')) : null;
+      if(hrDef){
+        grantCardToPlayer(caster, mkUidCard(hrDef), '급가속');
+        log('sys', `💨 ${J(caster.name,'이','가')} "${hrDef.name}" 1장을 얻었습니다.`);
+      }
+      renderBoard(); renderHand(); onDone({}); break;
+    }
+    case 'HITRUN_ATK': { // 뺑소니 — 700 피해 + 5% 자폭 / 7% 경찰
+      const target = players.find(p=>p.id===targetId);   // ⚠ 이 함수엔 함수 스코프 target 이 없다
+      if(!target){ onDone({}); break; }
+      currentAttackContext = { attackerName: caster.name, attackerId: caster.id, cardName: card.name };
+      applyDamageToPlayer(target, card.power||700, card.pierce||'NONE');
+      log('dmg', `🚗 ${J(caster.name,'이','가')} ${J(target.name,'을','를')} 치고 달아났습니다! (${(card.power||700).toLocaleString()} 피해)`);
+      /* 5% — 차가 터진다. 대상과 시전자가 함께 간다. 여기서 끝(경찰은 굴리지 않는다). */
+      if(Math.random()*100 < (card.blowChance||5)){
+        log('highlight', `💥 차가 터졌습니다! ${J(caster.name,'와','과')} ${J(target.name,'이','가')} 함께 즉사합니다!`);
+        [target, caster].forEach(v=>{
+          if(!v || !v.alive) return;
+          if(v.instaKillImmune){ log('sys', `${J(v.name,'이','가')} 즉사 면역으로 폭발을 견뎌냈습니다!`); return; }
+          currentAttackContext = { attackerName: '뺑소니 폭발', attackerId: caster.id, cardName: card.name };
+          v.hp = 0; v.alive = false;
+          onPlayerDeath(v, `${caster.name}의 ${card.name}`, card.name);
+        });
+        renderBoard(); checkWinCondition(); onDone({}); break;
+      }
+      /* 7% — 경찰에 붙잡힌다. 골드 전액 압수 + 1바퀴 스턴. */
+      if(caster.alive && Math.random()*100 < (card.copChance||7)){
+        const lost = Math.max(0, caster.gold||0);
+        caster.gold = 0;
+        caster.stunned = true;
+        caster.stunLockTurns = Math.max(caster.stunLockTurns||0, card.copStunRounds||1);
+        caster.stunLockLabel = '경찰서';
+        log('highlight', `🚔 ${J(caster.name,'이','가')} 뺑소니로 붙잡혔습니다! 골드 ${fmtWon(lost)} 전액 압수 · ${card.copStunRounds||1}바퀴 스턴.`);
+      }
+      renderBoard(); renderHand(); onDone({}); break;
+    }
+    case 'TNT_POWDER_MARK': { // trinitrotoluene — 화약 표식
+      const target = players.find(p=>p.id===targetId);   // ⚠ 이 함수엔 함수 스코프 target 이 없다
+      if(!target){ onDone({}); break; }
+      target.tntPowder = true;
+      target.tntPowderBy = caster.id;
+      target.tntPowderPct = card.tntChance || 20;
+      target.tntPowderDmg = card.power || 1000;
+      log('highlight', `🧨 ${J(caster.name,'이','가')} ${J(target.name,'에게','에게')} 화약을 발랐습니다. 이제 카드를 낼 때마다 ${target.tntPowderPct}% 확률로 터집니다.`);
+      renderBoard(); onDone({}); break;
+    }
+    case 'COWARD_SHOT': { // 비겁한 일격 — 1대1 전용. 최대체력 1 + 3바퀴 기절
+      const target = players.find(p=>p.id===targetId);   // ⚠ 이 함수엔 함수 스코프 target 이 없다
+      if(!target){ onDone({}); break; }
+      const r = card.stunRounds || 3;
+      target.maxHp = 1; target.hp = 1; target.shield = 0;
+      target.stunned = true;
+      target.stunLockTurns = Math.max(target.stunLockTurns||0, r);
+      target.stunLockLabel = '기절';
+      log('highlight', `🔫 ${J(caster.name,'이','가')} ${J(target.name,'에게','에게')} 비겁하게 총을 쐈습니다! 최대 체력이 1이 되고 ${r}바퀴간 기절합니다.`);
+      renderBoard(); onDone({}); break;
     }
     case 'EVASION_BUFF_SELF': { // 척수반사 — 5바퀴 회피율 +50%
       const pct = card.evasionPct||50, r = card.durationRounds||5;
@@ -55472,6 +55989,19 @@ function getEffectiveGambleTiers(p){
 }
 
 function mkUidCard(def){ return { ...def, uid:'u'+Date.now().toString(36)+Math.random().toString(36).slice(2,8) }; }
+/* [Ver 13.3.1] trinitrotoluene — 화약 표식을 가진 사람이 카드를 낼 때마다 굴린다.
+   해제 수단이 없는 영구 표식이라, 죽으면 그때 지워진다(초기화는 resetPlayerStatuses). */
+function tntPowderRoll(p, card){
+  if(!p || !p.alive || !p.tntPowder) return;
+  if(Math.random()*100 >= (p.tntPowderPct || 20)) return;
+  const dmg = p.tntPowderDmg || 1000;
+  log('highlight', `🧨 ${J(p.name,'이','가')} 카드를 내는 순간 <b>화약이 터졌습니다!</b> (${dmg.toLocaleString()} 피해)`);
+  try{ if(typeof cardAudioTriggerKey==='function') cardAudioTriggerKey('sfx','boom', p.id); }catch(e){}
+  currentAttackContext = { attackerName:'trinitrotoluene', attackerId: p.tntPowderBy || p.id, cardName:'trinitrotoluene' };
+  applyDamageToPlayer(p, dmg, 'PIERCE');
+  renderBoard();
+  try{ checkWinCondition(); }catch(e){}
+}
 /* [Ver 5.7] "지금 바로 윤회" 리셋 도중 재진입(리셋으로 뽑은 카드가 또 E등급인 경우)을 막는 가드 */
 let samsaraResetting = false;
 
