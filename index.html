@@ -2044,6 +2044,15 @@ body.pw-targeting .p-card.pw-pick{
 .ol-val{ flex-shrink:0; font-family:var(--font-mono); font-size:12px; font-weight:600; }
 .ol-grow{ flex:1; min-width:0; }
 .ol-me{ color:var(--accent); font-weight:700; }
+/* [Ver 13.5.1] 줄마다 "언제 올라온 기록인지" · 자동 갱신 실패 경고 */
+.ol-when{ display:block; font-family:var(--font-mono); font-size:9.5px; color:var(--fg-faint); font-weight:400; }
+.ol-warn{
+  display:flex; flex-direction:column; gap:3px;
+  margin:0 0 10px; padding:10px 13px; border-radius:var(--r-sm);
+  background:rgba(224,89,107,0.12); box-shadow:inset 0 0 0 1px rgba(224,89,107,0.45);
+  font-size:12px; line-height:1.6; color:var(--fg);
+}
+.ol-warn small{ font-size:11px; color:var(--fg-dim); }
 .ol-bio{ font-size:11px; color:var(--fg-faint); line-height:1.6; }
 .ol-msg{ font-size:11.5px; color:var(--fg-dim); text-align:center; padding:var(--sp-3); }
 .ol-note{ font-size:11px; color:var(--fg-faint); line-height:1.7; }
@@ -4055,6 +4064,14 @@ body.dragging-card-no-target .p-card{ opacity:0.5; }
 .hand-card > .hc-flavor,
 .hand-card > .cmk-row{ flex:0 0 auto; }
 .hand-card .hc-name{ overflow-wrap:anywhere; }
+/* [Ver 13.7] 무력화된 소지형 패시브 — 회색으로 죽이고 붉은 띠를 두른다.
+   ⚠ .disabled 와 함께 붙으므로 흐려지는 건 그쪽이 맡는다. 여기서는 "왜 죽었는지"만 말한다. */
+.hand-card.passive-dead{ filter:grayscale(1); box-shadow:inset 0 0 0 2px rgba(224,89,107,0.55); }
+.hand-card .hc-dead{
+  flex:0 0 auto; margin-top:2px; padding:2px 5px; border-radius:var(--r-xs);
+  background:rgba(224,89,107,0.16); color:#B33A48;
+  font-size:9.5px; font-weight:700; line-height:1.4;
+}
 .hand-card .hc-power{ line-height:1.35; }
 .hand-card .hc-desc{
   flex:1 1 auto; min-height:24px;
@@ -6699,7 +6716,7 @@ body.high-contrast.theme-light-shell{
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.5.1</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.7</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -10514,6 +10531,50 @@ function isPlayThenPassiveCard(card){ return !!card && PLAY_THEN_PASSIVE_TYPES.i
 function hasProblemChildCard(p){ return !!(p && p.alive && p.hand && p.hand.some(c=>c.type==='PROBLEM_CHILD_PASSIVE')); }
 function isPassiveHoldCard(card){ return PASSIVE_HOLD_TYPES.includes(card.type); }
 
+/* ##########################################################################
+   [Ver 13.7] 소지형 패시브의 "무력화"
+   --------------------------------------------------------------------------
+   ▶ 무슨 문제였나
+     소지만 해도 버프를 주는 카드(우빈칼리버·LK69·블루오션 …)는 **버프를 벗겨내는 효과**
+     (모든 효과 초기화 · 강서윤 · 버프 강탈)를 맞으면 어정쩡해졌다.
+       · 우빈칼리버는 atkMultiplier 에 +200 을 얹어두는 방식인데, 그 값이 0으로
+         밀리면 **동기화 플래그(__ubincOn)는 true 로 남아** 다시 얹어주지 않았다.
+         → 카드는 손에 멀쩡히 있는데 효과는 영영 없다. 화면에도 아무 표시가 없었다.
+       · 매번 손패에서 다시 계산하는 것들(블루오션 등)은 반대로 **아무리 벗겨도 되살아났다.**
+     같은 "패시브"인데 어떤 건 죽고 어떤 건 안 죽었다.
+   ▶ 이제는 하나로 통일한다 — **버프가 벗겨지면 그 카드도 죽는다.**
+     카드는 손에 남지만 효과가 없고, 손패에서 회색으로 표시되며 **판매가가 0**이 된다.
+     다시 살아나지 않는다. 되찾으려면 카드를 새로 구해야 한다.
+   ⚠ 그래서 모든 소지 판정은 `hasLivePassive` / `findLivePassive` 를 지나야 한다.
+     `hand.some(c=>c.type==='X')` 를 새로 쓰면 죽은 카드까지 세어버린다.
+   ########################################################################## */
+const PASSIVE_BUFF_TYPES = ['UBINCALIBUR_PASSIVE','SUPERCONDUCTOR_PASSIVE','BLUE_OCEAN_PASSIVE',
+  'LIBERO_PASSIVE','POKER_PASSIVE','DIABLO_PASSIVE','HAND_COUNT_ATK_BUFF_PASSIVE','UNDERDOG_ATK_DR_PASSIVE'];
+function isPassiveBuffCard(c){ return !!c && PASSIVE_BUFF_TYPES.includes(c.type); }
+function passiveIsDead(c){ return !!(c && c.__passiveDead); }
+function hasLivePassive(p, type){
+  return !!(p && Array.isArray(p.hand) && p.hand.some(c=> c && c.type===type && !c.__passiveDead));
+}
+function findLivePassive(p, type){
+  if(!p || !Array.isArray(p.hand)) return null;
+  return p.hand.find(c=> c && c.type===type && !c.__passiveDead) || null;
+}
+/* 버프를 벗겨내는 효과가 지날 때마다 부른다. 손패의 살아있는 패시브를 전부 죽인다. */
+function killHeldPassives(p, why){
+  if(!p || !Array.isArray(p.hand)) return 0;
+  const dead = [];
+  p.hand.forEach(c=>{ if(isPassiveBuffCard(c) && !c.__passiveDead){ c.__passiveDead = true; dead.push(c.name); } });
+  if(!dead.length) return 0;
+  /* 얹어두는 방식(atkMultiplier 에 직접 더해두는 것)은 **얹은 만큼 도로 걷어낸 뒤** 플래그를 내린다.
+     ⚠ 플래그만 내리면 +200 이 atkMultiplier 에 그대로 남는다. 실제 호출부는 대부분 바로 뒤에서
+       atkMultiplier 를 0으로 밀지만, 그것에 기대면 안 되는 자리다(강탈처럼 값을 옮기는 효과도 있다). */
+  if(p.__ubincOn){ p.atkMultiplier = (p.atkMultiplier||0) - 200; p.__ubincOn = false; }
+  p.blueOceanActive = false;   // 이쪽은 매 턴 손패에서 다시 계산되므로 내려두기만 하면 된다
+  log('sys', `🚫 ${J(p.name,'의','의')} 패시브 카드 ${dead.length}장이 무력화되었습니다 — ${dead.map(escapeHtml).join(' · ')}${why ? ` (${escapeHtml(why)})` : ''}`);
+  try{ renderHand(); renderBoard(); }catch(e){}
+  return dead.length;
+}
+
 /* ---------- settings / localStorage ---------- */
 const STORAGE_KEYS = {
   settings: 'gang_card_settings_v364',
@@ -13293,7 +13354,7 @@ function useWhiteTiger(){
 }
 function enterReadyPhase(p, opts={}){
   // [Ver 8.5.1] LK69 소지자: 자기 턴마다 쉴드 1
-  try{ if(p && p.alive && p.hand && p.hand.some(c=>c.type==='SUPERCONDUCTOR_PASSIVE')){ grantShield(p, 1, 'LK69'); } }catch(e){}
+  try{ if(p && p.alive && hasLivePassive(p,'SUPERCONDUCTOR_PASSIVE')){ grantShield(p, 1, 'LK69'); } }catch(e){}
   try{ if(p) p.whiteTigerUsedThisTurn = false; }catch(e){} // [Ver 8.5.1] 백호 턴당 1회 리셋
   // 텔레키네시스 만료된 조종자 정리
   try{ players.forEach(c=>{ if(c.telekinesisTarget && (c.telekinesisDueRound||0) <= turnCount){ const t=players.find(x=>x.id===c.telekinesisTarget); if(t) t.telekinesisPuppetOf=null; c.telekinesisTarget=null; } }); }catch(e){}
@@ -14312,7 +14373,7 @@ const POWER_DEFS = [
   { key:'mend', rarity:'normal', icon:'💚', name:'회복', target:'self', cd:70, amt:250, up:{k:'amt',per:10},
     desc:v=>`자신의 HP를 <b>${v}</b> 회복합니다.`,
     run:(me,t,v)=>{ const n = pwHeal(me, v); pwLog(`💚 ${J(me.name,'이','가')} 권능 <b>회복</b>으로 HP ${n.toLocaleString()}을(를) 되찾았습니다.`); } },
-  { key:'cleave', rarity:'normal', icon:'🗡️', name:'베기', target:'none', cd:70, amt:100, up:{k:'amt',per:10},
+  { key:'cleave', rarity:'normal', icon:'🗡️', name:'베기', target:'none', cd:70, amt:180, up:{k:'amt',per:10},
     desc:v=>`모든 상대에게 <b>${v}</b> 피해를 입힙니다. (전체 공격)`,
     run:(me,t,v)=>{ pwEnemies(me).forEach(e=> dealDamage(me, e, v, 'NONE', true)); } },
   { key:'startle', rarity:'normal', icon:'😱', name:'놀래키기', target:'enemy', cd:70, amt:1, up:{k:'cd',per:3},
@@ -14320,13 +14381,17 @@ const POWER_DEFS = [
     run:(me,t,v)=>{ pwStun(t, 1, '놀래키기'); pwLog(`😱 ${J(me.name,'이','가')} ${J(t.name,'을','를')} 놀래켜 1턴 스턴시켰습니다.`); } },
 
   /* ---------------- 희귀 ---------------- */
-  { key:'drain', rarity:'rare', icon:'🩸', name:'흡혈', target:'enemy', cd:63, amt:250, up:{k:'amt',per:10},
-    desc:v=>`지목 대상의 체력을 <b>${v}</b> 빼앗아 옵니다.`,
-    run:(me,t,v)=>{ dealDamage(me, t, v, 'NONE', false); pwHeal(me, v); } },
+  /* [Ver 13.6] 리워크 — 고정 수치에서 **비율**로. 피해는 상대 현재 체력 기준,
+     회복은 **자신의** 현재 체력 기준이라 둘이 따로 논다(많이 깎았다고 많이 회복하지 않는다). */
+  { key:'drain', rarity:'rare', icon:'🩸', name:'흡혈', target:'enemy', cd:63, amt:15, up:{k:'amt',per:1},
+    desc:v=>`지목 대상의 <b>현재 체력의 ${v}%</b>를 빼앗고, <b>자신의 현재 체력의 25%</b>만큼 회복합니다.`,
+    run:(me,t,v)=>{ const dmg = Math.max(1, Math.floor((t.hp||0) * v / 100));
+      const heal = Math.max(1, Math.floor((me.hp||0) * 0.25));
+      dealDamage(me, t, dmg, 'NONE', false); pwHeal(me, heal); } },
   { key:'earn', rarity:'rare', icon:'💰', name:'돈벌기', target:'self', cd:56, amt:10, up:{k:'amt',per:1},
     desc:v=>`현재 보유 골드의 <b>${v}%</b>를 추가로 얻습니다.`,
     run:(me,t,v)=>{ const g = Math.floor((me.gold||0) * v / 100); if(g>0){ grantGold(me, g); pwLog(`💰 ${J(me.name,'이','가')} 권능 <b>돈벌기</b>로 ${fmtWon(g)}을(를) 벌었습니다.`); } } },
-  { key:'corrode', rarity:'rare', icon:'🧪', name:'부식', target:'enemy', cd:52, amt:15, up:{k:'amt',per:2},
+  { key:'corrode', rarity:'rare', icon:'🧪', name:'부식', target:'enemy', cd:52, amt:20, up:{k:'amt',per:2},
     desc:v=>`지목 대상이 받는 피해량을 <b>1바퀴</b>간 <b>${v}%</b> 늘립니다.`,
     run:(me,t,v)=>{ t.vulnPct = (t.vulnPct||0) + v; t.vulnRounds = Math.max(t.vulnRounds||0, 1);
       pwLog(`🧪 ${J(t.name,'이','가')} 부식되어 1바퀴 동안 받는 피해가 ${v}% 늘어납니다.`); } },
@@ -14351,24 +14416,38 @@ const POWER_DEFS = [
       pwLog(`🦁 ${J(me.name,'의','의')} 포효! 2바퀴 동안 모든 상대의 공격력이 ${v}% 떨어집니다.`); } },
   /* quiet:true — 쿨이 3초라 쓸 때마다 로그를 남기면 로그창이 노가다로만 가득 찬다.
      판마다 처음 한 번만 알린다(pwFire 참고). */
-  { key:'grind', rarity:'rare', icon:'⛏️', name:'노가다', target:'self', cd:3, amt:1, up:{k:'cd',per:0.1}, quiet:true,
-    desc:v=>`골드 <b>1</b>을 얻습니다. 쿨타임이 아주 짧습니다.`,
-    run:(me,t,v)=>{ grantGold(me, 1); } },
+  { key:'grind', rarity:'rare', icon:'⛏️', name:'노가다', target:'self', cd:3, amt:2, up:{k:'cd',per:0.1}, quiet:true,
+    desc:v=>`골드 <b>2</b>를 얻습니다. 쿨타임이 아주 짧습니다.`,
+    run:(me,t,v)=>{ grantGold(me, 2); } },
+  /* [Ver 13.6] 리워크 — 예전엔 카드마다 따로 굴려서 "반은 오르고 반은 내리는" 밍밍한 결과가
+     대부분이었다. 이제 **방향을 한 번만 정하고**(오름/내림), 몇 장이 걸릴지를 1~전부에서 굴린다.
+     크게 먹거나 크게 잃는다. */
   { key:'wager', rarity:'rare', icon:'🎲', name:'도박', target:'self', cd:84, amt:50, up:{k:'amt',per:1},
-    desc:v=>`손패의 <b>모든 카드</b>가 <b>${v}%</b> 확률로 등급이 오르고, 아니면 내려갑니다.`,
-    run:(me,t,v)=>{ let up=0, down=0;
-      me.hand = me.hand.map(c=>{ const win = Math.random()*100 < v;
-        const g = pwGradeShift(c.grade, win ? 1 : -1);
-        const nc = pwCardOfGrade(g); if(!nc) return c;
-        win ? up++ : down++; return nc; });
-      pwLog(`🎲 도박 결과 — 등급 상승 <b>${up}</b>장 · 하락 <b>${down}</b>장`); } },
+    desc:v=>`<b>${v}%</b> 확률로 손패의 <b>1장~전부</b>가 등급이 <b>한 단계 오르고</b>, 아니면 같은 수만큼 <b>내려갑니다.</b>`,
+    run:(me,t,v)=>{ const n0 = (me.hand||[]).length; if(!n0){ pwLog(`🎲 손패가 비어 있습니다.`); return; }
+      const up = Math.random()*100 < v;
+      const cnt = 1 + Math.floor(Math.random() * n0);          // 1 ~ 전부
+      const idxs = me.hand.map((_,i)=>i);
+      for(let i=idxs.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [idxs[i],idxs[j]]=[idxs[j],idxs[i]]; }
+      let done = 0;
+      idxs.slice(0, cnt).forEach(i=>{
+        const nc = pwCardOfGrade(pwGradeShift(me.hand[i].grade, up ? 1 : -1));
+        if(nc){ me.hand[i] = nc; done++; }
+      });
+      pwLog(up ? `🎲 도박 성공 — 카드 <b>${done}</b>장의 등급이 올랐습니다!`
+               : `🎲 도박 실패 — 카드 <b>${done}</b>장의 등급이 내려갔습니다.`); } },
 
   /* ---------------- 영웅 ---------------- */
-  { key:'diablo', rarity:'epic', icon:'👹', name:'디아블로', target:'none', cd:91, amt:0, up:{k:'cd',per:5},
-    desc:v=>`<b>모든 상대</b>의 가장 높은 등급 카드 한 장을 한 단계 아래 카드로 변이시킵니다.`,
-    run:(me,t,v)=>{ let n=0; pwEnemies(me).forEach(e=>{ const i = pwHandIdxHighest(e); if(i<0) return;
-        const nc = pwCardOfGrade(pwGradeShift(e.hand[i].grade, -1)); if(nc){ e.hand[i] = nc; n++; } });
-      pwLog(`👹 디아블로 — ${n}명의 최고 등급 카드가 강등되었습니다.`); } },
+  { key:'diablo', rarity:'epic', icon:'👹', name:'디아블로', target:'none', cd:121, amt:0, up:{k:'cd',per:5},
+    desc:v=>`<b>모든 상대</b>의 가장 높은 등급 카드 <b>3장</b>을 한 단계 아래 카드로 변이시킵니다.`,
+    run:(me,t,v)=>{ let n=0;
+      pwEnemies(me).forEach(e=>{
+        /* 한 사람당 최대 3장 — 매번 "지금 가장 높은 것"을 다시 찾아 깎아내린다 */
+        for(let k=0;k<3;k++){ const i = pwHandIdxHighest(e); if(i<0) break;
+          const nc = pwCardOfGrade(pwGradeShift(e.hand[i].grade, -1)); if(!nc) break;
+          e.hand[i] = nc; n++; }
+      });
+      pwLog(`👹 디아블로 — 카드 ${n}장이 강등되었습니다.`); } },
   { key:'crit', rarity:'epic', icon:'💢', name:'치명상', target:'self', cd:98, amt:0, up:{k:'cd',per:5},
     desc:v=>`다음에 자신이 가하는 공격이 <b>무조건 크리티컬</b>이 됩니다.`,
     run:(me,t,v)=>{ me.pwCritNext = true; pwLog(`💢 ${J(me.name,'의','의')} 다음 공격이 반드시 크리티컬로 꽂힙니다.`); } },
@@ -14376,12 +14455,12 @@ const POWER_DEFS = [
     desc:v=>`손패를 <b>전부 같은 등급의 다른 카드</b>로 바꿉니다.`,
     run:(me,t,v)=>{ me.hand = me.hand.map(c=> pwCardOfGrade(c.grade) || c);
       pwLog(`🔄 ${J(me.name,'의','의')} 손패가 전부 새로 깔렸습니다.`); } },
-  { key:'seal', rarity:'epic', icon:'🔒', name:'봉인', target:'enemy', cd:84, amt:3, up:{k:'cd',per:5},
-    desc:v=>`지목 대상의 최고 등급 카드를 <b>3바퀴</b>간 사용할 수 없게 만듭니다.`,
+  { key:'seal', rarity:'epic', icon:'🔒', name:'봉인', target:'enemy', cd:84, amt:5, up:{k:'cd',per:5},
+    desc:v=>`지목 대상의 최고 등급 카드를 <b>5바퀴</b>간 사용할 수 없게 만듭니다.`,
     run:(me,t,v)=>{ const i = pwHandIdxHighest(t); if(i<0) return;
-      t.hand[i].pwSealedUntil = turnCount + 3;
-      pwLog(`🔒 ${J(t.name,'의','의')} "${escapeHtml(t.hand[i].name)}"이(가) 3바퀴간 봉인되었습니다.`); } },
-  { key:'nourish', rarity:'epic', icon:'🌱', name:'양분', target:'self', cd:84, amt:0, up:{k:'cd',per:5},
+      t.hand[i].pwSealedUntil = turnCount + 5;
+      pwLog(`🔒 ${J(t.name,'의','의')} "${escapeHtml(t.hand[i].name)}"이(가) 5바퀴간 봉인되었습니다.`); } },
+  { key:'nourish', rarity:'epic', icon:'🌱', name:'양분', target:'self', cd:70, amt:0, up:{k:'cd',per:5},
     desc:v=>`손패의 카드 한 장의 등급을 <b>한 단계</b> 올립니다.`,
     run:(me,t,v)=>{ const i = pwHandIdxRandom(me); if(i<0) return;
       const nc = pwCardOfGrade(pwGradeShift(me.hand[i].grade, 1)); if(!nc) return;
@@ -14403,18 +14482,18 @@ const POWER_DEFS = [
       const def = cards.find(c=> c.name === pick.cardName);
       if(def){ grantCardToPlayer(me, mkUidCard(def), '권능 리콜'); pwLog(`↩️ "${escapeHtml(def.name)}"이(가) 손으로 돌아왔습니다.`); } } },
   { key:'crush', rarity:'epic', icon:'🔨', name:'분쇄', target:'self', cd:49, amt:0, up:{k:'cd',per:5},
-    desc:v=>`자신의 카드 한 장을 부수고 그 <b>값어치만큼 골드</b>를 얻습니다.`,
+    desc:v=>`자신의 카드 한 장을 부수고 그 <b>구매가의 1.5배</b>만큼 골드를 얻습니다.`,
     run:(me,t,v)=>{ const i = pwHandIdxRandom(me); if(i<0) return;
-      const c = me.hand[i]; const g = pwCardWorth(c, me);
+      const c = me.hand[i]; const g = Math.floor(pwCardWorth(c, me) * 1.5);
       me.hand.splice(i,1); grantGold(me, g);
       pwLog(`🔨 "${escapeHtml(c.name)}"을(를) 분쇄해 ${fmtWon(g)}을(를) 얻었습니다.`); } },
-  { key:'landmine', rarity:'epic', icon:'💣', name:'지뢰', target:'enemy', cd:112, amt:500, up:{k:'cd',per:5},
-    desc:v=>`지목 대상에게 지뢰를 심습니다. 그 사람이 <b>상점에 들어가면 500 피해</b>를 입고 지뢰는 사라집니다.`,
-    run:(me,t,v)=>{ t.pwMine = { by: me.id, dmg: 500 }; pwLog(`💣 ${J(t.name,'에게','에게')} 지뢰가 심어졌습니다. (상점 입장 시 폭발)`); } },
+  { key:'landmine', rarity:'epic', icon:'💣', name:'지뢰', target:'enemy', cd:112, amt:600, up:{k:'cd',per:5},
+    desc:v=>`지목 대상에게 지뢰를 심습니다. 그 사람이 <b>상점에 들어가면 600 피해</b>를 입고 지뢰는 사라집니다.`,
+    run:(me,t,v)=>{ t.pwMine = { by: me.id, dmg: 600 }; pwLog(`💣 ${J(t.name,'에게','에게')} 지뢰가 심어졌습니다. (상점 입장 시 폭발)`); } },
   { key:'antigrav', rarity:'epic', icon:'🌌', name:'반중력', target:'enemy', cd:105, amt:0, up:{k:'cd',per:5},
-    desc:v=>`지목 대상의 최고 등급 카드를 <b>한 단계 아래 카드 2장</b>으로 쪼갭니다.`,
+    desc:v=>`지목 대상의 최고 등급 카드를 <b>두 단계 아래 카드 2장</b>으로 쪼갭니다.`,
     run:(me,t,v)=>{ const i = pwHandIdxHighest(t); if(i<0) return;
-      const gone = t.hand[i]; const g = pwGradeShift(gone.grade, -1);
+      const gone = t.hand[i]; const g = pwGradeShift(gone.grade, -2);
       t.hand.splice(i,1);
       for(let k=0;k<2;k++){ const c = pwCardOfGrade(g); if(c) t.hand.push(c); }
       pwLog(`🌌 ${J(t.name,'의','의')} "${escapeHtml(gone.name)}"이(가) ${g}등급 2장으로 쪼개졌습니다.`); } },
@@ -14424,7 +14503,7 @@ const POWER_DEFS = [
       const nc = pwCardOfGrade(me.hand[i].grade); if(!nc) return;
       pwLog(`🎚️ "${escapeHtml(me.hand[i].name)}" → <b>${escapeHtml(nc.name)}</b>`);
       me.hand[i] = nc; } },
-  { key:'filch', rarity:'epic', icon:'🖐️', name:'도벽', target:'enemy', cd:70, amt:0, up:{k:'cd',per:5},
+  { key:'filch', rarity:'epic', icon:'🖐️', name:'도벽', target:'enemy', cd:30, amt:0, up:{k:'cd',per:2},
     desc:v=>`지목 대상의 카드 <b>한 장</b>을 훔쳐 옵니다.`,
     run:(me,t,v)=>{ const i = pwHandIdxRandom(t); if(i<0){ pwLog(`🖐️ 훔칠 카드가 없습니다.`); return; }
       const c = t.hand.splice(i,1)[0];
@@ -14433,12 +14512,17 @@ const POWER_DEFS = [
   { key:'bolt', rarity:'epic', icon:'⚡', name:'번개', target:'enemy', cd:84, amt:200, up:{k:'amt',per:10},
     desc:v=>`지목 대상에게 <b>${v}</b> 피해. <b>50%</b> 확률로 0.5초 뒤 <b>무작위 대상</b>에게 피해가 <b>+30</b> 되어 다시 떨어집니다. (연쇄, 자신 제외)`,
     run:(me,t,v)=>{ pwBoltChain(me, t, v); } },
-  { key:'devour', rarity:'epic', icon:'🍖', name:'포식', target:'self', cd:98, amt:25, up:{k:'amt',per:3},
-    desc:v=>`자신의 카드 한 장을 먹어치우고 공격력이 <b>${v}%</b> 증가합니다.`,
-    run:(me,t,v)=>{ const i = pwHandIdxRandom(me); if(i<0) return;
-      const c = me.hand.splice(i,1)[0];
-      me.atkMultiplier = (me.atkMultiplier||0) + v;
-      pwLog(`🍖 "${escapeHtml(c.name)}"을(를) 삼켜 공격력이 ${v}% 올랐습니다.`); } },
+  /* [Ver 13.6] %가 아니라 **고정 수치**다. atkMultiplier(퍼센트 증감)가 아니라
+     permaAtkFlat(최종 피해에 그대로 더해지는 값)에 쌓는다 — 사디스트·마조히스트와 같은 통이라
+     상태칩("영구 공격력 +N")과 기록 패널에도 함께 잡힌다.
+     ⚠ cleanseAllEffects(모든 효과 초기화)로는 지워진다. 사디스트가 쌓은 것과 같은 취급이다. */
+  { key:'devour', rarity:'epic', icon:'🍖', name:'포식', target:'self', cd:45, amt:50, up:{k:'amt',per:5},
+    desc:v=>`자신의 카드 <b>3장</b>을 먹어치우고 공격력이 <b>${v}</b> 증가합니다. <span style="opacity:.7">(고정 수치 · 영구)</span>`,
+    run:(me,t,v)=>{ const eaten = [];
+      for(let k=0;k<3;k++){ const i = pwHandIdxRandom(me); if(i<0) break; eaten.push(me.hand.splice(i,1)[0].name); }
+      if(!eaten.length){ pwLog(`🍖 먹어치울 카드가 없습니다.`); return; }
+      me.permaAtkFlat = (me.permaAtkFlat||0) + v;
+      pwLog(`🍖 카드 ${eaten.length}장을 삼켜 공격력이 <b>+${v}</b> 올랐습니다. (누적 +${me.permaAtkFlat}) (${eaten.map(escapeHtml).join(' · ')})`); } },
 
   /* ---------------- 전설 ---------------- */
   /* [Ver 13.2.1 밸런스] 영웅 → 전설 상향. 쉴드 300을 조건 없이 즉시 두르는 건
@@ -14447,32 +14531,39 @@ const POWER_DEFS = [
   { key:'barrier', rarity:'legend', icon:'🛡️', name:'배리어', target:'self', cd:98, amt:300, up:{k:'cd',per:5},
     desc:v=>`즉시 쉴드 <b>300</b>을 얻습니다.`,
     run:(me,t,v)=>{ pwShield(me, 300); pwLog(`🛡️ ${J(me.name,'이','가')} 쉴드 300을 둘렀습니다.`); } },
-  { key:'nuke', rarity:'legend', icon:'☢️', name:'핵미사일', target:'none', cd:168, amt:9999, up:{k:'cd',per:8},
-    desc:v=>`<b>5%</b> 확률로 모두에게 <b>9999</b> 피해를 입힙니다. (전체 공격)`,
-    run:(me,t,v)=>{ if(Math.random()*100 >= 5){ pwLog(`☢️ 핵미사일이 불발되었습니다.`); return; }
+  { key:'nuke', rarity:'legend', icon:'☢️', name:'핵미사일', target:'none', cd:168, amt:99999, up:{k:'cd',per:8},
+    desc:v=>`<b>7%</b> 확률로 모두에게 <b>99,999</b> 피해를 입힙니다. <b>(쉴드 관통 · 전체 공격)</b>`,
+    run:(me,t,v)=>{ if(Math.random()*100 >= 7){ pwLog(`☢️ 핵미사일이 불발되었습니다.`); return; }
       pwLog(`☢️ <b>핵미사일 발사!</b>`);
-      pwEnemies(me).forEach(e=> dealDamage(me, e, 9999, 'NONE', true)); } },
-  { key:'seize', rarity:'legend', icon:'📉', name:'압류', target:'enemy', cd:175, amt:0, up:{k:'cd',per:5},
-    desc:v=>`지목 대상의 손패를 <b>전부</b> 없앱니다.`,
-    run:(me,t,v)=>{ const n = (t.hand||[]).length; t.hand = [];
-      pwLog(`📉 ${J(t.name,'의','의')} 손패 ${n}장이 전부 압류되었습니다.`); } },
+      pwEnemies(me).forEach(e=> dealDamage(me, e, 99999, 'PIERCE', true)); } },
+  /* [Ver 13.6 너프] 즉시 → **2바퀴 뒤**. 그 사이에 카드를 쓰거나 넘길 시간을 준다.
+     예고가 상태칩으로 보이므로 대상은 대비할 수 있다. */
+  { key:'seize', rarity:'legend', icon:'📉', name:'압류', target:'enemy', cd:175, amt:2, up:{k:'cd',per:5},
+    desc:v=>`지목 대상의 손패를 <b>2바퀴 뒤에</b> 전부 없앱니다. (예고가 상대에게 보입니다)`,
+    run:(me,t,v)=>{ t.pwSeize = { by: me.id, dueRound: turnCount + 2 };
+      pwLog(`📉 ${J(t.name,'의','의')} 손패에 압류가 예고되었습니다. <b>2바퀴 뒤</b> 전부 사라집니다.`); } },
   { key:'joker', rarity:'legend', icon:'🃏', name:'조커', target:'self', cd:154, amt:0, up:{k:'cd',per:5},
     desc:v=>`손패의 <b>최고 등급 카드</b>를 복제합니다.`,
     run:(me,t,v)=>{ const i = pwHandIdxHighest(me); if(i<0) return;
       const c = me.hand[i];
       me.hand.push(Object.assign({}, c, { uid:'u'+Date.now().toString(36)+Math.random().toString(36).slice(2,8) }));
       pwLog(`🃏 "${escapeHtml(c.name)}"이(가) 복제되었습니다.`); } },
-  { key:'salmi', rarity:'legend', icon:'🖤', name:'살미야키', target:'enemy', cd:133, amt:44, up:{k:'amt',per:1},
-    desc:v=>`지목 대상 <b>최대 체력의 ${v}%</b>에 해당하는 피해를 입힙니다.`,
-    run:(me,t,v)=>{ const dmg = Math.floor((t.maxHp||0) * v / 100); dealDamage(me, t, dmg, 'NONE', false); } },
-  { key:'godmode', rarity:'legend', icon:'✨', name:'무적', target:'self', cd:168, amt:5, up:{k:'cd',per:5},
-    desc:v=>`<b>5초</b> 동안 받는 피해가 <b>99%</b> 감소합니다.`,
-    run:(me,t,v)=>{ me.pwGodUntil = Date.now() + 5000; pwLog(`✨ ${J(me.name,'이','가')} 5초간 거의 모든 피해를 흘립니다.`); } },
-  { key:'emp', rarity:'legend', icon:'📡', name:'EMP', target:'enemy', cd:140, amt:20, up:{k:'amt',per:2},
+  /* [Ver 13.6 너프] ① 최대 체력 → **현재 체력** 기준. 이미 깎인 상대에게는 그만큼 덜 들어간다.
+     ② startOnCd — 판이 열리자마자 쓸 수 없다. 다른 권능은 전부 준비된 채 시작하지만
+        이것만은 쿨타임을 한 번 기다려야 한다(초반에 그냥 반토막을 내버렸다). */
+  { key:'salmi', rarity:'legend', icon:'🖤', name:'살미야키', target:'enemy', cd:133, amt:44, up:{k:'amt',per:1}, startOnCd:true,
+    desc:v=>`지목 대상 <b>현재 체력의 ${v}%</b>에 해당하는 피해를 입힙니다. <span style="opacity:.7">(판이 시작되면 쿨타임을 한 번 기다려야 합니다)</span>`,
+    run:(me,t,v)=>{ const dmg = Math.floor((t.hp||0) * v / 100); dealDamage(me, t, dmg, 'NONE', false); } },
+  { key:'godmode', rarity:'legend', icon:'✨', name:'무적', target:'self', cd:168, amt:7, up:{k:'amt',per:0.5},
+    desc:v=>`<b>${v}초</b> 동안 받는 피해가 <b>99%</b> 감소합니다.`,
+    run:(me,t,v)=>{ me.pwGodUntil = Date.now() + v*1000; pwLog(`✨ ${J(me.name,'이','가')} ${v}초간 거의 모든 피해를 흘립니다.`); } },
+  /* [Ver 13.6] 전설 → **영웅** 하향. 4바퀴 확률 무력화는 전설 칸에서 존재감이 옅었다.
+     ⚠ 등급이 내려가면 강화 비용이 1·2·3… → 2·4·6… 으로 비싸지고, 재단에서 더 자주 나온다. */
+  { key:'emp', rarity:'epic', icon:'📡', name:'EMP', target:'enemy', cd:140, amt:25, up:{k:'amt',per:2},
     desc:v=>`지목 대상에게 <b>4바퀴</b>간 EMP. 그 사람의 공격이 <b>${v}%</b> 확률로 ATK 0이 됩니다.`,
     run:(me,t,v)=>{ t.pwEmp = { pct:v, dueRound: turnCount + 4 };
       pwLog(`📡 ${J(t.name,'이','가')} 4바퀴 동안 EMP에 걸렸습니다. (공격 ${v}% 확률로 무력화)`); } },
-  { key:'hack', rarity:'legend', icon:'💻', name:'해킹', target:'enemy', cd:35, amt:0, up:{k:'cd',per:1},
+  { key:'hack', rarity:'legend', icon:'💻', name:'해킹', target:'enemy', cd:40, amt:0, up:{k:'cd',per:1},
     desc:v=>`지목 대상의 <b>공격 카드 한 장</b>을 해킹합니다. 그 카드는 공격 대신 <b>피격 대상을 회복</b>시킵니다.`,
     run:(me,t,v)=>{ const atkIdx = (t.hand||[]).map((c,i)=>({c,i})).filter(x=> (x.c.power||0) > 0);
       if(!atkIdx.length){ pwLog(`💻 해킹할 공격 카드가 없습니다.`); return; }
@@ -14489,11 +14580,14 @@ const POWER_DEFS = [
       const nc = pwCardOfGrade(pwGradeShift(t.hand[i].grade, -1)); if(!nc) return;
       pwLog(`🔪 ${J(t.name,'의','의')} "${escapeHtml(t.hand[i].name)}"이(가) 강등되었습니다.`);
       t.hand[i] = nc; } },
-  { key:'snipe', rarity:'legend', icon:'🎯', name:'저격', target:'enemy', cd:210, amt:300, up:{k:'cd',per:10},
-    desc:v=>`<b>5바퀴 뒤</b>부터 자신의 공격 카드가 그 대상에게 <b>300% 추가 피해</b>를 줍니다.`,
-    run:(me,t,v)=>{ me.pwSnipe = { targetId: t.id, fromRound: turnCount + 5, pct: 300 };
-      pwLog(`🎯 ${J(me.name,'이','가')} ${J(t.name,'을','를')} 조준했습니다. (5바퀴 뒤부터 +300%)`); } },
-  { key:'warp', rarity:'legend', icon:'🧬', name:'변이', target:'enemy', cd:49, amt:3, up:{k:'cd',per:2},
+  /* [Ver 13.6 너프] 300% → 150%.
+     ⚠ 예전엔 run 이 amt(v)를 안 쓰고 300 을 박아 써서, **강화해도 아무 변화가 없었다.**
+       이제 v 를 그대로 쓴다(설명과 실제가 같아진다). */
+  { key:'snipe', rarity:'legend', icon:'🎯', name:'저격', target:'enemy', cd:210, amt:150, up:{k:'amt',per:10},
+    desc:v=>`<b>5바퀴 뒤</b>부터 자신의 공격 카드가 그 대상에게 <b>${v}% 추가 피해</b>를 줍니다.`,
+    run:(me,t,v)=>{ me.pwSnipe = { targetId: t.id, fromRound: turnCount + 5, pct: v };
+      pwLog(`🎯 ${J(me.name,'이','가')} ${J(t.name,'을','를')} 조준했습니다. (5바퀴 뒤부터 +${v}%)`); } },
+  { key:'warp', rarity:'legend', icon:'🧬', name:'변이', target:'enemy', cd:65, amt:3, up:{k:'cd',per:2},
     desc:v=>`지목 대상의 카드 <b>3장</b>을 무작위 카드로 바꿉니다.`,
     run:(me,t,v)=>{ let n=0;
       for(let k=0;k<3;k++){ const i = pwHandIdxRandom(t); if(i<0) break;
@@ -14510,11 +14604,20 @@ const POWER_DEFS = [
     desc:v=>`지목 대상과 <b>손패를 통째로 맞바꿉니다.</b>`,
     run:(me,t,v)=>{ const a = me.hand; me.hand = t.hand; t.hand = a;
       pwLog(`🎩 ${J(me.name,'이','가')} ${J(t.name,'과','와')} 손패를 통째로 바꿨습니다!`); } },
-  { key:'nocool', rarity:'legend', icon:'🔃', name:'노쿨', target:'self', cd:182, amt:0, up:{k:'cd',per:5},
-    desc:v=>`자신의 <b>모든 권능 쿨타임</b>을 초기화합니다.`,
-    run:(me,t,v)=>{ (me.pwSlots||[]).forEach((s,i)=>{ if(s && i !== me.__pwUsingSlot) s.left = 0; });
-      pwLog(`🔃 ${J(me.name,'의','의')} 권능 쿨타임이 전부 초기화되었습니다.`); } },
-  { key:'purify', rarity:'legend', icon:'🕊️', name:'정화', target:'self', cd:196, amt:0, up:{k:'cd',per:5},
+  /* [Ver 13.6 조정] 전부 초기화 → **각 권능 전체 쿨타임의 50%만큼 단축.**
+     ⚠ "남은 시간의 50%"가 아니라 **"그 권능 전체 쿨의 50%"** 다. 그래서 쿨이 긴 권능일수록
+       더 많이 깎이고, 짧은 권능은 사실상 즉시 준비된다. 대신 자기 쿨은 182 → 90 으로 줄었다. */
+  { key:'nocool', rarity:'legend', icon:'🔃', name:'노쿨', target:'self', cd:90, amt:50, up:{k:'amt',per:3},
+    desc:v=>`자신의 다른 권능들의 쿨타임을 <b>각자 전체 쿨타임의 ${v}%</b>만큼 앞당깁니다.`,
+    run:(me,t,v)=>{ let n=0;
+      (me.pwSlots||[]).forEach((s,i)=>{
+        if(!s || i === me.__pwUsingSlot || !(s.left > 0)) return;
+        const def = powerDefOf(s.key); if(!def) return;
+        const cut = pwCd(def, s.lv || 1) * 1000 * (v/100);
+        s.left = Math.max(0, s.left - cut); n++;
+      });
+      pwLog(`🔃 ${J(me.name,'의','의')} 권능 ${n}개가 ${v}%만큼 앞당겨졌습니다.`); } },
+  { key:'purify', rarity:'legend', icon:'🕊️', name:'정화', target:'self', cd:150, amt:0, up:{k:'cd',per:5},
     desc:v=>`자신에게 걸린 <b>디버프를 전부</b> 없앱니다.`,
     run:(me,t,v)=>{ pwPurify(me); pwLog(`🕊️ ${J(me.name,'이','가')} 몸을 깨끗이 씻어냈습니다.`); } },
   { key:'gravity', rarity:'legend', icon:'🪐', name:'중력조작', target:'self', cd:98, amt:0, up:{k:'cd',per:5},
@@ -14527,7 +14630,7 @@ const POWER_DEFS = [
       const nc = pwCardOfGrade(pwGradeShift(g, 1));
       [i1,i2].sort((a,b)=>b-a).forEach(i=> me.hand.splice(i,1));
       if(nc){ me.hand.push(nc); pwLog(`🪐 ${g}등급 2장이 <b>${escapeHtml(nc.name)}</b>(으)로 합쳐졌습니다.`); } } },
-  { key:'nou', rarity:'legend', icon:'🪞', name:'NO U', target:'self', cd:126, amt:5, up:{k:'amt',per:1},
+  { key:'nou', rarity:'legend', icon:'🪞', name:'NO U', target:'self', cd:99, amt:7, up:{k:'amt',per:1},
     desc:v=>`<b>${v}초</b> 동안 자신이 받는 피해를 <b>시전자에게 반사</b>합니다.`,
     run:(me,t,v)=>{ me.pwReflectUntil = Date.now() + v*1000; pwLog(`🪞 ${J(me.name,'이','가')} ${v}초간 모든 것을 되돌려보냅니다.`); } },
   { key:'matrix', rarity:'legend', icon:'🟩', name:'매트릭스', target:'self', cd:126, amt:0, up:{k:'cd',per:5},
@@ -14536,7 +14639,7 @@ const POWER_DEFS = [
         pwLog(`🟩 ${J(me.name,'이','가')} 매트릭스에서 빠져나왔습니다.`); }
       else { me.matrixId = 'pw'+me.id; me.matrixDueRound = 99999; me.matrixAtkMod = 0;
         pwLog(`🟩 ${J(me.name,'이','가')} 매트릭스로 들어갔습니다.`); } } },
-  { key:'timewarp', rarity:'legend', icon:'⏳', name:'시간 왜곡', target:'self', cd:70, amt:1.5, up:{k:'amt',per:0.1},
+  { key:'timewarp', rarity:'legend', icon:'⏳', name:'시간 왜곡', target:'self', cd:80, amt:1.5, up:{k:'amt',per:0.1},
     desc:v=>`<b>3바퀴</b>간 자신이 내는 카드의 반응시간이 <b>${v}초 감소</b>하고, 상대가 자신에게 쓰는 카드의 반응시간은 <b>1초 증가</b>합니다. <span style="opacity:.7">(고유 반응시간이 정해진 카드는 제외)</span>`,
     run:(me,t,v)=>{ me.pwWarp = { cut: Math.round(v*1000), add: 1000, dueRound: turnCount + 3 };
       pwLog(`⏳ ${J(me.name,'의','의')} 주변 시간이 뒤틀립니다. (3바퀴)`); } },
@@ -15094,7 +15197,7 @@ function applyPowersToGame(){
       p.pwSlots = [0,1,2].map(i=>{
         const d = picks[i]; if(!d) return null;
         const lv = 1 + Math.floor(Math.random()*2);
-        return { key:d.key, lv, left: 0, dead:false,
+        return { key:d.key, lv, left: pwStartLeftMs({key:d.key, lv}), dead:false,
                  botWait: PW_BOT_OPEN_MIN_MS + Math.random()*PW_BOT_OPEN_SPREAD_MS };
       });
     } else if(isMyPlayer(p)){
@@ -15103,7 +15206,7 @@ function applyPowersToGame(){
         if(!k) return null;
         const d = powerDefOf(k); if(!d) return null;
         const lv = Math.max(1, powerLv(k));
-        return { key:k, lv, left: 0, dead:false };       // [Ver 13.2.1] 시작하자마자 쓸 수 있다
+        return { key:k, lv, left: pwStartLeftMs({key:k, lv}), dead:false };   // [Ver 13.2.1] 시작하자마자 쓸 수 있다 (startOnCd 권능만 예외)
       });
     } else if(!Array.isArray(p.pwSlots)){
       p.pwSlots = [null,null,null];   // 원격 참가자 — 본인 기기에서 도착할 때까지 빈 칸
@@ -15116,11 +15219,20 @@ function applyPowersToGame(){
 }
 /* 전투 화면이 뜬 뒤 처음 한 번, 모든 슬롯을 "바로 쓸 수 있음"으로 맞춘다. */
 let __pwArmPending = false;
+/* [Ver 13.6] startOnCd 가 붙은 권능은 **판이 열려도 준비되지 않는다.**
+   나머지는 전부 시작하자마자 쓸 수 있다(13.2.1). 살미야키처럼 초반에 나오면
+   판이 그대로 기울어버리는 것만 예외로 둔다. */
+function pwStartLeftMs(slot){
+  if(!slot) return 0;
+  const def = powerDefOf(slot.key);
+  if(!def || !def.startOnCd) return 0;
+  return pwCd(def, slot.lv || 1) * 1000;
+}
 function pwArmAllOnStart(){
   if(!Array.isArray(players)) return;
   players.forEach(p=>{
     if(!p || !Array.isArray(p.pwSlots)) return;
-    p.pwSlots.forEach(s=>{ if(s) s.left = 0; });
+    p.pwSlots.forEach(s=>{ if(s) s.left = pwStartLeftMs(s); });   // startOnCd 만 쿨을 안고 시작
   });
 }
 /* 랜서버 참가자의 장착 정보가 도착했을 때 심는다 (lanHostFlushPets에서 부른다) */
@@ -16862,6 +16974,20 @@ function seasonWinRateOf(d){
   const decided = (d.sWins||0) + (d.sLosses||0);
   return decided > 0 ? Math.round((d.sWins/decided)*100) : 0;
 }
+/* [Ver 13.5.1] 이 줄이 마지막으로 갱신된 게 얼마 전인지. 리더보드가 "멈춰 보이는" 이유가
+   서버 문제인지 그 사람이 안 하고 있는 것인지, 이 한 조각이면 바로 갈린다. */
+function olAgoText(ms){
+  if(!ms) return '';
+  const d = Date.now() - ms;
+  if(d < 0) return '방금';
+  const m = Math.floor(d/60000);
+  if(m < 1)  return '방금';
+  if(m < 60) return `${m}분 전`;
+  const h = Math.floor(m/60);
+  if(h < 24) return `${h}시간 전`;
+  const day = Math.floor(h/24);
+  return day < 30 ? `${day}일 전` : `${Math.floor(day/30)}달 전`;
+}
 /* 리더보드용 플레이 시간 표기 — 시간 단위가 커도 한 줄에 들어가게 "N시간 M분"으로 끊는다. */
 function fmtPlayMs(ms){
   const total = Math.max(0, Math.floor((ms||0)/60000));
@@ -16933,6 +17059,7 @@ async function fbSubmitScore(){
   await fbInit();
   const { doc, setDoc } = FB.mod;
   await setDoc(doc(FB.db, 'players', FB.uid), fbBuildMyDoc());
+  try{ __lastSubmitError = null; }catch(e){}   // [Ver 13.5.1] 성공했으니 경고를 지운다
   return true;
 }
 /* ==========================================================================
@@ -17620,6 +17747,67 @@ async function fbLookupRemoteCode(code){
    새 패치를 넣을 땐 BALANCE_PATCHES 맨 앞에 한 덩어리를 추가하면 된다.
    ########################################################################## */
 const BALANCE_PATCHES = [
+  {
+    version: 'Ver 13.6', date: '2026-09-03',
+    groups: [
+      { title:'약했던 권능 — 값어치를 올린다', kind:'power',
+        note:'끼고 있어도 판에 아무 영향이 없던 것들입니다. 수치를 올리거나 쿨타임을 줄여 <b>"한 칸을 내줄 만한가"</b>에 답이 되게 했습니다.',
+        rows:[
+          { name:'베기',   icon:'\u{1F5E1}️', rows:[{ label:'피해', from:'100', to:'180', dir:'up' }]},
+          { name:'부식',   icon:'\u{1F9EA}', rows:[{ label:'받는 피해 증가', from:'15%', to:'20%', dir:'up' }]},
+          { name:'노가다', icon:'⛏️', rows:[{ label:'골드', from:'1', to:'2', dir:'up' }]},
+          { name:'봉인',   icon:'\u{1F512}', rows:[{ label:'지속', from:'3바퀴', to:'5바퀴', dir:'up' }]},
+          { name:'양분',   icon:'\u{1F331}', rows:[{ label:'쿨타임', from:'84초', to:'70초', dir:'up' }]},
+          { name:'분쇄',   icon:'\u{1F528}', rows:[{ label:'획득 골드', from:'구매가', to:'구매가 ×1.5', dir:'up' }]},
+          { name:'지뢰',   icon:'\u{1F4A3}', rows:[{ label:'폭발 피해', from:'500', to:'600', dir:'up' }]},
+          { name:'반중력', icon:'\u{1F30C}', rows:[{ label:'강등 폭', from:'한 단계 아래 2장', to:'두 단계 아래 2장', dir:'up' }]},
+          { name:'도벽',   icon:'\u{1F590}️', rows:[{ label:'쿨타임', from:'70초', to:'30초', dir:'up' }]},
+          { name:'무적',   icon:'✨', rows:[{ label:'지속', from:'5초', to:'7초', dir:'up' }]},
+          { name:'NO U',   icon:'\u{1FA9E}', rows:[
+            { label:'지속',   from:'5초',   to:'7초',  dir:'up' },
+            { label:'쿨타임', from:'126초', to:'99초', dir:'up' }]},
+          { name:'정화',   icon:'\u{1F54A}️', rows:[{ label:'쿨타임', from:'196초', to:'150초', dir:'up' }]},
+          { name:'핵미사일', icon:'☢️', rows:[
+            { label:'발동 확률', from:'5%',    to:'7%',      dir:'up' },
+            { label:'피해',     from:'9,999', to:'99,999',  dir:'up' },
+            { label:'관통',     from:'없음',   to:'쉴드 관통', dir:'up' }]},
+        ]},
+      { title:'세던 권능 — 판을 혼자 끝내지 못하게', kind:'power',
+        note:'한 번 터지면 그대로 판이 끝나던 것들입니다. <b>없애지 않고 대응할 틈을 만드는</b> 쪽으로 손봤습니다.',
+        rows:[
+          { name:'압류',     icon:'\u{1F4C9}', rows:[{ label:'발동', from:'즉시', to:'2바퀴 뒤 (예고 표시)', dir:'down' }]},
+          { name:'살미야키', icon:'\u{1F5A4}', rows:[
+            { label:'기준',      from:'최대 체력 44%', to:'현재 체력 44%', dir:'down' },
+            { label:'시작 상태', from:'바로 사용 가능', to:'쿨타임 대기',   dir:'down' }]},
+          { name:'저격',     icon:'\u{1F3AF}', rows:[{ label:'추가 피해', from:'300%', to:'150%', dir:'down' }]},
+          { name:'변이',     icon:'\u{1F9EC}', rows:[{ label:'쿨타임', from:'49초', to:'65초', dir:'down' }]},
+          { name:'해킹',     icon:'\u{1F4BB}', rows:[{ label:'쿨타임', from:'35초', to:'40초', dir:'down' }]},
+          { name:'시간 왜곡', icon:'⏳', rows:[{ label:'쿨타임', from:'70초', to:'80초', dir:'down' }]},
+        ]},
+      { title:'리워크 — 결과가 밋밋했던 것들', kind:'power',
+        note:'수치만 만져서는 재미가 생기지 않는 셋입니다. 작동 방식을 바꿨습니다.',
+        rows:[
+          { name:'흡혈',     icon:'\u{1FA78}', rows:[
+            { label:'피해', from:'고정 250',   to:'상대 현재 체력 15%', dir:'up' },
+            { label:'회복', from:'입힌 만큼',  to:'내 현재 체력 25%',   dir:'up' }]},
+          { name:'도박',     icon:'\u{1F3B2}', rows:[
+            { label:'판정', from:'카드마다 따로', to:'방향 한 번 · 1장~전부', dir:'up' }]},
+          { name:'노쿨',     icon:'\u{1F503}', rows:[
+            { label:'효과',   from:'전부 초기화', to:'전체 쿨의 50% 단축', dir:'down' },
+            { label:'쿨타임', from:'182초',      to:'90초',              dir:'up' }]},
+          { name:'디아블로', icon:'\u{1F479}', rows:[
+            { label:'강등 장수', from:'1장',  to:'3장',   dir:'up' },
+            { label:'쿨타임',   from:'91초', to:'121초', dir:'down' }]},
+          { name:'포식',     icon:'\u{1F356}', rows:[
+            { label:'제물',   from:'카드 1장',      to:'카드 3장',        dir:'down' },
+            { label:'공격력', from:'+25% (비율)',   to:'+50 (고정·영구)', dir:'up' },
+            { label:'쿨타임', from:'98초',         to:'45초',            dir:'up' }]},
+          { name:'EMP',      icon:'\u{1F4E1}', rows:[
+            { label:'무력화 확률', from:'20%',  to:'25%',  dir:'up' },
+            { label:'등급',       from:'전설', to:'영웅', dir:'down' }]},
+        ]},
+    ]
+  },
   {
     version: 'Ver 13.4', date: '2026-08-31',
     groups: [
@@ -18414,13 +18602,25 @@ function renderOnlineRank(){
     const list = rows.slice(3).map((r,k)=>{
       const i = k + 3;
       const mine = (r.code === myCode);
+      /* [Ver 13.5.1] 이 줄이 **언제** 올라온 건지 보여준다.
+         남의 순위가 안 바뀌는 게 "서버 탓"인지 "그 사람이 안 한 것"인지 여기서 갈린다. */
       return `<div class="ol-row${mine?' mine':''} ol-clickable" onclick="openPlayerProfile(${i})" title="눌러서 프로필 보기">
         <span class="ol-rank">${i+1}</span>
         <span class="ol-cls">${classIconHtml(r.sCls || 1, 20)}</span>
         <span class="ol-nick">${escapeHtml(r.nick||'이름없음')}${mine?' <i>나</i>':''}${r.bio?`<small class="ol-bio">${escapeHtml(r.bio)}</small>`:''}</span>
-        <span class="ol-val">${escapeHtml(b.fmt(r).replace(/<[^>]+>/g,''))}</span>
+        <span class="ol-val">${escapeHtml(b.fmt(r).replace(/<[^>]+>/g,''))}<small class="ol-when">${escapeHtml(olAgoText(r.updatedAt))}</small></span>
       </div>`;
     }).join('');
+
+    /* [Ver 13.5.1] 내 기록이 서버에 안 올라가고 있으면 여기서 알린다.
+       "다른 사람 순위가 안 바뀐다"는 제보가 실제로는 이 실패인 경우가 많다. */
+    const submitWarn = __lastSubmitError ? `<div class="ol-warn">
+      ⚠ <b>내 기록이 서버에 올라가지 않고 있습니다.</b>
+      ${escapeHtml(__lastSubmitError.code || '')} ${escapeHtml(String(__lastSubmitError.msg||'').slice(0,120))}
+      <small>${__lastSubmitError.code === 'permission-denied'
+        ? 'Firestore 규칙이 쓰기를 거부했습니다. (개발자에게 제보해주세요)'
+        : '인터넷 연결이나 차단 프로그램을 확인해주세요. 다음 판에 다시 시도합니다.'}</small>
+    </div>` : '';
 
     /* 시즌 설명 — 지금이 몇 번째 시즌이고, 언제 끝나고, 끝나면 무엇을 주는지. */
     const seasonHtml = onlineGenesisView ? '' : `<div class="ol-season">
@@ -18463,6 +18663,7 @@ function renderOnlineRank(){
       </div>
       ${seasonHtml}
       ${genesisMineHtml}
+      ${submitWarn}
       ${podiumHtml}
       <div class="ol-me">
         <div>내 순위 — ${myIdx>=0 ? `<b>${myIdx+1}위</b>` : '<b>순위권 밖</b>'}</div>
@@ -18573,6 +18774,12 @@ function doSubmitScore(){
    ========================================================================== */
 let __autoSubmitDoneThisGame = false;
 const AUTO_SUBMIT_DELAY_MS = 2000;   // 정산(클래스·시즌)이 끝나고도 남을 만큼
+/* [Ver 13.5.1] 자동 갱신이 실패해도 **아무도 몰랐다.** 콘솔에만 남기고 조용히 넘어갔기 때문에,
+   Firestore 규칙이 쓰기를 거부하고 있어도 "리더보드가 안 올라가네?" 하고 끝났다.
+   마지막 실패를 여기 기억해뒀다가 랭킹 화면에 한 줄로 알린다. 성공하면 지운다.
+   ⚠ 특히 permission-denied 는 **규칙의 hasOnly 목록과 fbBuildMyDoc 의 필드가 어긋났을 때** 난다.
+     필드를 추가했으면 firestore.rules 도 같이 게시해야 한다. */
+let __lastSubmitError = null;
 function autoSubmitScoreAfterGame(){
   try{
     if(__autoSubmitDoneThisGame) return;
@@ -18590,7 +18797,10 @@ function autoSubmitScoreAfterGame(){
               if(scr && scr.classList.contains('active') && onlineTab === 'rank' && !onlineGenesisView) renderOnlineRank();
             }catch(e){}
           })
-          .catch(e=>{ console.info('[리더보드] 자동 갱신 실패 — 다음 판에 다시 시도합니다.', e); });
+          .catch(e=>{
+            __lastSubmitError = { code: (e && e.code) || '', msg: (e && e.message) || String(e), at: Date.now() };
+            console.info('[리더보드] 자동 갱신 실패 — 다음 판에 다시 시도합니다.', e);
+          });
       }catch(e){ console.info('[리더보드] 자동 갱신 호출 실패', e); }
     }, AUTO_SUBMIT_DELAY_MS);
   }catch(e){}
@@ -20807,6 +21017,28 @@ function exitPlaygroundBar(){
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
   {
+    version: 'Ver 13.7', date: '2026-09-03',
+    items: [
+      '\u{1F6AB} <b>[규칙 정리] 소지형 패시브 카드가 버프를 잃으면 그 카드도 함께 죽습니다.</b> <b>우빈칼리버 · LK69 · 블루오션 · 리베로 · 포커 · 디아블로 · 인해전술 · 악전고투</b>가 대상입니다. <b>모든 효과 초기화 · 강서윤 · 불편 · 버프 강탈</b>을 맞으면 카드는 손에 남지만 <b>효과가 사라지고</b>, 손패에서 <b>회색</b>으로 바뀌며 <b>판매가가 0골드</b>가 됩니다. 다시 살아나지 않습니다 — 카드를 새로 구해야 합니다.',
+      '\u{1F41E} <b>[버그수정] 우빈칼리버가 조용히 죽어 있던 문제</b> — 버프를 벗겨내는 효과를 맞으면 공격력 +200%만 사라지고 <b>카드는 멀쩡해 보였습니다.</b> 게다가 내부 표식이 "아직 켜져 있음"으로 남아 <b>다시는 적용되지 않았습니다.</b> 손에 든 SR 카드가 아무 일도 하지 않는 채로 판이 끝났습니다.',
+      '\u{2696}\uFE0F <b>[일관성] 어떤 패시브는 죽고 어떤 패시브는 안 죽던 문제</b> — 매번 손패에서 다시 계산하는 것들(블루오션 등)은 아무리 벗겨도 되살아났고, 얹어두는 것들(우빈칼리버)은 영영 죽었습니다. 이제 <b>전부 같은 규칙</b>을 따릅니다.',
+    ]
+  },
+  {
+    version: 'Ver 13.6', date: '2026-09-03',
+    items: [
+      '\u{1F451} <b>[밸런스] 랩터의 권능 24종을 손봤습니다.</b> 자세한 수치는 <b>밸런스 패치</b> 탭에 있습니다.',
+      '\u{1FA78} <b>[리워크] 흡혈</b> — 고정 250 → <b>상대 현재 체력의 15%</b>를 빼앗고 <b>자신의 현재 체력 25%</b>만큼 회복합니다. 피해와 회복이 따로 놀아, 많이 깎았다고 많이 회복하지 않습니다.',
+      '\u{1F3B2} <b>[리워크] 도박</b> — 예전엔 카드마다 따로 굴려 "반은 오르고 반은 내리는" 밍밍한 결과가 대부분이었습니다. 이제 <b>방향을 한 번만 정하고</b>(오름/내림) <b>1장~전부</b>가 한꺼번에 걸립니다. 크게 먹거나 크게 잃습니다.',
+      '\u{1F503} <b>[조정] 노쿨</b> — "전부 초기화" → <b>각 권능 전체 쿨타임의 50%만큼 앞당김</b>. 대신 자기 쿨타임이 <b>182 → 90초</b>로 줄었습니다. 쿨이 긴 권능일수록 더 많이 깎입니다.',
+      '\u{1F4C9} <b>[너프] 압류</b> — 즉시 → <b>2바퀴 뒤</b>에 손패가 사라집니다. 예고가 <b>상태칩으로 보이므로</b> 그 사이에 카드를 쓰거나 넘길 수 있습니다.',
+      '\u{1F5A4} <b>[너프] 살미야키</b> — <b>최대</b> 체력의 44% → <b>현재</b> 체력의 44%. 그리고 <b>판이 시작되자마자 쓸 수 없습니다</b> — 쿨타임을 한 번 기다려야 합니다. (다른 권능은 예전처럼 바로 쓸 수 있습니다)',
+      '\u{1F356} <b>[조정] 포식</b> — 제물 <b>1장 → 3장</b>, 쿨타임 <b>98 → 45초</b>. 공격력 증가가 <b>비율(+25%) → 고정 수치(+50)</b>로 바뀌었습니다. 사디스트·마조히스트가 쌓는 것과 같은 <b>영구 고정 공격력</b>이라, 상태칩에도 누적치가 함께 잡힙니다.',
+      '\u{1F4E1} <b>[등급 조정] EMP</b>가 <b>전설 → 영웅</b>으로 내려갔습니다. 재단에서 더 자주 나오지만 강화 비용은 비싸집니다.',
+      '\u{1F3AF} <b>[버그수정] 저격</b>이 강화해도 아무 변화가 없던 문제 — 코드가 강화 수치를 무시하고 <b>300을 그대로 박아 쓰고</b> 있었습니다. 이제 설명과 실제가 같습니다. (수치는 300% → 150%로 하향)',
+    ]
+  },
+  {
     version: 'Ver 13.5.1', date: '2026-09-03',
     items: [
       '\u{1F41E} <b>[수정] 인게임에서 개발자 모드로 들어갈 수 없던 문제</b> — 헤더가 전투 화면보다 <b>아래에 깔려</b> 있어서, 버전 배지 자리를 보드가 가로채고 있었습니다. 눌러도 아무 반응이 없던 이유입니다.',
@@ -20815,6 +21047,8 @@ const CHANGELOG = [
       '\u{1F0CF} <b>[수정] 신규 카드 탭에 13.4 카드가 빠져 있던 문제</b> — <b>급가속 · 뺑소니 · trinitrotoluene · 비겁한 일격</b>이 이제 목록에 나옵니다.',
       '\u{1F3A8} <b>[UI] 상황에 따라 갈리는 상태칩의 색을 맞췄습니다.</b> <b>점괘</b>(길조는 버프 · 흉조는 디버프) · <b>회복량</b>(증가↔감소) · <b>임시 공격력</b>(샤우팅↔지후한테 쳐맞음) · <b>WILD</b>(±) · <b>누르끼끼</b>(박상현급만 디버프). <b>선행성 기억상실증</b>은 중립에서 디버프로 옮겼습니다.',
       '\u{1F9E8} <b>[수정] trinitrotoluene 의 화약 표식</b>이 <b>디버프 면역·무효화</b>를 무시하고 걸리던 문제 — 같은 성격의 표식(바이러스 표식 · 사냥꾼 표적 · 동상 · 재)과 판정을 맞췄습니다. <b>싱크로·프록시</b>로도 전가·공유됩니다.',
+      '\u{1F3C6} <b>[리더보드] 각 줄이 언제 올라온 기록인지 표시됩니다.</b> (<b>3시간 전 · 2일 전</b> …) 순위가 안 바뀌는 게 <b>서버 문제인지, 그 사람이 안 하고 있는 것인지</b> 바로 알 수 있습니다.',
+      '\u{26A0}\uFE0F <b>[리더보드] 내 기록이 서버에 안 올라가면 랭킹 화면이 알려줍니다.</b> 예전에는 자동 갱신이 실패해도 <b>조용히 넘어가서</b> 아무도 몰랐습니다.',
     ]
   },
   {
@@ -26068,6 +26302,7 @@ function tickEvoUnpleasant(){
       const owner = holders.find(h=> h.id !== p.id);   // 자기 자신에게는 발동하지 않는다
       if(!owner) return;
       const stripped = [];
+      killHeldPassives(p, '버프 강탈');   // [Ver 13.7] 손패의 패시브도 함께 죽는다
       if((p.atkMultiplier||0) > 0){ stripped.push(`공격력 +${Math.round(p.atkMultiplier)}%`); p.atkMultiplier = 0; }
       if((p.damageReductionPct||0) > 0){ stripped.push(`받는피해 -${p.damageReductionPct}%`); p.damageReductionPct = 0; }
       if((p.tempAtkBuffMult||0) > 0){ stripped.push('임시 공격력 버프'); p.tempAtkBuffMult = 0; p.tempAtkBuffTurns = 0; }
@@ -32171,6 +32406,7 @@ function mkPlayer(id,name,isBot){
     antiplazaDRPct:0, antiplazaDueRound:0, // [Ver 6.3] 안티프라자: 유료로 재적용하는 별도 트랙의 임시 받는피해감소
     freezeOnBigHit:false, // 빙하기: ATK 600 이상 카드로 명중시킬 때마다 상대를 2턴간 얼림(쉴드 보유 중이면 무시)
     huntedBy:null, // 사냥꾼: 이 값이 있으면 이 사람이 받는 모든 데미지는 1000으로 고정되고, 죽으면 해당 id의 사람이 100골드를 받는다
+    pwSeize:null,      // [Ver 13.6] 압류 예고 { by, dueRound } — 그 바퀴가 되면 손패가 통째로 사라진다
     tntPowder:false, tntPowderBy:null, tntPowderPct:20, tntPowderDmg:1000, // [Ver 13.4] trinitrotoluene 화약 표식
     __nosEva:0,        // [Ver 13.4] 급가속으로 올린 회피율 누적치(상한 50%를 재기 위함)
     virusMarked:false, // 랩터바이러스: [바이러스] 표식. 이 표식을 가진 사람이 사망하면 표식을 건 사람을 제외한 모두에게 [숙주] 디버프가 걸린다
@@ -32597,7 +32833,8 @@ const CHIP_DEBUFF = new Set([
   'reChaos','shopClosedForever',
   /* [Ver 13.5.1] 중립에 있던 것을 디버프로 옮겼다 — 효과가 통째로 초기화되는 건
      좋게 봐줄 여지가 없다. */
-  'amnesiaActive',]);
+  'amnesiaActive',
+  'pwSeize',]);   // [Ver 13.6] 압류 예고
 /* 위 둘에 없으면 전부 중립이다 — 팀·연인·매트릭스처럼 좋다 나쁘다를 가를 수 없는 것들.
    ⚠ 다만 **같은 칩이 상황에 따라 갈리는 것들**이 있다 — 점괘(길조↔흉조) · 회복량(증↔감) ·
      임시 공격력(샤우팅↔지후한테 쳐맞음) · WILD(±) · 누르끼끼(박상현급↔사황급).
@@ -32918,7 +33155,7 @@ function getStatusChips(p){
   if(p.matrixSealed) addChip('matrixSealed', '🚪', '문단속 (매트릭스 이동 불가)', 'blue');
   if(p.fastReactionMs) addChip('fastReactionMs', '⏩', '느려 (내 카드 반응 1.5초)', 'blue');
   if(p.reflexEvasionAdd && p.reflexEvasionDue > turnCount) addChip('reflexEvasionAdd', '⚡', `척수반사 (회피율 +${p.reflexEvasionAdd}% · ${p.reflexEvasionDue - turnCount}바퀴)`, 'blue');
-  if(p.hand && p.hand.some(c=>c.type==='SUPERCONDUCTOR_PASSIVE')) addChip('lk69', '🧊', 'LK69 (매 턴 쉴드+1 · 회피 +40%)', 'green');
+  if(hasLivePassive(p,'SUPERCONDUCTOR_PASSIVE')) addChip('lk69', '🧊', 'LK69 (매 턴 쉴드+1 · 회피 +40%)', 'green');
   if(p.beggarIncomeMult && p.beggarIncomeMult>1) addChip('beggarIncomeMult', '🥣', '거지 (바퀴 돈 2배)', 'yellow');
   if(p.whiteTigerReady) addChip('whiteTigerReady', '🐯', '백호랩터 (백호 버튼 사용 가능)', 'yellow');
   if(p.telekinesisTarget && p.telekinesisDueRound>turnCount){ const t=players.find(x=>x.id===p.telekinesisTarget); if(t) addChip('telekinesisTarget', '🧠', `텔레키네시스 조종 → ${t.name} (${p.telekinesisDueRound-turnCount}바퀴)`, 'red'); }
@@ -33033,20 +33270,20 @@ function getStatusChips(p){
   /* ===== [Ver 12.7.1] 신규 카드 상태칩 =====
      실시간으로 값이 변하는 카드일수록 "지금 몇 %인지"가 화면에 안 보이면 쓸 수가 없다. */
   {
-    const pk = (typeof pokerHandOf === 'function') ? pokerHandOf(p) : null;
+    const pk = (hasLivePassive(p,'POKER_PASSIVE') && typeof pokerHandOf === 'function') ? pokerHandOf(p) : null;
     if(pk) addChip('pokerHand', '🃏', `포커 · ${pk.label} (공격력 +${pk.pct}%)`, 'yellow');
-    else if(p.hand && p.hand.some(c=> c && c.type==='POKER_PASSIVE')) addChip('pokerNone', '🃏', '포커 (족보 없음)', 'blue');
+    else if(hasLivePassive(p,'POKER_PASSIVE')) addChip('pokerNone', '🃏', '포커 (족보 없음)', 'blue');
   }
   {
     const db = (typeof diabloAtkPct === 'function') ? diabloAtkPct(p) : 0;
-    if(p.hand && p.hand.some(c=> c && c.type==='DIABLO_PASSIVE')) addChip('diablo', '😈', `디아블로 (공격력 +${db}%)`, db > 0 ? 'red' : 'blue');
+    if(hasLivePassive(p,'DIABLO_PASSIVE')) addChip('diablo', '😈', `디아블로 (공격력 +${db}%)`, db > 0 ? 'red' : 'blue');
   }
   if(p.rampageOn) addChip('rampageOn', '💢', `폭주 (공격력 ${(p.rampageAtkPct||0) >= 0 ? '+' : ''}${Math.round(p.rampageAtkPct||0)}% · 0.5초마다 변동)`, 'red');
   if(typeof berserkActive === 'function' && berserkActive(p)) addChip('berserkAtkPct', '🪓', `광전사 (전체공격 · 공격력 +${p.berserkAtkPct||30}%) · ${Math.max(0,(p.berserkDueRound||0)-turnCount)}바퀴`, 'red');
   else if(p.berserkOnHit) addChip('berserkOnHit', '🪓', '광전사 대기 (맞으면 발동)', 'blue');
   if(p.ledgerRevenge) addChip('ledgerRevenge', '📓', '앙갚음장부 (적힌 상대에게 피해 2배)', 'yellow');
   if(p.ledgerMarked) addChip('ledgerMarked', '✒️', '장부에 적힘 (받는 피해 2배)', 'red');
-  if(p.hand && p.hand.some(c=> c && c.type==='LIBERO_PASSIVE')) addChip('libero', '🏐', '리베로 (상대 피해증감 무시)', 'green');
+  if(hasLivePassive(p,'LIBERO_PASSIVE')) addChip('libero', '🏐', '리베로 (상대 피해증감 무시)', 'green');
   if(p.healerAura > 0) addChip('healerAura', '💚', `힐러 (명중 시 아군 HP +${p.healerAura})`, 'green');
   if(p.auraFarmDueRound && turnCount < p.auraFarmDueRound) addChip('auraFarmDueRound', '🌟', `AURA FARMING (공격 불가) · ${p.auraFarmDueRound - turnCount}바퀴`, 'yellow');
   if(p.hand && p.hand.some(c=> c && c.type==='DOOR_OPENS_CURSE')) addChip('doorOpens', '🚪', '문이 열리네 요 (상점 입장 시 즉사)', 'red');
@@ -33131,6 +33368,8 @@ function getStatusChips(p){
   if(p.virusMarked) addChip('virusMarked', '🦠', '바이러스 표식', 'red');
   // [Ver 13.4] 화약 표식 — 해제되지 않으므로 남은 바퀴 배지가 없다
   if(p.tntPowder) addChip('tntPowder', '🧨', `화약 (카드 사용 시 ${p.tntPowderPct||20}%로 ${(p.tntPowderDmg||1000).toLocaleString()})`, 'red');
+  // [Ver 13.6] 압류 예고 — 몇 바퀴 뒤에 손패가 통째로 날아가는지 보여준다
+  if(p.pwSeize) addChip('pwSeize', '📉', `압류 예고 · ${Math.max(0, p.pwSeize.dueRound - turnCount)}바퀴 뒤 손패 전부 삭제`, 'red');
   if(p.hostBurdened) addChip('hostBurdened', '🧟', '숙주(매턴 250 피해)', 'red');
   if((p.butterflyStacks||0) > 0) addChip('butterflyStacks', '🦋', `나비 ${p.butterflyStacks}중첩(자기 턴마다 ${90*p.butterflyStacks} 피해)`, 'red');
   if(shopPartyDiscountStacks > 0) addChip('shopPartyDiscount', '🪩', `파티 타임(상점가 ×${Math.pow(0.5,shopPartyDiscountStacks).toFixed(shopPartyDiscountStacks>2?3:2)})`, 'yellow');
@@ -33840,7 +34079,7 @@ function runTurnStart(){
   });
   // [Ver 8.10 조정] 블루오션: 레드오션과 동일하게, 낼 필요 없이 "소지"만 하고 있으면 조건 충족 시 자동으로 받는 피해 -50%가 적용/해제된다.
   alivePlayers().forEach(pp=>{
-    const holdsBlue = pp.hand.some(c=>c.type==='BLUE_OCEAN_PASSIVE');
+    const holdsBlue = hasLivePassive(pp,'BLUE_OCEAN_PASSIVE');
     const twoLeft = alivePlayers().length === 2;
     if(holdsBlue && twoLeft && !pp.blueOceanActive){ pp.blueOceanActive = true; log('sys', `🌊 ${J(pp.name,'이','가')} "블루오션" 효과로 받는 피해가 50% 감소합니다.`); }
     else if(pp.blueOceanActive && (!holdsBlue || !twoLeft)){ pp.blueOceanActive = false; log('sys', `"블루오션" 효과가 사라졌습니다.`); }
@@ -37182,6 +37421,7 @@ function renderHand(){
       cls += (isMyTurn && playable) ? '' : ' disabled';
     }
     cls += c.__masked ? ' card-masked' : (cardVisualClass(c) ? ' '+cardVisualClass(c) : '');
+    if(c.__passiveDead) cls += ' disabled passive-dead';   // [Ver 13.7] 무력화된 패시브
     if(armedCardUid && c.uid===armedCardUid) cls += ' armed-confirm'; // [FIX #18] uid 기반 매칭
     // [Ver 4.12] 대상 지목 대기 중인 카드는 점선 테두리로 표시 (uid 기반 매칭)
     if(pendingCard && pendingCard.card && pendingCard.card.uid === c.uid) cls += ' targeting-pending';
@@ -37202,6 +37442,7 @@ function renderHand(){
       <div class="hc-name"${(!c.__masked && c.nameColor)?` style="color:${c.nameColor};"`:''}>${c.__masked ? '???' : escapeHtml(c.name)}</div>
       ${c.__masked ? `<div class="hc-power">무엇인지 알 수 없다...</div>` : powerLine(c)}
       <div class="hc-desc">${c.__masked ? '이 카드를 내기 전까지는 정체를 알 수 없습니다.' : (escapeHtml(c.desc||'') + evoBonusHtml(c))}</div>
+      ${(!c.__masked && c.__passiveDead) ? `<div class="hc-dead">🚫 효과 무력화됨 — 발동하지 않습니다 (판매가 0)</div>` : ''}
       ${(!c.__masked && !playable && isBlockedByFirstTurnRule(c)) ? `<div class="hc-flavor" style="opacity:1;">불문율: 첫 턴에는 사용 불가 (탭하면 안내)</div>` : ''}
       ${(!c.__masked && !playable && c.type==='ATK_AOE_COND') ? `<div class="hc-flavor" style="opacity:1;">대상 없음: ${escapeHtml(condLabel(c.cond))}</div>` : ''}
       ${(!c.__masked && !playable && c.railgunCond) ? `<div class="hc-flavor" style="opacity:1;">직전에 피격당해 사용 불가</div>` : ''}
@@ -38381,7 +38622,7 @@ function syncRouletteBuff(){
 function syncUbincaliburBuff(){
   try{
     players.forEach(pp=>{
-      const has = pp.hand && pp.hand.some(c=>c.type==='UBINCALIBUR_PASSIVE');
+      const has = hasLivePassive(pp,'UBINCALIBUR_PASSIVE');
       const on = !!pp.__ubincOn;
       if(has && !on){ pp.__ubincOn = true; pp.atkMultiplier = (pp.atkMultiplier||0) + 200; }
       else if(!has && on){ pp.__ubincOn = false; pp.atkMultiplier = (pp.atkMultiplier||0) - 200; }
@@ -39037,6 +39278,15 @@ function pwRoundTick(){
   if(!powersActive() || !Array.isArray(players)) return;
   players.forEach(p=>{
     if(!p || !p.alive) return;
+    /* [Ver 13.6] 압류 — 예고한 바퀴가 되면 손패가 통째로 사라진다.
+       ⚠ 여기(바퀴 틱)에서 터뜨린다. 즉시 발동이 아니라 **예고 후 2바퀴** 뒤다. */
+    if(p.pwSeize && turnCount >= p.pwSeize.dueRound){
+      const n = (p.hand||[]).length;
+      p.pwSeize = null;
+      p.hand = [];
+      log('highlight', `📉 ${J(p.name,'의','의')} 손패 ${n}장이 압류로 전부 사라졌습니다.`);
+      try{ renderHand(); }catch(e){}
+    }
     /* [Ver 13.3] 악몽 — 1바퀴가 지나면 최대 체력을 되돌리고 현재 체력도 비례해 복구한다 */
     if(p.pwNightmare && turnCount >= p.pwNightmare.dueRound){
       const om = p.pwNightmare.origMax;
@@ -43590,6 +43840,7 @@ function resolveCardEffect(caster, card, targetId, onDone){
         log('sys', `${J(caster.name,'이','가')} "${card.name}"을(를) 냈지만 이미 진행 중이라 효과가 무산되었습니다.`);
         onDone({}); break;
       }
+      killHeldPassives(caster, '강서윤 디버프');   // [Ver 13.7] 손패의 패시브도 함께 죽는다
       caster.gangseoyunPhase = 1;
       caster.gangseoyunTurnsLeft = 14;
       // [강서윤] 디버프: 그 외 모든 버프 제거 + 공격력 -40%
@@ -44691,6 +44942,7 @@ function resolveCardEffect(caster, card, targetId, onDone){
       if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
       if(tryNullify(target)){ onDone({}); break; }
       const moved = [];
+      killHeldPassives(target, card.name);   // [Ver 13.7] 손패의 패시브도 함께 죽는다
       if(target.atkMultiplier && target.atkMultiplier > 0){
         caster.atkMultiplier = (caster.atkMultiplier||0) + target.atkMultiplier;
         target.atkMultiplier = 0;
@@ -49708,6 +49960,7 @@ function resolveCardEffect(caster, card, targetId, onDone){
       if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
       if(tryNullify(target)){ onDone({}); return; }
       const stripped = [];
+      killHeldPassives(target, card.name);   // [Ver 13.7] 손패의 패시브도 함께 죽는다
       if((target.atkMultiplier||0) > 0){ stripped.push(`공격력 +${Math.round(target.atkMultiplier)}%`); target.atkMultiplier = 0; }
       if((target.damageReductionPct||0) > 0){ stripped.push(`받는피해 -${target.damageReductionPct}%`); target.damageReductionPct = 0; }
       if((target.tempAtkBuffMult||0) > 0){ stripped.push('임시 공격력 버프'); target.tempAtkBuffMult = 0; target.tempAtkBuffTurns = 0; }
@@ -50657,6 +50910,7 @@ function cleanseAllEffects(p){
   if(p.lonelyManBonus){ p.lonelyManBonus=false; cleared.push('고독한남자'); }
   if(p.healMult && p.healMult!==1){ p.healMult=1; p.healMultDueRound=0; cleared.push('경방소청룡탕(회복량 2배)'); }
   if(p.ignoreNullifyReflect){ p.ignoreNullifyReflect=false; cleared.push('무효/반사 무시'); }
+  if(killHeldPassives(p, '모든 효과 초기화')) cleared.push('소지 패시브 카드');   // [Ver 13.7]
   if(p.atkMultiplier && p.atkMultiplier!==0){ p.atkMultiplier=0; cleared.push('공격력 증가'); }
   if(p.chromaticMultiplier && p.chromaticMultiplier!==0){ p.chromaticMultiplier=0; cleared.push('크로마틱 공격력'); }
   if(p.nextAtkCritChance>0){ p.nextAtkCritChance=0; cleared.push('매의 눈'); }
@@ -51780,7 +52034,7 @@ function dealDamage(caster, target, amount, pierce, isAoe, deathChance, onHitRes
   // [Ver 5.10] 회피율 — 누르끼끼(대장급/사황급)·가면라이더 강서윤(최종 각성)이 가진 evasionPct만큼,
   //   명중까지 했더라도 대상이 그 확률로 공격 자체를 피한다. 인과율조작으로 hit이 강제된 경우는
   //   caster 본인의 확률만 보정하는 효과이므로 target의 회피는 그대로 적용된다.
-  const targetEvasion = Math.max(0, (target.evasionPct||0) + ((target.hand && target.hand.some(c=>c.type==='SUPERCONDUCTOR_PASSIVE'))?40:0)); // [Ver 8.5.1] LK69 소지 회피 +40%
+  const targetEvasion = Math.max(0, (target.evasionPct||0) + (hasLivePassive(target,'SUPERCONDUCTOR_PASSIVE')?40:0)); // [Ver 8.5.1] LK69 소지 회피 +40%
   const evaded = hit && targetEvasion>0 && Math.random()*100 < targetEvasion;
   if(evaded){
     try{ if(caster.curseDollTarget===target.id){ caster.curseDollStreak=0; caster.curseDollTarget=null; } }catch(e){} // [Ver 8.3.1] 저주인형 초기화
@@ -51818,7 +52072,7 @@ function dealDamage(caster, target, amount, pierce, isAoe, deathChance, onHitRes
   amount = applyTotalAtkPct(caster, amount);
   // 인해전술: 소지 중인 동안, 판정 시점의 "현재 카드 수"에 실시간으로 비례해 공격력이 증가한다 (정적 배율이 아니라 getTotalAtkPctBonus 합산 대상이 될 수 없음)
   {
-    const humanWaveCard = caster.hand && caster.hand.find(c=>c.type==='HAND_COUNT_ATK_BUFF_PASSIVE');
+    const humanWaveCard = findLivePassive(caster,'HAND_COUNT_ATK_BUFF_PASSIVE');
     if(humanWaveCard){
       const pct = (caster.hand.length) * (humanWaveCard.pctPerCard||5);
       if(pct > 0) amount = Math.round(amount * (1 + pct/100));
@@ -51826,7 +52080,7 @@ function dealDamage(caster, target, amount, pierce, isAoe, deathChance, onHitRes
   }
   // 악전고투: 소지 중인 동안, 자신보다 체력이 높은 상대를 공격할 때 추가 데미지 (조건부라 합산 대상 아님. 받는 쪽 피해감소는 applyDamageToPlayer에서 처리)
   {
-    const underdogCard = caster.hand && caster.hand.find(c=>c.type==='UNDERDOG_ATK_DR_PASSIVE');
+    const underdogCard = findLivePassive(caster,'UNDERDOG_ATK_DR_PASSIVE');
     if(underdogCard && target && target.hp > caster.hp){
       amount = Math.round(amount * (1 + (underdogCard.atkBuffPct||40)/100));
     }
@@ -52674,7 +52928,7 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
   // 악전고투: 소지 중인 동안, 자신보다 체력 높은 상대에게 공격받을 때 받는 피해 40% 감소
   let underdogDR = 0;
   {
-    const __underdogCard = target.hand && target.hand.find(c=>c.type==='UNDERDOG_ATK_DR_PASSIVE');
+    const __underdogCard = findLivePassive(target,'UNDERDOG_ATK_DR_PASSIVE');
     if(__underdogCard){
       const __attacker = currentAttackContext && currentAttackContext.attackerId ? players.find(p=>p.id===currentAttackContext.attackerId) : null;
       if(__attacker && __attacker.hp > target.hp) underdogDR = __underdogCard.drPct||40;
@@ -52711,7 +52965,7 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
      그래서 누군가 죽어 1:1이 된 그 턴 안에서는 계속 꺼져 있었고, 정작 필요한 순간에 발동하지 않았다.
      레드오션이 "소지만 하면 켜지는" 카드인 것처럼, 블루오션도 **맞는 그 순간에 손패를 직접 확인**한다. */
   if(remaining > 0 && !window.__ignoreDamageReduction && !__libero &&
-     (target.blueOceanActive || (target.hand||[]).some(c=> c && c.type==='BLUE_OCEAN_PASSIVE'))){
+     (target.blueOceanActive || hasLivePassive(target,'BLUE_OCEAN_PASSIVE'))){
     try{
       if(alivePlayers().length === 2){
         const cut = remaining - Math.round(remaining * 0.5);
@@ -57648,6 +57902,9 @@ function sellPriceFor(card, owner){
 }
 function sellPriceForBase(card, owner){
   if(!card) return null;
+  /* [Ver 13.7] 무력화된 패시브는 값어치가 없다. null(판매 불가)이 아니라 **0골드**다 —
+     팔아서 손패를 비울 수는 있어야 한다. */
+  if(card.__passiveDead) return 0;
   if(card.boundCursed) return null;
   if(card.noSell) return null; // [Ver 8.10] 테무 익스프레스로 배송된 D등급 카드 — 판매 불가
   if(card.type==='SUPERCONDUCTOR_PASSIVE') return null; // [Ver 8.5.1] LK69 국가기밀 — 판매 불가
