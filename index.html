@@ -217,12 +217,16 @@ img,svg{ display:block; max-width:100%; }
    로고와 버전 배지가 그 밑에 깔리지 않도록 왼쪽을 그만큼 비워준다.
    (값 = 화면 좌여백 sp-4 + 스탯창 폭 + 칸 사이 간격 sp-3 — 반응형 폭에 맞춰 아래에서 다시 잡는다) */
 body.in-battle header{ padding-left:264px; }
+/* ⚠ z-index 는 **화면(.screen / #screen-battle 의 21)보다 높아야 한다.**
+   20이던 시절, 인게임에서 `.board` 가 헤더 영역 위로 올라와 클릭을 가로챘다.
+   그래서 버전 배지를 눌러도 반응이 없었고 = **인게임에서 개발자 모드로 못 들어갔다.**
+   모달(9750)·오버레이(9550)보다는 낮게 둬야 그것들이 헤더를 덮을 수 있다. */
 header{
   display:flex; align-items:center; justify-content:space-between; gap:var(--sp-4);
   flex-shrink:0; height:52px; padding:0 var(--sp-5);
   border-bottom:1px solid var(--line-soft);
   background:var(--bg);
-  position:relative; z-index:20;
+  position:relative; z-index:60;
 }
 .logo{ display:flex; align-items:center; gap:10px; min-width:0; }
 .logo-text{
@@ -3562,6 +3566,165 @@ body.mobile-mode .rv-card-nm{ font-size:19px; }
 .status-chip.dead-chip{ background:rgba(242,100,90,0.14); color:var(--tone-red); }
 .status-chip.impeach-chip{ background:rgba(233,185,73,0.14); color:var(--tone-yellow); }
 
+/* =====================================================================
+   [Ver 13.5] 상태칩 — 정사각형 아이콘 (.sc-sq)
+   ---------------------------------------------------------------------
+   그림이 있는 칩만 이 모양으로 바뀐다. 색은 tone 이 아니라 **분류**가 정한다.
+     .k-buff 이롭다 · .k-debuff 해롭다 · .k-neutral 어느 쪽도 아니다
+   배지는 두 구석에 앉는다 — 좌상단 지속시간, 우하단 크기 값.
+   ⚠ 일러스트는 그 두 구석(좌상단 40×30% · 우하단 45×28%)을 비우고 그려야 한다.
+   ===================================================================== */
+/* ⚠ 색 배치가 신호등과 반대다 — **버프가 빨강, 디버프가 파랑**이다.
+   "강화는 뜨겁게, 약화는 차갑게" 쪽을 택한 것이니 초록/빨강으로 되돌리지 말 것.
+   ▶ 설정에서 뒤집을 수 있다 — body.chip-invert 가 변수만 바꾼다. 다른 규칙은
+     전부 이 변수를 읽으므로 여기 네 줄만 뒤집으면 끝난다. */
+:root{
+  --chip-buff:#E0596B;  --chip-buff-bg:rgba(224,89,107,0.13);  --chip-buff-line:rgba(224,89,107,0.55);
+  --chip-debuff:#4FA8DC; --chip-debuff-bg:rgba(79,168,220,0.13); --chip-debuff-line:rgba(79,168,220,0.55);
+  /* 중립 = 흰색. ⚠ 밝은 테마(body.ink)에서는 흰 테두리가 종이색에 묻히므로 아래에서 갈아끼운다. */
+  --chip-neutral:#FFFFFF; --chip-neutral-bg:rgba(255,255,255,0.10); --chip-neutral-line:rgba(255,255,255,0.42);
+}
+/* 밝은 테마 — 흰색 대신 짙은 회색을 쓴다. 테마 판정이 꼬여 있어(12.4.3) `body.ink` 는
+   **밝은 종이색**이고 `body.ink.force-dark` 가 어두운 팔레트다. 그래서 :not(.force-dark) 로 못박는다. */
+body.ink:not(.force-dark),
+body.theme-light-shell:not(.force-dark){
+  --chip-neutral:#4B525C; --chip-neutral-bg:rgba(75,82,92,0.10); --chip-neutral-line:rgba(75,82,92,0.42);
+}
+body.chip-invert{
+  --chip-buff:#4FA8DC;  --chip-buff-bg:rgba(79,168,220,0.13);  --chip-buff-line:rgba(79,168,220,0.55);
+  --chip-debuff:#E0596B; --chip-debuff-bg:rgba(224,89,107,0.13); --chip-debuff-line:rgba(224,89,107,0.55);
+}
+.status-chip.sc-sq{
+  position:relative; overflow:visible;
+  width:34px; height:34px; flex-shrink:0;
+  padding:0; border-radius:var(--r-sm);
+  background:var(--bg-2);
+  box-shadow:inset 0 0 0 1.5px var(--chipc, var(--line));
+  animation:popIn var(--t) var(--ease-spring) both;
+}
+.sc-sq.k-buff   { --chipc:var(--chip-buff);    background:var(--chip-buff-bg); }
+.sc-sq.k-debuff { --chipc:var(--chip-debuff);  background:var(--chip-debuff-bg); }
+.sc-sq.k-neutral{ --chipc:var(--chip-neutral); background:var(--chip-neutral-bg); }
+.sc-img{
+  position:absolute; inset:2px; width:calc(100% - 4px); height:calc(100% - 4px);
+  object-fit:contain; border-radius:calc(var(--r-sm) - 2px);
+}
+/* 그림이 아직 없을 때 — 이모지로 대신 채운다 */
+.sc-fb{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:18px; line-height:1;
+}
+/* 좌상단 : 지속시간 (기존 chip-b 를 그대로 옮겼다) */
+.sc-dur{
+  position:absolute; left:-3px; top:-4px; z-index:2;
+  font-family:var(--font-mono); font-style:normal; font-size:8.5px; font-weight:700;
+  padding:0 3px; border-radius:4px;
+  background:#6B52B0; color:#E6DDFF;
+  box-shadow:0 0 0 1.5px var(--bg-panel);
+}
+/* ---- 시안 B : 테두리 게이지 ----
+   남은 만큼 테두리가 아래에서부터 차 있다. 바탕 테두리는 흐리게 깔고 그 위에 덧그린다.
+   ⚠ 원래 지속시간을 모르므로 CHIP_GAUGE_MAX(6) 기준으로 환산한 값이다. 정확한 숫자는 툴팁에. */
+.sc-sb{ box-shadow:inset 0 0 0 1.5px rgba(255,255,255,0.10); }
+.sc-gauge{
+  position:absolute; inset:0; z-index:2; pointer-events:none;
+  border-radius:var(--r-sm); border:1.5px solid var(--chipc, var(--line));
+  clip-path:inset(calc((100 - var(--gp,100)) * 1%) 0 0 0);
+}
+/* ---- 시안 C : 아래 얇은 바 ---- */
+.sc-bar{
+  position:absolute; left:3px; right:3px; bottom:2px; height:3px; z-index:2;
+  border-radius:2px; background:rgba(0,0,0,0.34); pointer-events:none;
+}
+body.ink:not(.force-dark) .sc-bar{ background:rgba(0,0,0,0.16); }
+.sc-bar > b{ display:block; height:100%; border-radius:2px; background:var(--chipc, var(--line)); }
+/* 우하단 : 크기 값 */
+.sc-amt{
+  position:absolute; right:-3px; bottom:-4px; z-index:2;
+  font-family:var(--font-mono); font-style:normal; font-size:8.5px; font-weight:700;
+  padding:0 3px; border-radius:5px;
+  background:var(--chipc, var(--line)); color:#0D0F13;   /* 배지 바탕이 항상 진한 색이라 글씨는 검정 */
+  box-shadow:0 0 0 1.5px var(--bg-panel);
+  max-width:30px; overflow:hidden; text-overflow:clip; white-space:nowrap;
+}
+/* 좁은 왼쪽 레일·모바일에서는 한 단계 줄인다 */
+.zone-bots .status-chip.sc-sq{ width:29px; height:29px; }
+.zone-bots .sc-fb{ font-size:15px; }
+.zone-bots .sc-dur,.zone-bots .sc-amt{ font-size:7.5px; padding:0 2px; }
+body.mobile-mode .status-chip.sc-sq{ width:26px; height:26px; }
+body.mobile-mode .sc-fb{ font-size:14px; }
+body.mobile-mode .sc-dur,body.mobile-mode .sc-amt{ font-size:7px; padding:0 2px; }
+/* 정사각형 칩은 서로 조금 떨어져야 배지가 겹치지 않는다 */
+.status-icons{ row-gap:7px; column-gap:6px; }
+/* 글자 칩에도 분류 색을 입힌다 — 그림이 없는 동안에도 버프/디버프가 한눈에 갈린다.
+   ⚠ 누르끼끼처럼 style 로 색을 직접 박는 칩이 있으므로 !important 를 쓰지 않는다. */
+.status-chip.k-buff   { box-shadow:inset 0 0 0 1px var(--chip-buff-line); }
+.status-chip.k-debuff { box-shadow:inset 0 0 0 1px var(--chip-debuff-line); }
+.status-chip.k-neutral{ box-shadow:inset 0 0 0 1px var(--chip-neutral-line); }
+
+/* ---------- [Ver 13.5] 설정 — 상태칩 표시 고르기 ---------- */
+.chip-style-pick{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.chip-style-pick > button{
+  display:flex; flex-direction:column; align-items:center; gap:5px;
+  min-width:64px; padding:8px 10px; border-radius:var(--r-sm);
+  background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--line);
+  color:var(--fg-dim); cursor:pointer;
+  transition:background var(--t) var(--ease), box-shadow var(--t) var(--ease), color var(--t) var(--ease);
+}
+.chip-style-pick > button:hover{ background:var(--bg-3); color:var(--fg); }
+.chip-style-pick > button.on{
+  background:var(--bg-3); color:var(--fg); box-shadow:inset 0 0 0 1.5px var(--accent);
+}
+.chip-style-pick .csp-tx{ font-size:11px; font-weight:700; }
+/* 미리보기 조각 — 실제 칩과 같은 부품을 쓰되 배지 숫자는 고정값이다 */
+.csp-demo{ position:relative; width:30px; height:30px; border-radius:var(--r-sm);
+  background:var(--chip-buff-bg); box-shadow:inset 0 0 0 1.5px var(--chip-buff);
+  display:flex; align-items:center; justify-content:center; font-size:15px; }
+.csp-demo .sc-dur,.csp-demo .sc-amt{ font-size:7.5px; padding:0 2px; }
+.csp-demo .sc-amt{ background:var(--chip-buff); }
+.csp-demo .sc-gauge{ border-color:var(--chip-buff); }
+.csp-demo .sc-bar > b{ background:var(--chip-buff); }
+.csp-demo.csp-text{
+  width:auto; padding:0 7px; border-radius:var(--r-pill); font-size:9px; font-weight:700;
+  color:var(--chip-buff); white-space:nowrap;
+}
+
+/* ---------- [Ver 13.5] 상태칩 툴팁 ----------
+   아이콘만 남으면 이름을 알 길이 없다. 커서를 올리면 칩 **아래**에 이름과 상세가 뜬다.
+   ⚠ opacity 를 애니메이션으로 만들지 않는다 — 탭이 숨겨져 애니메이션이 멈추면
+     키프레임 값에서 굳어 툴팁이 영영 안 보인다. 보이기는 .on 이 직접 정하고,
+     움직임은 transform 만 만진다. */
+.sc-tip{
+  position:fixed; left:0; top:0; z-index:9400;
+  display:none; flex-direction:column; gap:2px;
+  /* ⚠ width 를 비워두면(shrink-to-fit) **처음 뜰 때 한 글자 폭으로 무너진다.**
+     아직 배치되지 않은 상태에서 재면 min-content 가 잡히는데, 이 파일은
+     overflow-wrap:anywhere 를 전역으로 쓰고 있어 min-content 가 글자 하나다.
+     max-content 로 못박으면 잴 필요 없이 늘 같은 폭이 나온다. */
+  width:max-content; max-width:260px; padding:8px 11px;
+  border-radius:var(--r-sm);
+  background:var(--bg-panel);
+  box-shadow:inset 0 0 0 1.5px var(--tipc, var(--line)), var(--sh-3);
+  pointer-events:none;
+}
+.sc-tip.on{ display:flex; animation:scTipIn 0.14s var(--ease) ; }
+@keyframes scTipIn{ from{ transform:translateY(-4px); } to{ transform:none; } }
+.sc-tip.k-buff   { --tipc:var(--chip-buff); }
+.sc-tip.k-debuff { --tipc:var(--chip-debuff); }
+.sc-tip.k-neutral{ --tipc:var(--chip-neutral); }
+.sc-tip b{
+  font-size:13px; font-weight:800; letter-spacing:-0.01em; line-height:1.3;
+  color:var(--tipc, var(--fg));
+}
+.sc-tip small{ font-size:11.5px; line-height:1.55; color:var(--fg-dim); }
+body.mobile-mode .sc-tip{ max-width:min(280px, 78vw); padding:7px 10px; }
+body.mobile-mode .sc-tip b{ font-size:12.5px; }
+body.mobile-mode .sc-tip small{ font-size:11px; }
+/* 칩에 커서를 올리면 살짝 떠오른다 — 지금 무엇을 보고 있는지 알려준다 */
+.status-chip{ cursor:help; }
+.status-chip.sc-sq:hover{ transform:translateY(-2px); }
+.status-chip.sc-sq{ transition:transform var(--t-fast) var(--ease); }
+
 /* 좁은 왼쪽 레일에서는 스탯창을 한 단계 줄인다 */
 .zone-bots .p-card{ padding:9px 10px; gap:4px; }
 .zone-bots .p-name{ font-size:11.5px; }
@@ -5238,7 +5401,22 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 .grp-no { background:var(--tone-red);   color:#fff; }
 .grp-yes:hover,.grp-no:hover{ filter:brightness(1.08); }
 .grp-yes:active,.grp-no:active{ transform:scale(0.96); }
-.grp-quiz-box{ display:flex; flex-direction:column; gap:var(--sp-2); padding:16px; border-radius:var(--r); background:var(--bg-2); }
+/* [Ver 13.5] 퀴즈 입력 상자 — 오버레이 **밖**에 만들되(랜서버에서 innerHTML 이 갈아끼워져
+   치던 글자가 날아가기 때문), 자리는 JS가 퀴즈 판 바로 아래로 잡아준다(grpQuizPlaceBox).
+   ⚠ position 을 주지 않으면 문서 맨 아래로 떨어진다 — 그래서 답을 칠 수가 없었다. */
+.grp-quiz-box{
+  position:fixed; left:0; top:0; z-index:9560;
+  display:flex; align-items:center; gap:var(--sp-2);
+  padding:12px 14px; border-radius:var(--r);
+  background:var(--bg-panel); box-shadow:inset 0 0 0 1px var(--line), var(--sh-3);
+}
+.grp-quiz-box .input{ flex:1; min-width:0; }
+.grp-quiz-box .btn{ flex:0 0 auto; }
+.grp-quiz-box .grp-quiz-left{ flex:0 0 auto; white-space:nowrap; }
+.grp-quiz-left.ok { color:var(--tone-green); }
+.grp-quiz-left.out{ color:var(--tone-red); }
+body.mobile-mode .grp-quiz-box{ padding:9px 10px; gap:6px; }
+body.mobile-mode .grp-quiz-box .grp-quiz-left{ font-size:10.5px; }
 .grp-quiz-hint{ font-size:11.5px; color:var(--fg-faint); }
 .grp-quiz-left{ font-family:var(--font-mono); font-size:12px; color:var(--accent); }
 .grp-wait{ font-size:11.5px; color:var(--fg-faint); text-align:center; }
@@ -6521,7 +6699,7 @@ body.high-contrast.theme-light-shell{
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.4</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.5.1</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -6759,6 +6937,10 @@ body.high-contrast.theme-light-shell{
         </button>
         <button class="nm-drawer-item nm-drawer-dev" id="devUbiniteBtn" style="display:none;" onclick="closeMenuDrawer(); openDevUbinite();">
           <span class="ic">💎</span><span class="tx"><b>우비나이트 조절</b><small>개발자 전용 · 더하기/빼기/직접 지정</small></span>
+        </button>
+        <!-- [Ver 13.5] 상태칩 아이콘 모드 미리보기 — 그림이 없는 칩도 정사각형으로 그려본다 -->
+        <button class="nm-drawer-item nm-drawer-dev" id="devChipIconBtn" style="display:none;" onclick="closeMenuDrawer(); toggleChipIconPreview();">
+          <span class="ic">🔲</span><span class="tx"><b>상태칩 아이콘 모드</b><small id="devChipIconSub">개발자 전용 · 정사각형 미리보기</small></span>
         </button>
       </div>
     </div>
@@ -12483,6 +12665,9 @@ function applyDisplaySettings(){
     b.classList.toggle('high-contrast', !!settings.highContrast);
     b.classList.toggle('log-compact', !!settings.compactLog);
     b.classList.toggle('no-ticker', settings.menuTicker === false);
+    /* [Ver 13.5] 상태칩 색 반전 — 이 설정은 별도 localStorage 키를 쓰지만,
+       body 클래스를 붙이는 자리는 여기 한 곳으로 모아둔다(부팅 때도 여기를 지난다). */
+    try{ applyChipInvert(); }catch(e){}
   }catch(e){}
 }
 /* [Ver 8.1.18] 앱 전역 테마 — 다크 / 라이트 */
@@ -12798,6 +12983,43 @@ function renderSettingsScreen(){
             <span>${fxOn(r) ? 'ON' : 'OFF'}</span>
           </label>
         </div>`).join('')}
+      ${/* [Ver 13.5] 상태칩 표시 — 별도 localStorage 키를 쓰므로 fxRows(setSetting)에
+            섞지 않고 여기 손으로 적는다. 네 갈래 중 하나를 고른다. */''}
+      <div class="setting-row" style="flex-direction:column; align-items:stretch;">
+        <div class="setting-meta">
+          <div class="setting-name">상태칩 표시</div>
+          <div class="setting-desc">스탯창 상태칩을 어떻게 그릴지 고릅니다. 아이콘 쪽은 오른쪽 아래에 <b>수치</b>가 붙고, <b>남은 시간</b>을 보여주는 방식만 다릅니다. 무슨 효과인지는 <b>커서를 올리면</b>(모바일은 탭) 칩 아래에 뜹니다.</div>
+        </div>
+        <div class="chip-style-pick">
+          ${[
+            { v:'a', name:'배지',
+              demo:`<span class="csp-demo">🛡<i class="sc-dur">3R</i><i class="sc-amt">25%</i></span>` },
+            { v:'b', name:'테두리',
+              demo:`<span class="csp-demo">🛡<i class="sc-gauge" style="--gp:60"></i><i class="sc-amt">25%</i></span>` },
+            { v:'c', name:'아래 바',
+              demo:`<span class="csp-demo">🛡<i class="sc-bar"><b style="width:60%"></b></i><i class="sc-amt">25%</i></span>` },
+            { v:'text', name:'글자',
+              demo:`<span class="csp-demo csp-text">🛡 받는피해 −25%</span>` },
+          ].map(o=>`
+            <button class="${chipStyleNow()===o.v?'on':''}" onclick="setChipStyle('${o.v}')" title="${o.name}">
+              ${o.demo}<span class="csp-tx">${o.name}</span>
+            </button>`).join('')}
+        </div>
+        <div class="setting-desc" style="margin-top:8px;">
+          ⚠ <b>테두리 · 아래 바</b>는 남은 시간을 눈금으로만 보여줍니다. 게임이 "원래 몇 바퀴짜리였는지"를
+          기록하지 않아 <b>6칸 기준으로 환산</b>한 값이라, 정확한 숫자를 보려면 <b>배지</b>를 쓰거나 칩에 커서를 올리세요.
+        </div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-meta">
+          <div class="setting-name">버프·디버프 색 뒤집기</div>
+          <div class="setting-desc">기본은 <b>버프 빨강 · 디버프 파랑</b>입니다. 켜면 <b>버프 파랑 · 디버프 빨강</b>으로 바뀝니다. (중립은 흰색 그대로)</div>
+        </div>
+        <label class="setting-switch">
+          <input type="checkbox" ${chipInvertOn() ? 'checked' : ''} onchange="setChipInvert(this.checked)">
+          <span>${chipInvertOn() ? 'ON' : 'OFF'}</span>
+        </label>
+      </div>
 
       <div class="settings-audio-head">🔊 소리 설정</div>
 
@@ -13087,18 +13309,56 @@ function enterReadyPhase(p, opts={}){
   if(!opts.skipAutoSave) saveGameState();
   // [Ver 7.1.9] LAN 턴 타이머: 이전 사람의 타이머가 남아있으면 항상 먼저 해제한다.
   lanClearTurnTimer();
+  botWatchdogClear();   // [Ver 13.5.1] 봇 안전망도 턴이 바뀔 때마다 푼다
   // [Ver 8.5.2] 텔레키네시스: 이 턴을 실제로 두는 주체(조종자가 있으면 조종자, 없으면 본인)
   const __ctrl = p.telekinesisPuppetOf ? players.find(x=>x.id===p.telekinesisPuppetOf) : null;
   const actor = (__ctrl && __ctrl.alive) ? __ctrl : p;
   if(actor.isBot){
     document.getElementById('headerStat').textContent = `${actor.id!==p.id ? actor.name+'(조종) ' : p.name+' '}생각 중...`;
     setTimeout(botPlay, 1300); // 대상(p)의 손패로 봇 AI가 행동
+    botWatchdogArm();          // [Ver 13.5.1] 봇이 멈추면 판 전체가 멈춘다 — 안전망을 건다
   } else {
     document.getElementById('headerStat').textContent = (actor.id!==p.id)
       ? `${actor.name}이(가) ${p.name}을(를) 조종 중 — 카드를 선택하세요` : '카드를 선택하세요';
     maybeStartFirstTurnTutorial(p);
     if(turnTimerShouldRun()) lanStartTurnTimer(p);
   }
+}
+
+/* ##########################################################################
+   [Ver 13.5.1] 봇 차례 소프트락 안전망
+   --------------------------------------------------------------------------
+   사람의 턴에는 제한시간(180초)이 있는데 **봇의 턴에는 아무 안전망이 없었다.**
+   botPlay 안에서 예외가 나거나, 콜백을 기다리는 효과가 그 콜백을 영영 못 받으면
+   "○○ 생각 중..." 인 채로 판이 통째로 멈춘다. 사람은 아무것도 할 수 없다.
+
+   이 시계는 **원인을 고치는 게 아니라 판을 살린다.** 같은 턴에 계속 머물러 있으면
+   로그를 남기고 강제로 넘긴다. 콘솔에 상태를 찍어두어 다음에 원인을 좁힐 수 있게 한다.
+   ⚠ 반응창·경매/퀴즈쇼 오버레이·모달이 떠 있으면 정상 대기이므로 건드리지 않는다.
+     (그것들은 각자 자기 타이머를 갖고 있다)
+   ########################################################################## */
+const BOT_TURN_WATCHDOG_MS = 45000;
+let __botWatchdog = null;
+function botWatchdogClear(){ if(__botWatchdog){ clearTimeout(__botWatchdog); __botWatchdog = null; } }
+function botWatchdogArm(){
+  botWatchdogClear();
+  const snap = totalIndividualTurns;
+  __botWatchdog = setTimeout(()=>{
+    __botWatchdog = null;
+    try{
+      if(!gameActive) return;
+      if(totalIndividualTurns !== snap) return;                  // 이미 넘어갔다
+      if(typeof awaitingReaction !== 'undefined' && awaitingReaction) return;
+      if(document.querySelector('.modal-bg.show, .auction-overlay.active, .match-intro.show')) return;
+      const cur = (typeof currentPlayer === 'function') ? currentPlayer() : null;
+      if(!cur || !cur.isBot) return;
+      console.error('[봇 워치독] 차례가 진행되지 않아 강제로 넘깁니다.', {
+        turn: totalIndividualTurns, round: turnCount, bot: cur.name,
+        hand: (cur.hand||[]).map(c=>c && c.name), stunned: !!cur.stunned, alive: cur.alive });
+      log('sys', `⚠ ${cur.name}의 차례가 진행되지 않아 자동으로 넘겼습니다. (버그 제보 시 이 줄을 알려주세요)`);
+      advanceTurn();
+    }catch(e){ console.error('[봇 워치독] 강제 진행 실패', e); }
+  }, BOT_TURN_WATCHDOG_MS);
 }
 
 /* [Ver 7.1.9] LAN 개인 턴 제한시간(60초) 관리.
@@ -16264,6 +16524,12 @@ function updateDevMenuButtons(){
   if(e) e.style.display = devMode ? '' : 'none';
   const u = document.getElementById('devUbiniteBtn');   // [Ver 13.0] 우비나이트 조절
   if(u) u.style.display = devMode ? '' : 'none';
+  const ci = document.getElementById('devChipIconBtn'); // [Ver 13.5] 상태칩 아이콘 모드
+  if(ci){
+    ci.style.display = devMode ? '' : 'none';
+    const cs = document.getElementById('devChipIconSub');
+    if(cs) cs.textContent = chipIconPreviewOn() ? '지금 켜져 있음 · 눌러서 끄기' : '개발자 전용 · 정사각형 미리보기';
+  }
   // [Ver 10.5] 인게임 버튼바 쪽 — 실제로 쓰는 자리는 이쪽이다
   const g = document.getElementById('devEventBtnGame');
   if(g) g.style.display = devMode ? '' : 'none';
@@ -18573,6 +18839,12 @@ let balancePatchIdx = 0;
    ########################################################################## */
 const NEW_CARDS = [
   {
+    version: 'Ver 13.4', date: '2026-08-31',
+    note: '유저 아이디어를 그대로 받아 <b>4종</b>을 넣었습니다. 넷 다 <b>대가가 있는 카드</b>입니다 — ' +
+          '급가속은 카드를 잃고, 뺑소니는 자기도 죽을 수 있으며, 비겁한 일격은 1대1에서만 쓸 수 있습니다.',
+    names: ['급가속','뺑소니','trinitrotoluene','비겁한 일격']
+  },
+  {
     version: 'Ver 12.7.1', date: '2026-08-29',
     note: '<b>15종</b>이 들어왔습니다. "쓰는 순간 끝나는 카드"보다 <b>판이 흐르는 동안 값이 계속 변하는 카드</b>에 무게를 뒀습니다 — ' +
           '포커 · 디아블로 · 폭주는 손패와 체력과 시간에 따라 공격력이 실시간으로 움직입니다.',
@@ -20534,6 +20806,30 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 13.5.1', date: '2026-09-03',
+    items: [
+      '\u{1F41E} <b>[수정] 인게임에서 개발자 모드로 들어갈 수 없던 문제</b> — 헤더가 전투 화면보다 <b>아래에 깔려</b> 있어서, 버전 배지 자리를 보드가 가로채고 있었습니다. 눌러도 아무 반응이 없던 이유입니다.',
+      '\u{1F6E1}️ <b>[안전망] 봇 차례에서 판이 멈추는 문제</b> — 사람 턴에는 제한시간이 있는데 <b>봇 턴에는 아무 안전망이 없어</b>, 봇이 한 번 멈추면 판 전체가 영영 멈췄습니다. 이제 <b>45초</b> 동안 차례가 넘어가지 않으면 자동으로 넘기고 로그를 남깁니다. (※ 멈추는 <b>원인 자체</b>는 아직 못 찾았습니다. 그 로그 줄과 함께 제보해주시면 큰 도움이 됩니다)',
+      '\u{23F8} <b>[UI] 무엇에 스턴당했는지 상태칩에 나옵니다.</b> 예전에는 어떤 카드로 굳었든 전부 <b>"스턴 · 1턴"</b>이라 원인을 알 수 없었습니다. 이제 <b>"마취총 · 스턴 1턴"</b>처럼 이름이 붙습니다.',
+      '\u{1F0CF} <b>[수정] 신규 카드 탭에 13.4 카드가 빠져 있던 문제</b> — <b>급가속 · 뺑소니 · trinitrotoluene · 비겁한 일격</b>이 이제 목록에 나옵니다.',
+      '\u{1F3A8} <b>[UI] 상황에 따라 갈리는 상태칩의 색을 맞췄습니다.</b> <b>점괘</b>(길조는 버프 · 흉조는 디버프) · <b>회복량</b>(증가↔감소) · <b>임시 공격력</b>(샤우팅↔지후한테 쳐맞음) · <b>WILD</b>(±) · <b>누르끼끼</b>(박상현급만 디버프). <b>선행성 기억상실증</b>은 중립에서 디버프로 옮겼습니다.',
+      '\u{1F9E8} <b>[수정] trinitrotoluene 의 화약 표식</b>이 <b>디버프 면역·무효화</b>를 무시하고 걸리던 문제 — 같은 성격의 표식(바이러스 표식 · 사냥꾼 표적 · 동상 · 재)과 판정을 맞췄습니다. <b>싱크로·프록시</b>로도 전가·공유됩니다.',
+    ]
+  },
+  {
+    version: 'Ver 13.5', date: '2026-09-03',
+    items: [
+      '\u{1F532} <b>[준비] 상태칩을 아이콘으로 바꾸는 작업을 시작했습니다.</b> 스탯창에 뜰 수 있는 상태칩 <b>222종</b>을 전부 훑어 <b>버프 · 디버프 · 중립</b>으로 나누고, 칩마다 고유 이름표(key)를 붙였습니다. 그림이 준비되는 대로 <b>글자 없는 정사각형 일러스트</b>로 하나씩 바뀝니다.',
+      '\u{1F3A8} <b>[UI] 상태칩에 분류 색이 들어왔습니다.</b> 테두리만 봐도 <b>이로운 것(빨강) · 해로운 것(파랑) · 어느 쪽도 아닌 것(흰색)</b>이 갈립니다. 예전에는 색이 제각각이라 <b>사디스트 · 디아블로 · 케인 · 막순아</b>처럼 <b>이로운 효과가 빨간색</b>으로 떠 있었습니다.',
+      '\u{1F5B1}️ <b>[UI] 상태칩에 커서를 올리면 아래에 이름과 설명이 뜹니다.</b> 예전에는 브라우저 기본 말풍선에 기대고 있어 1초 넘게 기다려야 했고, 글씨도 게임과 따로 놀았습니다. 모바일에서는 <b>탭</b>하면 뜹니다.',
+      '\u{1F4CF} <b>[UI] 지속시간과 수치가 칩의 두 구석으로 나뉩니다.</b> 왼쪽 위에 <b>남은 바퀴·턴</b>, 오른쪽 아래에 <b>크기 값</b>(쉴드 2,912 · 받는피해 −25% · 3중첩 …). 아이콘만 남아도 숫자가 사라지지 않습니다.',
+      '\u{2699}\uFE0F <b>[설정] 상태칩을 네 가지 중에 고를 수 있습니다.</b> <b>배지</b>(왼쪽 위에 남은 바퀴를 숫자로) · <b>테두리</b>(남은 만큼 테두리가 차 있음) · <b>아래 바</b>(칩 밑에 진행 바) · <b>글자</b>(예전 그대로). <b>설정 → 화면·연출</b>에 있습니다. ※ 테두리·아래 바는 게임이 원래 지속시간을 기록하지 않아 <b>6칸 기준으로 환산</b>한 눈금입니다 — 정확한 숫자는 배지를 쓰거나 칩에 커서를 올리세요.',
+      '\u{1F504} <b>[설정] 버프·디버프 테두리 색을 뒤집을 수 있습니다.</b> 기본은 <b>버프 빨강 · 디버프 파랑</b>이고, 켜면 반대가 됩니다. (중립은 흰색 그대로)',
+      '\u{1F9E0} <b>[수정] 퀴즈쇼에서 답을 낼 수가 없던 문제</b> — 정답 입력칸이 퀴즈 창이 아니라 <b>화면 맨 아래</b>에 떨어져 있었습니다. 이제 퀴즈 판 <b>바로 아래</b>에 같은 너비로 붙습니다.',
+      '\u{1F41E} <b>[수정] 퀴즈쇼 창이 쉴 새 없이 깜빡이던 문제</b> — 남은 시간을 그리려고 <b>0.25초마다 창을 통째로 다시 만들고</b> 있었습니다. 이제 문제가 바뀔 때만 새로 그리고, 그 사이에는 <b>시간 막대만</b> 움직입니다. 치던 답도 더 이상 날아가지 않습니다.',
+    ]
+  },
   {
     version: 'Ver 13.4', date: '2026-08-31',
     items: [
@@ -25623,7 +25919,7 @@ function newCardsOnHit(caster, target){
   }
   if(caster.reaperScythePct && !target.debuffImmune){
     const pct = (target.maxHp > 0) ? (target.hp / target.maxHp * 100) : 100;
-    if(pct <= caster.reaperScythePct && trySetStunned(target)){
+    if(pct <= caster.reaperScythePct && trySetStunned(target, '영계의 낫')){
       log('sys', `🌾 영계의 낫 — ${J(target.name,'이','가')} 빈사 상태(HP ${Math.round(pct)}%)라 1턴 스턴되었습니다.`);
     }
   }
@@ -31390,7 +31686,7 @@ function petStreamerTurn(p){
     p.__petStreamEvaDue = turnCount + 1;
     log('sys', `💃 리액션 — 제로투! 1바퀴 동안 ${J(p.name,'의','의')} 회피율이 35% 오릅니다.`);
   } else {
-    if(trySetStunned(p)) log('sys', `🚔 리액션 — 과도한 리액션으로 경찰서에 붙잡혔습니다! (스턴)`);
+    if(trySetStunned(p, '경찰서')) log('sys', `🚔 리액션 — 과도한 리액션으로 경찰서에 붙잡혔습니다! (스턴)`);
   }
   try{ renderBoard(); }catch(e){}
 }
@@ -31862,6 +32158,7 @@ function mkPlayer(id,name,isBot){
     dottusaCounterHolder:false, // (v4.36부터 미사용, 손패 소지 여부로 직접 판정) 도뜨살법 받아치기
     hasGhost:false, ghostDueTurn:0, // 고스트친구: 유령이 붙었는지, 다음 발동 turnCount
     hasRaptorTruck:false, // 배달의민족: 우빈랩터트럭 소환 여부
+    stunSource:'',                     // [Ver 13.5.1] 1턴 스턴을 건 원인(카드·효과 이름) — 상태칩에 표시
     stunLockTurns:0, stunLockLabel:'', // 스턴 피스트/무량공처 pro/빙하기: 여러 턴에 걸쳐 자기 턴을 쓸 수 없게 됨(스턴/빙결 공용)
     rigidTurns:0, // 스턴 피스트/무량공처 pro: 경직 상태인 동안 받는 피해량이 2배가 됨
     exclusionDueTurn:0, exclusionLabel:'', exclusionReturnFx:null, // 🦅/테카진/증발: totalIndividualTurns(개인턴 절대 카운터) 기준 절대시점. 해당 시점까지 matrixId로 완전 격리(무적+타겟불가)되며, 도달 시 예약된 복귀 효과 발동
@@ -32242,6 +32539,167 @@ function drawCardRespectingGacha(p){
        n바퀴 지속 →  nR     (보라색)
        n회 사용   →  xn
    ########################################################################## */
+/* ##########################################################################
+   [Ver 13.5] 상태칩 — 글자 없는 정사각형 아이콘
+   --------------------------------------------------------------------------
+   ▶ 칩마다 **key** 가 있다. 아이콘 파일(`chip/{key}.png`)과 분류를 이 key로 찾는다.
+     그래서 addChip() 의 첫 인자가 key다. **새 칩을 만들면 key를 반드시 붙일 것.**
+   ▶ 분류(CHIP_KIND)가 칩의 색을 정한다. 예전엔 호출부의 tone 인자가 정했는데
+     그게 일관성이 없었다 — 사디스트·디아블로·케인·막순아는 버프인데 전부 'red' 였다.
+     tone 인자는 하위호환으로 남겨두되, 색은 분류가 이긴다.
+   ▶ **그림이 있는 칩만** 정사각형으로 바뀐다(CHIP_ICON_KEYS). 그림이 없으면 예전
+     글자 칩 그대로다. 240장을 다 기다리지 않고 그려지는 대로 하나씩 갈아끼우기 위함이다.
+     (권능 아이콘의 POWER_ICON_KEYS 와 같은 방식)
+   ▶ 미리보기: 개발자 모드에서 `window.__chipIconPreview = true` 를 켜면 그림이
+     없는 칩도 전부 정사각형(이모지)으로 그려진다. 배치·크기를 눈으로 확인하는 용도.
+   ########################################################################## */
+const CHIP_BUFF = new Set([
+  'reflectNext','nullifyNext','guardNext','shield','tripleShieldCharges',
+  'routerShareAll','matrixSealed','fastReactionMs','reflexEvasionAdd','lk69',
+  'beggarIncomeMult','whiteTigerReady','telekinesisTarget','curseDollTarget','permaVulnDown',
+  'permaPierce','permaAoe','psychoKillHeal','atkUp','unconsciousReady',
+  'invincible','proxyTargetId','chromaticMultiplier','flatDmgReduceTurns','nextAtkCritChance',
+  'stunResistCharges','immortalHerbActive','deliciousReviveReady','ignoreNullifyReflect','nextCardGuaranteedHit',
+  'causalityLocked','gojaImmune','godBlessed','lamboUnlimited','matrixAtkUp',
+  'gambleExtraChoice','gambleCheap','lowGambleFree','shopLock','pokerHand',
+  'diablo','berserkAtkPct','berserkOnHit','ledgerRevenge','libero',
+  'healerAura','edoTensei','blueOceanActive','wilsonHp','doubleCastAura',
+  'ruinsActive','dottusaImmune','burningManBurn','reaperScythePct','ecoRebatePct',
+  'dmgRebatePct','schemeProDue','reflexHalfPending','musinCoupActive','drUp',
+  'tempDmgReductionPct','protocolDefensePct','cactusThornPct','tankBoyShieldDueRound','laserBeamActive',
+  'bulletproofActive','gwagidae','coachJoActive','kaneActive','solemnMode',
+  'impeachImmune','vipRefillBonus','debuffImmune','luckyDayStage','gaecheonjeolDueTurn',
+  'steelDueTurn','untellShieldPerDeath','egoRedMistPending','maksoonaActive','profitInvestActive',
+  'raptorExecutionActive','voyagerShield','compoundInterest','symphonyAura','lowGradeInsurance',
+  'lonelyManBonus','shopPartyDiscount','shopDjDiscount','gamstActive','pagliacciReady',
+  'gangseoyunAwaken','ryuraiActive','sadist','masochistActive','permaAtkFlat',
+  'permaFlatReduce','permaDeathChance','vengeanceAuraPct','graveRobber','soulStealer',
+  'diabolicRaptorAura','sigmaStoneActive','memorialActive','freePurchase','antiplazaDRPct',
+  'injuryInsuranceActive','metatonGrowth','dopamineActive','brainInVat','fourCutImmuneActive',
+  'stunImmuneTimed','stunImmunePerma','untargetableDueRound','blessPackImmune','evasionPct',
+  'assassinAccBonus','goldshotActive','vigilanteStacks','holyShieldCharges','reviveCharge',
+  'reBless','petJobs','__reIncomeMult','__reDrAmt',]);
+const CHIP_DEBUFF = new Set([
+  'impeached','stunned','stunLockTurns','rigidTurns','hpBlindDueRound',
+  'sellPriceLockValue','burn','spineFractured','routerLockedBy','encoreLockUid',
+  'loanDebt','telekinesisPuppetOf','chatBanned','chatMuteUntil','burnTimed',
+  'maskedBySource','permaVulnUp','atkDown','devilContractActive','berserkDueRound',
+  'unconsciousActive','poisoned','bleedDamage','laborExploitedBy','healBlocked',
+  'ufcPartnerId','baitDebuff','hpBugActive','overheat','skipNextTurn',
+  'paralyzeDueRound','silencedDueTurn','forcedSkipTurns','rawMeatDrainActive','accuracyMod',
+  'foreshadow','momCardRecoil','matrixAtkDown','sell1gAll','shopBanned',
+  'ledgerMarked','doorOpens','cultNoDraw','shopBlockDueRound','madDogPct',
+  'rouletteLockUid','drDown','goldRedirectRemaining','vulnPct','excitedVulnPct',
+  'frostbiteStacks','ashStacks','timeCurseActive','doctorWhoActive','deathBoom',
+  'obituaryActive','ubinNicotine','healReducePct','romanticAccDrop','virusMarked',
+  'tntPowder','hostBurdened','butterflyStacks','huntedBy','gangseoyunDebuff',
+  'reactionBanned','cannotRevive','reCurse','petHeistName','reDottusa',
+  'reChaos','shopClosedForever',
+  /* [Ver 13.5.1] 중립에 있던 것을 디버프로 옮겼다 — 효과가 통째로 초기화되는 건
+     좋게 봐줄 여지가 없다. */
+  'amnesiaActive',]);
+/* 위 둘에 없으면 전부 중립이다 — 팀·연인·매트릭스처럼 좋다 나쁘다를 가를 수 없는 것들.
+   ⚠ 다만 **같은 칩이 상황에 따라 갈리는 것들**이 있다 — 점괘(길조↔흉조) · 회복량(증↔감) ·
+     임시 공격력(샤우팅↔지후한테 쳐맞음) · WILD(±) · 누르끼끼(박상현급↔사황급).
+     이런 칩은 호출부가 addChip 의 extraCls 로 'k-buff' / 'k-debuff' 를 직접 넘긴다.
+     그 값이 있으면 표(CHIP_BUFF/CHIP_DEBUFF)보다 **호출부가 이긴다.** */
+/* [Ver 13.5] 아이콘 모드 — **기본값이 켜짐**이다.
+   그림(chip/{key}.png)이 아직 없는 칩은 **이모지가 임시 그림 노릇**을 한다. 그래서
+   240장을 다 기다릴 필요 없이 새 UI를 지금부터 쓰고, PNG가 들어오는 대로 그 자리에
+   갈아끼우면 된다.
+   ⚠ 이모지는 겹친다 — 🛡️ 하나를 여섯 칩이 나눠 쓴다. 그래서 **툴팁이 필수**다.
+     커서를 올리면(모바일은 탭) 칩 아래에 이름과 설명이 뜬다.
+   ▶ 끄면 예전 글자 칩으로 돌아간다. 설정 → 화면에서 바꿀 수 있다. */
+const CHIP_PREVIEW_KEY = 'gang_card_chip_icon_mode_v1';   // [구버전] on/off 만 있던 시절
+const CHIP_STYLE_KEY   = 'gang_card_chip_style_v1';       // 'a' | 'b' | 'c' | 'text'
+const CHIP_INVERT_KEY  = 'gang_card_chip_invert_v1';      // 버프·디버프 색 뒤집기
+/* [Ver 13.5] 지속시간을 어떻게 보여줄지 네 갈래.
+     a    좌상단 배지 (기본) — 남은 바퀴/턴이 숫자 그대로 보인다
+     b    테두리 게이지     — 남은 만큼 테두리가 차 있다
+     c    아래 얇은 바      — 칩 밑에 진행 바
+     text 예전 글자 칩
+   ⚠ b·c 는 **비율**이 필요한데 게임은 "원래 몇 바퀴짜리였는지"를 저장하지 않는다.
+     남은 값만 알기 때문에 고정 기준(CHIP_GAUGE_MAX)으로 환산해 그린다. 정확한 숫자는
+     툴팁에 그대로 있다. 이 한계가 싫으면 a 를 쓰면 된다. */
+const CHIP_STYLES = ['a','b','c','text'];
+const CHIP_GAUGE_MAX = 6;
+function chipStyleNow(){
+  try{
+    const v = localStorage.getItem(CHIP_STYLE_KEY);
+    if(v && CHIP_STYLES.indexOf(v) !== -1) return v;
+    /* 옛 키에서 넘어온다 — 글자 칩으로 꺼둔 사람은 그대로 글자 칩을 본다 */
+    const old = localStorage.getItem(CHIP_PREVIEW_KEY);
+    if(old === '0') return 'text';
+  }catch(e){}
+  return 'a';
+}
+function setChipStyle(v){
+  if(CHIP_STYLES.indexOf(v) === -1) return;
+  try{ localStorage.setItem(CHIP_STYLE_KEY, v); }catch(e){}
+  try{ window.__chipIconPreview = undefined; }catch(e){}
+  try{ renderBoard(); }catch(e){}
+  try{ if(document.getElementById('settingsWrap')) renderSettingsScreen(); }catch(e){}
+  try{ updateDevMenuButtons(); }catch(e){}
+}
+function chipInvertOn(){
+  try{ return localStorage.getItem(CHIP_INVERT_KEY) === '1'; }catch(e){ return false; }
+}
+function setChipInvert(on){
+  try{ localStorage.setItem(CHIP_INVERT_KEY, on ? '1' : '0'); }catch(e){}
+  applyChipInvert();
+  try{ renderBoard(); }catch(e){}
+  try{ if(document.getElementById('settingsWrap')) renderSettingsScreen(); }catch(e){}
+}
+/* 색 반전은 body 클래스 하나로 끝낸다 — CSS 변수만 뒤바뀐다 */
+function applyChipInvert(){
+  try{ document.body.classList.toggle('chip-invert', chipInvertOn()); }catch(e){}
+}
+function chipIconPreviewOn(){
+  if(typeof window !== 'undefined' && window.__chipIconPreview === false) return false;
+  if(typeof window !== 'undefined' && window.__chipIconPreview === true) return true;
+  return chipStyleNow() !== 'text';
+}
+/* quiet=true 면 안내 모달을 띄우지 않는다 — 설정 스위치에서 부를 때가 그렇다.
+   (스위치를 누를 때마다 모달이 뜨면 두 번 누르는 것만으로도 성가시다) */
+function toggleChipIconPreview(quiet){
+  const now = !chipIconPreviewOn();
+  /* 아이콘으로 켤 때는 마지막에 고른 시안이 아니라 기본(a)으로 간다 — 단순 토글이므로 */
+  setChipStyle(now ? 'a' : 'text');
+  try{ window.__chipIconPreview = undefined; }catch(e){}
+  if(quiet === true) return;
+  showModal('🔲 상태칩 표시', now
+    ? '상태칩을 <b>정사각형 아이콘</b>으로 그립니다. 그림이 아직 없는 칩은 <b>이모지</b>로 대신 채웁니다. 무슨 효과인지는 <b>커서를 올리면</b>(모바일은 탭) 아래에 뜹니다.'
+    : '상태칩을 예전처럼 <b>글자 칩</b>으로 그립니다.', [{label:'확인', solid:true}]);
+}
+function chipKind(key){
+  if(CHIP_BUFF.has(key)) return 'buff';
+  if(CHIP_DEBUFF.has(key)) return 'debuff';
+  return 'neutral';
+}
+/* ⚠ **그림 파일이 있는 key만** 여기 적는다. 목록에 없으면 예전 글자 칩으로 나간다.
+   → `chip/{key}.png` 를 새로 넣었으면 **이 목록에도 key를 추가할 것.** */
+const CHIP_ICON_KEYS = new Set([
+  /* 아직 그림 없음. 준비되는 대로 key를 여기 추가한다. */
+]);
+/* 우하단 수치 배지를 붙일 칩. 여기 없으면 숫자를 뽑지 않는다 —
+   ⚠ 전부 뽑으려 들면 "LK69"의 69 같은 이름 속 숫자를 집어 온다. 화이트리스트가 맞다. */
+const CHIP_AMOUNT_KEYS = new Set([
+  '__reDrAmt','__reIncomeMult','accuracyMod','antiplazaDRPct','ashStacks',
+  'assassinAccBonus','atkDown','atkUp','berserkAtkPct','bleedDamage',
+  'bulletproofActive','burn','burnTimed','burningManBurn','butterflyStacks',
+  'cactusThornPct','chromaticMultiplier','coachJoActive','diablo','dmgRebatePct',
+  'drDown','drUp','ecoRebatePct','evasionPct','excitedVulnPct',
+  'flatDmgReduceTurns','fourCutImmuneActive','frostbiteStacks','goldRedirectRemaining','goldshotActive',
+  'gwagidae','healMult','healReducePct','healerAura','holyShieldCharges',
+  'huntedBy','kaneActive','laborExploitedBy','loanDebt','madDogPct',
+  'matrixAtkDown','matrixAtkUp','nextAtkCritChance','permaAtkFlat','permaDeathChance',
+  'permaFlatReduce','permaVulnDown','permaVulnUp','poisoned','pokerHand',
+  'protocolDefensePct','rampageOn','raptorExecutionActive','reDottusa','reaperScythePct',
+  'romanticAccDrop','ruinsActive','sellPriceLockValue','shield','shopDjDiscount',
+  'tempAtkBuffIcon','tntPowder','tripleShieldCharges','ubinNicotine','ufcPartnerId',
+  'untellShieldPerDeath','vengeanceAuraPct','vigilanteStacks','vulnPct','wildAtkDelta',
+  'wilsonHp',]);
+
 function statusChipHtml(c){
   let label = String(c.label || '');
   let badge = '';
@@ -32263,8 +32721,139 @@ function statusChipHtml(c){
   take(/(\d+)(바퀴)/,  v=> v + 'R', 'chip-r');
   take(/(\d+)(턴)/,    v=> v,       'chip-n');
   take(/(\d+)(회)/,    v=> 'x' + v, 'chip-x');
-  return `<span class="status-chip ${c.cls||''}"${c.style?` style="${c.style}"`:''} title="${escapeHtml(String(c.label||''))}">`
+
+  /* ===== [Ver 13.5] 정사각형 아이콘 칩 =====
+     그림이 있는 칩(또는 미리보기 모드)만 이 길로 온다. 나머지는 아래 글자 칩 그대로.
+       좌상단 = 지속시간(위에서 뽑은 badge를 그대로 옮긴다)
+       우하단 = 크기 값(쉴드 2912 · 받는피해 −25% · 3중첩 …)
+     ⚠ 두 배지가 그림의 좌상단·우하단 구석을 덮는다. 일러스트는 그 자리를 비우고 그린다. */
+  const key = c.key || '';
+  /* 호출부가 k-buff / k-debuff 를 직접 달았으면 그것을 쓴다 (상황에 따라 갈리는 칩) */
+  const forced = /\bk-(buff|debuff|neutral)\b/.exec(c.cls || '');
+  const kind = forced ? forced[1] : chipKind(key);
+  const style = chipStyleNow();
+  const iconMode = style !== 'text';
+  if(iconMode){
+    const amt = chipAmountOf(key, label);
+    const art = CHIP_ICON_KEYS.has(key)
+      ? `<img class="sc-img" src="chip/${key}.png" alt="" draggable="false">`
+      : `<span class="sc-fb">${c.ic}</span>`;
+    const durTx = badge ? badge.replace(/<\/?i[^>]*>/g,'') : '';
+    /* b·c 는 남은 값을 고정 기준으로 환산해 게이지로 그린다 (원래 길이를 모르므로) */
+    let dur = '';
+    if(durTx){
+      if(style === 'a'){
+        dur = `<i class="sc-dur">${durTx}</i>`;
+      } else {
+        const n = parseInt(String(durTx).replace(/\D/g,''), 10) || 0;
+        const pct = Math.max(8, Math.min(100, Math.round(n / CHIP_GAUGE_MAX * 100)));
+        dur = (style === 'b')
+          ? `<i class="sc-gauge" style="--gp:${pct}"></i>`
+          : `<i class="sc-bar"><b style="width:${pct}%"></b></i>`;
+      }
+    }
+    return `<span class="status-chip sc-sq sc-s${style} k-${kind} ${c.cls||''}"${c.style?` style="${c.style}"`:''}`
+         + ` data-tip="${escapeHtml(String(c.label||''))}" aria-label="${escapeHtml(String(c.label||''))}">${art}`
+         + dur
+         + (amt ? `<i class="sc-amt">${escapeHtml(amt)}</i>` : '')
+         + `</span>`;
+  }
+  return `<span class="status-chip k-${kind} ${c.cls||''}"${c.style?` style="${c.style}"`:''} data-tip="${escapeHtml(String(c.label||''))}">`
        + `<span class="ic">${c.ic}</span><span class="chip-tx">${label}</span>${badge}</span>`;
+}
+
+/* ##########################################################################
+   [Ver 13.5] 상태칩 툴팁 — 칩 **아래**에 이름과 상세를 띄운다
+   --------------------------------------------------------------------------
+   아이콘만 남으면 그림이 곧 정보의 전부라, 무슨 효과인지 확인할 길이 필요하다.
+   예전엔 브라우저 기본 title 툴팁에 기대고 있었는데 1초 넘게 기다려야 뜨고,
+   글씨도 게임과 따로 놀았다.
+   ▶ 툴팁은 **document.body 에 붙인다.** .screen 은 애니메이션 transform 때문에
+     컨테이닝 블록이 되어, 그 안에 position:fixed 를 두면 헤더 높이만큼 밀린다.
+   ▶ 이름/상세는 라벨을 첫 '(' 또는 ' · ' 에서 자른다. 라벨이 원래 그렇게 생겼다 —
+     "과기대 3중첩(ATK +45%, 피해 -30%)" · "화상 (턴당 300 · 2바퀴)"
+   ▶ 모바일은 hover가 없으므로 **탭**으로 띄우고, 다른 곳을 누르면 닫는다.
+   ########################################################################## */
+let __chipTipEl = null, __chipTipHideT = null;
+function chipTipHost(){
+  if(__chipTipEl && document.body.contains(__chipTipEl)) return __chipTipEl;
+  __chipTipEl = document.createElement('div');
+  __chipTipEl.className = 'sc-tip';
+  __chipTipEl.id = 'scTip';
+  document.body.appendChild(__chipTipEl);
+  return __chipTipEl;
+}
+/* "이름(상세)" · "이름 · 상세" 를 두 조각으로 가른다 */
+function chipTipParts(text){
+  const s = String(text || '').trim();
+  let i = s.indexOf('(');
+  const j = s.indexOf(' · ');
+  if(i < 0 || (j >= 0 && j < i)) i = j;
+  if(i <= 0) return { name: s, desc: '' };
+  const name = s.slice(0, i).trim();
+  let desc = s.slice(i).trim();
+  if(desc.startsWith('·')) desc = desc.slice(1).trim();
+  if(desc.startsWith('(') && desc.endsWith(')')) desc = desc.slice(1, -1).trim();
+  return { name: name || s, desc };
+}
+function showChipTip(el){
+  const raw = el.getAttribute('data-tip');
+  if(!raw) return;
+  if(__chipTipHideT){ clearTimeout(__chipTipHideT); __chipTipHideT = null; }
+  const tip = chipTipHost();
+  const p = chipTipParts(raw);
+  const kind = /k-buff/.test(el.className) ? 'buff' : (/k-debuff/.test(el.className) ? 'debuff' : 'neutral');
+  tip.className = 'sc-tip k-' + kind;
+  tip.innerHTML = `<b>${escapeHtml(p.name)}</b>${p.desc ? `<small>${escapeHtml(p.desc)}</small>` : ''}`;
+  /* 먼저 보이게 해서 크기를 잰 뒤 자리를 잡는다 */
+  tip.style.visibility = 'hidden';
+  tip.classList.add('on');
+  const r = el.getBoundingClientRect();
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  /* ⚠ window.innerWidth/Height 는 창이 숨겨져 있으면 **0** 을 돌려준다.
+     그대로 쓰면 "화면 밖"으로 판정해 툴팁이 늘 왼쪽 위로 튀거나 위로 뒤집힌다.
+     documentElement 쪽을 폴백으로 두고, 그마저 0이면 뒤집기를 아예 하지 않는다. */
+  const vw = window.innerWidth  || document.documentElement.clientWidth  || 0;
+  const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+  let left = Math.round(r.left + r.width / 2 - tw / 2);
+  if(vw > 0) left = Math.min(left, vw - tw - 6);
+  left = Math.max(6, left);
+  let top = Math.round(r.bottom + 8);
+  /* 아래에 자리가 없으면 위로 뒤집는다 */
+  if(vh > 0 && top + th > vh - 6) top = Math.round(r.top - th - 8);
+  tip.style.left = left + 'px';
+  tip.style.top = Math.max(6, top) + 'px';
+  tip.style.visibility = '';
+}
+function hideChipTip(){
+  if(!__chipTipEl) return;
+  __chipTipHideT = setTimeout(()=>{ try{ __chipTipEl.classList.remove('on'); }catch(e){} }, 60);
+}
+/* 위임 — 칩은 renderBoard 마다 새로 그려지므로 개별 바인딩은 의미가 없다 */
+(function bindChipTip(){
+  if(typeof document === 'undefined') return;
+  const find = (t)=> (t && t.closest) ? t.closest('.status-chip') : null;
+  chipTipHost();   // 미리 만들어 둔다 — 첫 호버 프레임에 배치가 없으면 자리를 못 잡는다
+  document.addEventListener('mouseover', (e)=>{ const c = find(e.target); if(c) showChipTip(c); }, true);
+  document.addEventListener('mouseout',  (e)=>{ if(find(e.target)) hideChipTip(); }, true);
+  document.addEventListener('scroll',    ()=> hideChipTip(), true);
+  /* 모바일 — 탭으로 띄우고, 칩 밖을 누르면 닫는다 */
+  document.addEventListener('click', (e)=>{
+    const c = find(e.target);
+    if(c) showChipTip(c); else hideChipTip();
+  }, true);
+})();
+/* 라벨에서 "크기 값" 하나를 뽑는다. 지속시간은 위에서 이미 떼어낸 뒤다.
+   ⚠ 순서가 중요하다 — 중첩을 %보다 먼저 본다. 과기대는 "3중첩(ATK +15%…)"이라
+     %를 먼저 보면 15%가 잡혀 정작 몇 중첩인지가 사라진다. */
+function chipAmountOf(key, label){
+  if(!CHIP_AMOUNT_KEYS.has(key)) return '';
+  let m = label.match(/(\d+)\s*중첩/);
+  if(m) return '×' + m[1];
+  m = label.match(/([+-]?\d[\d,]*(?:\.\d+)?)\s*%/);
+  if(m) return m[1] + '%';
+  m = label.match(/([+-]?\d[\d,]*)/);
+  return m ? m[1] : '';
 }
 
 /* [Ver 12.6.1] 공격력 · 방어력 증감률 — 칩에 섞여 묻히던 값을 따로 뽑아 고정 자리에 둔다.
@@ -32290,28 +32879,29 @@ function statModsHtml(p){
 
 function getStatusChips(p){
   const chips = [];
-  const addChip = (ic, label, tone, extraCls='', style='')=>{
+  /* [Ver 13.5] 첫 인자가 key 다. 아이콘 파일·분류·수치배지를 전부 이 key로 찾는다. */
+  const addChip = (key, ic, label, tone, extraCls='', style='')=>{
     const cls = [tone ? `tone-${tone}` : '', extraCls].filter(Boolean).join(' ');
-    chips.push({ ic, label, cls, style });
+    chips.push({ key, ic, label, cls, style });
   };
-  if(!p.alive) return [{ic:'☠',label:'탈락', cls:'dead-chip tone-red'}];
-  if(p.impeached) addChip('👑', `탄핵(${Math.max(0,p.impeachDueRound-turnCount)}바퀴)`, 'red');
-  if(p.stunned) addChip('⏸', '스턴 · 1턴', 'red');
-  if(p.stunLockTurns>0) addChip(p.stunLockLabel==='빙결' ? '❄️' : '⏸', `${p.stunLockLabel||'스턴'} · ${p.stunLockTurns}턴`, 'red');
-  if(p.rigidTurns>0) addChip('💢', `경직(받는피해 100% 증가) · ${p.rigidTurns}턴`, 'red');
-  if(isExcluded(p)) addChip('🌀', `${p.exclusionLabel||'게임에서 제외'} · 무적 · ${p.exclusionDueTurn - totalIndividualTurns}턴 후 복귀`, 'red');
-  if(p.hpBlindDueRound > turnCount) addChip('🙈', `징오징오 · 남 체력 안 보임 · ${p.hpBlindDueRound-turnCount}바퀴`, 'red');
-  if(p.sellPriceLockValue != null && p.sellPriceLockDueRound && turnCount < p.sellPriceLockDueRound) addChip('💰', `카드 판매가 ${fmtWon(p.sellPriceLockValue)} 고정 · ${p.sellPriceLockDueRound-turnCount}바퀴`, 'red');
-  if(p.reflectNext) addChip('⤺', p.reflectNextDueRound ? `반사 대기 · ${Math.max(0,p.reflectNextDueRound-turnCount)}바퀴` : '반사 대기', 'blue');
-  if(p.nullifyNext) addChip('⊘', '무효 대기', 'blue');
-  if(p.guardNext) addChip('🛡', '가드 대기', 'blue');
+  if(!p.alive) return [{key:'dead', ic:'☠', label:'탈락', cls:'dead-chip tone-red'}];
+  if(p.impeached) addChip('impeached', '👑', `탄핵(${Math.max(0,p.impeachDueRound-turnCount)}바퀴)`, 'red');
+  if(p.stunned) addChip('stunned', '⏸', p.stunSource ? `${p.stunSource} · 스턴 1턴` : '스턴 · 1턴', 'red');
+  if(p.stunLockTurns>0) addChip('stunLockTurns', p.stunLockLabel==='빙결' ? '❄️' : '⏸', `${p.stunLockLabel||'스턴'} · ${p.stunLockTurns}턴`, 'red');
+  if(p.rigidTurns>0) addChip('rigidTurns', '💢', `경직(받는피해 100% 증가) · ${p.rigidTurns}턴`, 'red');
+  if(isExcluded(p)) addChip('exclusionLabel', '🌀', `${p.exclusionLabel||'게임에서 제외'} · 무적 · ${p.exclusionDueTurn - totalIndividualTurns}턴 후 복귀`, 'red');
+  if(p.hpBlindDueRound > turnCount) addChip('hpBlindDueRound', '🙈', `징오징오 · 남 체력 안 보임 · ${p.hpBlindDueRound-turnCount}바퀴`, 'red');
+  if(p.sellPriceLockValue != null && p.sellPriceLockDueRound && turnCount < p.sellPriceLockDueRound) addChip('sellPriceLockValue', '💰', `카드 판매가 ${fmtWon(p.sellPriceLockValue)} 고정 · ${p.sellPriceLockDueRound-turnCount}바퀴`, 'red');
+  if(p.reflectNext) addChip('reflectNext', '⤺', p.reflectNextDueRound ? `반사 대기 · ${Math.max(0,p.reflectNextDueRound-turnCount)}바퀴` : '반사 대기', 'blue');
+  if(p.nullifyNext) addChip('nullifyNext', '⊘', '무효 대기', 'blue');
+  if(p.guardNext) addChip('guardNext', '🛡', '가드 대기', 'blue');
   if(p.cardShareWith){
     const partner = players.find(x=>x.id===p.cardShareWith);
-    if(partner && partner.alive) addChip('📱', `카드 공유 중(${partner.name})`, 'blue');
+    if(partner && partner.alive) addChip('cardShare', '📱', `카드 공유 중(${partner.name})`, 'blue');
   }
-  if(p.shield > 0) addChip('▣', `쉴드 ${p.shield}`, 'blue');
-  if((p.tripleShieldCharges||0) > 0) addChip('🔰', `특수쉴드 ${p.tripleShieldCharges}회 · 회당 ${p.tripleShieldReducePct||95}% 감소`, 'blue'); // [5.2.1] 3회쉴드권 칩 누락 수정
-  if(p.burned) addChip('🔥', `화상 ${p.burnDamage}`, 'red');
+  if(p.shield > 0) addChip('shield', '▣', `쉴드 ${p.shield}`, 'blue');
+  if((p.tripleShieldCharges||0) > 0) addChip('tripleShieldCharges', '🔰', `특수쉴드 ${p.tripleShieldCharges}회 · 회당 ${p.tripleShieldReducePct||95}% 감소`, 'blue'); // [5.2.1] 3회쉴드권 칩 누락 수정
+  if(p.burned) addChip('burn', '🔥', `화상 ${p.burnDamage}`, 'red');
   // [Ver 8.1.7] "나가사키 눈뽕"/"건망증"으로 손패가 은폐된 상태를 상태칩으로 표시.
   //   p.maskedBySource(마지막으로 은폐를 건 카드명)를 그대로 보여줘 어떤 카드로 걸렸는지 정확히 드러낸다.
   /* ★★★ 카드를 추가할 때의 규칙 ★★★
@@ -32319,47 +32909,47 @@ function getStatusChips(p){
      반드시 그 효과를 받는 사람(대상 또는 자신)에게 여기서 상태칩을 추가하라.
      칩이 없으면 플레이어는 자신이 무슨 효과에 걸렸는지 화면에서 확인할 방법이 전혀 없다. */
   // [Ver 8.3] 그동안 칩이 없어 보이지 않던 지속 효과들
-  if(p.spineFractured) addChip('🦴', '척추뼈 골절 (회복 카드만 사용 가능)', 'red');
-  if(p.routerShareAll) addChip('📶', '공유기 (모두의 손패 사용)', 'yellow');
-  if(p.routerLockedBy && p.routerLockedBy !== p.id) addChip('🔌', '공유기에 연결됨 (카드 사용 불가)', 'red');
-  if(p.encoreLockUid) addChip('🎤', '앙코르 (지목된 카드만 사용 가능)', 'red');
-  if(p.loanDebt) addChip('💸', `사채 ${fmtWon(p.loanDebt.amount)} (${Math.max(0,(p.loanDebt.dueRound||0)-turnCount)}바퀴 뒤 상환)`, 'red');
-  if(p.ddakjiActive) addChip('🎴', '딱지남 (매 턴 빵·복권·꽝)', 'green');
-  if(p.matrixSealed) addChip('🚪', '문단속 (매트릭스 이동 불가)', 'blue');
-  if(p.fastReactionMs) addChip('⏩', '느려 (내 카드 반응 1.5초)', 'blue');
-  if(p.reflexEvasionAdd && p.reflexEvasionDue > turnCount) addChip('⚡', `척수반사 (회피율 +${p.reflexEvasionAdd}% · ${p.reflexEvasionDue - turnCount}바퀴)`, 'blue');
-  if(p.hand && p.hand.some(c=>c.type==='SUPERCONDUCTOR_PASSIVE')) addChip('🧊', 'LK69 (매 턴 쉴드+1 · 회피 +40%)', 'green');
-  if(p.beggarIncomeMult && p.beggarIncomeMult>1) addChip('🥣', '거지 (바퀴 돈 2배)', 'yellow');
-  if(p.whiteTigerReady) addChip('🐯', '백호랩터 (백호 버튼 사용 가능)', 'yellow');
-  if(p.telekinesisTarget && p.telekinesisDueRound>turnCount){ const t=players.find(x=>x.id===p.telekinesisTarget); if(t) addChip('🧠', `텔레키네시스 조종 → ${t.name} (${p.telekinesisDueRound-turnCount}바퀴)`, 'red'); }
-  if(p.telekinesisPuppetOf){ const c=players.find(x=>x.id===p.telekinesisPuppetOf); if(c) addChip('🎭', `조종당함 (${c.name})`, 'red'); }
-  if(p.curseDollTarget && p.curseDollStreak){ const t=players.find(x=>x.id===p.curseDollTarget); if(t) addChip('🪆', `저주 인형 (${t.name} ${p.curseDollStreak}/4)`, 'red'); }
-  if(p.chatBanned) addChip('🔇', '채팅 영구 금지', 'red');
-  else if(p.chatMuteUntil && turnCount < p.chatMuteUntil) addChip('🔇', `타임아웃 (${p.chatMuteUntil - turnCount}바퀴)`, 'red');
-  if(p.burned && p.burnDueRound && turnCount < p.burnDueRound) addChip('🔥', `화상 (턴당 ${p.burnDamage||0} · ${p.burnDueRound - turnCount}바퀴)`, 'red');
+  if(p.spineFractured) addChip('spineFractured', '🦴', '척추뼈 골절 (회복 카드만 사용 가능)', 'red');
+  if(p.routerShareAll) addChip('routerShareAll', '📶', '공유기 (모두의 손패 사용)', 'yellow');
+  if(p.routerLockedBy && p.routerLockedBy !== p.id) addChip('routerLockedBy', '🔌', '공유기에 연결됨 (카드 사용 불가)', 'red');
+  if(p.encoreLockUid) addChip('encoreLockUid', '🎤', '앙코르 (지목된 카드만 사용 가능)', 'red');
+  if(p.loanDebt) addChip('loanDebt', '💸', `사채 ${fmtWon(p.loanDebt.amount)} (${Math.max(0,(p.loanDebt.dueRound||0)-turnCount)}바퀴 뒤 상환)`, 'red');
+  if(p.ddakjiActive) addChip('ddakjiActive', '🎴', '딱지남 (매 턴 빵·복권·꽝)', 'green');
+  if(p.matrixSealed) addChip('matrixSealed', '🚪', '문단속 (매트릭스 이동 불가)', 'blue');
+  if(p.fastReactionMs) addChip('fastReactionMs', '⏩', '느려 (내 카드 반응 1.5초)', 'blue');
+  if(p.reflexEvasionAdd && p.reflexEvasionDue > turnCount) addChip('reflexEvasionAdd', '⚡', `척수반사 (회피율 +${p.reflexEvasionAdd}% · ${p.reflexEvasionDue - turnCount}바퀴)`, 'blue');
+  if(p.hand && p.hand.some(c=>c.type==='SUPERCONDUCTOR_PASSIVE')) addChip('lk69', '🧊', 'LK69 (매 턴 쉴드+1 · 회피 +40%)', 'green');
+  if(p.beggarIncomeMult && p.beggarIncomeMult>1) addChip('beggarIncomeMult', '🥣', '거지 (바퀴 돈 2배)', 'yellow');
+  if(p.whiteTigerReady) addChip('whiteTigerReady', '🐯', '백호랩터 (백호 버튼 사용 가능)', 'yellow');
+  if(p.telekinesisTarget && p.telekinesisDueRound>turnCount){ const t=players.find(x=>x.id===p.telekinesisTarget); if(t) addChip('telekinesisTarget', '🧠', `텔레키네시스 조종 → ${t.name} (${p.telekinesisDueRound-turnCount}바퀴)`, 'red'); }
+  if(p.telekinesisPuppetOf){ const c=players.find(x=>x.id===p.telekinesisPuppetOf); if(c) addChip('telekinesisPuppetOf', '🎭', `조종당함 (${c.name})`, 'red'); }
+  if(p.curseDollTarget && p.curseDollStreak){ const t=players.find(x=>x.id===p.curseDollTarget); if(t) addChip('curseDollTarget', '🪆', `저주 인형 (${t.name} ${p.curseDollStreak}/4)`, 'red'); }
+  if(p.chatBanned) addChip('chatBanned', '🔇', '채팅 영구 금지', 'red');
+  else if(p.chatMuteUntil && turnCount < p.chatMuteUntil) addChip('chatMuteUntil', '🔇', `타임아웃 (${p.chatMuteUntil - turnCount}바퀴)`, 'red');
+  if(p.burned && p.burnDueRound && turnCount < p.burnDueRound) addChip('burnTimed', '🔥', `화상 (턴당 ${p.burnDamage||0} · ${p.burnDueRound - turnCount}바퀴)`, 'red');
   if(p.alive && p.hand && p.hand.some(c=>c.__masked)){
     const maskedN = p.hand.filter(c=>c.__masked).length;
-    addChip('❓', `${p.maskedBySource||'건망증'} · 손패 은폐 (${maskedN}장)`, 'red');
+    addChip('maskedBySource', '❓', `${p.maskedBySource||'건망증'} · 손패 은폐 (${maskedN}장)`, 'red');
   }
-  if(p.permaDamageBonus > 0) addChip('▲', `받는피해 +${p.permaDamageBonus}`, 'red');
-  if(p.permaDamageBonus < 0) addChip('▼', `받는피해 ${p.permaDamageBonus}`, 'blue');
-  if(p.permaPierce) addChip('⇶', '관통샷', 'yellow');
-  if(p.permaAoe) addChip('☄', '초월자', 'yellow');
-  if(p.psychoKillHeal) addChip('♥', '싸이코패스', 'green');
-  if(p.healMult && p.healMult !== 1) addChip('🍵', `회복량 ${Math.round((p.healMult-1)*100)}% ${p.healMult>1?'증가':'감소'} (${Math.max(0,p.healMultDueRound-turnCount)}바퀴)`, 'green');
-  if(p.atkMultiplier > 0) addChip('⬆️', `공격력 ${Math.round(p.atkMultiplier)}% 증가`, 'yellow');
-  if(p.atkMultiplier < 0) addChip('⬇️', `공격력 ${Math.round(-p.atkMultiplier)}% 감소`, 'red');
+  if(p.permaDamageBonus > 0) addChip('permaVulnUp', '▲', `받는피해 +${p.permaDamageBonus}`, 'red');
+  if(p.permaDamageBonus < 0) addChip('permaVulnDown', '▼', `받는피해 ${p.permaDamageBonus}`, 'blue');
+  if(p.permaPierce) addChip('permaPierce', '⇶', '관통샷', 'yellow');
+  if(p.permaAoe) addChip('permaAoe', '☄', '초월자', 'yellow');
+  if(p.psychoKillHeal) addChip('psychoKillHeal', '♥', '싸이코패스', 'green');
+  if(p.healMult && p.healMult !== 1) addChip('healMult', '🍵', `회복량 ${Math.round((p.healMult-1)*100)}% ${p.healMult>1?'증가':'감소'} (${Math.max(0,p.healMultDueRound-turnCount)}바퀴)`, 'green', p.healMult>1?'k-buff':'k-debuff');
+  if(p.atkMultiplier > 0) addChip('atkUp', '⬆️', `공격력 ${Math.round(p.atkMultiplier)}% 증가`, 'yellow');
+  if(p.atkMultiplier < 0) addChip('atkDown', '⬇️', `공격력 ${Math.round(-p.atkMultiplier)}% 감소`, 'red');
   /* [Ver 9.7 정리] "돈 재단 · 공격력 N% 증가" 칩 삭제 — 9.6에서 그 효과 자체가 폐지됐다.
      (fdnGoldAtkPct가 늘 0을 돌려줘서 이미 화면에는 뜨지 않던 죽은 칩) */
-  if(p.devilContractActive) addChip('😈', `악마 계약(${Math.max(0,p.devilContractDueRound-turnCount)}바퀴 내 처치)`, 'red');
-  if(p.berserkDueRound > turnCount) addChip('🩸', `광폭화(${Math.max(0,p.berserkDueRound-turnCount)}바퀴 후 사망)`, 'red');
-  if(p.unconsciousReady && !p.unconsciousActive) addChip('🧠', '무의식 대기', 'blue');
-  if(p.unconsciousActive) addChip('👁️', `무의식 폭주(${Math.max(0,p.unconsciousDueRound-turnCount)}바퀴)`, 'red');
-  if(p.poisoned) addChip('☠️', `맹독(${p.poisonDamage}/턴)`, 'red');
+  if(p.devilContractActive) addChip('devilContractActive', '😈', `악마 계약(${Math.max(0,p.devilContractDueRound-turnCount)}바퀴 내 처치)`, 'red');
+  if(p.berserkDueRound > turnCount) addChip('berserkDueRound', '🩸', `광폭화(${Math.max(0,p.berserkDueRound-turnCount)}바퀴 후 사망)`, 'red');
+  if(p.unconsciousReady && !p.unconsciousActive) addChip('unconsciousReady', '🧠', '무의식 대기', 'blue');
+  if(p.unconsciousActive) addChip('unconsciousActive', '👁️', `무의식 폭주(${Math.max(0,p.unconsciousDueRound-turnCount)}바퀴)`, 'red');
+  if(p.poisoned) addChip('poisoned', '☠️', `맹독(${p.poisonDamage}/턴)`, 'red');
   /* [Ver 9.6 버그수정] 우빈 들개 "출혈" 상태칩이 아예 없어서, 물린 사람이 자기가 왜 깎이는지
      화면에서 확인할 방법이 없었다. (지속 효과에는 반드시 칩을 붙인다는 이 파일의 규약 위반) */
   if(p.bleedDueRound && turnCount < p.bleedDueRound && (p.bleedDamage||0) > 0){
-    addChip('🩸', `출혈(화면 클릭시 ${p.bleedDamage} 피해) · ${Math.max(0, p.bleedDueRound - turnCount)}바퀴`, 'red');
+    addChip('bleedDamage', '🩸', `출혈(화면 클릭시 ${p.bleedDamage} 피해) · ${Math.max(0, p.bleedDueRound - turnCount)}바퀴`, 'red');
   }
   /* [Ver 9.12.1] 우빈랩터 알 — 언제 부화하는지 알 방법이 없어 손패에 두고 잊어버리기 쉬웠다.
      남은 바퀴를 상태칩으로 띄운다. 단, 손패는 감춰진 정보이므로 **자기 자신에게만** 보인다. */
@@ -32370,238 +32960,240 @@ function getStatusChips(p){
       if(eggs.length){
         const left = Math.min.apply(null, eggs.map(c=>
           (c.__eggDueRound != null) ? Math.max(0, c.__eggDueRound - turnCount) : (c.hatchRounds || 2)));
-        addChip('🥚', `우빈랩터 알 · ${left}바퀴 후 부화${eggs.length>1?` (${eggs.length}개)`:''}`, 'yellow');
+        addChip('raptorEgg', '🥚', `우빈랩터 알 · ${left}바퀴 후 부화${eggs.length>1?` (${eggs.length}개)`:''}`, 'yellow');
       }
     }
   }catch(e){}
-  if(p.laborExploitedBy){ const ex = players.find(pp=>pp.id===p.laborExploitedBy); addChip('⛏', `노동착취(캄보디아)${ex?` · by ${ex.name}`:''} · 자기턴마다 150피해 · ${p.laborExploitTurnsLeft||0}회 남음`, 'red'); }
-  if(p.healBlocked) addChip('🚫', '하드코어(회복·부활 불가)', 'red');
-  if(p.syncTargetId){ const partner = players.find(pp=>pp.id===p.syncTargetId); addChip('🔗', `싱크로 · ${partner?partner.name:'?'}과 해로운 효과 공유`, 'yellow'); }
-  if(p.ufcPartnerId){ const rival = players.find(pp=>pp.id===p.ufcPartnerId); addChip('🥊', `UFC · ${rival?rival.name:'?'}과 서로 받는 피해 +${p.ufcAmpPct||50}%`, 'red'); }
-  if(p.invincible) addChip('🛡️', '무적 (모든 피해·효과 무시)', 'blue');
-  if(p.baitDebuff) addChip('🎣', `[미끼]${(p.baitStacks||1) > 1 ? ` ${p.baitStacks}중첩` : ''} (강태공 반응시 일괄피해 대상)`, 'red');
-  if(p.proxyTargetId){ const proxy = players.find(pp=>pp.id===p.proxyTargetId); addChip('🎭', `프록시 · ${proxy?proxy.name:'?'}에게 해로운 효과 전가`, 'yellow'); }
-  if(p.hpBugActive) addChip('🐞', 'HP 100000↑ 즉사 버그', 'red');
-  if(p.chromaticMultiplier && p.chromaticMultiplier>0) addChip('🌈', `크로마틱(공격력 ${Math.round(p.chromaticMultiplier)}% 증가)`, 'yellow');
+  if(p.laborExploitedBy){ const ex = players.find(pp=>pp.id===p.laborExploitedBy); addChip('laborExploitedBy', '⛏', `노동착취(캄보디아)${ex?` · by ${ex.name}`:''} · 자기턴마다 150피해 · ${p.laborExploitTurnsLeft||0}회 남음`, 'red'); }
+  if(p.healBlocked) addChip('healBlocked', '🚫', '하드코어(회복·부활 불가)', 'red');
+  if(p.syncTargetId){ const partner = players.find(pp=>pp.id===p.syncTargetId); addChip('syncTargetId', '🔗', `싱크로 · ${partner?partner.name:'?'}과 해로운 효과 공유`, 'yellow'); }
+  if(p.ufcPartnerId){ const rival = players.find(pp=>pp.id===p.ufcPartnerId); addChip('ufcPartnerId', '🥊', `UFC · ${rival?rival.name:'?'}과 서로 받는 피해 +${p.ufcAmpPct||50}%`, 'red'); }
+  if(p.invincible) addChip('invincible', '🛡️', '무적 (모든 피해·효과 무시)', 'blue');
+  if(p.baitDebuff) addChip('baitDebuff', '🎣', `[미끼]${(p.baitStacks||1) > 1 ? ` ${p.baitStacks}중첩` : ''} (강태공 반응시 일괄피해 대상)`, 'red');
+  if(p.proxyTargetId){ const proxy = players.find(pp=>pp.id===p.proxyTargetId); addChip('proxyTargetId', '🎭', `프록시 · ${proxy?proxy.name:'?'}에게 해로운 효과 전가`, 'yellow'); }
+  if(p.hpBugActive) addChip('hpBugActive', '🐞', 'HP 100000↑ 즉사 버그', 'red');
+  if(p.chromaticMultiplier && p.chromaticMultiplier>0) addChip('chromaticMultiplier', '🌈', `크로마틱(공격력 ${Math.round(p.chromaticMultiplier)}% 증가)`, 'yellow');
   /* [Ver 9.7 버그수정] ① 이 칩은 어떤 카드/이벤트가 걸었든 무조건 "샤우팅"으로 떴다.
        랜덤 이벤트 <지후한테 쳐맞음>에 걸려도 화면에는 "샤우팅"이라고 나와, 엉뚱한 원인을 가리켰다.
        효과를 건 쪽이 tempAtkBuffLabel/Icon을 남기면 그 이름으로 뜬다.
      ② 감소일 때도 "N% 증가"로 표기됐다(예: "-10% 증가"). 부호를 보고 증가/감소를 가른다. */
   if(p.tempAtkBuffTurns > 0){
     const __tb = Math.round(p.tempAtkBuffMult||0);
-    addChip(p.tempAtkBuffIcon || '💪',
+    addChip('tempAtkBuffIcon', p.tempAtkBuffIcon || '💪',
       `${p.tempAtkBuffLabel || '샤우팅'}(공격력 ${Math.abs(__tb)}% ${__tb < 0 ? '감소' : '증가'} · ${p.tempAtkBuffTurns}턴)`,
-      __tb < 0 ? 'red' : 'yellow');
+      __tb < 0 ? 'red' : 'yellow', __tb < 0 ? 'k-debuff' : 'k-buff');
   }
-  if(p.wildAtkDelta && turnCount < (p.wildAtkDueRound||0)) addChip('🐕', `WILD(공격력 ${p.wildAtkDelta>0?'+':''}${p.wildAtkDelta} · ${p.wildAtkDueRound - turnCount}바퀴)`, p.wildAtkDelta>0?'yellow':'red');
-  if(p.flatDmgReduceTurns > 0) addChip('🧘', `편안함(받는피해 -${p.flatDmgReduceAmt} · ${p.flatDmgReduceTurns}바퀴)`, 'blue');
-  if(p.overheat) addChip('♨️', '과열(자폭 30%)', 'red');
-  if(p.nextAtkCritChance>0) addChip('🎯', `매의 눈 대기(${p.nextAtkCritChance}%)`, 'yellow');
-  if(p.skipNextTurn) addChip('⏭', '다음턴 스킵 예정', 'red');
-  if(p.paralyzeDueRound && turnCount < p.paralyzeDueRound) addChip('🧟', '마비(턴 50%스킵)', 'red');
-  if(p.silencedDueTurn && totalIndividualTurns < p.silencedDueTurn) addChip('🤐', '침묵(보여주기 봉인)', 'red');
-  if(p.forcedSkipTurns > 0) addChip('⛏️', `노가다(스킵 ${p.forcedSkipTurns}턴 남음)`, 'red');
-  if(p.stunResistCharges > 0) addChip('🔨', `스턴저항(${p.stunResistCharges}회)`, 'blue');
-  if(p.immortalHerbActive) addChip('🌿', '불로초(매턴 +1000)', 'green');
-  if(p.rawMeatDrainActive) addChip('🥩', '익히지않은고기(매턴 -30)', 'red');
-  if(p.deliciousReviveReady) addChip('🍜', '사망시 즉시부활 대기', 'yellow');
-  if(p.ignoreNullifyReflect) addChip('⚡', 'Sudo(무효/반사 무시)', 'yellow');
-  if(p.nextCardGuaranteedHit) addChip('🎯', '집중(다음 카드 명중 100%)', 'yellow');
-  if(p.causalityLocked) addChip('☯', '인과율조작(확률100%)', 'yellow');
-  if(p.gojaImmune) addChip('🛡', '고자면역', 'yellow');
-  if(p.godBlessed) addChip('✟', '신의 가호(B등급이하 면역)', 'yellow');
-  if(p.lamboUnlimited) addChip('🏎', '람보르기니(무제한 사용)', 'yellow');
-  if(p.accuracyMod < 0) addChip('▽', `명중률 ${p.accuracyMod}%`, 'red');
-  if(pendingDeaths.some(d=>d.targetId===p.id)) addChip('⧗', `복선 · ${Math.max(0,pendingDeaths.find(d=>d.targetId===p.id).dueRound - turnCount)}바퀴`, 'red');
-  if(pendingRecoils.some(r=>r.targetId===p.id)) addChip('👵', `엄카 발각예정 · ${Math.max(0,pendingRecoils.find(r=>r.targetId===p.id).dueRound - turnCount)}바퀴`, 'red');
+  if(p.wildAtkDelta && turnCount < (p.wildAtkDueRound||0)) addChip('wildAtkDelta', '🐕', `WILD(공격력 ${p.wildAtkDelta>0?'+':''}${p.wildAtkDelta} · ${p.wildAtkDueRound - turnCount}바퀴)`, p.wildAtkDelta>0?'yellow':'red', p.wildAtkDelta>0?'k-buff':'k-debuff');
+  if(p.flatDmgReduceTurns > 0) addChip('flatDmgReduceTurns', '🧘', `편안함(받는피해 -${p.flatDmgReduceAmt} · ${p.flatDmgReduceTurns}바퀴)`, 'blue');
+  if(p.overheat) addChip('overheat', '♨️', '과열(자폭 30%)', 'red');
+  if(p.nextAtkCritChance>0) addChip('nextAtkCritChance', '🎯', `매의 눈 대기(${p.nextAtkCritChance}%)`, 'yellow');
+  if(p.skipNextTurn) addChip('skipNextTurn', '⏭', '다음턴 스킵 예정', 'red');
+  if(p.paralyzeDueRound && turnCount < p.paralyzeDueRound) addChip('paralyzeDueRound', '🧟', '마비(턴 50%스킵)', 'red');
+  if(p.silencedDueTurn && totalIndividualTurns < p.silencedDueTurn) addChip('silencedDueTurn', '🤐', '침묵(보여주기 봉인)', 'red');
+  if(p.forcedSkipTurns > 0) addChip('forcedSkipTurns', '⛏️', `노가다(스킵 ${p.forcedSkipTurns}턴 남음)`, 'red');
+  if(p.stunResistCharges > 0) addChip('stunResistCharges', '🔨', `스턴저항(${p.stunResistCharges}회)`, 'blue');
+  if(p.immortalHerbActive) addChip('immortalHerbActive', '🌿', '불로초(매턴 +1000)', 'green');
+  if(p.rawMeatDrainActive) addChip('rawMeatDrainActive', '🥩', '익히지않은고기(매턴 -30)', 'red');
+  if(p.deliciousReviveReady) addChip('deliciousReviveReady', '🍜', '사망시 즉시부활 대기', 'yellow');
+  if(p.ignoreNullifyReflect) addChip('ignoreNullifyReflect', '⚡', 'Sudo(무효/반사 무시)', 'yellow');
+  if(p.nextCardGuaranteedHit) addChip('nextCardGuaranteedHit', '🎯', '집중(다음 카드 명중 100%)', 'yellow');
+  if(p.causalityLocked) addChip('causalityLocked', '☯', '인과율조작(확률100%)', 'yellow');
+  if(p.gojaImmune) addChip('gojaImmune', '🛡', '고자면역', 'yellow');
+  if(p.godBlessed) addChip('godBlessed', '✟', '신의 가호(B등급이하 면역)', 'yellow');
+  if(p.lamboUnlimited) addChip('lamboUnlimited', '🏎', '람보르기니(무제한 사용)', 'yellow');
+  if(p.accuracyMod < 0) addChip('accuracyMod', '▽', `명중률 ${p.accuracyMod}%`, 'red');
+  if(pendingDeaths.some(d=>d.targetId===p.id)) addChip('foreshadow', '⧗', `복선 · ${Math.max(0,pendingDeaths.find(d=>d.targetId===p.id).dueRound - turnCount)}바퀴`, 'red');
+  if(pendingRecoils.some(r=>r.targetId===p.id)) addChip('momCardRecoil', '👵', `엄카 발각예정 · ${Math.max(0,pendingRecoils.find(r=>r.targetId===p.id).dueRound - turnCount)}바퀴`, 'red');
   if(p.team){
     if(cultMode){
       // [Ver 6.19.2] 사이비: 팀 소속 자체가 교주팀임을 노출하므로, 그 사실을 아는 뷰어에게만 '교주팀' 칩을 보인다.
-      if(cultKnownToViewer(p)) addChip('🔔', '교주팀', 'blue');
+      if(cultKnownToViewer(p)) addChip('cultTeam', '🔔', '교주팀', 'blue');
     } else {
-      addChip('⚭', battleRoyaleMode ? `팀 ${p.team} (${teamAliveSize(p.team)}/${teamMaxSize()})` : `팀 ${p.team}`, 'blue');
+      addChip('team', '⚭', battleRoyaleMode ? `팀 ${p.team} (${teamAliveSize(p.team)}/${teamMaxSize()})` : `팀 ${p.team}`, 'blue');
     }
   }
-  if(p.fateChainWith){ const partner = players.find(pp=>pp.id===p.fateChainWith); addChip('⛓️', `사슬 · ${partner?partner.name:'?'}`, 'blue'); }
+  if(p.fateChainWith){ const partner = players.find(pp=>pp.id===p.fateChainWith); addChip('fateChainWith', '⛓️', `사슬 · ${partner?partner.name:'?'}`, 'blue'); }
   if(p.matrixId!=null && !isExcluded(p)){
-    addChip('🟩', `매트릭스 · ${Math.max(0,p.matrixDueRound-turnCount)}바퀴 후 복귀`, 'blue');
+    addChip('matrixDueRound', '🟩', `매트릭스 · ${Math.max(0,p.matrixDueRound-turnCount)}바퀴 후 복귀`, 'blue');
     // [Ver 5.7.1 편의] 코델리우스 등으로 매트릭스에 있는 동안 적용되는 공격력 증감을 칩으로 명시한다.
     //   (기존엔 "매트릭스" 칩만 있어서 내 공격력이 오른 건지 깎인 건지 화면에서 알 수 없었다)
     const am = p.matrixAtkMod;
     if(am != null && am !== 0){
       const pct = Math.round(am);
-      if(pct > 0) addChip('🔺', `매트릭스 공격력 +${pct}%`, 'green');
-      else addChip('🔻', `매트릭스 공격력 ${pct}%`, 'red');
+      if(pct > 0) addChip('matrixAtkUp', '🔺', `매트릭스 공격력 +${pct}%`, 'green');
+      else addChip('matrixAtkDown', '🔻', `매트릭스 공격력 ${pct}%`, 'red');
     }
   }
-  if(p.gambleExtraChoice) addChip('🎰', '라스베가스', 'yellow');
-  if(p.gambleCheap) addChip('🏷️', '박리다매', 'yellow');
-  if(p.lowGambleFree) addChip('🎟️', '단골 혜택', 'yellow');
-  if(p.sell1gAll) addChip('💸', '짐바브웨', 'red');
-  if(shopLockOwnerId === p.id) addChip('🔒', '상점 독점', 'yellow');
-  if(p.shopBanned) addChip('🚫', p.tradeNoDraw ? '거래(상점·드로우 불가)' : '상점 입장불가', 'red');
+  if(p.gambleExtraChoice) addChip('gambleExtraChoice', '🎰', '라스베가스', 'yellow');
+  if(p.gambleCheap) addChip('gambleCheap', '🏷️', '박리다매', 'yellow');
+  if(p.lowGambleFree) addChip('lowGambleFree', '🎟️', '단골 혜택', 'yellow');
+  if(p.sell1gAll) addChip('sell1gAll', '💸', '짐바브웨', 'red');
+  if(shopLockOwnerId === p.id) addChip('shopLock', '🔒', '상점 독점', 'yellow');
+  if(p.shopBanned) addChip('shopBanned', '🚫', p.tradeNoDraw ? '거래(상점·드로우 불가)' : '상점 입장불가', 'red');
   /* ===== [Ver 12.7.1] 신규 카드 상태칩 =====
      실시간으로 값이 변하는 카드일수록 "지금 몇 %인지"가 화면에 안 보이면 쓸 수가 없다. */
   {
     const pk = (typeof pokerHandOf === 'function') ? pokerHandOf(p) : null;
-    if(pk) addChip('🃏', `포커 · ${pk.label} (공격력 +${pk.pct}%)`, 'yellow');
-    else if(p.hand && p.hand.some(c=> c && c.type==='POKER_PASSIVE')) addChip('🃏', '포커 (족보 없음)', 'blue');
+    if(pk) addChip('pokerHand', '🃏', `포커 · ${pk.label} (공격력 +${pk.pct}%)`, 'yellow');
+    else if(p.hand && p.hand.some(c=> c && c.type==='POKER_PASSIVE')) addChip('pokerNone', '🃏', '포커 (족보 없음)', 'blue');
   }
   {
     const db = (typeof diabloAtkPct === 'function') ? diabloAtkPct(p) : 0;
-    if(p.hand && p.hand.some(c=> c && c.type==='DIABLO_PASSIVE')) addChip('😈', `디아블로 (공격력 +${db}%)`, db > 0 ? 'red' : 'blue');
+    if(p.hand && p.hand.some(c=> c && c.type==='DIABLO_PASSIVE')) addChip('diablo', '😈', `디아블로 (공격력 +${db}%)`, db > 0 ? 'red' : 'blue');
   }
-  if(p.rampageOn) addChip('💢', `폭주 (공격력 ${(p.rampageAtkPct||0) >= 0 ? '+' : ''}${Math.round(p.rampageAtkPct||0)}% · 0.5초마다 변동)`, 'red');
-  if(typeof berserkActive === 'function' && berserkActive(p)) addChip('🪓', `광전사 (전체공격 · 공격력 +${p.berserkAtkPct||30}%) · ${Math.max(0,(p.berserkDueRound||0)-turnCount)}바퀴`, 'red');
-  else if(p.berserkOnHit) addChip('🪓', '광전사 대기 (맞으면 발동)', 'blue');
-  if(p.ledgerRevenge) addChip('📓', '앙갚음장부 (적힌 상대에게 피해 2배)', 'yellow');
-  if(p.ledgerMarked) addChip('✒️', '장부에 적힘 (받는 피해 2배)', 'red');
-  if(p.hand && p.hand.some(c=> c && c.type==='LIBERO_PASSIVE')) addChip('🏐', '리베로 (상대 피해증감 무시)', 'green');
-  if(p.healerAura > 0) addChip('💚', `힐러 (명중 시 아군 HP +${p.healerAura})`, 'green');
-  if(p.auraFarmDueRound && turnCount < p.auraFarmDueRound) addChip('🌟', `AURA FARMING (공격 불가) · ${p.auraFarmDueRound - turnCount}바퀴`, 'yellow');
-  if(p.hand && p.hand.some(c=> c && c.type==='DOOR_OPENS_CURSE')) addChip('🚪', '문이 열리네 요 (상점 입장 시 즉사)', 'red');
-  if(p.loverId){ const lv = players.find(x=>x.id===p.loverId); if(lv) addChip('💞', `연인 (${lv.name})`, 'pink'); }
+  if(p.rampageOn) addChip('rampageOn', '💢', `폭주 (공격력 ${(p.rampageAtkPct||0) >= 0 ? '+' : ''}${Math.round(p.rampageAtkPct||0)}% · 0.5초마다 변동)`, 'red');
+  if(typeof berserkActive === 'function' && berserkActive(p)) addChip('berserkAtkPct', '🪓', `광전사 (전체공격 · 공격력 +${p.berserkAtkPct||30}%) · ${Math.max(0,(p.berserkDueRound||0)-turnCount)}바퀴`, 'red');
+  else if(p.berserkOnHit) addChip('berserkOnHit', '🪓', '광전사 대기 (맞으면 발동)', 'blue');
+  if(p.ledgerRevenge) addChip('ledgerRevenge', '📓', '앙갚음장부 (적힌 상대에게 피해 2배)', 'yellow');
+  if(p.ledgerMarked) addChip('ledgerMarked', '✒️', '장부에 적힘 (받는 피해 2배)', 'red');
+  if(p.hand && p.hand.some(c=> c && c.type==='LIBERO_PASSIVE')) addChip('libero', '🏐', '리베로 (상대 피해증감 무시)', 'green');
+  if(p.healerAura > 0) addChip('healerAura', '💚', `힐러 (명중 시 아군 HP +${p.healerAura})`, 'green');
+  if(p.auraFarmDueRound && turnCount < p.auraFarmDueRound) addChip('auraFarmDueRound', '🌟', `AURA FARMING (공격 불가) · ${p.auraFarmDueRound - turnCount}바퀴`, 'yellow');
+  if(p.hand && p.hand.some(c=> c && c.type==='DOOR_OPENS_CURSE')) addChip('doorOpens', '🚪', '문이 열리네 요 (상점 입장 시 즉사)', 'red');
+  if(p.loverId){ const lv = players.find(x=>x.id===p.loverId); if(lv) addChip('loverId', '💞', `연인 (${lv.name})`, 'pink'); }
   /* [Ver 12.7] 사이비에 포섭된 상태 — 왜 도박·드로우 버튼이 안 먹는지 여기서 알 수 있어야 한다 */
-  if(p.cultNoDraw || p.cultNoGamble) addChip('🕯️', '사이비(도박·드로우 불가 · 수입 몰수)', 'red');
+  if(p.cultNoDraw || p.cultNoGamble) addChip('cultNoDraw', '🕯️', '사이비(도박·드로우 불가 · 수입 몰수)', 'red');
   /* [Ver 12.7] 예토전생 — 소지 중이면 마지막 순간에 한 번 일어난다 */
-  if(p.hand && p.hand.some(c=> c && c.type==='EDO_TENSEI_REVIVE')) addChip('⚰️', '예토전생(최후 1인 남으면 부활)', 'blue');
-  if((p.shopBlockDueRound||0) > turnCount) addChip('🚧', `봉쇄 (상점 ${Math.max(0,(p.shopBlockDueRound||0)-turnCount)}바퀴)`, 'red'); // [Ver 6.8]
-  if(p.blueOceanActive) addChip('🌊', '블루오션 (1:1시 받는피해 -50%)', 'green'); // [Ver 6.8]
+  if(p.hand && p.hand.some(c=> c && c.type==='EDO_TENSEI_REVIVE')) addChip('edoTensei', '⚰️', '예토전생(최후 1인 남으면 부활)', 'blue');
+  if((p.shopBlockDueRound||0) > turnCount) addChip('shopBlockDueRound', '🚧', `봉쇄 (상점 ${Math.max(0,(p.shopBlockDueRound||0)-turnCount)}바퀴)`, 'red'); // [Ver 6.8]
+  if(p.blueOceanActive) addChip('blueOceanActive', '🌊', '블루오션 (1:1시 받는피해 -50%)', 'green'); // [Ver 6.8]
   /* ===== [Ver 9.14] 신규 카드 상태 칩 ===== */
-  if((p.wilsonHp||0) > 0) addChip('🏐', `윌슨 ${p.wilsonHp.toLocaleString()} / ${(p.wilsonMaxHp||2000).toLocaleString()}`, 'blue');
-  if(p.doubleCastAura) addChip('🔫', '조광일 (턴마다 카드 2장)', 'yellow');
-  if(p.ruinsActive) addChip('🏛️', `고대 유적 (매 턴 ${p.ruinsPct||10}% 보물)`, 'green');
-  if(p.dottusaImmune) addChip('🎲', '도뜨사 면역', 'green');
-  if(p.burningManBurn) addChip('🔥', `불타는남자 (내 공격에 화상 ${p.burningManBurn})`, 'yellow');
-  if(p.reaperScythePct) addChip('🌾', `영계의 낫 (HP ${p.reaperScythePct}% 이하 스턴)`, 'yellow');
-  if(p.ecoRebatePct) addChip('💹', `경기 회복 (쓴 돈 ${p.ecoRebatePct}% 환급)`, 'green');
-  if(p.dmgRebatePct) addChip('🩹', `우빈 리커버리 (받은 피해 ${p.dmgRebatePct}% 회복)`, 'green');
-  if(p.madDogPct) addChip('🐕', `개쉐끼 랩터 (매 턴 ${p.madDogPct}% 고자)`, 'red');
-  if(p.schemeProDue && turnCount < p.schemeProDue) addChip('🕸️', `권모술수pro · ${p.schemeProDue - turnCount}바퀴`, 'yellow');
-  if(p.reflexHalfPending) addChip('🤸', '무조건반사 대기 (다음 피격 50% 반사)', 'blue');
-  if(p.musinCoupActive) addChip('⚔️', `무신정변 (${p.musinTargetedStreak||0}/3)`, 'blue'); // [Ver 6.8]
-  if(p.flowerScentOnDeath) addChip('🌸', '꽃향기 (사망 시 전원 공격력↑)', 'blue'); // [Ver 6.8]
-  if(p.rouletteLockUid) addChip('🔫', '러시안룰렛 (이 카드만 사용 가능)', 'red'); // [Ver 6.8]
-  if(p.damageReductionPct > 0) addChip('🛡️', `받는피해 -${p.damageReductionPct}%`, 'green');
-  if((p.tempDmgReductionPct||0) > 0) addChip('💋', `유혹 · ${Math.max(0,p.tempDmgReductionDueRound-turnCount)}바퀴 후 종료`, 'green');
-  if(p.damageReductionPct < 0) addChip('💢', `받는피해 +${-p.damageReductionPct}%`, 'red');
+  if((p.wilsonHp||0) > 0) addChip('wilsonHp', '🏐', `윌슨 ${p.wilsonHp.toLocaleString()} / ${(p.wilsonMaxHp||2000).toLocaleString()}`, 'blue');
+  if(p.doubleCastAura) addChip('doubleCastAura', '🔫', '조광일 (턴마다 카드 2장)', 'yellow');
+  if(p.ruinsActive) addChip('ruinsActive', '🏛️', `고대 유적 (매 턴 ${p.ruinsPct||10}% 보물)`, 'green');
+  if(p.dottusaImmune) addChip('dottusaImmune', '🎲', '도뜨사 면역', 'green');
+  if(p.burningManBurn) addChip('burningManBurn', '🔥', `불타는남자 (내 공격에 화상 ${p.burningManBurn})`, 'yellow');
+  if(p.reaperScythePct) addChip('reaperScythePct', '🌾', `영계의 낫 (HP ${p.reaperScythePct}% 이하 스턴)`, 'yellow');
+  if(p.ecoRebatePct) addChip('ecoRebatePct', '💹', `경기 회복 (쓴 돈 ${p.ecoRebatePct}% 환급)`, 'green');
+  if(p.dmgRebatePct) addChip('dmgRebatePct', '🩹', `우빈 리커버리 (받은 피해 ${p.dmgRebatePct}% 회복)`, 'green');
+  if(p.madDogPct) addChip('madDogPct', '🐕', `개쉐끼 랩터 (매 턴 ${p.madDogPct}% 고자)`, 'red');
+  if(p.schemeProDue && turnCount < p.schemeProDue) addChip('schemeProDue', '🕸️', `권모술수pro · ${p.schemeProDue - turnCount}바퀴`, 'yellow');
+  if(p.reflexHalfPending) addChip('reflexHalfPending', '🤸', '무조건반사 대기 (다음 피격 50% 반사)', 'blue');
+  if(p.musinCoupActive) addChip('musinCoupActive', '⚔️', `무신정변 (${p.musinTargetedStreak||0}/3)`, 'blue'); // [Ver 6.8]
+  if(p.flowerScentOnDeath) addChip('flowerScentOnDeath', '🌸', '꽃향기 (사망 시 전원 공격력↑)', 'blue'); // [Ver 6.8]
+  if(p.rouletteLockUid) addChip('rouletteLockUid', '🔫', '러시안룰렛 (이 카드만 사용 가능)', 'red'); // [Ver 6.8]
+  if(p.damageReductionPct > 0) addChip('drUp', '🛡️', `받는피해 -${p.damageReductionPct}%`, 'green');
+  if((p.tempDmgReductionPct||0) > 0) addChip('tempDmgReductionPct', '💋', `유혹 · ${Math.max(0,p.tempDmgReductionDueRound-turnCount)}바퀴 후 종료`, 'green');
+  if(p.damageReductionPct < 0) addChip('drDown', '💢', `받는피해 +${-p.damageReductionPct}%`, 'red');
   if(p.goldRedirectTo){
     const cr = players.find(x=>x.id===p.goldRedirectTo);
-    addChip('💸', `빚쟁이지후(잔여 ${fmtWon(p.goldRedirectRemaining)}→${cr?cr.name:'?'})`, 'red');
+    addChip('goldRedirectRemaining', '💸', `빚쟁이지후(잔여 ${fmtWon(p.goldRedirectRemaining)}→${cr?cr.name:'?'})`, 'red');
   }
   if(p.protocolDefensePct > 0){
     const rt = players.find(x=>x.id===p.protocolRedirectToId);
-    addChip('🛰️', `방어 프로토콜(-${p.protocolDefensePct}%→${rt?rt.name:'?'})`, 'green');
+    addChip('protocolDefensePct', '🛰️', `방어 프로토콜(-${p.protocolDefensePct}%→${rt?rt.name:'?'})`, 'green');
   }
-  if(p.cactusThornPct > 0) addChip('🌵', `선인장랩터(반사 ${p.cactusThornPct}%)`, 'green');
-  if(p.tankBoyShieldDueRound && turnCount < p.tankBoyShieldDueRound) addChip('🛡️', `탱크보이전두광(${p.tankBoyShieldDueRound-turnCount}바퀴)`, 'green');
+  if(p.cactusThornPct > 0) addChip('cactusThornPct', '🌵', `선인장랩터(반사 ${p.cactusThornPct}%)`, 'green');
+  if(p.tankBoyShieldDueRound && turnCount < p.tankBoyShieldDueRound) addChip('tankBoyShieldDueRound', '🛡️', `탱크보이전두광(${p.tankBoyShieldDueRound-turnCount}바퀴)`, 'green');
   /* [Ver 9.7 버그수정] vulnPct는 여러 카드·이벤트가 공유하는 필드인데 칩 이름은 "공론화"로 박혀 있었다.
      랜덤 이벤트 <감기 걸림>에 걸려도 화면에는 "공론화"라고 떠서 원인을 알 수 없었다.
      효과를 건 쪽이 vulnLabel/vulnIcon을 남기면 그 이름으로 뜨고, 없으면 종래대로 공론화다. */
-  if(p.vulnPct > 0 && turnCount < p.vulnDueRound) addChip(p.vulnIcon || '📢', `${p.vulnLabel || '공론화'}(받는피해 +${p.vulnPct}%) · ${Math.max(0,p.vulnDueRound-turnCount)}바퀴`, 'red');
-  if(p.excitedVulnPct > 0 && turnCount < p.excitedDueRound) addChip('🥵', `흥분(받는피해 +${p.excitedVulnPct}%) · ${Math.max(0,p.excitedDueRound-turnCount)}바퀴`, 'red');
-  if(p.frostbiteStacks > 0) addChip('🧊', `동상 · ${p.frostbiteStacks}중첩`, 'red');
-  if(p.ashStacks > 0) addChip('🌫️', `재 · ${p.ashStacks}중첩`, 'red');
-  if(p.laserBeamActive) addChip('🟢', `직사광선(누적 ${(p.laserBeamStack||0)+1}회)`, 'green');
-  if(p.bulletproofActive) addChip('🛡️', `방탄불괴(피해 -${p.bulletproofReduction||0})`, 'yellow');
-  if(p.timeCurseActive) addChip('⏳', '시간의 저주(1초당 2 · 관통)', 'red');
-  if(p.doctorWhoActive) addChip('💗', '닥터후 레이저(0.1초당 1 · 관통)', 'red');
+  if(p.vulnPct > 0 && turnCount < p.vulnDueRound) addChip('vulnPct', p.vulnIcon || '📢', `${p.vulnLabel || '공론화'}(받는피해 +${p.vulnPct}%) · ${Math.max(0,p.vulnDueRound-turnCount)}바퀴`, 'red');
+  if(p.excitedVulnPct > 0 && turnCount < p.excitedDueRound) addChip('excitedVulnPct', '🥵', `흥분(받는피해 +${p.excitedVulnPct}%) · ${Math.max(0,p.excitedDueRound-turnCount)}바퀴`, 'red');
+  if(p.frostbiteStacks > 0) addChip('frostbiteStacks', '🧊', `동상 · ${p.frostbiteStacks}중첩`, 'red');
+  if(p.ashStacks > 0) addChip('ashStacks', '🌫️', `재 · ${p.ashStacks}중첩`, 'red');
+  if(p.laserBeamActive) addChip('laserBeamActive', '🟢', `직사광선(누적 ${(p.laserBeamStack||0)+1}회)`, 'green');
+  if(p.bulletproofActive) addChip('bulletproofActive', '🛡️', `방탄불괴(피해 -${p.bulletproofReduction||0})`, 'yellow');
+  if(p.timeCurseActive) addChip('timeCurseActive', '⏳', '시간의 저주(1초당 2 · 관통)', 'red');
+  if(p.doctorWhoActive) addChip('doctorWhoActive', '💗', '닥터후 레이저(0.1초당 1 · 관통)', 'red');
   if((p.gwagidaeStacks||[]).length > 0){
     const n = p.gwagidaeStacks.length;
-    addChip('🏫', `과기대 ${n}중첩(ATK +${15*n}%, 피해 -${10*n}%)`, 'green');
+    addChip('gwagidae', '🏫', `과기대 ${n}중첩(ATK +${15*n}%, 피해 -${10*n}%)`, 'green');
   }
-  if(p.coachJoActive) addChip('📣', `코치조(매턴 ${p.coachJoPct||40}% [과기대])`, 'green');
-  if(p.kaneActive) addChip('🗣️', `케인(매턴 ${p.kanePct||35}% 뭉탱이)`, 'red');
-  if(p.samsaraActive) addChip('🌀', '지금 바로 윤회(E등급시 손패리셋)', 'blue');
+  if(p.coachJoActive) addChip('coachJoActive', '📣', `코치조(매턴 ${p.coachJoPct||40}% [과기대])`, 'green');
+  if(p.kaneActive) addChip('kaneActive', '🗣️', `케인(매턴 ${p.kanePct||35}% 뭉탱이)`, 'red');
+  if(p.samsaraActive) addChip('samsaraActive', '🌀', '지금 바로 윤회(E등급시 손패리셋)', 'blue');
   if(p.solemnMode && hasSolemnLament(p)){
     const sm = SOLEMN_MODES[p.solemnMode];
-    if(sm) addChip(sm.icon, `SOLEMN ${sm.label}`, p.solemnMode==='WHITE' ? 'green' : (p.solemnMode==='BLACK' ? 'red' : 'blue'));
+    if(sm) addChip('solemnMode', sm.icon, `SOLEMN ${sm.label}`, p.solemnMode==='WHITE' ? 'green' : (p.solemnMode==='BLACK' ? 'red' : 'blue'));
   }
-  if(p.impeachImmune) addChip('🚷', '탄핵 면역', 'green');
-  if(p.vipRefillBonus) addChip('🛍️', 'VIP고객(리필 7장)', 'green');
-  if(p.debuffImmune) addChip('✨', '디버프 면역', 'green');
-  if(p.luckyDayStage > 0) addChip('🍀', `운수좋은날(${p.luckyDayStage}/3)`, 'green');
-  if(p.gaecheonjeolDueTurn > 0) addChip('🌿', `개천절(잔여 ${Math.max(0,p.gaecheonjeolDueTurn-totalIndividualTurns)}턴)`, 'green');
-  if(p.steelDueTurn > 0) addChip('⚙️', `만년담근강철(잔여 ${Math.max(0,p.steelDueTurn-totalIndividualTurns)}턴)`, 'green');
-  if(p.deathBoom) addChip('💣', '데스붐 예약', 'red');
-  if(p.obituaryActive) addChip('🕯️', '부고기사 발동중', 'red');
-  if((p.ubinNicotine||0) > 0) addChip('🚬', `우빈 니코틴 ${p.ubinNicotine}중첩`, 'red');
-  if((p.healReducePct||0) > 0) addChip('💔', `훈발롬(회복 -${p.healReducePct}%)`, 'red');
-  if((p.untellShieldPerDeath||0) > 0) addChip('🧥', `언텔(사망시 쉴드 +${p.untellShieldPerDeath})`, 'blue');
-  if(p.egoRedMistPending) addChip('🌫️', 'Ego:붉은안개 대기중', 'blue');
-  if(p.maksoonaActive) addChip('💥', '막순아 발동중', 'red');
-  if(p.profitInvestActive) addChip('📈', '수익성 투자 발동중', 'gold');
-  if(p.raptorExecutionActive) addChip('⚔️', `랩터 익스큐션(체력${p.raptorExecutionThreshold||1200}↓ 처형)`, 'red');
-  if(p.voyagerShield) addChip('🛰️', '보이저(매턴 쉴드+100)', 'blue');
-  if(p.compoundInterest) addChip('📊', '원리합계(매턴 +5%)', 'yellow');
-  if(p.symphonyAura) addChip('🎼', 'symphony(매턴 회복)', 'green');
-  if(p.romanticAccDrop > 0) addChip('💔', `낭만닥터(-${p.romanticAccDrop}% · ${Math.max(0,p.romanticAccDueRound-turnCount)}바퀴)`, 'red');
-  if(p.lowGradeInsurance) addChip('🪙', '운빨보험(E~C +15G)', 'yellow');
-  if(p.lonelyManBonus) addChip('🖤', '고독한남자(현재HP 16%)', 'yellow');
-  if(p.virusMarked) addChip('🦠', '바이러스 표식', 'red');
+  if(p.impeachImmune) addChip('impeachImmune', '🚷', '탄핵 면역', 'green');
+  if(p.vipRefillBonus) addChip('vipRefillBonus', '🛍️', 'VIP고객(리필 7장)', 'green');
+  if(p.debuffImmune) addChip('debuffImmune', '✨', '디버프 면역', 'green');
+  if(p.luckyDayStage > 0) addChip('luckyDayStage', '🍀', `운수좋은날(${p.luckyDayStage}/3)`, 'green');
+  if(p.gaecheonjeolDueTurn > 0) addChip('gaecheonjeolDueTurn', '🌿', `개천절(잔여 ${Math.max(0,p.gaecheonjeolDueTurn-totalIndividualTurns)}턴)`, 'green');
+  if(p.steelDueTurn > 0) addChip('steelDueTurn', '⚙️', `만년담근강철(잔여 ${Math.max(0,p.steelDueTurn-totalIndividualTurns)}턴)`, 'green');
+  if(p.deathBoom) addChip('deathBoom', '💣', '데스붐 예약', 'red');
+  if(p.obituaryActive) addChip('obituaryActive', '🕯️', '부고기사 발동중', 'red');
+  if((p.ubinNicotine||0) > 0) addChip('ubinNicotine', '🚬', `우빈 니코틴 ${p.ubinNicotine}중첩`, 'red');
+  if((p.healReducePct||0) > 0) addChip('healReducePct', '💔', `훈발롬(회복 -${p.healReducePct}%)`, 'red');
+  if((p.untellShieldPerDeath||0) > 0) addChip('untellShieldPerDeath', '🧥', `언텔(사망시 쉴드 +${p.untellShieldPerDeath})`, 'blue');
+  if(p.egoRedMistPending) addChip('egoRedMistPending', '🌫️', 'Ego:붉은안개 대기중', 'blue');
+  if(p.maksoonaActive) addChip('maksoonaActive', '💥', '막순아 발동중', 'red');
+  if(p.profitInvestActive) addChip('profitInvestActive', '📈', '수익성 투자 발동중', 'gold');
+  if(p.raptorExecutionActive) addChip('raptorExecutionActive', '⚔️', `랩터 익스큐션(체력${p.raptorExecutionThreshold||1200}↓ 처형)`, 'red');
+  if(p.voyagerShield) addChip('voyagerShield', '🛰️', '보이저(매턴 쉴드+100)', 'blue');
+  if(p.compoundInterest) addChip('compoundInterest', '📊', '원리합계(매턴 +5%)', 'yellow');
+  if(p.symphonyAura) addChip('symphonyAura', '🎼', 'symphony(매턴 회복)', 'green');
+  if(p.romanticAccDrop > 0) addChip('romanticAccDrop', '💔', `낭만닥터(-${p.romanticAccDrop}% · ${Math.max(0,p.romanticAccDueRound-turnCount)}바퀴)`, 'red');
+  if(p.lowGradeInsurance) addChip('lowGradeInsurance', '🪙', '운빨보험(E~C +15G)', 'yellow');
+  if(p.lonelyManBonus) addChip('lonelyManBonus', '🖤', '고독한남자(현재HP 16%)', 'yellow');
+  if(p.virusMarked) addChip('virusMarked', '🦠', '바이러스 표식', 'red');
   // [Ver 13.4] 화약 표식 — 해제되지 않으므로 남은 바퀴 배지가 없다
-  if(p.tntPowder) addChip('🧨', `화약 (카드 사용 시 ${p.tntPowderPct||20}%로 ${(p.tntPowderDmg||1000).toLocaleString()})`, 'red');
-  if(p.hostBurdened) addChip('🧟', '숙주(매턴 250 피해)', 'red');
-  if((p.butterflyStacks||0) > 0) addChip('🦋', `나비 ${p.butterflyStacks}중첩(자기 턴마다 ${90*p.butterflyStacks} 피해)`, 'red');
-  if(shopPartyDiscountStacks > 0) addChip('🪩', `파티 타임(상점가 ×${Math.pow(0.5,shopPartyDiscountStacks).toFixed(shopPartyDiscountStacks>2?3:2)})`, 'yellow');
-  if(shopDiscountPct > 0) addChip('🎧', `DJ 부스(상점 -${shopDiscountPct}%)`, 'yellow');
-  if(p.huntedBy){ const h = players.find(pp=>pp.id===p.huntedBy); addChip('🎯', `사냥꾼 표적${h?`(by ${h.name})`:''} · 피해 1000 고정`, 'red'); }
+  if(p.tntPowder) addChip('tntPowder', '🧨', `화약 (카드 사용 시 ${p.tntPowderPct||20}%로 ${(p.tntPowderDmg||1000).toLocaleString()})`, 'red');
+  if(p.hostBurdened) addChip('hostBurdened', '🧟', '숙주(매턴 250 피해)', 'red');
+  if((p.butterflyStacks||0) > 0) addChip('butterflyStacks', '🦋', `나비 ${p.butterflyStacks}중첩(자기 턴마다 ${90*p.butterflyStacks} 피해)`, 'red');
+  if(shopPartyDiscountStacks > 0) addChip('shopPartyDiscount', '🪩', `파티 타임(상점가 ×${Math.pow(0.5,shopPartyDiscountStacks).toFixed(shopPartyDiscountStacks>2?3:2)})`, 'yellow');
+  if(shopDiscountPct > 0) addChip('shopDjDiscount', '🎧', `DJ 부스(상점 -${shopDiscountPct}%)`, 'yellow');
+  if(p.huntedBy){ const h = players.find(pp=>pp.id===p.huntedBy); addChip('huntedBy', '🎯', `사냥꾼 표적${h?`(by ${h.name})`:''} · 피해 1000 고정`, 'red'); }
   // [Ver 5.10] 신규 카드 5종 상태 칩
-  if(p.gamstActive) addChip('🥭', '감스트 발동중(즉시투척)', 'yellow');
+  if(p.gamstActive) addChip('gamstActive', '🥭', '감스트 발동중(즉시투척)', 'yellow');
   if(p.nuleukkiActive){
     const tierInfo = NULEUKKI_TIERS.find(t=>t.key===p.nuleukkiGrade);
     if(tierInfo){
-      addChip('🎡', `누르끼끼 · [${tierInfo.name}] (${tierInfo.desc})`, '', '', `border-color:${tierInfo.color}; color:${tierInfo.color}; background:${tierInfo.color}1A;`);
+      addChip('nuleukkiTier', '🎡', `누르끼끼 · [${tierInfo.name}] (${tierInfo.desc})`, '',
+        tierInfo.key === 'sangHyeon' ? 'k-debuff' : 'k-buff',
+        `border-color:${tierInfo.color}; color:${tierInfo.color}; background:${tierInfo.color}1A;`);
     } else {
-      addChip('🎡', '누르끼끼 발동중', 'yellow');
+      addChip('nuleukkiActive', '🎡', '누르끼끼 발동중', 'yellow');
     }
   }
-  if(p.pagliacciReady) addChip('🎭', '팔리아치 대기중(사망시 검은 흑곰으로 부활)', 'yellow');
-  if(p.gangseoyunPhase === 1) addChip('📺', `[강서윤] 디버프(공격력 -40%) · ${p.gangseoyunTurnsLeft||0}턴 남음`, 'red');
-  if(p.gangseoyunPhase === 2) addChip('🎬', '[가면라이더 강서윤] 각성', 'green');
-  if(p.ryuraiActive) addChip('🍓', `류라이 발동중${(p.ryuraiStrawberries||0)>0?` · 딸기 ${p.ryuraiStrawberries}개 심어짐`:''}`, 'yellow');
+  if(p.pagliacciReady) addChip('pagliacciReady', '🎭', '팔리아치 대기중(사망시 검은 흑곰으로 부활)', 'yellow');
+  if(p.gangseoyunPhase === 1) addChip('gangseoyunDebuff', '📺', `[강서윤] 디버프(공격력 -40%) · ${p.gangseoyunTurnsLeft||0}턴 남음`, 'red');
+  if(p.gangseoyunPhase === 2) addChip('gangseoyunAwaken', '🎬', '[가면라이더 강서윤] 각성', 'green');
+  if(p.ryuraiActive) addChip('ryuraiActive', '🍓', `류라이 발동중${(p.ryuraiStrawberries||0)>0?` · 딸기 ${p.ryuraiStrawberries}개 심어짐`:''}`, 'yellow');
   // [Ver 8.1.8] 지속 효과인데 상태칩이 없던 카드들을 전수 점검해 추가.
   //   (해당 효과를 받는 사람이 뭘 걸려있는지 알 수 있어야 한다는 원칙에 따라, 영구/다턴 지속되는 버프·디버프·면역 위주로 보강)
-  if(p.sadistActive) addChip('🔪', `사디스트(공격시 회복 + 공격력 누적↑${p.permaAtkFlat?` · 현재 +${p.permaAtkFlat}`:''})`, 'red');
-  if(p.masochistActive) addChip('⛓️', `마조히스트(피격시 회복 + 공격력 누적↑${p.permaAtkFlat?` · 현재 +${p.permaAtkFlat}`:''})`, 'red');
-  if(!p.sadistActive && !p.masochistActive && p.permaAtkFlat > 0) addChip('⬆️', `영구 공격력 +${p.permaAtkFlat}`, 'yellow');
-  if(p.permaFlatReduce > 0) addChip('🛡️', `받는피해 -${p.permaFlatReduce}(고정, 영구)`, 'green');
-  if(p.permaDeathChance > 0) addChip('💀', `급소노리기(즉사 확률 ${p.permaDeathChance}%)`, 'red');
-  if(p.vengeanceAuraPct > 0) addChip('😤', `인성질(명중시 상대 공격력 -${p.vengeanceAuraPct}%)`, 'yellow');
-  if(p.graveRobber) addChip('⛏️', '도굴꾼(사망자 카드·돈 흡수)', 'yellow');
-  if(p.soulStealer) addChip('👻', '소울스틸러(처치시 강화)', 'yellow');
-  if(p.diabolicRaptorAura) addChip('😈', '다이아볼릭(카드 사용시 전체 HP↓ · 남 공격력↓)', 'red');
-  if(p.sigmaStoneActive) addChip('🗿', '시그마스톤(매턴 8% 광역 스턴)', 'red');
-  if(p.memorialActive) addChip('🕯️', '추모(사망자 발생시 카드 강제 폐기)', 'red');
-  if(p.gachaDrawUntilA) addChip('🎰', '가챠 뽑기 대기', 'yellow');
-  if(p.freePurchase) addChip('🆓', '다음 구매 무료', 'green');
-  if(p.antiplazaDRPct > 0 && turnCount < (p.antiplazaDueRound||0)) addChip('🏬', `안티프라자(받는피해 -${p.antiplazaDRPct}%)`, 'green');
-  if(p.injuryInsuranceActive && !p.injuryInsuranceUsed) addChip('🩹', '상해보험(체력 400↓시 회복)', 'green');
-  if(p.metatonGrowth) addChip('👶', '메타톤 잼민이(매턴 HP·MaxHP↑)', 'green');
-  if(p.handReshuffleActive) addChip('🔀', 'RNG.(매턴 손패 전체 교체)', 'yellow');
-  if(p.dopamineActive) addChip('💊', '도파민(매턴 공격력↑)', 'yellow');
-  if(p.brainInVat) addChip('🧠', '통 속의 뇌(매트릭스 무시 지목 가능)', 'blue');
-  if(p.amnesiaActive) addChip('🌀', '선행성 기억상실증(25% 확률 손패 리셋+효과 초기화)', 'yellow');
-  if(p.fourCutImmuneActive) addChip('📸', `인생네방컷(받는피해 100% 감소 · ${(p.fourCutHitLimit||5)-(p.fourCutHitCount||0)}회 남음)`, 'green');
-  if(p.stunImmuneDueRound && turnCount < p.stunImmuneDueRound && p.stunImmuneDueRound !== Infinity) addChip('😤', `스턴·빙결 면역 · ${p.stunImmuneDueRound-turnCount}바퀴`, 'green');
-  if(p.stunImmuneDueRound === Infinity) addChip('😤', '스턴 면역(영구)', 'green');
-  if(p.untargetableDueRound && turnCount < p.untargetableDueRound) addChip('🙅', `방해금지(피지목 불가) · ${p.untargetableDueRound-turnCount}바퀴`, 'blue');
-  if(p.reactionBanned) addChip('🚫', '보여주기 카드 사용 불가', 'red');
+  if(p.sadistActive) addChip('sadist', '🔪', `사디스트(공격시 회복 + 공격력 누적↑${p.permaAtkFlat?` · 현재 +${p.permaAtkFlat}`:''})`, 'red');
+  if(p.masochistActive) addChip('masochistActive', '⛓️', `마조히스트(피격시 회복 + 공격력 누적↑${p.permaAtkFlat?` · 현재 +${p.permaAtkFlat}`:''})`, 'red');
+  if(!p.sadistActive && !p.masochistActive && p.permaAtkFlat > 0) addChip('permaAtkFlat', '⬆️', `영구 공격력 +${p.permaAtkFlat}`, 'yellow');
+  if(p.permaFlatReduce > 0) addChip('permaFlatReduce', '🛡️', `받는피해 -${p.permaFlatReduce}(고정, 영구)`, 'green');
+  if(p.permaDeathChance > 0) addChip('permaDeathChance', '💀', `급소노리기(즉사 확률 ${p.permaDeathChance}%)`, 'red');
+  if(p.vengeanceAuraPct > 0) addChip('vengeanceAuraPct', '😤', `인성질(명중시 상대 공격력 -${p.vengeanceAuraPct}%)`, 'yellow');
+  if(p.graveRobber) addChip('graveRobber', '⛏️', '도굴꾼(사망자 카드·돈 흡수)', 'yellow');
+  if(p.soulStealer) addChip('soulStealer', '👻', '소울스틸러(처치시 강화)', 'yellow');
+  if(p.diabolicRaptorAura) addChip('diabolicRaptorAura', '😈', '다이아볼릭(카드 사용시 전체 HP↓ · 남 공격력↓)', 'red');
+  if(p.sigmaStoneActive) addChip('sigmaStoneActive', '🗿', '시그마스톤(매턴 8% 광역 스턴)', 'red');
+  if(p.memorialActive) addChip('memorialActive', '🕯️', '추모(사망자 발생시 카드 강제 폐기)', 'red');
+  if(p.gachaDrawUntilA) addChip('gachaDrawUntilA', '🎰', '가챠 뽑기 대기', 'yellow');
+  if(p.freePurchase) addChip('freePurchase', '🆓', '다음 구매 무료', 'green');
+  if(p.antiplazaDRPct > 0 && turnCount < (p.antiplazaDueRound||0)) addChip('antiplazaDRPct', '🏬', `안티프라자(받는피해 -${p.antiplazaDRPct}%)`, 'green');
+  if(p.injuryInsuranceActive && !p.injuryInsuranceUsed) addChip('injuryInsuranceActive', '🩹', '상해보험(체력 400↓시 회복)', 'green');
+  if(p.metatonGrowth) addChip('metatonGrowth', '👶', '메타톤 잼민이(매턴 HP·MaxHP↑)', 'green');
+  if(p.handReshuffleActive) addChip('handReshuffleActive', '🔀', 'RNG.(매턴 손패 전체 교체)', 'yellow');
+  if(p.dopamineActive) addChip('dopamineActive', '💊', '도파민(매턴 공격력↑)', 'yellow');
+  if(p.brainInVat) addChip('brainInVat', '🧠', '통 속의 뇌(매트릭스 무시 지목 가능)', 'blue');
+  if(p.amnesiaActive) addChip('amnesiaActive', '🌀', '선행성 기억상실증(25% 확률 손패 리셋+효과 초기화)', 'yellow');
+  if(p.fourCutImmuneActive) addChip('fourCutImmuneActive', '📸', `인생네방컷(받는피해 100% 감소 · ${(p.fourCutHitLimit||5)-(p.fourCutHitCount||0)}회 남음)`, 'green');
+  if(p.stunImmuneDueRound && turnCount < p.stunImmuneDueRound && p.stunImmuneDueRound !== Infinity) addChip('stunImmuneTimed', '😤', `스턴·빙결 면역 · ${p.stunImmuneDueRound-turnCount}바퀴`, 'green');
+  if(p.stunImmuneDueRound === Infinity) addChip('stunImmunePerma', '😤', '스턴 면역(영구)', 'green');
+  if(p.untargetableDueRound && turnCount < p.untargetableDueRound) addChip('untargetableDueRound', '🙅', `방해금지(피지목 불가) · ${p.untargetableDueRound-turnCount}바퀴`, 'blue');
+  if(p.reactionBanned) addChip('reactionBanned', '🚫', '보여주기 카드 사용 불가', 'red');
   if(p.bigAtkImmune > 0 || p.cardStealImmune || p.matrixImmune || p.dottusaImmune){
     const parts = [];
     if(p.dottusaImmune) parts.push('도뜨사');
     if(p.matrixImmune) parts.push('매트릭스');
     if(p.cardStealImmune) parts.push('카드탈취');
     if(p.bigAtkImmune > 0) parts.push(`ATK ${p.bigAtkImmune.toLocaleString()}↑`);
-    addChip('📦', `축복 패키지 면역(${parts.join('·')})`, 'green');
+    addChip('blessPackImmune', '📦', `축복 패키지 면역(${parts.join('·')})`, 'green');
   }
-  if(p.evasionPct > 0) addChip('💨', `회피율 ${p.evasionPct}%`, 'green');
-  if(p.assassinAccBonus > 0) addChip('🔪', `숙련어쌔신("암살" 명중 +${p.assassinAccBonus}%)`, 'yellow');
-  if(p.goldshotActive) addChip('🪙', `골드샷(명중시 ${fmtWon(p.goldshotAmount||15)} 강탈)`, 'yellow');
-  if(p.vigilanteStacks > 0) addChip('🕵️', `자경단원(공격력 +${p.vigilanteStacks*20}%)`, 'yellow');
-  if(p.holyShieldCharges > 0) addChip('✨', `홀리 쉴드(받는피해 -${p.holyShieldReduction} · ${p.holyShieldCharges}회)`, 'green');
-  if(p.cannotRevive) addChip('⚰️', '성불(부활 불가)', 'red');
-  if(p.reviveCharge) addChip('🦸', '영웅은 죽지 않아요(사망시 풀피 부활 대기)', 'green');
+  if(p.evasionPct > 0) addChip('evasionPct', '💨', `회피율 ${p.evasionPct}%`, 'green');
+  if(p.assassinAccBonus > 0) addChip('assassinAccBonus', '🔪', `숙련어쌔신("암살" 명중 +${p.assassinAccBonus}%)`, 'yellow');
+  if(p.goldshotActive) addChip('goldshotActive', '🪙', `골드샷(명중시 ${fmtWon(p.goldshotAmount||15)} 강탈)`, 'yellow');
+  if(p.vigilanteStacks > 0) addChip('vigilanteStacks', '🕵️', `자경단원(공격력 +${p.vigilanteStacks*20}%)`, 'yellow');
+  if(p.holyShieldCharges > 0) addChip('holyShieldCharges', '✨', `홀리 쉴드(받는피해 -${p.holyShieldReduction} · ${p.holyShieldCharges}회)`, 'green');
+  if(p.cannotRevive) addChip('cannotRevive', '⚰️', '성불(부활 불가)', 'red');
+  if(p.reviveCharge) addChip('reviveCharge', '🦸', '영웅은 죽지 않아요(사망시 풀피 부활 대기)', 'green');
   /* ==========================================================================
      [Ver 9.7] 랜덤 이벤트로 걸린 지속 효과 칩
      --------------------------------------------------------------------------
@@ -32611,48 +33203,48 @@ function getStatusChips(p){
      ▸ 판 전체 상태(도박 확률·혼돈의 시대·상점 폐업)는 원인 제공자를 특정할 수 없으므로
        상점 할인 칩과 같은 방식으로 전원에게 붙인다.
      판 단위 변수(reDottusaBonus 등)는 이 함수보다 아래에서 선언되므로 통째로 try로 감싼다. */
-  if(p.__reForceNext === 'good') addChip('✨', '축복 · 다음 랜덤 이벤트는 좋은 효과', 'green');
-  if(p.__reForceNext === 'bad')  addChip('🕯️', '저주 · 다음 랜덤 이벤트는 나쁜 효과', 'red');
-  if(p.__reApplyToAll) addChip('🤡', '🤡🤡🤡 · 내가 뽑는 랜덤 이벤트는 전원 적용', 'yellow');
+  if(p.__reForceNext === 'good') addChip('reBless', '✨', '축복 · 다음 랜덤 이벤트는 좋은 효과', 'green');
+  if(p.__reForceNext === 'bad')  addChip('reCurse', '🕯️', '저주 · 다음 랜덤 이벤트는 나쁜 효과', 'red');
+  if(p.__reApplyToAll) addChip('__reApplyToAll', '🤡', '🤡🤡🤡 · 내가 뽑는 랜덤 이벤트는 전원 적용', 'yellow');
   /* [Ver 9.10.2] 괴도 지후 — 예고 중임은 모두가 알지만, **훔칠 카드 이름은 본인만** 볼 수 있다.
      (viewer 기준으로 판단해 랜서버에서도 각자 자기 것만 읽힌다) */
   if(p.__petHeistWanted){
     let mine = false;
     try{ const me = viewer(); mine = !!(me && me.id === p.id); }catch(e){}
-    addChip('🎩', mine && p.petHeistName ? `예고장 · "${p.petHeistName}" 노리는 중 (받는 피해 +25%)` : '지명수배 · 예고장 발송됨 (받는 피해 +25%)', 'red');
+    addChip('petHeistName', '🎩', mine && p.petHeistName ? `예고장 · "${p.petHeistName}" 노리는 중 (받는 피해 +25%)` : '지명수배 · 예고장 발송됨 (받는 피해 +25%)', 'red');
   }
   /* [Ver 9.13.1] 점쟁이 — 지금 걸려 있는 점괘. 어떤 점괘든 다음 자기 턴까지 유지된다.
      (흉조는 vulnPct 칩이 따로 뜨므로 여기서는 점괘 이름만 알려준다) */
   if(hasPet(p,'fortune') && p.petOmen){
     const om = FORTUNE_OMENS.find(o=> o.key === p.petOmen);
     if(om && om.key !== 'curse'){
-      const tone = (om.key === 'vuln' || om.key === 'weak') ? 'red' : 'green';
-      addChip(om.icon, `점괘 · ${om.name} (${om.tx})`, tone);
+      const bad = (om.key === 'vuln' || om.key === 'weak');
+      addChip('fortuneOmen', om.icon, `점괘 · ${om.name} (${om.tx})`, bad ? 'red' : 'green', bad ? 'k-debuff' : 'k-buff');
     }
   }
   /* [Ver 9.13.1] 투자자 — 지금 굴러가고 있는 투자금. 다음 턴에 회수된다. */
   if(hasPet(p,'investor') && (p.petInvested||0) > 0){
-    addChip('📈', `투자 중 ${fmtWon(p.petInvested)} · 다음 턴 회수`, 'yellow');
+    addChip('petInvested', '📈', `투자 중 ${fmtWon(p.petInvested)} · 다음 턴 회수`, 'yellow');
   }
   /* [Ver 9.10.6] 청부업자 — 쌓인 의뢰 수. 실제 수행 버튼은 스탯창 위의 hitman-panel이 맡는다. */
   if(Array.isArray(p.petJobs) && p.petJobs.length){
     let mine = false;
     try{ const me = viewer(); mine = !!(me && me.id === p.id); }catch(e){}
-    if(mine) addChip('🎯', `대기 중인 의뢰 ${p.petJobs.length}건`, 'yellow');
+    if(mine) addChip('petJobs', '🎯', `대기 중인 의뢰 ${p.petJobs.length}건`, 'yellow');
   }
-  if((p.__reIncomeMult||1) > 1) addChip('📈', `승진 · 바퀴 수입 ${p.__reIncomeMult}배`, 'yellow');
+  if((p.__reIncomeMult||1) > 1) addChip('__reIncomeMult', '📈', `승진 · 바퀴 수입 ${p.__reIncomeMult}배`, 'yellow');
   /* <헬스장> — 받는피해 감소는 아래 damageReductionPct 칩에도 잡히지만, 그 칩에는 남은 기간이 없다.
      언제 풀리는지 보여주려고 전용 칩을 따로 붙인다. */
   if(p.__reDrDue && turnCount < p.__reDrDue && (p.__reDrAmt||0) > 0){
-    addChip('💪', `헬스장(받는피해 -${p.__reDrAmt}%) · ${p.__reDrDue - turnCount}바퀴`, 'green');
+    addChip('__reDrAmt', '💪', `헬스장(받는피해 -${p.__reDrAmt}%) · ${p.__reDrDue - turnCount}바퀴`, 'green');
   }
   try{
     if(reDottusaBonus > 0){
       const __db = reDottusaBonus * 100;
-      addChip('🎲', `도박 확률 상승 · 도뜨사 +${(Math.round(__db*10)/10)}%p`, 'red');
+      addChip('reDottusa', '🎲', `도박 확률 상승 · 도뜨사 +${(Math.round(__db*10)/10)}%p`, 'red');
     }
-    if(reChaosMode) addChip('🌀', '혼돈의 시대 · 랜덤 이벤트 확률 반전(극악 53%)', 'red');
-    if(shopClosedForever) addChip('🪧', '상점 영구 폐업', 'red');
+    if(reChaosMode) addChip('reChaos', '🌀', '혼돈의 시대 · 랜덤 이벤트 확률 반전(극악 53%)', 'red');
+    if(shopClosedForever) addChip('shopClosedForever', '🪧', '상점 영구 폐업', 'red');
   }catch(e){}
 
   // [Ver 5.9] 업적 추적 — p0의 최대 칩 개수(어쩌다 이 지경 까지) / 최대 받는피해 감소량(뭔가 잘못됐어)
@@ -41172,7 +41764,7 @@ function resolveCardEffect(caster, card, targetId, onDone){
         stolenCount++;
       });
       log('sys', `${caster.name}이(가) "${card.name}"으로 상대 전원에게서 카드를 총 ${stolenCount}장 훔쳤습니다!`);
-      const gotStunned = trySetStunned(caster);
+      const gotStunned = trySetStunned(caster, '코난');
       if(gotStunned) log('sys', `하지만 코난에게 딱 걸려 다음 턴 스턴당합니다...`);
       renderHand(); renderBoard();
       onDone({});
@@ -41924,7 +42516,7 @@ function resolveCardEffect(caster, card, targetId, onDone){
         dealDamage(caster, t, card.power, card.pierce, true);
         if(!t.alive) return;
         if(isGodBlessedProtected(t, card)){ blessedSkipped++; return; }
-        trySetStunned(t);
+        trySetStunned(t, card.name);
       });
       log('sys', `${caster.name}의 ${card.name}! ${isEvoOf(card,'빙결화도')?'반동 없이':'자신도 400 피해를 입고,'} 모든 적이 얼어붙어 다음 턴을 스킵합니다.${blessedSkipped>0?` (신의 가호 보유자 ${blessedSkipped}명은 스턴 면역)`:''}`);
       renderBoard();
@@ -42640,11 +43232,20 @@ function resolveCardEffect(caster, card, targetId, onDone){
     case 'TNT_POWDER_MARK': { // trinitrotoluene — 화약 표식
       const target = players.find(p=>p.id===targetId);   // ⚠ 이 함수엔 함수 스코프 target 이 없다
       if(!target){ onDone({}); break; }
-      target.tntPowder = true;
-      target.tntPowderBy = caster.id;
-      target.tntPowderPct = card.tntChance || 20;
-      target.tntPowderDmg = card.power || 1000;
-      log('highlight', `🧨 ${J(caster.name,'이','가')} ${J(target.name,'에게','에게')} 화약을 발랐습니다. 이제 카드를 낼 때마다 ${target.tntPowderPct}% 확률로 터집니다.`);
+      /* [Ver 13.5.1] 13.4에서 넣을 때 보호 검사를 빠뜨렸다. 화약은 해제되지 않는 표식이라
+         같은 성격의 것들(바이러스 표식·사냥꾼 표적·동상·재)과 판정이 같아야 한다.
+         · 디버프 면역 → 아예 안 걸린다
+         · 무효화 대기 → 그 자리에서 소모되며 막힌다
+         · 싱크로/프록시 → 해로운 효과이므로 전가·공유 대상이다 */
+      if(target.debuffImmune){ log('sys', `${J(target.name,'은','는')} 디버프 면역이라 ${card.name} 효과가 무시되었습니다.`); onDone({}); break; }
+      if(tryNullify(target)){ onDone({}); break; }
+      applyHarmfulStatus(target, (t)=>{
+        t.tntPowder = true;
+        t.tntPowderBy = caster.id;
+        t.tntPowderPct = card.tntChance || 20;
+        t.tntPowderDmg = card.power || 1000;
+        log('highlight', `🧨 ${J(caster.name,'이','가')} ${J(t.name,'에게','에게')} 화약을 발랐습니다. 이제 카드를 낼 때마다 ${t.tntPowderPct}% 확률로 터집니다.`);
+      });
       renderBoard(); onDone({}); break;
     }
     case 'COWARD_SHOT': { // 비겁한 일격 — 1대1 전용. 최대체력 1 + 3바퀴 기절
@@ -44658,7 +45259,7 @@ function resolveCardEffect(caster, card, targetId, onDone){
       if(target.debuffImmune){ log('sys', `${J(target.name,'은','는')} 디버프 면역이라 ${card.name} 효과가 무시되었습니다.`); onDone({}); return; }
       if(tryNullify(target)){ onDone({}); return; }
       applyHarmfulStatus(target, (t)=>{
-        if(trySetStunned(t)){
+        if(trySetStunned(t, card.name)){
           /* [Ver 9.13.1] 마취총+ — 스턴 기간이 1턴 늘어난다.
              기본 스턴(stunned)은 다음 자기 턴 하나를 날리는 1회성이라, 늘어나는 몫은
              지속 스턴(stunLockTurns) 1턴으로 얹는다. */
@@ -45735,7 +46336,7 @@ function resolveCardEffect(caster, card, targetId, onDone){
     }
     case 'SELF_STUN': {
       // 김인호 남아: 오직 자기 자신만 스턴된다. (남을 지목하지 않는 자폭성 카드)
-      if(trySetStunned(caster)) log('sys', `😵 ${J(caster.name,'이','가')} "${card.name}"으로 스스로 스턴 상태가 되었습니다.`);
+      if(trySetStunned(caster, card.name)) log('sys', `😵 ${J(caster.name,'이','가')} "${card.name}"으로 스스로 스턴 상태가 되었습니다.`);
       else log('sys', `${J(caster.name,'은','는')} 스턴에 걸리지 않았습니다.`);
       renderBoard();
       onDone({});
@@ -47591,7 +48192,7 @@ function resolveCardEffect(caster, card, targetId, onDone){
         onDone({});
         break;
       }
-      trySetStunned(caster);
+      trySetStunned(caster, card.name);
       if(!(caster.healBlocked)){
         caster.hp = caster.maxHp;
         log('highlight', `${J(caster.name,'이','가')} ${card.name}으로 곤히 잠들었습니다(1바퀴 스턴)... 자는 동안 체력이 완전히 회복되었습니다! (HP ${caster.hp}/${caster.maxHp})`);
@@ -48261,7 +48862,7 @@ function resolveCardEffect(caster, card, targetId, onDone){
       if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
       dealDamage(caster, target, card.power, card.pierce, false, 0, (hit)=>{
         if(hit && target.alive){
-          if(trySetStunned(target)){
+          if(trySetStunned(target, card.name)){
             log('sys', `${J(target.name,'이','가')} ${card.name}에 맞아 1턴 동안 스턴됩니다.`);
           }
           renderBoard();
@@ -51574,7 +52175,10 @@ function applyPsychoKillHeal(deadPlayerId){
 /* 광기에 깃든 층간소음 보복빌런: 스턴을 몇 회 무시할 수 있는 저항 카운터. 스턴이 적용되려는 시점마다 소모된다. */
 /* 캡틴아메리카노: 스턴 면역 남은 바퀴 수 체크 공용 헬퍼 */
 function isStunImmune(p){ return !!(p.stunImmuneDueRound && turnCount < p.stunImmuneDueRound); }
-function trySetStunned(t){
+/* [Ver 13.5.1] src — **무엇에 스턴당했는지.** 상태칩에 그대로 나온다.
+   예전엔 어떤 카드로 굳었든 칩이 전부 "스턴 · 1턴"이라, 맞은 사람이 원인을 알 수 없었다.
+   ⚠ 안 넘기면 예전처럼 그냥 '스턴'으로 뜬다 — 새 스턴 경로를 만들면 반드시 이름을 넘길 것. */
+function trySetStunned(t, src){
   if(isStunImmune(t)){
     log('sys', `${J(t.name,'은','는')} "캡틴아메리카노"의 스턴 면역 효과로 스턴을 무시했습니다!`);
     return false;
@@ -51585,6 +52189,7 @@ function trySetStunned(t){
     return false;
   }
   t.stunned = true;
+  t.stunSource = src || '';
   return true;
 }
 /* 🦅/테카진/증발 공용: "게임에서 제외" 상태 판정 및 진입/복귀 처리.
@@ -54454,7 +55059,14 @@ function grpQuizRender(){
      JSON.parse가 매번 실패(catch)해 st={}가 되고, st[내id]가 없어 grpQuizLocalSync가
      "관전자·봇 자리"로 오판해 조용히 return — 입력 칸이 아예 생성되지 않았다.
      attrArgQ()가 이미 다른 곳(23993·24132)에서 쓰던 정확한 패턴이라 그대로 재사용한다. */
-  const stateAttr = attrArgQ((function(){
+  /* ⚠ 값이 **두 벌** 필요하다.
+       · stateAttr : HTML 문자열에 박을 것 — attrArgQ 가 " 를 &quot; 로 바꿔둔다.
+                     브라우저가 HTML을 파싱할 때 다시 " 로 풀린다.
+       · stateJson : setAttribute 로 넣을 것 — setAttribute 는 엔티티를 풀지 않으므로
+                     **날것 그대로** 넣어야 한다. 여기에 stateAttr 를 넣으면 값이
+                     `{&quot;p0&quot;…}` 인 채로 저장되어 JSON.parse 가 매번 실패하고,
+                     grpQuizLocalSync 가 "관전자 자리"로 오판해 입력창을 안 만든다. */
+  const stateObj = (function(){
     const o = {};
     G.order.forEach(pid=>{
       const p = players.find(x=> x && x.id===pid);
@@ -54462,7 +55074,9 @@ function grpQuizRender(){
       o[pid] = { t: R.tries[pid]||0, d: R.done[pid] ? 1 : 0 };
     });
     return o;
-  })());
+  })();
+  const stateAttr = attrArgQ(stateObj);
+  const stateJson = JSON.stringify(stateObj);
   const rows = G.order.map(pid=>{
     const p = players.find(x=> x && x.id===pid); if(!p) return '';
     const st = R.done[pid] ? '<span class="grp-yes">정답!</span>'
@@ -54473,7 +55087,17 @@ function grpQuizRender(){
         <div class="grp-bet-val">${st}</div>
       </div>`;
   }).join('');
-  ov.innerHTML = `
+  /* [Ver 13.5 버그수정] 예전엔 이 함수가 **0.25초마다 ov.innerHTML 을 통째로 갈아끼웠다.**
+     초당 네 번 판이 통째로 지워졌다 다시 생기니 화면이 쉴 새 없이 "뿅뿅" 거렸고,
+     그때마다 애니메이션(popIn 등)이 처음부터 다시 돌았다.
+     이제 **문제가 바뀔 때만 뼈대를 세우고**, 매 틱에는 타이머 막대 폭만 만진다.
+     참가자 줄과 상태 속성은 실제로 값이 달라졌을 때만 갈아끼운다.
+     ⚠ 랜서버는 이 ov.innerHTML 을 스냅샷으로 실어보내므로, 호스트 화면의 HTML이
+       늘 최신이어야 한다 — 그래서 "안 그리는" 게 아니라 "바뀐 데만 그리는" 것이다. */
+  let panel = ov.querySelector('.auction-panel');
+  if(!panel || ov.dataset.quizRound !== String(R.no)){
+    ov.dataset.quizRound = String(R.no);
+    ov.innerHTML = `
     <div class="auction-panel" data-quiz-state="${stateAttr}">
       <div class="auction-title">🧠 퀴즈쇼 <span style="font-size:13px;opacity:.7;">${R.no} / ${GRP_QUIZ_ROUNDS}</span></div>
       <div class="auction-subtitle">
@@ -54485,6 +55109,18 @@ function grpQuizRender(){
       <div class="goods-players">${rows}</div>
       <div class="auction-timer-bar"><div class="auction-timer-fill" style="width:${pct}%"></div></div>
     </div>`;
+    panel = ov.querySelector('.auction-panel');
+    window.__grpQuizRowsSig = rows;
+  } else {
+    if(window.__grpQuizRowsSig !== rows){
+      window.__grpQuizRowsSig = rows;
+      const holder = panel.querySelector('.goods-players');
+      if(holder) holder.innerHTML = rows;
+    }
+    if(panel.getAttribute('data-quiz-state') !== stateJson) panel.setAttribute('data-quiz-state', stateJson);
+  }
+  const fill = panel && panel.querySelector('.auction-timer-fill');
+  if(fill) fill.style.width = pct + '%';
   try{ grpQuizLocalSync(); }catch(e){}
 }
 
@@ -54528,7 +55164,28 @@ function grpQuizLocalSync(){
     }
     if(inp){ inp.disabled = over; if(over) inp.value = ''; }
     if(btn) btn.disabled = over;
+    /* [Ver 13.5 버그수정] 이 상자는 오버레이 **밖**(document.body)에 만든다 — 랜서버에서
+       오버레이 HTML이 통째로 갈아끼워지면 치던 글자가 날아가기 때문이다(위 주석 참고).
+       그런데 자리를 정해주지 않아 **문서 맨 아래**로 떨어져 있었다. 퀴즈 판은 화면
+       한가운데 떠 있는데 입력칸은 저 아래에 있으니, 맞히려야 맞힐 수가 없었다.
+       판의 실제 위치를 재서 그 바로 밑에 붙인다. */
+    grpQuizPlaceBox(box, panel);
   }catch(e){}
+}
+/* 입력 상자를 퀴즈 판 바로 아래에 놓는다.
+   ⚠ 창이 숨겨져 있으면 innerHeight 가 0 이라 "화면 밖" 판정이 무너진다 — 폴백을 둔다. */
+function grpQuizPlaceBox(box, panel){
+  if(!box || !panel) return;
+  const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+  const r = panel.getBoundingClientRect();
+  if(!r.width){ return; }
+  box.style.left = Math.round(r.left) + 'px';
+  box.style.width = Math.round(r.width) + 'px';
+  let top = Math.round(r.bottom + 10);
+  const h = box.offsetHeight || 64;
+  /* 아래로 넘치면 판 위쪽에 붙인다 */
+  if(vh > 0 && top + h > vh - 8) top = Math.max(8, Math.round(r.top - h - 10));
+  box.style.top = top + 'px';
 }
 function grpQuizEndRound(){
   const G = window.__grp;
