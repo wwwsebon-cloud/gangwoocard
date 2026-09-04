@@ -3617,6 +3617,11 @@ body.chip-invert{
 .sc-img{
   position:absolute; inset:2px; width:calc(100% - 4px); height:calc(100% - 4px);
   object-fit:contain; border-radius:calc(var(--r-sm) - 2px);
+  /* ⚠ [Ver 13.8] 그림 뒤에 밝은 판때기를 깐다. **지우지 말 것.**
+     일러스트가 대부분 흰 종이에 그린 검은 선화라, 투명 배경 그대로 두면
+     어두운 테마에서 칼·방패·카메라가 통째로 사라진다(실제로 그랬다).
+     분류 색은 바깥 1.5px 테두리와 두 배지가 계속 들고 있으므로 신호는 죽지 않는다. */
+  background:rgba(250,250,247,0.94);
 }
 /* 그림이 아직 없을 때 — 이모지로 대신 채운다 */
 .sc-fb{
@@ -6716,7 +6721,7 @@ body.high-contrast.theme-light-shell{
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.7</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.8</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -21017,6 +21022,14 @@ function exitPlaygroundBar(){
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
   {
+    version: 'Ver 13.8', date: '2026-09-04',
+    items: [
+      '\u{1F5BC} <b>[UI] 상태칩에 그림이 붙기 시작했습니다.</b> 이모지 대신 손그림 아이콘이 들어갑니다 — 이번엔 <b>20종</b>이고, 나머지는 그려지는 대로 하나씩 갈아끼웁니다.',
+      '\u{2694} 공격력 증감 · 받는피해 증감 · 특수쉴드 · 무적 · 인생네방컷 · 안티프라자 · 헬스장 · 방어 프로토콜 · 보이저 · 방탄불괴 · 만년담근강철 · 개천절 · 과기대 · 편안함 · 회피율 · 척수반사 · 무효 대기 · 가드 대기',
+      '\u{1F50D} 그림이 없는 칩은 <b>예전 그대로</b> 나옵니다. 설정 → 상태칩 모양에서 <b>글자형</b>으로 되돌릴 수도 있습니다.',
+    ]
+  },
+  {
     version: 'Ver 13.7', date: '2026-09-03',
     items: [
       '\u{1F6AB} <b>[규칙 정리] 소지형 패시브 카드가 버프를 잃으면 그 카드도 함께 죽습니다.</b> <b>우빈칼리버 · LK69 · 블루오션 · 리베로 · 포커 · 디아블로 · 인해전술 · 악전고투</b>가 대상입니다. <b>모든 효과 초기화 · 강서윤 · 불편 · 버프 강탈</b>을 맞으면 카드는 손에 남지만 <b>효과가 사라지고</b>, 손패에서 <b>회색</b>으로 바뀌며 <b>판매가가 0골드</b>가 됩니다. 다시 살아나지 않습니다 — 카드를 새로 구해야 합니다.',
@@ -32916,8 +32929,29 @@ function chipKind(key){
 /* ⚠ **그림 파일이 있는 key만** 여기 적는다. 목록에 없으면 예전 글자 칩으로 나간다.
    → `chip/{key}.png` 를 새로 넣었으면 **이 목록에도 key를 추가할 것.** */
 const CHIP_ICON_KEYS = new Set([
-  /* 아직 그림 없음. 준비되는 대로 key를 여기 추가한다. */
+  /* ── [Ver 13.8] 1차 20종 ── */
+  /* 부호로 갈리는 쌍 — 한 그림을 여러 key가 나눠 쓴다(CHIP_ICON_FILE 참고) */
+  'atkUp','atkDown','drUp','drDown',
+  'permaAtkFlat','matrixAtkUp','matrixAtkDown','permaFlatReduce','permaVulnDown','permaVulnUp',
+  /* 방어·경감 */
+  'tripleShieldCharges','invincible','fourCutImmuneActive','antiplazaDRPct','__reDrAmt',
+  'protocolDefensePct','voyagerShield','bulletproofActive','steelDueTurn','gaecheonjeolDueTurn',
+  'gwagidae','flatDmgReduceTurns','evasionPct','reflexEvasionAdd',
+  /* 반응 */
+  'nullifyNext','guardNext',
 ]);
+/* 파일 이름이 key 와 다른 칩만 여기 적는다. 없으면 `chip/{key}.png` 다.
+   쓰임새는 둘이다 —
+     ① ± 쌍이 한 그림을 나눠 쓸 때 (칼↑ 하나로 공격력 증가 세 종류를 다 그린다)
+     ② 확장자가 png 가 아닐 때 (움짤) */
+const CHIP_ICON_FILE = {
+  permaAtkFlat:'atkUp.png', matrixAtkUp:'atkUp.png',
+  matrixAtkDown:'atkDown.png',
+  permaFlatReduce:'drUp.png', permaVulnDown:'drUp.png',
+  permaVulnUp:'drDown.png',
+  evasionPct:'evasionPct.gif', flatDmgReduceTurns:'flatDmgReduceTurns.gif',
+};
+function chipIconSrc(key){ return 'chip/' + (CHIP_ICON_FILE[key] || (key + '.png')); }
 /* 우하단 수치 배지를 붙일 칩. 여기 없으면 숫자를 뽑지 않는다 —
    ⚠ 전부 뽑으려 들면 "LK69"의 69 같은 이름 속 숫자를 집어 온다. 화이트리스트가 맞다. */
 const CHIP_AMOUNT_KEYS = new Set([
@@ -32973,7 +33007,7 @@ function statusChipHtml(c){
   if(iconMode){
     const amt = chipAmountOf(key, label);
     const art = CHIP_ICON_KEYS.has(key)
-      ? `<img class="sc-img" src="chip/${key}.png" alt="" draggable="false">`
+      ? `<img class="sc-img" src="${chipIconSrc(key)}" alt="" draggable="false">`
       : `<span class="sc-fb">${c.ic}</span>`;
     const durTx = badge ? badge.replace(/<\/?i[^>]*>/g,'') : '';
     /* b·c 는 남은 값을 고정 기준으로 환산해 게이지로 그린다 (원래 길이를 모르므로) */
