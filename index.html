@@ -5100,13 +5100,39 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 .gr-p-tag.win{ background:var(--accent); color:var(--accent-fg); }
 .gr-p-tag.alive{ background:rgba(79,201,138,0.15); color:var(--tone-green); }
 .gr-p-tag.dead{ background:rgba(242,100,90,0.14); color:var(--tone-red); }
+/* [Ver 13.11] 봇 성격 — 판이 끝난 뒤에만 붙는다. 눈에 띄되 순위표를 흐리지 않게 옅게. */
+.gr-p-tag.persona{ background:rgba(140,120,220,0.16); color:#A99BE8; }
+.gr-p-tag.dc{ background:rgba(242,100,90,0.14); color:var(--tone-red); }
 .gr-p-death{ font-size:11px; color:var(--fg-faint); line-height:1.7; }
 .gr-p-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:7px; }
 .gr-p-grid > div{ display:flex; flex-direction:column; gap:1px; }
 .gr-p-grid span{ font-size:9.5px; color:var(--fg-faint); }
 .gr-p-grid b{ font-family:var(--font-mono); font-size:12px; font-weight:600; }
 .gr-p-grid b.mvp{ font-family:var(--font); color:var(--accent); }
-.gr-btns{ display:flex; justify-content:flex-end; gap:var(--sp-2); margin-top:var(--sp-3); }
+/* ---------- [Ver 13.11] 판 요약 "이 판의 장면" ---------- */
+.gr-hls{ display:flex; flex-direction:column; gap:6px; }
+.gr-hl{
+  display:flex; align-items:center; gap:9px; flex-wrap:wrap;
+  padding:10px 13px; border-radius:var(--r-sm); background:var(--bg-2);
+  box-shadow:inset 0 0 0 1px var(--line);
+}
+.gr-hl-ic{ font-size:16px; line-height:1; }
+.gr-hl-tx{ font-size:10.5px; color:var(--fg-faint); }
+.gr-hl-v{ font-family:var(--font-mono); font-size:16px; font-weight:700; color:var(--accent); }
+/* 이름이 길어도 줄바꿈으로 흘려보낸다 — 결과창은 가로 스크롤이 없다 */
+.gr-hl-sub{ flex:1; min-width:120px; font-size:11.5px; color:var(--fg-dim); }
+.gr-btns{ display:flex; justify-content:flex-end; gap:var(--sp-2); margin-top:var(--sp-3); flex-wrap:wrap; }
+/* 복사 결과 안내. 클립보드가 막히면 여기에 텍스트를 통째로 펼쳐 직접 긁어가게 한다. */
+.gr-copy-note{ font-size:11px; color:var(--fg-faint); text-align:right; line-height:1.7; }
+.gr-copy-note.ok{ color:var(--tone-green); }
+.gr-copy-fallback{ text-align:left; }
+.gr-copy-fallback textarea{
+  width:100%; height:150px; margin-top:6px; padding:9px;
+  border-radius:var(--r-sm); border:1px solid var(--line);
+  background:var(--bg-2); color:var(--fg);
+  font-family:var(--font-mono); font-size:10.5px; line-height:1.6;
+  resize:vertical;
+}
 .gr-list{ display:flex; flex-direction:column; gap:5px; }
 .gr-row{ display:flex; align-items:center; gap:10px; padding:9px 13px; border-radius:var(--r-sm); background:var(--bg-2); font-size:12px; }
 .gr-nm{ flex:1; min-width:0; }
@@ -6717,7 +6743,7 @@ body.high-contrast.theme-light-shell{
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.10</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.11</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -21074,6 +21100,16 @@ function exitPlaygroundBar(){
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
   {
+    version: 'Ver 13.11', date: '2026-09-05',
+    items: [
+      '\u{1F3C6} <b>[신규] 판 요약</b> — 결과창에 <b>이 판의 장면</b>이 생겼습니다. <b>최고 한 방</b>(누가 무슨 카드로 얼마나)과 <b>마지막 탈락</b>을 보여줍니다.',
+      '\u{1F4CB} <b>[신규] 디스코드에 복사</b> — 결과창의 버튼 하나로 판 요약을 텍스트로 복사합니다. 디스코드에 그대로 붙여넣으면 됩니다.',
+      '\u{1F916} <b>[공개] 봇의 성격</b> — 봇들은 예전부터 <b>공격적 · 방어적 · 과감한 투자</b> 같은 성격을 가지고 움직이고 있었습니다. 이제 <b>판이 끝나면</b> 누가 어떤 성격이었는지 결과창에서 밝혀집니다. (판 중에는 여전히 비밀입니다)',
+      '\u{1F310} <b>[버그수정] 온라인에서 결과창이 안 뜨던 문제</b> — 참가자에게는 "호스트의 게임이 종료되었습니다" 안내만 떴습니다. 이제 <b>혼자 할 때와 똑같은 결과창</b>이 뜹니다.',
+      '\u{1F50C} <b>[변경] 온라인에서 누가 나가도 판은 계속됩니다.</b> 예전에는 한 명만 빠져도 <b>판 전체가 끝났습니다.</b> 이제 나간 사람만 <b>연결 끊김</b>으로 탈락하고 남은 사람끼리 계속합니다. (호스트가 나간 경우는 예전처럼 종료됩니다)',
+    ]
+  },
+  {
     version: 'Ver 13.10', date: '2026-09-05',
     items: [
       '\u{1F7E9} <b>[리워크] 매트릭스</b> — 이제 <b>대상을 지목하고</b> 매트릭스로 가라앉습니다. <b>5초</b> 뒤 빠져나오면서 그 대상에게 <b>350 피해</b>를 입힙니다. 잠수하는 동안에는 지목당하지 않습니다.',
@@ -31150,6 +31186,8 @@ function actuallyStartGame(){
   window.__gutsPickAwardedThisGame = false; // [Ver 13.1] 판마다 유물 '객기' 1회 지급 가드 리셋
   __autoSubmitDoneThisGame = false;        // [Ver 12.7] 리더보드 자동 갱신 1회 가드 리셋
   reEventCount = 0;                        // [Ver 10.2] 랜덤 이벤트 희귀도 누적 리셋
+  window.__gameBestHit = null;             // [Ver 13.11] 판 요약 — 이 판의 최고 한 방
+  try{ if(typeof LAN === 'object' && LAN) LAN.__result = null; }catch(e){}  // [Ver 13.11] 지난 판 결과 잔재 제거
   /* [Ver 10.0.2] DJ 쿨타임의 임시 바닥값·틱 정리 — 안 지우면 지난 판 값이 새 판까지 따라온다 */
   try{ __djLocalLastAt = 0; djStopTick(); }catch(e){}
   // [Ver 9.5] 랜덤 이벤트 — 판마다 초기화 (도뜨사 가산 확률·혼돈의 시대는 판 단위 상태다)
@@ -33301,7 +33339,8 @@ function getStatusChips(p){
     const cls = [tone ? `tone-${tone}` : '', extraCls].filter(Boolean).join(' ');
     chips.push({ key, ic, label, cls, style });
   };
-  if(!p.alive) return [{key:'dead', ic:'☠', label:'탈락', cls:'dead-chip tone-red'}];
+  if(!p.alive) return [{key:'dead', ic:'☠',
+    label: p.__disconnected ? '탈락 (연결 끊김)' : '탈락', cls:'dead-chip tone-red'}];   // [Ver 13.11]
   if(p.impeached) addChip('impeached', '👑', `탄핵(${Math.max(0,p.impeachDueRound-turnCount)}바퀴)`, 'red');
   if(p.stunned) addChip('stunned', '⏸', p.stunSource ? `${p.stunSource} · 스턴 1턴` : '스턴 · 1턴', 'red');
   if(p.stunLockTurns>0) addChip('stunLockTurns', p.stunLockLabel==='빙결' ? '❄️' : '⏸', `${p.stunLockLabel||'스턴'} · ${p.stunLockTurns}턴`, 'red');
@@ -36005,6 +36044,11 @@ function grCollect(winners, forcedMessage){
       id: p.id,
       name: p.name,
       isBot: !!p.isBot,
+      /* [Ver 13.11] 봇의 성격은 판이 **끝난 뒤에만** 밝힌다.
+         진행 중에 보이면 "쟤 왜 저러지"를 추리하는 재미가 사라진다.
+         (botPersona 는 10.2부터 돌고 있었지만 유저가 알 방법이 없었다) */
+      persona: (p.isBot ? grSafe(()=>{ const P = botPersona(p); return P ? P.label : null; }, null) : null),
+      disconnected: !!p.__disconnected,   // [Ver 13.11] 연결 끊김으로 탈락
       isMe: p.id === (grSafe(()=> viewerIdNow(), 'p0') || 'p0'),
       isWinner: winnerIds.has(p.id),
       alive: !!p.alive,
@@ -36023,19 +36067,65 @@ function grCollect(winners, forcedMessage){
     };
   }).sort((a,b)=> (a.rank||99) - (b.rank||99));
 
+  /* [Ver 13.11] 결정타 — 마지막에 쓰러진 사람과 그 사인. 요약의 마무리 한 줄이 된다. */
+  const lastFall = (Array.isArray(players) ? players : []).filter(p=> !p.alive)
+    .sort((a,b)=> (b.deathRound||0) - (a.deathRound||0))[0] || null;
+
+  /* ⚠ 이 객체는 랜서버 스냅샷에 그대로 실린다(JSON.stringify).
+     **undefined 가 하나라도 섞이면 RTDB 쓰기가 통째로 거부되어** 참가자에게 상태가 영영 안 간다.
+     그래서 모든 값을 `|| 기본값` 으로 못박는다. null 은 괜찮지만 undefined 는 안 된다. */
   return {
-    winnerNames,
+    winnerNames: winnerNames || null,
     isDraw: !winnerNames,
-    headline,
-    elapsed: grSafe(grElapsedText, '-'),
-    turns: grSafe(()=> totalIndividualTurns, 0),
-    rounds: grSafe(()=> turnCount, 0),
+    headline: headline || '',
+    elapsed: grSafe(grElapsedText, '-') || '-',
+    turns: grSafe(()=> totalIndividualTurns, 0) || 0,
+    rounds: grSafe(()=> turnCount, 0) || 0,
     rows,
-    tierHtml: grSafe(()=> buildVictoryTierHtml(rankMap) || '', '')
+    tierHtml: grSafe(()=> buildVictoryTierHtml(rankMap) || '', '') || '',
+    /* [Ver 13.11] 판 요약 */
+    bestHit: (window.__gameBestHit || null),
+    lastFall: lastFall ? { name: lastFall.name || '?',
+                           cause: lastFall.deathCause || '',
+                           card: lastFall.deathCardName || '' } : null,
+    modeLabel: grSafe(()=> (typeof lanModeLabel === 'function' && lanMode) ? lanModeLabel() : null, null) || null
   };
 }
 
 /* 모아둔 데이터로 결과창 HTML을 만든다. */
+/* ##########################################################################
+   [Ver 13.11] 판 요약 — "얘깃거리"
+   --------------------------------------------------------------------------
+   판이 끝나면 아무것도 안 남았다. 디스코드로 노는 판인데 판 얘기를 할 재료가 없었다.
+   재료 자체는 이미 다 쌓여 있었다 — cardDamageMap · damageDealt · killCount ·
+   deathCause. 그걸 한 덩어리로 보여주고, **텍스트로 복사**할 수 있게 한다.
+   ⚠ 이미지로 만들지 않는다. html2canvas 류는 CDN 의존 + 실패 지점이 늘고,
+     디스코드는 코드블록으로 충분히 읽힌다.
+   ########################################################################## */
+function grBuildSummary(d){
+  const bits = [];
+  if(d.bestHit && d.bestHit.dmg > 0){
+    bits.push(`<div class="gr-hl">
+      <span class="gr-hl-ic">💥</span>
+      <span class="gr-hl-tx">최고 한 방</span>
+      <b class="gr-hl-v">${grNum(d.bestHit.dmg)}</b>
+      <span class="gr-hl-sub">${d.bestHit.card ? `「${grEsc(d.bestHit.card)}」 ` : ''}${grEsc(d.bestHit.by)} → ${grEsc(d.bestHit.to)}</span>
+    </div>`);
+  }
+  if(d.lastFall){
+    const how = [d.lastFall.cause, d.lastFall.card && d.lastFall.cause.indexOf(d.lastFall.card) === -1 ? `「${d.lastFall.card}」` : '']
+                .filter(Boolean).join(' · ');
+    bits.push(`<div class="gr-hl">
+      <span class="gr-hl-ic">☠️</span>
+      <span class="gr-hl-tx">마지막 탈락</span>
+      <b class="gr-hl-v">${grEsc(d.lastFall.name)}</b>
+      <span class="gr-hl-sub">${grEsc(how || '알 수 없음')}</span>
+    </div>`);
+  }
+  if(!bits.length) return '';
+  return `<div class="gr-sect">이 판의 장면</div><div class="gr-hls">${bits.join('')}</div>`;
+}
+
 function grBuildHtml(d){
   const meta = `<div class="gr-meta">
     <div class="gr-meta-item"><span>진행 시간</span><b>${grEsc(d.elapsed)}</b></div>
@@ -36053,6 +36143,8 @@ function grBuildHtml(d){
         <span class="gr-rank">${r.rank ? r.rank + '위' : '-'}</span>
         <span class="gr-p-name">${r.isWinner?'👑 ':''}${grEsc(r.name)}</span>
         ${tag}${r.isMe && !r.isBot ? '<span class="gr-p-tag">나</span>' : ''}
+        ${r.persona ? `<span class="gr-p-tag persona">${grEsc(r.persona)}</span>` : ''}
+        ${r.disconnected ? '<span class="gr-p-tag dc">🔌 연결 끊김</span>' : ''}
       </div>
       ${r.deathHtml ? `<div class="gr-p-death">${r.deathHtml}</div>` : ''}
       <div class="gr-p-grid">
@@ -36071,14 +36163,64 @@ function grBuildHtml(d){
     <div class="gr-title ${d.isDraw?'draw':''}">${d.isDraw ? '승자 없음' : grEsc(d.winnerNames)}</div>
     <div class="gr-msg">${d.headline}</div>
     ${meta}
+    ${grBuildSummary(d)}
     <div class="gr-sect">RESULT</div>
     ${players_}
     ${d.tierHtml}
     <div class="gr-btns">
+      <button class="btn btn-ghost" id="grCopyBtn">📋 디스코드에 복사</button>
       <button class="btn btn-ghost" id="grLogBtn">로그 보기</button>
       <button class="btn btn-solid" id="grBackBtn">메뉴로 돌아가기</button>
     </div>
+    <div class="gr-copy-note" id="grCopyNote"></div>
   </div>`;
+}
+
+/* ---------- [Ver 13.11] 디스코드에 붙일 순수 텍스트 ----------
+   grBuildHtml 과 **같은 d** 를 받는다. 한쪽만 고치면 둘이 어긋나므로 항상 같이 볼 것. */
+function grBuildText(d){
+  const L = [];
+  const n = v => (Number(v)||0).toLocaleString();
+  const head = d.isDraw ? '무승부' : `${d.winnerNames} 승리`;
+  L.push(`🏆 ${head} · ${d.rows.length}인전 · ${n(d.rounds)}바퀴 · ${d.elapsed}`);
+  L.push('');
+  if(d.bestHit && d.bestHit.dmg > 0){
+    L.push(`💥 최고 한 방  ${n(d.bestHit.dmg)}  ${d.bestHit.card ? `「${d.bestHit.card}」  ` : ''}${d.bestHit.by} → ${d.bestHit.to}`);
+  }
+  if(d.lastFall){
+    L.push(`☠️ 마지막 탈락  ${d.lastFall.name}  ${d.lastFall.cause || ''}`.trimEnd());
+  }
+  if(L[L.length-1] !== '') L.push('');
+  d.rows.forEach(r=>{
+    const rank = r.rank ? `${r.rank}위` : ' - ';
+    const tail = [
+      `피해 ${n(r.damageDealt)}`,
+      `처치 ${n(r.kills)}`,
+      (r.mvpName && r.mvpName !== '(알 수 없음)') ? `MVP ${r.mvpName}` : null,
+      r.persona ? `[${r.persona}]` : null,
+      r.disconnected ? '[연결 끊김]' : null
+    ].filter(Boolean).join(' · ');
+    L.push(`${rank} ${r.name}  ${tail}`);
+  });
+  return L.join('\n');
+}
+
+/* 클립보드는 http:// 나 권한 거부 상황에서 조용히 실패한다. 그래서 실패하면
+   텍스트를 화면에 그대로 펼쳐 **직접 긁어갈 수 있게** 한다 (devCopyCode 와 같은 태도). */
+function grCopySummary(){
+  const note = document.getElementById('grCopyNote');
+  const d = window.__grLastData;
+  if(!d){ if(note) note.textContent = '요약 데이터가 없습니다.'; return; }
+  let text = '';
+  try{ text = grBuildText(d); }catch(e){ if(note) note.textContent = '요약을 만들지 못했습니다.'; return; }
+  const block = '```\n' + text + '\n```';
+  const ok = ()=>{ if(note){ note.className = 'gr-copy-note ok'; note.textContent = '복사했습니다. 디스코드에 그대로 붙여넣으세요.'; } };
+  const fail = ()=>{ if(note){ note.className = 'gr-copy-note'; note.innerHTML = `<div class="gr-copy-fallback">복사가 막혔습니다. 아래를 직접 긁어가세요.<textarea readonly>${grEsc(block)}</textarea></div>`;
+      const ta = note.querySelector('textarea'); if(ta){ ta.focus(); ta.select(); } } };
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(block).then(ok).catch(fail);
+    else fail();
+  }catch(e){ fail(); }
 }
 
 /* 결과창을 화면에 올린다. 이미 떠 있으면 내용만 갈아끼운다. */
@@ -36090,6 +36232,28 @@ function grRenderResult(winners, forcedMessage){
     try{ closeModal(); }catch(e){}
 
     const data = grCollect(winners, forcedMessage);
+    /* [Ver 13.11] 온라인 호스트라면 이 데이터를 참가자에게도 보낸다.
+       참가자는 승패 판정을 하지 않으므로(checkWinCondition 이 막는다) 스스로 결과를 만들 수 없다.
+       ⚠ 여기서 보관만 하고, 실제 전송은 하트비트가 lanHostSnapshot 을 통해 알아서 한다. */
+    try{ if(lanIsHostGame()) LAN.__result = data; }catch(e){}
+    return grRenderResultFromData(data, forcedMessage);
+  }catch(e){
+    console.error('[결과창] 데이터 수집 실패 — 알림으로 대체', e);
+    try{ showModal('게임 종료', forcedMessage || '게임이 종료되었습니다.', [{label:'메인 메뉴로', solid:true, action:()=>goToStart()}]); }catch(e2){}
+    return false;
+  }
+}
+
+/* [Ver 13.11] 이미 만들어진 데이터로 결과창을 그린다.
+   ⚠ 이 갈래가 따로 있는 이유 — **온라인 참가자는 승패 판정을 하지 않는다.**
+     호스트가 grCollect() 로 만든 데이터를 스냅샷으로 받아 여기로 바로 들어온다.
+     (checkWinCondition 의 "결과는 스냅샷으로 전달받는다" 주석이 말하던 그 구조다) */
+function grRenderResultFromData(data, forcedMessage){
+  if(typeof document === 'undefined') return false;
+  try{
+    try{ document.querySelectorAll('.death-screen-overlay').forEach(el=> el.remove()); }catch(e){}
+    try{ closeModal(); }catch(e){}
+    window.__grLastData = data;          // 복사 버튼이 읽는다
     const html = grBuildHtml(data);
 
     let ov = document.getElementById(GR_OVERLAY_ID);
@@ -36106,6 +36270,8 @@ function grRenderResult(winners, forcedMessage){
 
     const logBtn = ov.querySelector('#grLogBtn');
     if(logBtn) logBtn.onclick = ()=>{ try{ showGameLogModal(); }catch(e){} };
+    const copyBtn = ov.querySelector('#grCopyBtn');
+    if(copyBtn) copyBtn.onclick = ()=>{ try{ grCopySummary(); }catch(e){} };
     const backBtn = ov.querySelector('#grBackBtn');
     if(backBtn) backBtn.onclick = ()=> closeVictoryAndGoToStart();
     return true;
@@ -53620,6 +53786,19 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
     const dealtBy = currentAttackContext && currentAttackContext.attackerId;
     const total = shieldAbsorbedAmount + __hpDamageApplied;
     if(total > 0){
+      /* [Ver 13.11] 판 요약용 '이 판의 최고 한 방'.
+         ⚠ 아래 STATS.maxSingleHit 와 다르다 — 그쪽은 **내가 때린 것만**, 평생 기록이다.
+           여기는 **누가 때렸든** 이 판에서 제일 큰 한 방을 남긴다(봇 것도 센다).
+         ⚠ 랜서버에서는 피해 계산이 호스트에서만 돌므로 이 값도 호스트에만 쌓인다.
+           그래서 결과 데이터를 호스트가 만들어 참가자에게 보내는 구조여야 한다. */
+      if(total > ((window.__gameBestHit && window.__gameBestHit.dmg) || 0)){
+        window.__gameBestHit = {
+          dmg: total,
+          card: (currentAttackContext && currentAttackContext.cardName) || '',
+          by:   (currentAttackContext && currentAttackContext.attackerName) || '?',
+          to:   (target && target.name) || '?'
+        };
+      }
       if(dealtBy === myPlayerId() && !isMyPlayer(target)){
         bumpStat('damageDealt', total);
         /* [Ver 10.5] 놀이터·튜토리얼의 한 방은 리더보드('한 방 최대')에 올리지 않는다 —
@@ -62012,11 +62191,15 @@ function lanRtRebuildRoom(code){
   LAN.isHost = (meta.hostId === LAN.you);
 
   if(LAN.inGame){
-    /* [사용자 요청] 참가자가 한 명이라도 빠지면 그 즉시 게임을 끝낸다.
-       호스트가 나간 경우도 인원이 줄어드는 것이라 여기서 함께 걸린다. */
-    if(LAN.rt.headcount && arr.length < LAN.rt.headcount){
-      lanRtEndGame('참가자가 나가 게임이 종료되었습니다.');
-    }
+    /* [Ver 13.11] 예전에는 **한 명만 빠져도 판 전체를 끝냈다**(아래 옛 주석 참고).
+         > [사용자 요청] 참가자가 한 명이라도 빠지면 그 즉시 게임을 끝낸다.
+       이제는 **나간 사람만 탈락**시키고 남은 사람끼리 계속한다.
+       ⚠ 호스트가 사라진 경우만은 예외다 — 판정을 돌릴 주체가 없어서 판이 이어질 수 없다. */
+    const hostGone = !arr.some(p=> p && p.id === meta.hostId);
+    if(hostGone){ lanRtEndGame('호스트의 연결이 끊겨 게임이 종료되었습니다.'); return; }
+    /* 판정은 호스트만 한다. 참가자는 스냅샷으로 결과를 받는다 —
+       각자 판정하면 기기마다 다른 사람이 죽어 있을 수 있다. */
+    if(LAN.isHost) { try{ lanHostKillLeavers(arr); }catch(e){} }
     return;                                      // 게임 중에는 로비를 다시 그리지 않는다
   }
 
@@ -62030,6 +62213,38 @@ function lanRtRebuildRoom(code){
   }
   lanOnMessage({ t:'room', room });
 }
+/* ##########################################################################
+   [Ver 13.11] 연결이 끊긴 사람을 탈락 처리한다 (호스트 전용)
+   --------------------------------------------------------------------------
+   ▶ 감지 장치를 새로 만들지 않았다. 방에 들어올 때 이미
+     `onDisconnect(rooms/{code}/players/{uid}).remove()` 를 걸어두었기 때문에,
+     연결이 끊기면 그 자리가 **알아서 사라진다.** 여기서는 사라진 자리를 찾아내기만 하면 된다.
+   ▶ 자리 ↔ 플레이어 대응은 이미 정해져 있다 — slot N 은 players 의 'p'+N 이다.
+   ▶ 부활 수단을 무시하는 forceKillAbsolute 를 쓴다. 자리를 뜬 사람이 예토전생으로
+     되살아나 봐야 조작할 사람이 없어 판만 멈춘다.
+   ########################################################################## */
+const LAN_DC_GRACE_MS = 0;   // 유예를 주고 싶으면 이 값만 올리면 된다 (0 = 즉시)
+function lanHostKillLeavers(arr){
+  if(!lanIsHostGame() || !gameActive || !Array.isArray(players)) return 0;
+  const present = new Set((arr||[]).map(p=> p && p.slot).filter(s=> s != null));
+  const gone = players.filter(p=>{
+    if(!p || !p.alive || p.isBot) return false;          // 봇은 자리가 없다
+    const slot = parseInt(String(p.id||'').slice(1), 10);
+    return !isNaN(slot) && !present.has(slot);
+  });
+  if(!gone.length) return 0;
+  gone.forEach(p=>{
+    p.__disconnected = true;
+    log('highlight', `🔌 ${J(p.name,'의','의')} 연결이 끊겨 탈락 처리되었습니다.`);
+    try{ forceKillAbsolute(p, '연결 끊김'); }catch(e){}
+  });
+  try{ renderBoard(); }catch(e){}
+  /* 남은 사람이 한 명뿐이면 여기서 판이 끝난다. 호스트가 부르므로 판정 권한도 맞다. */
+  try{ checkWinCondition(); }catch(e){}
+  try{ lanHostBroadcastNow(true); }catch(e){}          // 참가자 화면에 즉시 반영
+  return gone.length;
+}
+
 /* [Ver 10.0] 온라인 판을 즉시 끝낸다. 방에서도 빠져나오므로 재진입 고리가 생기지 않는다. */
 function lanRtEndGame(msg){
   if(LAN.rt.ending) return;                      // 여러 리스너가 동시에 부를 수 있다
@@ -62856,7 +63071,10 @@ function lanHostLogPack(){
 
 /* 호스트 → 전원: 전체 게임 상태 스냅샷 (각 클라이언트가 자기 시점으로 렌더) */
 function lanHostSnapshot(){
-  if(!gameActive || !Array.isArray(players)) return { over:true };
+  /* [Ver 13.11] 판이 끝났으면 결과 데이터를 함께 보낸다.
+     ⚠ 예전엔 { over:true } 만 보내서, 참가자는 "끝났다"는 사실만 알고
+       결과창을 그릴 재료가 없었다(그래서 모달 한 줄만 떴다). */
+  if(!gameActive || !Array.isArray(players)) return { over:true, result: (LAN.__result || null) };
   return {
     /* [Ver 10.0] v는 0으로 두고 **실제로 보낼 때** lanHostBroadcastNow가 매긴다.
        여기서 올려버리면 스냅샷이 매번 달라져 "안 바뀌었으면 안 보내기"가 무력화된다. */
@@ -63694,7 +63912,7 @@ function lanClientApplyState(snap){
   /* [Ver 11.4] 온라인 퀴즈 모드 — qm 필드가 있으면 카드게임 스냅샷이 아니라 퀴즈 스냅샷이다.
      완전히 별도 경로로 처리하고 아래 카드게임 로직은 타지 않는다. */
   if(snap && snap.qm){ try{ lanQmClientApplyState(snap.qm); }catch(e){} return; }
-  if(!snap || snap.over){ lanClientGameOver(); return; }
+  if(!snap || snap.over){ lanClientGameOver(snap); return; }   // [Ver 13.11] 결과 데이터를 함께 넘긴다
   if(LAN.__lastV && snap.v && snap.v <= LAN.__lastV) return; // 오래된 스냅샷 무시
   LAN.__lastV = snap.v;
   LAN.__rxCount = (LAN.__rxCount||0)+1;
@@ -64031,12 +64249,22 @@ function lanClientSyncCenterPile(html, labelHtml){
   if(label && labelHtml!=null && label.innerHTML!==labelHtml) label.innerHTML = labelHtml;
 }
 
-function lanClientGameOver(){
+function lanClientGameOver(snap){
   try{ cardAudioStopEverything(); }catch(e){} // [Ver 7.2] 게임 종료 — 모든 카드 음원 정지
   // 이미 시작 전(스냅샷 한 번도 못 받음)이면 종료 처리하지 않는다 — 호스트의 정상 시작을 기다린다.
   if(!LAN.__lastV){ return; }
   gameActive=false;
   const hs=document.getElementById('headerStat'); if(hs) hs.textContent='게임이 종료되었습니다.';
+  /* [Ver 13.11] 호스트가 보낸 결과 데이터가 있으면 **혼자 할 때와 똑같은 결과창**을 그린다.
+     ⚠ 여러 번 불릴 수 있다(하트비트가 400ms마다 같은 over 스냅샷을 준다).
+       이미 떠 있으면 다시 그리지 않는다 — 안 그러면 스크롤이 계속 맨 위로 튄다. */
+  if(snap && snap.result){
+    try{
+      if(typeof grIsResultShown === 'function' && grIsResultShown()) return;
+      if(grRenderResultFromData(snap.result)) return;
+    }catch(e){}
+  }
+  // 결과를 못 받았을 때만 예전 안내로 되돌아간다
   try{ showModal('게임 종료', '호스트의 게임이 종료되었습니다.', [{label:'로비로', solid:true, action:()=>lanLeaveGame()}]); }catch(e){}
 }
 
