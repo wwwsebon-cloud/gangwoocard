@@ -680,6 +680,11 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 }
 .usb-expbar{ height:5px; }
 .usb-expsub{ font-size:10.5px; color:var(--fg-faint); font-family:var(--font-mono); }
+/* [Ver 13.14] 레벨 게이지 — 클래스 게이지와 **색으로** 구분한다.
+   ⚠ --tone-yellow 는 **테마마다 값이 다르다**(어두움 #E9B949 / 밝음 #B98216). 색을 직접 박지 말 것.
+   ⚠ .usb-expbar-fill 은 위(564행)에서 --accent 로 칠해지므로 뒤에서 덮어써야 한다. */
+.usb-lvbar-fill{ background:var(--tone-yellow) !important; }
+.usb-lv-tag{ color:var(--tone-yellow); font-weight:700; }
 .usb-chev{ flex-shrink:0; font-size:20px; color:var(--fg-faint); transition:transform var(--t) var(--ease); }
 .user-stat-bar:hover .usb-chev{ transform:translateX(3px); color:var(--fg-dim); }
 
@@ -898,6 +903,20 @@ body.ink.force-dark .nm-stage-art{ filter:invert(1); }   /* 강제 다크는 언
 .nm-big.nm-soon:hover{ opacity:0.82; transform:none; box-shadow:var(--sh-ring), var(--sh-1); }
 
 /* ---------- D열 : 할 일 · 소지품 ---------- */
+/* [Ver 13.15] 서랍에서 꺼낸 세 버튼. 타일(.nm-tile)은 flex:1 로 남은 높이를 나눠 갖지만
+   이 줄은 flex:0 0 auto 라 **자기 높이만** 차지한다 — 타일들이 그만큼 조금 줄 뿐 배치는 안 깨진다. */
+.nm-mini-row{ display:flex; gap:6px; flex:0 0 auto; }
+.nm-mini{
+  position:relative; flex:1; min-width:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+  padding:9px 4px; border-radius:var(--r-sm);
+  background:var(--bg-2); color:var(--fg-dim);
+  box-shadow:var(--sh-ring); cursor:pointer;
+  transition:transform var(--t) var(--ease), background var(--t) var(--ease);
+}
+.nm-mini:hover{ transform:translateY(-2px); background:var(--bg-3); color:var(--fg); }
+.nm-mini > .ic{ font-size:17px; line-height:1; }
+.nm-mini > b{ font-size:10.5px; font-weight:600; white-space:nowrap; }
 .nm-tile{
   position:relative; flex:1;
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
@@ -2030,6 +2049,13 @@ body.pw-targeting .p-card.pw-pick{
 .ol-row{ background:var(--bg-2); }
 .ol-row.mine{ box-shadow:inset 0 0 0 1px var(--accent); background:var(--accent-weak); }
 .ol-row.ol-clickable{ cursor:pointer; }
+/* [Ver 13.15] 리더보드 레벨 배지 · 제외 안내 */
+.ol-lv{ font-family:var(--font-mono); font-size:10.5px; color:var(--tone-yellow); }
+.ol-excl{
+  padding:9px 13px; border-radius:var(--r-sm); font-size:11.5px; line-height:1.7;
+  background:rgba(242,100,90,0.10); color:var(--fg-dim);
+  box-shadow:inset 0 0 0 1px rgba(242,100,90,0.28);
+}
 .ol-row.ol-clickable:active{ transform:scale(0.995); }
 .ol-row-in{ display:flex; align-items:center; gap:var(--sp-3); width:100%; min-width:0; }
 .ol-rank{
@@ -3584,25 +3610,48 @@ body.mobile-mode .rv-card-nm{ font-size:19px; }
    ▶ 설정에서 뒤집을 수 있다 — body.chip-invert 가 변수만 바꾼다. 다른 규칙은
      전부 이 변수를 읽으므로 여기 네 줄만 뒤집으면 끝난다. */
 :root{
-  --chip-buff:#E0596B;  --chip-buff-bg:rgba(224,89,107,0.13);  --chip-buff-line:rgba(224,89,107,0.55);
-  --chip-debuff:#4FA8DC; --chip-debuff-bg:rgba(79,168,220,0.13); --chip-debuff-line:rgba(79,168,220,0.55);
+  /* ── [Ver 13.13.2] 빨강·파랑을 먼저 정의하고, buff/debuff 는 그 둘을 **가리키기만** 한다.
+     이렇게 나눠야 ① 테마마다 색을 갈아끼우고 ② 반전(chip-invert)을 함께 굴릴 수 있다.
+     예전엔 chip-invert 가 색을 직접 박아둬서, 테마별 색을 넣으면 반전 모드만 옛 색으로 남았다.
+     ⚠ 색을 바꿀 일이 있으면 --chip-red / --chip-blue 만 고칠 것. 아래 매핑은 건드리지 않는다.
+
+     여기 값은 **어두운 테마용**이다. 순수 파랑(#0000FF)은 상대휘도가 0.07 밖에 안 돼
+     어두운 바탕에서 대비가 2:1 수준이라 테두리가 묻힌다. 밝기를 올려 또렷하게 만든다.
+     (밝은 테마는 아래에서 순수색으로 되돌린다 — 흰 종이 위에서는 순수색이 가장 진하다) */
+  --chip-red:#FF4040;  --chip-red-bg:rgba(255,64,64,0.26);  --chip-red-line:rgba(255,64,64,0.78);
+  --chip-blue:#5B9BFF; --chip-blue-bg:rgba(91,155,255,0.26); --chip-blue-line:rgba(91,155,255,0.78);
+
   /* 중립 = 흰색. ⚠ 밝은 테마(body.ink)에서는 흰 테두리가 종이색에 묻히므로 아래에서 갈아끼운다. */
   --chip-neutral:#FFFFFF; --chip-neutral-bg:rgba(255,255,255,0.10); --chip-neutral-line:rgba(255,255,255,0.42);
+}
+/* ⚠ 매핑은 **반드시 body 에서** 한다. :root 에 두면 안 된다 —
+   var() 는 **선언한 그 요소의 값**으로 확정되므로, :root 에 두면 :root 의 --chip-red 로 굳어
+   아래 밝은 테마가 --chip-red 를 갈아끼워도 buff/debuff 에는 영영 반영되지 않는다.
+   (실제로 그렇게 했다가 밝은 테마에서 순수색이 안 먹었다) */
+body{
+  --chip-buff:var(--chip-red);    --chip-buff-bg:var(--chip-red-bg);    --chip-buff-line:var(--chip-red-line);
+  --chip-debuff:var(--chip-blue); --chip-debuff-bg:var(--chip-blue-bg); --chip-debuff-line:var(--chip-blue-line);
 }
 /* 밝은 테마 — 흰색 대신 짙은 회색을 쓴다. 테마 판정이 꼬여 있어(12.4.3) `body.ink` 는
    **밝은 종이색**이고 `body.ink.force-dark` 가 어두운 팔레트다. 그래서 :not(.force-dark) 로 못박는다. */
 body.ink:not(.force-dark),
 body.theme-light-shell:not(.force-dark){
   --chip-neutral:#4B525C; --chip-neutral-bg:rgba(75,82,92,0.10); --chip-neutral-line:rgba(75,82,92,0.42);
+  /* [Ver 13.13.2] 흰 종이 위에서는 **순수색**이 가장 진하다. 밝힐 이유가 없다. */
+  --chip-red:#FF0000;  --chip-red-bg:rgba(255,0,0,0.20);  --chip-red-line:rgba(255,0,0,0.72);
+  --chip-blue:#0000FF; --chip-blue-bg:rgba(0,0,255,0.20); --chip-blue-line:rgba(0,0,255,0.72);
 }
+/* 반전 — 가리키는 대상만 맞바꾼다. 색을 여기 다시 적지 않으므로 테마가 바뀌어도 따라온다. */
 body.chip-invert{
-  --chip-buff:#4FA8DC;  --chip-buff-bg:rgba(79,168,220,0.13);  --chip-buff-line:rgba(79,168,220,0.55);
-  --chip-debuff:#E0596B; --chip-debuff-bg:rgba(224,89,107,0.13); --chip-debuff-line:rgba(224,89,107,0.55);
+  --chip-buff:var(--chip-blue);  --chip-buff-bg:var(--chip-blue-bg);  --chip-buff-line:var(--chip-blue-line);
+  --chip-debuff:var(--chip-red); --chip-debuff-bg:var(--chip-red-bg); --chip-debuff-line:var(--chip-red-line);
 }
 .status-chip.sc-sq{
   position:relative; overflow:visible;
   width:34px; height:34px; flex-shrink:0;
-  padding:0; border-radius:var(--r-sm);
+  /* [Ver 13.13.1] 각진 정사각형. 아래 .sc-img · .sc-gauge · .csp-demo 도 **같이** 0 이어야 한다 —
+     하나만 남으면 그림 모서리나 게이지 테두리가 칩 밖으로 삐져나온 것처럼 보인다. */
+  padding:0; border-radius:0;
   background:var(--bg-2);
   box-shadow:inset 0 0 0 1.5px var(--chipc, var(--line));
   animation:popIn var(--t) var(--ease-spring) both;
@@ -3612,7 +3661,7 @@ body.chip-invert{
 .sc-sq.k-neutral{ --chipc:var(--chip-neutral); background:var(--chip-neutral-bg); }
 .sc-img{
   position:absolute; inset:2px; width:calc(100% - 4px); height:calc(100% - 4px);
-  object-fit:contain; border-radius:calc(var(--r-sm) - 2px);
+  object-fit:contain; border-radius:0;   /* [Ver 13.13.1] 칩과 함께 각지게 */
   /* ⚠ [Ver 13.8] 그림 뒤에 밝은 판때기를 깐다. **지우지 말 것.**
      일러스트가 대부분 흰 종이에 그린 검은 선화라, 투명 배경 그대로 두면
      어두운 테마에서 칼·방패·카메라가 통째로 사라진다(실제로 그랬다).
@@ -3638,7 +3687,7 @@ body.chip-invert{
 .sc-sb{ box-shadow:inset 0 0 0 1.5px rgba(255,255,255,0.10); }
 .sc-gauge{
   position:absolute; inset:0; z-index:2; pointer-events:none;
-  border-radius:var(--r-sm); border:1.5px solid var(--chipc, var(--line));
+  border-radius:0; border:1.5px solid var(--chipc, var(--line));   /* [Ver 13.13.1] */
   clip-path:inset(calc((100 - var(--gp,100)) * 1%) 0 0 0);
 }
 /* ---- 시안 C : 아래 얇은 바 ---- */
@@ -3653,7 +3702,9 @@ body.ink:not(.force-dark) .sc-bar{ background:rgba(0,0,0,0.16); }
   position:absolute; right:-3px; bottom:-4px; z-index:2;
   font-family:var(--font-mono); font-style:normal; font-size:8.5px; font-weight:700;
   padding:0 3px; border-radius:5px;
-  background:var(--chipc, var(--line)); color:#0D0F13;   /* 배지 바탕이 항상 진한 색이라 글씨는 검정 */
+  /* ⚠ [Ver 13.13.1] 흰 글씨로 뒤집었다. 예전 색(#E0596B·#4FA8DC)은 밝아서 검은 글씨가 맞았지만,
+     완전한 파랑(#0000FF) 바탕에서는 검은 글씨가 통째로 묻힌다. 빨강 위에서도 흰 글씨가 더 낫다. */
+  background:var(--chipc, var(--line)); color:#FFFFFF;
   box-shadow:0 0 0 1.5px var(--bg-panel);
   max-width:30px; overflow:hidden; text-overflow:clip; white-space:nowrap;
 }
@@ -3686,8 +3737,9 @@ body.mobile-mode .sc-dur,body.mobile-mode .sc-amt{ font-size:7px; padding:0 2px;
   background:var(--bg-3); color:var(--fg); box-shadow:inset 0 0 0 1.5px var(--accent);
 }
 .chip-style-pick .csp-tx{ font-size:11px; font-weight:700; }
-/* 미리보기 조각 — 실제 칩과 같은 부품을 쓰되 배지 숫자는 고정값이다 */
-.csp-demo{ position:relative; width:30px; height:30px; border-radius:var(--r-sm);
+/* 미리보기 조각 — 실제 칩과 같은 부품을 쓰되 배지 숫자는 고정값이다
+   ⚠ [Ver 13.13.1] 모양이 실제 칩과 같아야 한다. 위 .sc-sq 를 바꾸면 여기도 함께 바꿀 것. */
+.csp-demo{ position:relative; width:30px; height:30px; border-radius:0;
   background:var(--chip-buff-bg); box-shadow:inset 0 0 0 1.5px var(--chip-buff);
   display:flex; align-items:center; justify-content:center; font-size:15px; }
 .csp-demo .sc-dur,.csp-demo .sc-amt{ font-size:7.5px; padding:0 2px; }
@@ -5109,6 +5161,15 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 .gr-p-grid span{ font-size:9.5px; color:var(--fg-faint); }
 .gr-p-grid b{ font-family:var(--font-mono); font-size:12px; font-weight:600; }
 .gr-p-grid b.mvp{ font-family:var(--font); color:var(--accent); }
+/* [Ver 13.14] 결과창 레벨 한 줄 — 클래스 카드 위에 얹힌다 */
+.victory-lv-line{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  padding:9px 13px; margin-bottom:8px;
+  border-radius:var(--r-sm); background:var(--bg-2);
+  box-shadow:inset 0 0 0 1px var(--line);
+  font-size:12.5px;
+}
+.victory-lv-line b{ font-family:var(--font-mono); font-size:14px; }
 /* ---------- [Ver 13.11] 판 요약 "이 판의 장면" ---------- */
 .gr-hls{ display:flex; flex-direction:column; gap:6px; }
 .gr-hl{
@@ -5777,8 +5838,9 @@ body.ui-overlay-open .p-card{ animation-play-state:paused !important; }
         상대 칸을 격자로 펼치고, 로그는 버튼으로 여닫는 서랍으로 뺀다 ---- */
 body.battle-royale-mode .board{
   grid-template-columns:minmax(0,1fr);
-  grid-template-rows:minmax(0,1fr) auto;
-  grid-template-areas:"bots" "hand";
+  /* [Ver 13.14] top(턴 요약)·pw(권능 독) 줄을 되살렸다 — 없으면 둘 다 화면을 떠다닌다 */
+  grid-template-rows:auto minmax(0,1fr) auto auto;
+  grid-template-areas:"top" "bots" "hand" "pw";
 }
 body.battle-royale-mode .zone-table{
   position:absolute; top:0; right:0; width:360px; height:310px; z-index:5;
@@ -5812,25 +5874,45 @@ body.battle-royale-mode .hand-card{ --card-w:112px; --card-h:164px; }
 /* ---- 3:3 팀전 — 로그 자리를 팀 색 대비에 내준다 ---- */
 body.team-battle-mode .zone-log{ display:none; }
 body.team-battle-mode .board{
-  grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);
-  grid-template-areas:"bots table" "hand hand";
+  /* [Ver 13.14] 왼쪽 레드 · 가운데 판 · 오른쪽 블루.
+     기본 그리드(13.3 pw · 13.4 top)를 못 따라가 깨져 있었고, 블루팀 칸은
+     아예 자리가 없어 보이지도 않았다.
+     ⚠ pw 는 **자기 줄**을 가져야 한다 — 손패와 같은 줄에 두면 손패가 많아질 때 겹친다. */
+  grid-template-columns:minmax(0,258px) minmax(0,1fr) minmax(0,258px);
+  grid-template-rows:auto minmax(0,1fr) auto auto;
+  grid-template-areas:"bots top   botsR"
+                      "bots table botsR"
+                      "bots hand  botsR"
+                      "pw   pw    pw";
 }
+/* ⚠ .zone-bots-right 는 .zone-bots 클래스를 함께 달고 있어 그대로 두면 grid-area:bots 로 가
+   레드팀 박스와 겹친다. 자리와 표시를 여기서 못박는다.
+   (JS 의 `style.display=''` 만으로는 절대 안 보인다 — 기본 규칙이 none 이기 때문이다) */
+body.team-battle-mode .zone-bots-right{ display:flex; grid-area:botsR; }
 
 /* ---- 야차 1:1 — 상대가 한 명뿐이라 레일이 필요 없다 ---- */
 body.yacha-solo-mode .zone-log{ display:none; }
 body.yacha-solo-mode #zoneBotsRight{ display:none; }
 body.yacha-solo-mode .board{
   grid-template-columns:minmax(0,280px) minmax(0,1fr);
-  grid-template-areas:"bots table" "hand hand";
+  grid-template-rows:auto minmax(0,1fr) auto auto;   /* [Ver 13.14] top·pw 복구 */
+  grid-template-areas:"bots top" "bots table" "bots hand" "pw pw";
 }
 body.yacha-solo-mode .zone-bots .seat{ flex:0 0 auto; }
 
 /* ---- 사이비 — 로그를 감춰 정보 비대칭을 유지한다 ---- */
 body.cult-mode .zone-log{ display:none; }
 body.cult-mode .board{
-  grid-template-columns:minmax(0,236px) minmax(0,1fr);
-  grid-template-areas:"bots table" "hand hand";
+  /* [Ver 13.14] 팀전과 같은 이유로 오른쪽 칸을 되살린다 —
+     applyCultSeatAssignment 도 상대를 좌 4 · 우 3 으로 나눠 앉힌다. */
+  grid-template-columns:minmax(0,236px) minmax(0,1fr) minmax(0,236px);
+  grid-template-rows:auto minmax(0,1fr) auto auto;
+  grid-template-areas:"bots top   botsR"
+                      "bots table botsR"
+                      "bots hand  botsR"
+                      "pw   pw    pw";
 }
+body.cult-mode .zone-bots-right{ display:flex; grid-area:botsR; }
 
 /* ---- 저점매수(골드 상자) ---- */
 body.draft-goldbox-mode .p-gold{ font-size:13px; font-weight:700; }
@@ -6743,7 +6825,7 @@ body.high-contrast.theme-light-shell{
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.12</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.15</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -6839,6 +6921,9 @@ body.high-contrast.theme-light-shell{
               </div>
               <div class="usb-expbar"><div class="usb-expbar-fill" id="usbExpFill" style="width:0%"></div></div>
               <div class="usb-expsub" id="usbExpSub">0 / 100 Exp</div>
+              <!-- [Ver 13.14] 레벨은 클래스와 별개다. 게이지도 따로 둔다. -->
+              <div class="usb-expbar usb-lvbar"><div class="usb-expbar-fill usb-lvbar-fill" id="usbLvFill" style="width:0%"></div></div>
+              <div class="usb-expsub" id="usbLvSub">Lv.1 · 0 / 100 Exp</div>
             </div>
             <div class="usb-chev">›</div>
           </div>
@@ -6903,6 +6988,21 @@ body.high-contrast.theme-light-shell{
           <button class="nm-tile" data-art="dex" onclick="goToDex()">
             <span class="ic">🎒</span><b>인벤토리</b>
           </button>
+          <!-- [Ver 13.15] 서랍에서 꺼낸 셋. 자주 보는 것이라 한 번에 닿게 둔다.
+               ⚠ nmNewCardsDot · nmBalanceDot 는 렌더 함수가 찾는 id다 — 이름을 바꾸지 말 것. -->
+          <div class="nm-mini-row">
+            <button class="nm-mini" onclick="openOnlineScreen('rank')" title="리더보드 · 전체 순위">
+              <span class="ic">🏆</span><b>리더보드</b>
+            </button>
+            <button class="nm-mini" onclick="openNewCards()" title="이번 버전에 추가된 카드">
+              <span class="ic">🃏</span><b>신규 카드</b>
+              <span class="nm-new" id="nmNewCardsDot" style="display:none;">New</span>
+            </button>
+            <button class="nm-mini" onclick="openBalancePatch()" title="세진 카드 · 약해진 카드">
+              <span class="ic">⚖️</span><b>밸런스</b>
+              <span class="nm-new" id="nmBalanceDot" style="display:none;">New</span>
+            </button>
+          </div>
           <button class="nm-log" onclick="goToChangelog()">
             <span class="ic">📜</span><b>업데이트 로그</b>
           </button>
@@ -6924,24 +7024,12 @@ body.high-contrast.theme-light-shell{
                 mailboxMenuSub · nmAcctCode · nmNote · cardCountLabel ·
                 nmNewCardsDot · nmBalanceDot
              ========================================================================== -->
-        <button class="nm-drawer-item" onclick="closeMenuDrawer(); openGachaScreen();">
-          <span class="ic">🎴</span><span class="tx"><b>카드 뽑기</b><small>진화석을 얻는 곳</small></span>
-        </button>
+        <!-- [Ver 13.15] '카드 뽑기'를 뺐다 — C열의 <b>카드 진화석 뽑기</b>와 같은 화면이라 중복이었다. -->
         <button class="nm-drawer-item" onclick="closeMenuDrawer(); openBoxScreen();">
           <span class="ic">🎁</span><span class="tx"><b>수상한 상자</b><small>열쇠로 여는 무작위 상자</small></span>
         </button>
-        <div class="nm-drawer-sep"></div>
-        <button class="nm-drawer-item" onclick="closeMenuDrawer(); openOnlineScreen('rank');">
-          <span class="ic">🏆</span><span class="tx"><b>리더보드</b><small>전체 순위</small></span>
-        </button>
-        <button class="nm-drawer-item" onclick="closeMenuDrawer(); openNewCards();">
-          <span class="ic">🃏</span><span class="tx"><b>신규 카드</b><small>이번 버전에 추가된 카드</small></span>
-          <span class="nm-new" id="nmNewCardsDot" style="display:none;">New</span>
-        </button>
-        <button class="nm-drawer-item" onclick="closeMenuDrawer(); openBalancePatch();">
-          <span class="ic">⚖️</span><span class="tx"><b>밸런스 패치</b><small>세진 카드 · 약해진 카드</small></span>
-          <span class="nm-new" id="nmBalanceDot" style="display:none;">New</span>
-        </button>
+        <!-- [Ver 13.15] 리더보드 · 신규 카드 · 밸런스 패치는 서랍 밖(메뉴 D열)으로 나갔다.
+             자주 여는 것들이라 두 번 눌러 들어갈 이유가 없었다. -->
         <div class="nm-drawer-sep"></div>
         <button class="nm-drawer-item" onclick="closeMenuDrawer(); openMailbox();">
           <span class="ic">📬</span><span class="tx"><b>우편함</b><small id="mailboxMenuSub">받지 않은 보상 확인</small></span>
@@ -7069,14 +7157,13 @@ body.high-contrast.theme-light-shell{
           <b>놀이터</b>
           <small>원하는 카드만 골라서 · 보상 없음</small>
         </button>
-        <!-- [Ver 13.1] 클래식 모드는 단순화 작업으로 잠시 내려갔다.
-             되살릴 때는 이 주석을 풀고 SIMPLIFY_CLOSED_MODES 에서 'classic'을 뺄 것.
+        <!-- [Ver 13.15] 클래식 복구 (13.1에서 잠시 내려갔던 것).
+             ⚠ 다시 내릴 일이 생기면 여기 주석 + SIMPLIFY_CLOSED_MODES 를 **함께** 되돌릴 것. -->
         <button class="gm-card" onclick="pickGameMode('classic')">
           <span class="gm-ic">🃏</span>
-          <b>클래식 모드 <em>NEW</em></b>
+          <b>클래식 모드</b>
           <small>4인 · 일반전에서 상점·골드만 뺀 단순 버전</small>
         </button>
-        -->
         <button class="gm-card" onclick="pickGameMode('team')">
           <span class="gm-ic">🟥</span>
           <b>3:3 팀전 <em>BETA</em></b>
@@ -10713,37 +10800,48 @@ const CLASS_LABELS = [
 /* [Ver 12.6.1] 클래스 상승에 필요한 경험치를 **기존의 절반**으로 낮췄다.
    한 판에서 얻는 경험치(CLASS_EXP_GAIN_*)는 그대로 두고 문턱만 내렸으므로,
    이미 쌓아둔 누적 경험치를 가진 사람은 그 자리에서 클래스가 올라간다. */
+/* [Ver 13.14] 필요 경험치를 **2배로** 올렸다. 대신 아래 획득량을 훨씬 크게 올리고
+   잃는 양을 줄여, 실제로는 예전보다 **빨리** 오른다(특히 승률이 낮을 때).
+   ▶ 왜 이렇게 했나 — 예전 구조는 3·4등에서 exp가 깎여서, 못하는 사람은
+     올랐다 내렸다만 반복하며 1클래스를 못 벗어났다. 한 판 한 판의 폭을 키우고
+     바닥을 없애서 "지면 제자리, 이기면 크게" 쪽으로 옮겼다.
+   ▶ 실측(3000판 시뮬레이션) — 클래스 4 도달까지
+       승률 25% : 33.6판 → 21.4판 · 승률 15% : 47.2판 → 25.3판 */
 const CLASS_CUMUL_EXP = [
   0,    // class 1
-  150,  // →2
-  300,  // →3
-  500,  // →4
-  650,  // →5
-  800,  // →6
-  1000, // →7
-  1150, // →8
-  1300, // →9
-  1500, // →10
-  1650, // →11
-  1800, // →12
-  2000, // →13
-  2250, // →14
-  2500, // →15
-  3000, // →16
-  3250, // →17
-  3500, // →18
-  4000, // →19
-  4500  // →20
+  300,  // →2
+  600,  // →3
+  1000, // →4
+  1300, // →5
+  1600, // →6
+  2000, // →7
+  2300, // →8
+  2600, // →9
+  3000, // →10
+  3300, // →11
+  3600, // →12
+  4000, // →13
+  4500, // →14
+  5000, // →15
+  6000, // →16
+  6500, // →17
+  7000, // →18
+  8000, // →19
+  9000  // →20
 ];
 const CLASS_MAX = 20;
 
 /* 등수별 exp 구간 — class 1 기준 / class 19 기준 (19→20 구간). 사이는 선형 보간.
    [min, max] inclusive. 실제 지급은 구간 내 난수. */
+/* [Ver 13.14] 낮은 클래스에서는 **아무도 exp를 잃지 않는다.**
+   꼴등이어도 0~10 은 받는다 — 여기서 깎이면 초심자가 영영 못 올라간다. */
 const CLASS_EXP_GAIN_LO = { // class 1
-  1: [45, 55], 2: [15, 25], 3: [-5, 5], 4: [-10, 0]
+  1: [100, 120], 2: [55, 70], 3: [20, 30], 4: [0, 10]
 };
+/* [Ver 13.14] 위쪽은 여전히 깎이지만 폭을 크게 줄였다(-17~-20 → -8~-2).
+   높은 클래스는 유지가 어려워야 하되, 한 판 실수로 무너지지는 않게. */
 const CLASS_EXP_GAIN_HI = { // class 19 (→20)
-  1: [19, 22], 2: [3, 6], 3: [-8, -3], 4: [-17, -20]
+  1: [45, 55], 2: [20, 28], 3: [0, 6], 4: [-8, -2]
 };
 
 let classState = { cls: 1, exp: 0 }; // cls 1~20, exp = 누적 경험치
@@ -10967,15 +11065,19 @@ function legacyGenesisSnap(){
   }catch(e){}
   return null;
 }
+/* ⚠ [Ver 13.14] 예전에는 스냅샷이 없으면 **살아있는 expState 로 되돌아갔다.**
+   그때는 expState 가 얼어 있어서 안전했지만, 레벨을 복구한 지금은 그러면
+   지금 올라가는 레벨이 **태초 시즌 리더보드로 새어나간다.**
+   스냅샷이 없다 = 11.5 이전 기록이 없다는 뜻이므로 1/0 이 맞다. */
 function legacyGenesisLevel(){
   const snap = legacyGenesisSnap();
   if(snap && typeof snap.legacyLevel === 'number') return snap.legacyLevel;
-  return (typeof expState !== 'undefined' && expState) ? (expState.level||1) : 1;
+  return 1;
 }
 function legacyGenesisExp(){
   const snap = legacyGenesisSnap();
   if(snap && typeof snap.legacyExp === 'number') return snap.legacyExp;
-  return (typeof expState !== 'undefined' && expState) ? (expState.exp||0) : 0;
+  return 0;
 }
 
 function grantClassExp(delta){
@@ -12217,11 +12319,20 @@ function renderUserStatBar(){
   const subEl = document.getElementById('usbExpSub');
   if(!nameEl) return;
   nameEl.textContent = getPlayerNickname();
-  // [Ver 11.5] 레벨 → 클래스 표기
+  // 오른쪽 위 배지는 클래스(등급)를 그대로 둔다 — 레벨은 아래 전용 게이지가 맡는다
   if(lvEl) lvEl.textContent = `클래스 ${classState.cls} · ${classLabel(classState.cls)}`;
   const pct = classProgressPct();
   if(fillEl) fillEl.style.width = pct + '%';
   if(subEl) subEl.textContent = classProgressText();
+  /* [Ver 13.14] 레벨 게이지 — 클래스와 별개로 채운다. */
+  try{
+    const lvFill = document.getElementById('usbLvFill');
+    const lvSub  = document.getElementById('usbLvSub');
+    const need = expNeededForLevel(expState.level);
+    const lvPct = Math.max(0, Math.min(100, Math.round((expState.exp / Math.max(1, need)) * 100)));
+    if(lvFill) lvFill.style.width = lvPct + '%';
+    if(lvSub)  lvSub.innerHTML = `<span class="usb-lv-tag">Lv.${expState.level}</span> · ${expState.exp} / ${need} Exp`;
+  }catch(e){}
   /* [Ver 12.6.1] 메인 화면 아바타 = 내가 고른 프로필 사진 + 왼쪽 위 클래스 배지 */
   try{
     const av = document.querySelector('#userStatBar .usb-avatar');
@@ -12264,6 +12375,11 @@ function buildUserStatPanelHtml(){
         </div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--fg-dim);">클래스 ${classState.cls} · ${classLabel(classState.cls)} · ${classProgressText()}</div>
         <div class="usb-expbar" style="margin-top:6px;max-width:260px;"><div class="usb-expbar-fill" style="width:${pct}%"></div></div>
+        <!-- [Ver 13.14] 레벨 — 클래스와 따로. 오르는 조건이 다르므로 설명도 따로 붙인다. -->
+        <div style="font-family:var(--font-mono);font-size:12px;color:var(--fg-dim);margin-top:9px;">
+          <span class="usb-lv-tag">Lv.${expState.level}</span> · ${expState.exp} / ${expNeededForLevel(expState.level)} Exp</div>
+        <div class="usb-expbar usb-lvbar" style="margin-top:6px;max-width:260px;"><div class="usb-expbar-fill usb-lvbar-fill" style="width:${Math.max(0,Math.min(100,Math.round((expState.exp/Math.max(1,expNeededForLevel(expState.level)))*100)))}%"></div></div>
+        <div style="font-size:10.5px;color:var(--fg-faint);margin-top:4px;">놀이터·퀴즈를 뺀 <b>모든 모드</b>에서 레벨이 오릅니다</div>
         <div style="font-size:10.5px;color:var(--fg-faint);margin-top:4px;">${SEASON_INFO.name} · 일반전에서만 클래스가 변동합니다</div>
       </div>
     </div>
@@ -12561,10 +12677,19 @@ function settleTierForHuman(placement, cause){
   // [Ver 9.10.1] 놀이터는 원하는 카드만 골라 노는 연습판이라 경험치·재화를 주지 않는다
   if(typeof playgroundMode !== 'undefined' && playgroundMode) return;
   const total = (Array.isArray(players) && players.length) ? players.length : 4;
-  // [Ver 11.5] 기존 레벨 경험치는 더 이상 쓰지 않는다. 대신 클래스 exp는 봇 로컬 일반전에서만.
+  // 클래스 exp 는 **봇 로컬 4인 일반전에서만** 붙는다(isLocalNormalMatch).
   //   (우비나이트·곡괭이·열쇠 등 재화 보상은 기존처럼 모든 정산 경로에서 지급)
   try{ settleClassForHuman(placement); }catch(e){}
-  // 레거시 grantExp는 호출하지 않음 — 클래스 시스템으로 대체
+  /* [Ver 13.14] 레벨 복구 — 클래스와 **정반대 성격**이다.
+     클래스는 실력 지표라 일반전에서만 움직이지만, 레벨은 "얼마나 놀았나"라서
+     **놀이터·퀴즈·튜토리얼만 빼고 어디서든** 오른다(야차·팀전·온라인·아케이드 전부).
+     ⚠ 놀이터·튜토리얼은 이 함수 위쪽에서 이미 걸러져 여기까지 못 온다.
+       퀴즈는 애초에 이 정산을 부르지 않지만(qmFinish 는 따로 논다) 혹시 몰라 한 번 더 막는다. */
+  try{
+    let quiz = false;
+    try{ quiz = !!(typeof quizMode !== 'undefined' && quizMode) || !!(window.__qm); }catch(e){}
+    if(!quiz) grantExp(computeExpGain(placement, total));
+  }catch(e){}
   try{ awardUbiniteForPlacement(placement); }catch(e){}
   /* [Ver 11.8] 아케이드 모드였다면 랩터코인도 준다. (놀이터·튜토리얼은 위에서 이미 걸러진다) */
   try{ if(isArcadeModeKey(window.__pickedModeKey)) awardArcadeCoinsForPlacement(placement); }catch(e){}
@@ -14840,7 +14965,7 @@ function equippedPowerCount(){ return loadEquippedPowers().filter(Boolean).lengt
    ▶ 보너스는 등급마다 **따로** 굴린다(서로 배타적이지 않다). 그래서 한 번에 최대 4개까지 나온다. */
 const POWER_ALTAR_OFFERS = [
   { teeth:1,  label:'이빨 1개',  fixed:['normal'],         bonus:[['rare',40],['epic',10],['legend',3]] },
-  { teeth:5,  label:'이빨 5개',  fixed:['normal','rare'],  bonus:[['epic',22],['legend',25]] },   // [Ver 13.4] 전설 12 → 25
+  { teeth:5,  label:'이빨 5개',  fixed:['normal','rare'],  bonus:[['epic',35],['legend',25]] },   // [Ver 13.4] 전설 12→25 · [Ver 13.15] 영웅 22→35
   { teeth:15, label:'이빨 15개', fixed:['legend'],         bonus:[['epic',30],['rare',30]] },
 ];
 function powersOfRarity(r){ return POWER_DEFS.filter(d=> d.rarity === r); }
@@ -15325,6 +15450,18 @@ function pwMatrixDiveTick(now){
     try{ renderBoard(); }catch(e){}
   });
 }
+/* [Ver 13.13] NO U(권능 반사)가 **켜지는 순간과 끝나는 순간**에만 스탯창을 다시 그린다.
+   ⚠ 이게 없으면 2.5초 안에 렌더 이벤트가 없어 칩이 아예 안 뜨거나, 끝난 뒤에도 남는다.
+     매 틱 renderBoard 를 부르지 않는 이유는 명백하다 — 250ms마다 판 전체를 다시 그릴 일이 아니다.
+     그래서 "지금 반사 중인 사람 목록"이 **바뀔 때만** 부른다. */
+let __pwReflectSig = '';
+function pwReflectTick(now){
+  if(!Array.isArray(players)) return;
+  const sig = players.filter(p=> p && p.pwReflectUntil && now < p.pwReflectUntil).map(p=>p.id).join(',');
+  if(sig === __pwReflectSig) return;
+  __pwReflectSig = sig;
+  try{ renderBoard(); }catch(e){}
+}
 function powerCooldownTick(){
   const now = Date.now();
   const dt = __pwLastTick ? Math.min(2000, now - __pwLastTick) : PW_TICK_MS;
@@ -15337,6 +15474,7 @@ function powerCooldownTick(){
     renderPowerBar();
     return;
   }
+  try{ pwReflectTick(now); }catch(e){}   // [Ver 13.13] 참가자도 봐야 하므로 아래 조기 return 앞에 둔다
   /* 랜서버 참가자는 호스트가 굴린 값을 스냅샷으로 받는다 — 여기서 또 깎으면 두 배로 준다 */
   if(typeof lanIsRemoteClient==='function' && lanIsRemoteClient()){ renderPowerBar(); return; }
   /* ⚠ 슬롯 루프보다 **먼저** 부른다. 그 루프에는 "자기 턴에는 자기 시계가 멈춘다"가 있는데,
@@ -17051,9 +17189,21 @@ function winRateOf(d){
 }
 /* 지금 이 기기의 기록을 하나의 문서로 만든다. (쓰기는 언제나 이 함수 하나를 지난다 —
    나중에 Cloud Functions로 옮길 때 여기만 바꾸면 된다) */
-function fbBuildMyDoc(){
+/* [Ver 13.15] 새 필드(lv·pfp)를 서버가 받아주는가.
+   ⚠ firestore.rules 의 hasOnly 목록에 없는 키가 **하나라도** 섞이면 쓰기가 통째로 거부된다.
+     규칙을 아직 안 올린 기기에서도 리더보드가 죽지 않도록, 거부되면 이 값을 내리고
+     **새 필드를 뺀 채 한 번 더** 보낸다(fbSubmitScore 참고). 규칙을 올리면 저절로 살아난다. */
+let __fbExtraFieldsOk = true;
+function fbBuildMyDoc(withExtra){
   const s = (typeof STATS === 'object' && STATS) ? STATS : {};
+  const extra = (withExtra === false) ? {} : {
+    /* 지금 살아 움직이는 레벨. 위의 level/exp 는 태초 시즌 고정값이라 따로 둔다. */
+    lv: Math.max(1, Math.min(9999, (typeof expState!=='undefined' && expState) ? (expState.level|0) : 1)),
+    /* 프로필 사진 key — 남의 리더보드 줄에 얼굴을 띄우려면 이게 필요하다 */
+    pfp: String((typeof equippedPfp==='function' ? equippedPfp() : '') || '').slice(0, 24),
+  };
   return {
+    ...extra,
     code: getUserCode(),
     nick: String(getPlayerNickname() || '이름없음').slice(0, 16),
     /* [Ver 11.5] level/exp는 태초 시즌(11.5 이전) 값 그대로 고정 — 마이그레이션 시점에
@@ -17108,7 +17258,19 @@ async function fbSubmitScore(){
   if(isBanned()) throw new Error('이용이 제한된 계정입니다. 기록을 올릴 수 없습니다.');
   await fbInit();
   const { doc, setDoc } = FB.mod;
-  await setDoc(doc(FB.db, 'players', FB.uid), fbBuildMyDoc());
+  const ref = doc(FB.db, 'players', FB.uid);
+  try{
+    await setDoc(ref, fbBuildMyDoc(__fbExtraFieldsOk));
+  }catch(e){
+    /* [Ver 13.15] 규칙을 아직 안 올린 서버는 새 필드(lv·pfp) 때문에 쓰기를 통째로 거부한다.
+       그 경우 **한 번만** 새 필드를 빼고 다시 보낸다 — 리더보드가 죽는 것보다 낫다.
+       (규칙을 올리면 다음 실행부터 저절로 다시 붙는다) */
+    if(__fbExtraFieldsOk && e && e.code === 'permission-denied'){
+      __fbExtraFieldsOk = false;
+      console.warn('[리더보드] 새 필드(lv·pfp)가 거부되어 빼고 다시 보냅니다 — firestore.rules 를 올려주세요.');
+      await setDoc(ref, fbBuildMyDoc(false));
+    } else throw e;
+  }
   try{ __lastSubmitError = null; }catch(e){}   // [Ver 13.5.1] 성공했으니 경고를 지운다
   return true;
 }
@@ -17130,16 +17292,35 @@ async function fbSubmitScore(){
      그 보드에서 가장 높은(즉 먼저 나온) 한 줄만 남는다. code가 비어 있는 옛 문서는
      구분할 수 없으니 문서 id로 대신 구분한다.
    ========================================================================== */
+/* ##########################################################################
+   [Ver 13.15] 순위에서 빼는 사람 (버그 사용)
+   --------------------------------------------------------------------------
+   ⚠ **서버 문서를 지우는 게 아니다.** 보안 규칙상 클라이언트는 남의 문서를 못 지운다.
+     여기서는 조회 결과에서 걸러낼 뿐이고, 진짜로 없애려면 Firebase 콘솔에서
+     players 컬렉션의 해당 문서를 직접 삭제해야 한다.
+   닉네임은 바뀔 수 있으니 유저 코드도 함께 적을 수 있게 해뒀다(둘 중 하나만 맞아도 걸린다).
+   ########################################################################## */
+const LB_EXCLUDED_NICKS = ['hacker'];   // 소문자로 비교한다
+const LB_EXCLUDED_CODES = [];           // 유저 코드(대문자)로도 막을 수 있다
+function isExcludedFromBoard(r){
+  if(!r) return false;
+  const nick = String(r.nick || '').trim().toLowerCase();
+  const code = String(r.code || '').trim().toUpperCase();
+  return LB_EXCLUDED_NICKS.includes(nick) || LB_EXCLUDED_CODES.includes(code);
+}
 function dedupeLeaderboardRows(rows, n){
   const seen = new Set();
   const out = [];
+  let excluded = 0;
   for(const r of rows){
+    if(isExcludedFromBoard(r)){ excluded++; continue; }   // [Ver 13.15] 버그 사용 — 순위에서 뺀다
     const key = (r.code && String(r.code).trim()) || ('__id:' + r.id);
     if(seen.has(key)) continue;
     seen.add(key);
     out.push(r);
     if(out.length >= n) break;
   }
+  try{ window.__lbExcludedCount = excluded; }catch(e){}
   return out;
 }
 async function fbFetchTop(boardKey, n){
@@ -18672,10 +18853,12 @@ function renderOnlineRank(){
         if(!r) return '<div class="ol-pod empty"></div>';
         const mine = (r.code === myCode);
         const medal = pi===0?'🥇':pi===1?'🥈':'🥉';
+        /* [Ver 13.15] 남의 얼굴도 보이게 — pfp 는 서버 문서에 새로 실린 필드다.
+           옛 문서(pfp 없음)는 profilePicHtml 이 기본 사진으로 대신 그린다. */
         return `<div class="ol-pod p${pi+1}${mine?' mine':''}" onclick="openPlayerProfile(${pi})" title="눌러서 프로필 보기">
           <div class="ol-pod-medal">${medal}</div>
-          <div class="ol-pod-cls">${classIconHtml(r.sCls || 1, pi===0?38:30)}</div>
-          <div class="ol-pod-nick">${escapeHtml(r.nick||'이름없음')}${mine?' <i>나</i>':''}</div>
+          <div class="ol-pod-cls">${profilePicHtml({ size: pi===0?46:38, key: r.pfp, cls: r.sCls || 1 })}</div>
+          <div class="ol-pod-nick">${escapeHtml(r.nick||'이름없음')}${mine?' <i>나</i>':''}${r.lv?` <b class="ol-lv">Lv.${r.lv|0}</b>`:''}</div>
           <div class="ol-pod-val">${escapeHtml(b.fmt(r).replace(/<[^>]+>/g,''))}</div>
           <div class="ol-pod-base"><span>${pi+1}</span></div>
         </div>`;
@@ -18689,12 +18872,15 @@ function renderOnlineRank(){
          남의 순위가 안 바뀌는 게 "서버 탓"인지 "그 사람이 안 한 것"인지 여기서 갈린다. */
       return `<div class="ol-row${mine?' mine':''} ol-clickable" onclick="openPlayerProfile(${i})" title="눌러서 프로필 보기">
         <span class="ol-rank">${i+1}</span>
-        <span class="ol-cls">${classIconHtml(r.sCls || 1, 20)}</span>
-        <span class="ol-nick">${escapeHtml(r.nick||'이름없음')}${mine?' <i>나</i>':''}${r.bio?`<small class="ol-bio">${escapeHtml(r.bio)}</small>`:''}</span>
+        <span class="ol-cls">${profilePicHtml({ size: 26, key: r.pfp, cls: r.sCls || 1 })}</span>
+        <span class="ol-nick">${escapeHtml(r.nick||'이름없음')}${mine?' <i>나</i>':''}${r.lv?` <b class="ol-lv">Lv.${r.lv|0}</b>`:''}${r.bio?`<small class="ol-bio">${escapeHtml(r.bio)}</small>`:''}</span>
         <span class="ol-val">${escapeHtml(b.fmt(r).replace(/<[^>]+>/g,''))}<small class="ol-when">${escapeHtml(olAgoText(r.updatedAt))}</small></span>
       </div>`;
     }).join('');
 
+    /* [Ver 13.15] 순위에서 뺀 사람이 있으면 조용히 알린다 — 왜 사라졌는지 모르면 그게 더 이상하다. */
+    const exclHtml = (window.__lbExcludedCount|0) > 0
+      ? `<div class="ol-excl">🚫 <b>${window.__lbExcludedCount|0}명</b>이 <b>버그 사용</b>으로 순위에서 제외되었습니다.</div>` : '';
     /* [Ver 13.5.1] 내 기록이 서버에 안 올라가고 있으면 여기서 알린다.
        "다른 사람 순위가 안 바뀐다"는 제보가 실제로는 이 실패인 경우가 많다. */
     const submitWarn = __lastSubmitError ? `<div class="ol-warn">
@@ -18747,6 +18933,7 @@ function renderOnlineRank(){
       ${seasonHtml}
       ${genesisMineHtml}
       ${submitWarn}
+      ${exclHtml}
       ${podiumHtml}
       <div class="ol-me">
         <div>내 순위 — ${myIdx>=0 ? `<b>${myIdx+1}위</b>` : '<b>순위권 밖</b>'}</div>
@@ -19402,6 +19589,9 @@ function renderMineScreen(){
       <button class="gc-pull gc-pull-mine" ${n < 5 ? 'disabled' : ''} onclick="doMine(5)">
         <b>5회 채굴</b><small>⛏️ 5</small>
       </button>
+      <button class="gc-pull gc-pull-mine" ${n < 1 ? 'disabled' : ''} onclick="openMineCountPicker()">
+        <b>원하는 만큼</b><small>⛏️ 직접 고르기</small>
+      </button>
       <button class="gc-pull gc-pull-mine" ${n < 10 ? 'disabled' : ''} onclick="doMine(10)">
         <b>10회 채굴</b><small>⛏️ 10</small>
       </button>
@@ -19444,6 +19634,9 @@ function renderMineScreen(){
         </button>
         <button class="gc-pull gc-pull-gold" ${gold < 1 ? 'disabled' : ''} onclick="doGoldMine(1)">
           <b>1회 채굴</b><small>🪙 1</small>
+        </button>
+        <button class="gc-pull gc-pull-gold" ${gold < 1 ? 'disabled' : ''} onclick="openGoldMineCountPicker()">
+          <b>원하는 만큼</b><small>🪙 직접 고르기</small>
         </button>
         <button class="gc-pull gc-pull-gold" ${gold < 5 ? 'disabled' : ''} onclick="doGoldMine(5)">
           <b>5회 채굴</b><small>🪙 5</small>
@@ -19565,6 +19758,43 @@ function mineRollOnce(rates){
   return use[Math.floor(Math.random()*use.length)].key;
 }
 /* 채굴 — 2초짜리 "캐는 중" 안내를 띄운 뒤 결과를 보여준다. (등급별 연출은 없다) */
+/* [Ver 13.15] 채굴 — 보유 곡괭이 전부까지 원하는 만큼 */
+function openMineCountPicker(){
+  const have = pickaxeCount();
+  if(have < 1){ showModal('⛏️ 곡괭이 부족', '곡괭이가 없습니다.', [{label:'확인', solid:true}]); return; }
+  openCountPicker({
+    title:'⛏️ 유물 캐기', hero:'⛏️', unit:'번', go:'캐러 가기',
+    desc:'곡괭이를 <b>원하는 개수만큼</b> 한 번에 씁니다. 결과는 한 장에 모아서 보여줍니다.',
+    max: have, have:`보유 ⛏️ <b>${have}</b>개`,
+    exp:(n)=>`곡괭이 <b>${n}</b>개 사용 · 남는 곡괭이 <b>${have-n}</b>개`,
+    onGo:(n)=> doMine(n)
+  });
+}
+/* [Ver 13.15] 개쩌는 곡괭이 채굴 — 마찬가지 */
+function openGoldMineCountPicker(){
+  const have = goldPickaxeCount();
+  if(have < 1){ showModal('🪙 개쩌는 곡괭이 부족', '개쩌는 곡괭이가 없습니다.', [{label:'확인', solid:true}]); return; }
+  openCountPicker({
+    title:'🪙 개쩌는 곡괭이로 캐기', hero:'🪙', unit:'번', go:'캐러 가기',
+    desc:'<b>영웅 · 전설만</b> 나옵니다. 원하는 개수만큼 한 번에 씁니다.',
+    max: have, have:`보유 🪙 <b>${have}</b>개`,
+    exp:(n)=>`개쩌는 곡괭이 <b>${n}</b>개 사용 · 남는 것 <b>${have-n}</b>개`,
+    onGo:(n)=> doGoldMine(n)
+  });
+}
+/* [Ver 13.15] 상자 — 1~BOX_MAX_OPEN 사이에서 원하는 만큼 */
+function openBoxCountPicker(){
+  const keys = boxKeyCount();
+  const canOpen = Math.min(BOX_MAX_OPEN, Math.floor(keys / BOX_KEY_COST));
+  if(canOpen < 1){ showModal('🔑 열쇠 부족', `상자 1개를 열려면 열쇠가 <b>${BOX_KEY_COST}개</b> 필요합니다.`, [{label:'확인', solid:true}]); return; }
+  openCountPicker({
+    title:'🎁 상자 열기', hero:'🎁', unit:'개', go:'열기',
+    desc:`한 번에 <b>1~${BOX_MAX_OPEN}개</b>까지 열 수 있습니다.`,
+    max: canOpen, have:`보유 🔑 <b>${keys}</b>개`,
+    exp:(n)=>`상자 <b>${n}</b>개 · 열쇠 <b>${BOX_KEY_COST*n}</b>개 사용 (남음 ${keys-BOX_KEY_COST*n})`,
+    onGo:(n)=> doOpenBox(n)
+  });
+}
 function doMine(count){
   try{ questBump('mine', 1); }catch(e){}   // [Ver 13.0] 일일 퀘스트 '유물 뽑기'
   if(mineBusy) return;
@@ -19645,6 +19875,51 @@ function doPickaxeUpgrade(){
   window.__puN = 1;
   puStep(0);
 }
+/* ##########################################################################
+   [Ver 13.15] 범용 개수 선택창 — "원하는 만큼 한 번에"
+   --------------------------------------------------------------------------
+   채굴(⛏️/🪙)·상자(🎁)가 1·5·10 고정 버튼뿐이라, 그 사이 개수를 쓰려면
+   버튼을 여러 번 눌러야 했다. 13.4 곡괭이 강화의 개수 선택창과 **같은 모양**을 쓴다
+   (`.pu-*` CSS 를 그대로 재사용하므로 새 스타일이 없다).
+   ⚠ max 는 부를 때 계산해 넘긴다 — 창이 떠 있는 동안 보유량이 바뀌지 않기 때문이다.
+   ########################################################################## */
+function openCountPicker(o){
+  const max = Math.max(1, o.max|0);
+  showModal(o.title, `<div class="pu-wrap">
+      <div class="pu-hero">${o.hero||''}</div>
+      <div class="pu-line">${o.desc||''}</div>
+      <div class="pu-pick">
+        <button class="btn btn-sm pu-minus" onclick="cpStep(-10)">−10</button>
+        <button class="btn btn-sm pu-minus" onclick="cpStep(-1)">−1</button>
+        <div class="pu-n"><b id="cpN">1</b><small>${o.unit||'개'}</small></div>
+        <button class="btn btn-sm" onclick="cpStep(1)">+1</button>
+        <button class="btn btn-sm" onclick="cpStep(10)">+10</button>
+        <button class="btn btn-sm" onclick="cpStep('max')">전부</button>
+      </div>
+      <div class="pu-exp" id="cpExp"></div>
+      <button class="btn btn-solid pu-go" onclick="cpConfirm()">${o.go||'확인'}</button>
+      <div class="pu-have">${o.have||''}</div>
+    </div>`, [{ label:'그만두기' }]);
+  window.__cp = { n:1, max, fn:o.onGo, exp:o.exp||null };
+  cpStep(0);
+}
+function cpStep(d){
+  const cp = window.__cp; if(!cp) return;
+  let n = cp.n || 1;
+  if(d === 'max') n = cp.max; else n = n + d;
+  cp.n = Math.max(1, Math.min(cp.max, n));
+  const el = document.getElementById('cpN'); if(el) el.textContent = cp.n;
+  const ex = document.getElementById('cpExp');
+  if(ex) ex.innerHTML = cp.exp ? cp.exp(cp.n) : '';
+}
+function cpConfirm(){
+  const cp = window.__cp; if(!cp) return;
+  const n = cp.n; const fn = cp.fn;
+  window.__cp = null;
+  try{ closeModal(); }catch(e){}
+  try{ if(typeof fn === 'function') fn(n); }catch(e){ console.error('[개수 선택]', e); }
+}
+
 /* 개수 조절 — 보유량을 넘지 않게 잘라낸다 */
 function puStep(d){
   const have = pickaxeCount();
@@ -19866,6 +20141,9 @@ function renderBoxScreen(){
       </button>
       <button class="gc-pull gc-pull-box" ${keys < BOX_KEY_COST*5 ? 'disabled' : ''} onclick="doOpenBox(5)">
         <b>상자 5개 열기</b><small>🔑 ${BOX_KEY_COST*5}</small>
+      </button>
+      <button class="gc-pull gc-pull-box" ${keys < BOX_KEY_COST ? 'disabled' : ''} onclick="openBoxCountPicker()">
+        <b>원하는 만큼</b><small>🎁 1~${BOX_MAX_OPEN}개</small>
       </button>
       <button class="gc-pull gc-pull-box" ${keys < BOX_KEY_COST*BOX_MAX_OPEN ? 'disabled' : ''} onclick="doOpenBox(${BOX_MAX_OPEN})">
         <b>상자 ${BOX_MAX_OPEN}개 열기</b><small>🔑 ${BOX_KEY_COST*BOX_MAX_OPEN}</small>
@@ -20838,8 +21116,11 @@ function renderPassScreen(){
        → 마스터리 수치 자체는 계속 쌓인다(bumpCardMastery). 화면에만 안 나온다.
    ⚠ 되살릴 때 "어떻게 놀까?" 창의 클래식 버튼 주석도 함께 풀 것.
    ========================================================================== */
-const SIMPLIFY_CLOSED_MODES = ['farming','cult','br','classic'];
-const SIMPLIFY_HIDE_MASTERY = true;
+/* [Ver 13.15] 클래식을 다시 열었다. ⚠ "어떻게 놀까?" 창의 버튼 주석도 함께 풀어야 한다(아래). */
+const SIMPLIFY_CLOSED_MODES = ['farming','cult','br'];
+/* [Ver 13.15] 마스터리 복구. 수치는 13.1 내내 계속 쌓이고 있었고(bumpCardMastery)
+   화면에서만 가려져 있었다 — 켜는 순간 그동안 쌓인 게 그대로 드러난다. */
+const SIMPLIFY_HIDE_MASTERY = false;
 function isModeClosed(k){ return SIMPLIFY_CLOSED_MODES.indexOf(k) !== -1; }
 
 const ARCADE_MODES = [
@@ -21099,6 +21380,46 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 13.15', date: '2026-09-05',
+    items: [
+      '\u{1F451} <b>[신규] 3:3 팀전에서도 랩터의 권능</b>을 쓸 수 있습니다. 재단도 함께 열립니다.',
+      '\u{1F0CF} <b>[복구] 카드 마스터리</b>가 돌아왔습니다. 수치는 그동안 계속 쌓이고 있었으니, 켜는 순간 그대로 드러납니다.',
+      '\u{1F3B4} <b>[복구] 클래식 모드</b> — 일반 모드에서 다시 고를 수 있습니다.',
+      '\u{2694} <b>[밸런스] 재단 이빨 5개</b> — 영웅 보너스 확률 <b>22% → 35%</b>.',
+      '\u{26CF} <b>[편의] 유물 채굴·상자 열기를 원하는 개수만큼</b> 한 번에 할 수 있습니다. 1·5·10 버튼 옆에 <b>원하는 만큼</b>이 생겼습니다.',
+      '\u{1F916} <b>[봇] 상점에 살 게 없으면 봇도 리롤합니다.</b> 예전에는 매진투성이거나 E급만 남으면 그냥 포기했습니다. (사람과 같은 횟수·비용 규칙을 씁니다)',
+      '\u{1F3C6} <b>[리더보드] 레벨과 프로필 사진</b>이 함께 보입니다.',
+      '\u{1F6AB} <b>[리더보드] 버그를 쓴 계정을 순위에서 제외</b>했습니다.',
+      '\u{1F5C2} <b>[UI] 리더보드 · 신규 카드 · 밸런스 패치</b>를 서랍 밖으로 꺼내 메뉴에서 바로 누를 수 있게 했습니다. 서랍에 중복이던 <b>카드 뽑기</b>는 지웠습니다.',
+    ]
+  },
+  {
+    version: 'Ver 13.14', date: '2026-09-05',
+    items: [
+      '\u{2B50} <b>[복구] 레벨 시스템이 돌아왔습니다.</b> 클래스와 달리 <b>놀이터·퀴즈를 뺀 모든 모드</b>에서 오릅니다 — 팀전·야차·온라인·아케이드 전부 포함입니다. 메뉴와 <b>내 정보</b>에 클래스와 <b>별개의 게이지</b>가 생겼습니다.',
+      '\u{1F396} <b>[개편] 클래스가 훨씬 잘 오릅니다.</b> 승급에 필요한 경험치는 <b>2배</b>가 됐지만, <b>얻는 양을 크게 올리고 잃는 양을 크게 줄였습니다.</b> 낮은 클래스에서는 <b>꼴등이어도 경험치가 깎이지 않습니다.</b>',
+      '\u{1F4C8} 실제로는 예전보다 빨라집니다 — 클래스 4까지 <b>33.6판 → 21.4판</b>(승률 25%), 승률이 낮을수록 차이가 큽니다(<b>47.2판 → 25.3판</b>).',
+      '\u{1F534} <b>[버그수정] 3:3 팀전에서 상대(블루팀) 스탯창이 아예 안 보이던 문제.</b> 화면 오른쪽에 블루팀 칸이 제대로 생깁니다.',
+      '\u{1F5A5} <b>[버그수정] 팀전·야차 1:1 화면이 깨지던 문제.</b> 턴 요약과 권능 독이 제자리를 못 찾아 손패와 겹치고 있었습니다.',
+    ]
+  },
+  {
+    version: 'Ver 13.13.1', date: '2026-09-05',
+    items: [
+      '\u{1F535} <b>[UI] 상태칩 모양을 다듬었습니다.</b> 모서리를 <b>각지게</b> 바꾸고, 버프/디버프 테두리를 <b>빨강·파랑</b>으로 바꿔 한눈에 갈리게 했습니다.',
+      '\u{1F311} <b>[UI] 테마마다 색을 따로 씁니다.</b> 어두운 테마에서는 <b>더 밝은 빨강·파랑</b>을 써서 테두리가 묻히지 않고, 밝은 테마에서는 <b>완전한 빨강·파랑</b>을 그대로 씁니다.',
+      '\u{1F308} <b>[수정] 크로마틱 칩</b>이 칩 크기에 안 맞던 문제. 배경까지 꽉 찬 그림인데 위로 밀어 올려 아래가 비어 있었습니다.',
+    ]
+  },
+  {
+    version: 'Ver 13.13', date: '2026-09-05',
+    items: [
+      '\u{1F5BC} <b>[UI] 상태칩 그림 16종을 더했습니다.</b> 이제 <b>44종</b>이 그림으로 나옵니다.',
+      '\u{2702} <b>[신규] 고자 상태에 칩이 생겼습니다.</b> 예전에는 <b>체력바를 봐야만</b> 알 수 있었습니다.',
+      '\u{1FA9E} <b>[버그수정] NO U 권능을 써도 상태창에 아무것도 안 뜨던 문제.</b> 반사가 도는 동안 <b>NO U</b> 칩이 뜹니다. (카드 "반사 대기"와는 다른 효과라 칩도 따로 뜹니다)',
+    ]
+  },
   {
     version: 'Ver 13.12', date: '2026-09-05',
     items: [
@@ -32996,7 +33317,7 @@ function drawCardRespectingGacha(p){
      없는 칩도 전부 정사각형(이모지)으로 그려진다. 배치·크기를 눈으로 확인하는 용도.
    ########################################################################## */
 const CHIP_BUFF = new Set([
-  'reflectNext','nullifyNext','guardNext','shield','tripleShieldCharges',
+  'reflectNext','pwReflect','nullifyNext','guardNext','shield','tripleShieldCharges',
   'routerShareAll','matrixSealed','fastReactionMs','reflexEvasionAdd','lk69',
   'beggarIncomeMult','whiteTigerReady','telekinesisTarget','curseDollTarget','permaVulnDown',
   'permaPierce','permaAoe','psychoKillHeal','atkUp','unconsciousReady',
@@ -33041,7 +33362,8 @@ const CHIP_DEBUFF = new Set([
      좋게 봐줄 여지가 없다. */
   'amnesiaActive',
   'pwSeize',      // [Ver 13.6] 압류 예고
-  'dcPending',]); // [Ver 13.11.1] 연결 끊김 유예
+  'dcPending',    // [Ver 13.11.1] 연결 끊김 유예
+  'goja',]);      // [Ver 13.13] 고자 — 최대 체력 1
 /* 위 둘에 없으면 전부 중립이다 — 팀·연인·매트릭스처럼 좋다 나쁘다를 가를 수 없는 것들.
    ⚠ 다만 **같은 칩이 상황에 따라 갈리는 것들**이 있다 — 점괘(길조↔흉조) · 회복량(증↔감) ·
      임시 공격력(샤우팅↔지후한테 쳐맞음) · WILD(±) · 누르끼끼(박상현급↔사황급).
@@ -33138,6 +33460,13 @@ const CHIP_ICON_KEYS = new Set([
      텔레키네시스만 좌상단에 지속시간 배지(N바퀴)가 붙는데, 머리가 가운데라 가려지지 않는다. */
   'lk69','beggarIncomeMult','routerShareAll','fastReactionMs',
   'libero','matrixSealed','whiteTigerReady','telekinesisTarget',
+  /* ── [Ver 13.13] 3차 14종 + 신규 칩 2개 ──
+     수치 배지가 붙는 shield · nextAtkCritChance · chromaticMultiplier 만 그림을 위로 올렸다.
+     reflectNext · pwReflect 는 **NO U 권능 아이콘을 재사용**한다(pw/nou.jpg 를 chip/ 으로 복사). */
+  'proxyTargetId','gojaImmune','goja','nextAtkCritChance','unconsciousReady',
+  'ignoreNullifyReflect','shield','stunResistCharges','psychoKillHeal','permaPierce',
+  'deliciousReviveReady','curseDollTarget','permaAoe','chromaticMultiplier',
+  'reflectNext','pwReflect',
 ]);
 /* 파일 이름이 key 와 다른 칩만 여기 적는다. 없으면 `chip/{key}.png` 다.
    쓰임새는 둘이다 —
@@ -33366,6 +33695,9 @@ function getStatusChips(p){
   if(isExcluded(p)) addChip('exclusionLabel', '🌀', `${p.exclusionLabel||'게임에서 제외'} · 무적 · ${p.exclusionDueTurn - totalIndividualTurns}턴 후 복귀`, 'red');
   if(p.hpBlindDueRound > turnCount) addChip('hpBlindDueRound', '🙈', `징오징오 · 남 체력 안 보임 · ${p.hpBlindDueRound-turnCount}바퀴`, 'red');
   if(p.sellPriceLockValue != null && p.sellPriceLockDueRound && turnCount < p.sellPriceLockDueRound) addChip('sellPriceLockValue', '💰', `카드 판매가 ${fmtWon(p.sellPriceLockValue)} 고정 · ${p.sellPriceLockDueRound-turnCount}바퀴`, 'red');
+  /* [Ver 13.13] NO U 권능 — 실시간 초 단위라 바퀴/턴 배지가 안 붙는다.
+     ⚠ 카드의 reflectNext 와는 **다른 필드**다. 둘 다 켜져 있으면 칩도 둘 다 뜬다(맞는 동작이다). */
+  if(p.pwReflectUntil && Date.now() < p.pwReflectUntil) addChip('pwReflect', '🪞', 'NO U · 받는 피해를 시전자에게 반사', 'blue');
   if(p.reflectNext) addChip('reflectNext', '⤺', p.reflectNextDueRound ? `반사 대기 · ${Math.max(0,p.reflectNextDueRound-turnCount)}바퀴` : '반사 대기', 'blue');
   if(p.nullifyNext) addChip('nullifyNext', '⊘', '무효 대기', 'blue');
   if(p.guardNext) addChip('guardNext', '🛡', '가드 대기', 'blue');
@@ -33473,6 +33805,10 @@ function getStatusChips(p){
   if(p.nextCardGuaranteedHit) addChip('nextCardGuaranteedHit', '🎯', '집중(다음 카드 명중 100%)', 'yellow');
   if(p.causalityLocked) addChip('causalityLocked', '☯', '인과율조작(확률100%)', 'yellow');
   if(p.gojaImmune) addChip('gojaImmune', '🛡', '고자면역', 'yellow');
+  /* [Ver 13.13] 고자 — 최대 체력이 1로 깎인 상태. 예전엔 칩이 없어 체력바를 봐야 알았다.
+     ⚠ 판정은 게임이 이미 쓰는 것과 같다(__wasGoja 도 maxHp===1 로 본다).
+       "도주" 복귀처럼 다른 경로로 최대 체력이 1이 되는 경우도 같은 상태이므로 함께 잡힌다. */
+  if(p.maxHp === 1) addChip('goja', '✂️', '고자 (최대 체력 1)', 'red');
   if(p.godBlessed) addChip('godBlessed', '✟', '신의 가호(B등급이하 면역)', 'yellow');
   if(p.lamboUnlimited) addChip('lamboUnlimited', '🏎', '람보르기니(무제한 사용)', 'yellow');
   if(p.accuracyMod < 0) addChip('accuracyMod', '▽', `명중률 ${p.accuracyMod}%`, 'red');
@@ -36402,9 +36738,22 @@ function buildVictoryTierHtml(rankMap){
    있어서 이 카드가 항상 빈 문자열을 반환했다 — 실제로는 classState가 정상적으로 오르고 있었는데도
    "내 정보" 패널을 직접 열어보기 전에는 그걸 확인할 방법이 이 결과 화면에 없었던 것.
    → 실제로 채워지는 lastClassSettlement를 쓰도록 교체. */
+/* [Ver 13.14] 레벨 한 줄. 클래스 카드가 없는 판(팀전·야차·온라인 등)에서도 이건 뜬다 —
+   그런 판에서 아무것도 안 뜨면 "정산이 안 됐나" 싶어진다. */
+function buildVictoryLevelHtml(){
+  const st = lastExpSettlement;
+  if(!st) return '';
+  const up = st.leveledUp > 0
+    ? `<b style="color:var(--tone-green);">🎉 Lv.${st.beforeLevel} → Lv.${st.afterLevel}</b>`
+    : `<b>Lv.${st.afterLevel}</b>`;
+  return `<div class="victory-lv-line">⭐ ${up}
+    <span>+${st.gained} Exp</span>
+    <span style="color:var(--fg-faint);">${st.afterExp} / ${st.needed}</span>
+  </div>`;
+}
 function buildVictoryExpHtml(){
   const st = lastClassSettlement;
-  if(!st) return '';
+  if(!st) return buildVictoryLevelHtml();   // 클래스가 안 붙는 판이면 레벨만이라도 보여준다
   const beforeLabel = classLabel(st.beforeCls);
   const afterLabel = classLabel(st.afterCls);
   const pct = classProgressPct(); // 지금 classState 기준 — st.afterCls/afterExp와 일치하는 시점
@@ -36418,7 +36767,7 @@ function buildVictoryExpHtml(){
      data-* 에 필요한 값을 실어 보내 startClassExpAnim()이 알아서 굴린다.
      (결과 화면·사망 화면 양쪽이 이 HTML을 그대로 쓰므로 한 곳만 고치면 둘 다 움직인다) */
   const startPct = classPctFor(st.beforeCls, st.beforeExp);
-  return `<div class="victory-tier-block cls-anim" style="--tier-gradient:linear-gradient(135deg,#6bc8ff,#8effb2);--tier-glow:rgba(139,209,255,0.5);"
+  return buildVictoryLevelHtml() + `<div class="victory-tier-block cls-anim" style="--tier-gradient:linear-gradient(135deg,#6bc8ff,#8effb2);--tier-glow:rgba(139,209,255,0.5);"
        data-cls-before="${st.beforeCls}" data-cls-after="${st.afterCls}"
        data-exp-before="${st.beforeExp}" data-exp-after="${st.afterExp}"
        data-delta="${st.delta}" data-promoted="${st.promoted||0}">
@@ -54043,7 +54392,10 @@ function botShopBuyStep(bot){
     if(bot.gold < 60) return 'done';
     if(Math.random() >= (bot.gold >= 150 ? 0.7 : 0.5)) return 'done';
   }
-  const i = botPickShopSlotIndex(bot);
+  let i = botPickShopSlotIndex(bot);
+  /* [Ver 13.15] 살 게 없으면 사람처럼 한 번 리롤해보고 다시 고른다.
+     그래도 없으면 예전처럼 그냥 넘어간다. */
+  if(i < 0 && botMaybeRerollShop(bot)) i = botPickShopSlotIndex(bot);
   if(i < 0) return 'done'; // 진열대에 살 만한 칸이 없다
   // [Ver 9.0] 봇도 재단을 쓰므로, 사람과 완전히 같은 shopSlotsFor/shopSlotPrice 규약을 탄다
   const slot = shopSlotsFor(bot)[i];
@@ -54090,6 +54442,41 @@ function botShopBuyStep(bot){
 /* [Ver 8.7.1] 봇이 진열된 상점 슬롯 중 살 만한 칸을 고른다. 없으면 -1.
    E등급과 봇이 활용 못 하는 패시브/부활류(BOT_AVOID_DRAW_TYPES)는 되도록 피하되,
    그런 칸밖에 없으면(=선택지가 없으면) E등급은 사지 않고 넘어간다(예전 로직과 동일한 취향). */
+/* ##########################################################################
+   [Ver 13.15] 봇의 상점 리롤
+   --------------------------------------------------------------------------
+   ▶ 언제 리롤하나 — **살 게 없을 때만.** botPickShopSlotIndex 가 -1 을 돌려준 뒤에만 부른다.
+     즉 "매진이 많다"거나 "E급·기피 카드만 남았다"가 이미 판정된 상태다.
+   ▶ 사람과 **같은 규칙**을 탄다 — 횟수 상한(fdnShopRerollMax)·비용(fdnShopRerollCost)·
+     그린벨트 차단까지 그대로다. 봇만 공짜로 돌리지 않는다.
+   ▶ 리롤하고도 살 돈이 남아야 의미가 있으므로 `비용 + 60골드` 를 기준으로 잡는다.
+   ⚠ 턴당 한 번만 시도한다(__shopRerolledThisTurn). 안 그러면 "살 게 없다 → 리롤 →
+     또 없다 → 또 리롤"로 돈이 다 빠지고, 호출부가 루프라 턴이 늘어질 수 있다.
+   ########################################################################## */
+function botMaybeRerollShop(bot){
+  try{
+    if(!bot || bot.isBot !== true) return false;
+    if(bot.__shopRerolledThisTurn) return false;
+    if(typeof greenbeltIdx !== 'undefined' && greenbeltIdx >= 0) return false;  // 그린벨트 — 아무도 못 돌린다
+    const rrMax  = fdnShopRerollMax(bot);
+    const rrCost = fdnShopRerollCost(bot);
+    if((bot.shopRerollsUsed || 0) >= rrMax) return false;
+    /* 무정부 중에는 카드값이 0이라 "리롤 뒤에 살 돈"을 따질 필요가 없다 */
+    const needAfter = (typeof anarchyActive !== 'undefined' && anarchyActive) ? 0 : 60;
+    if(bot.gold < rrCost + needAfter) return false;
+
+    bot.__shopRerolledThisTurn = true;
+    bot.gold -= rrCost;
+    bot.goldSpent = (bot.goldSpent || 0) + rrCost;
+    bot.shopRerollsUsed = (bot.shopRerollsUsed || 0) + 1;
+    bot.shopRerollUsed = (bot.shopRerollsUsed >= rrMax);   // 구버전 호환 플래그
+    initShopSlots(bot);
+    refreshFoundationShopSlots(bot);
+    log('gold', `${J(bot.name,'이','가')} 살 만한 게 없어 ${rrCost>0?`${fmtWon(rrCost)}을 내고 `:''}상점을 리롤했습니다.`);
+    try{ renderBoard(); }catch(e){}
+    return true;
+  }catch(e){ return false; }
+}
 function botPickShopSlotIndex(bot){
   // [Ver 9.0] 매물의 재단 Lv3의 개인 매물까지 포함해 고른다 (사람 쪽 렌더/구매와 같은 목록)
   const list = shopSlotsFor(bot);
@@ -54568,6 +54955,7 @@ function botPlay(){
   if(bot.hand.length === 0){ advanceTurn(); return; }
 
   bot.__shopBuysThisTurn = 0; // [Ver 8.7] 이번 턴 봇 상점 구매 횟수 카운터 초기화
+  bot.__shopRerolledThisTurn = false; // [Ver 13.15] 리롤은 턴당 한 번만
 
   // 이 봇 턴이 아직 유효한지(그 사이 턴이 넘어가거나 게임이 끝나지 않았는지) 확인하기 위한 토큰.
   const __turnToken = totalIndividualTurns;
@@ -56590,7 +56978,9 @@ function foundationUpgradeCost(lv){
    (LAN.gameMode는 초기화 전 undefined일 수 있어 다른 호출부와 같이 || 'normal'로 방어한다) */
 function isFoundationModeActive(){
   try{
-    if(draftMode || teamBattleMode || battleRoyaleMode || cultMode || hotseatMode) return false;
+    /* [Ver 13.15] 팀전에서도 권능을 쓴다.
+       ⚠ 이 함수는 **권능과 재단을 함께** 여닫는다. 팀전을 빼면 둘 다 열린다(의도한 것). */
+    if(draftMode || battleRoyaleMode || cultMode || hotseatMode) return false;
     if(lanMode) return (LAN.gameMode || 'normal') === 'normal';
     return true;
   }catch(e){ return false; }
