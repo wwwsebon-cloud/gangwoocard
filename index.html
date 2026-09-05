@@ -608,14 +608,14 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
 }
 
 /* ---------- 목록 행 ---------- */
-.card-row,.setting-row,.mail-item,.ol-row,.cl-row,.bx-row,.pdrow,.psd-row,
+.card-row,.setting-row,.mail-item,.ol-row,.bx-row,.pdrow,.psd-row,
 .pstat-row,.fr-row,.credit-row{
   display:flex; align-items:center; gap:var(--sp-3);
   padding:11px 14px; border-radius:var(--r-sm);
   background:var(--bg-2);
   transition:background var(--t) var(--ease), transform var(--t-fast) var(--ease);
 }
-.card-row:hover,.mail-item:hover,.ol-row.ol-clickable:hover,.cl-row:hover{
+.card-row:hover,.mail-item:hover,.ol-row.ol-clickable:hover{
   background:var(--bg-3);
 }
 
@@ -2104,12 +2104,7 @@ body.pw-targeting .p-card.pw-pick{
 .uc-note{ font-size:11px; color:var(--tone-green); }
 .ol-mycode{ display:flex; flex-direction:column; gap:8px; padding:16px; border-radius:var(--r); background:var(--bg-2); }
 .ol-mycode-big{ font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:0.14em; text-align:center; }
-.cl-wrap{ display:flex; flex-direction:column; gap:6px; }
-.cl-row{ background:var(--bg-2); font-size:11.5px; }
-.cl-row.used{ opacity:0.45; text-decoration:line-through; }
-.cl-code{ font-family:var(--font-mono); font-weight:600; }
-.cl-info,.cl-note{ font-size:10.5px; color:var(--fg-faint); }
-.cl-list{ display:flex; flex-direction:column; gap:5px; max-height:40vh; overflow-y:auto; }
+/* [Ver 13.9] .cl-* (코드 확인 창) 규칙을 지웠다 — 창 자체가 없어졌다. */
 
 /* 친구 */
 .fr-list{ display:flex; flex-direction:column; gap:5px; }
@@ -2888,9 +2883,10 @@ body.mobile-mode .zone-bots .status-icons{ flex-wrap:nowrap; overflow:hidden; }
 .code-wrap{ display:flex; flex-direction:column; gap:var(--sp-3); }
 .code-row{ display:flex; gap:var(--sp-2); }
 /* [Ver 12.4.3 버그수정] text-transform:uppercase는 화면 표시만 바꾸고 실제 입력값은
-   그대로였다. 그런데 코드가 대소문자를 구분하는 방식이라(예: 소문자 전용 코드
-   imgangwoodeveloper090205), 사용자가 소문자로 쳐도 화면엔 대문자로만 보여
-   "소문자를 못 치는 것"처럼 느껴졌다. 표시를 실제 입력값과 일치시킨다. */
+   그대로였다. 그런데 코드가 대소문자를 구분하는 방식이라(소문자 전용 코드가 있다),
+   사용자가 소문자로 쳐도 화면엔 대문자로만 보여 "소문자를 못 치는 것"처럼 느껴졌다.
+   표시를 실제 입력값과 일치시킨다.
+   ⚠ [Ver 13.9] 여기 예시로 적혀 있던 실제 개발자 코드를 지웠다. 주석에도 코드를 쓰지 말 것. */
 .code-input{ flex:1; font-family:var(--font-mono); letter-spacing:0.08em; }
 .code-go{
   flex-shrink:0; padding:10px 18px; border-radius:var(--r-sm);
@@ -6721,7 +6717,7 @@ body.high-contrast.theme-light-shell{
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.8</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.10</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -6951,9 +6947,8 @@ body.high-contrast.theme-light-shell{
           <span class="nm-drawer-sw"></span>
         </label>
         <div class="nm-drawer-sep"></div>
-        <button class="nm-drawer-item nm-drawer-dev" id="devCodeListBtn" style="display:none;" onclick="closeMenuDrawer(); openCodeList();">
-          <span class="ic">🔑</span><span class="tx"><b>코드 확인</b><small>이 빌드에 등록된 코드</small></span>
-        </button>
+        <!-- [Ver 13.9] '코드 확인' 창을 없앴다 — 코드가 해시로만 들어 있어 보여줄 수 없다.
+             원본 코드 목록은 Desktop\갱우카_코드표.md 에 있다. -->
         <button class="nm-drawer-item nm-drawer-dev" id="devEventBtn" style="display:none;" onclick="openDevEventForce();">
           <span class="ic">🎲</span><span class="tx"><b>이벤트 강제</b><small>개발자 전용</small></span>
         </button>
@@ -7935,8 +7930,14 @@ function devAuthSubmit(){
   const err = document.getElementById('devAuthErr');
   const box = document.getElementById('devAuthBox');
   const v = String((inp && inp.value) || '').trim();
-  if(v === '7753'){ closeDevAuth(); enableDevMode('full'); return; }
-  if(v.toLowerCase() === 'zazihu'){ closeDevAuth(); enableDevMode('sub'); return; }
+  /* [Ver 13.9] 비번을 평문으로 두지 않는다. 예전엔 여기 비번이 그대로 적혀 있어
+     소스에서 검색 한 번이면 나왔다. 이제 해시만 있다.
+     ⚠ **주석에도 비번을 쓰지 말 것.** 13.9 작업 중에 설명한답시고 옛 비번을 주석에
+       도로 적었다가 지웠다. 그러면 숨긴 의미가 통째로 없어진다.
+     ⚠ 비번을 바꾸려면 게임을 열고 콘솔에 `sha256Hex('새비번')` 을 쳐서 나온 값을 넣을 것. */
+  const vh = sha256Hex(v);
+  if(vh === 'b6a4127c9eaaf2d883a5a301042d1b971b303d77581527f587645d2c97686806'){ closeDevAuth(); enableDevMode('full'); return; }
+  if(sha256Hex(v.toLowerCase()) === '16b5d66682b30714c1b13e348c0a7799a2b3daeb00b4aabe1e92f2d0127db3cb'){ closeDevAuth(); enableDevMode('sub'); return; }
   if(err) err.textContent = '비밀번호가 올바르지 않습니다.';
   if(box){ box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake'); }
   if(inp){ inp.value = ''; try{ inp.focus(); }catch(e){} }
@@ -14486,7 +14487,8 @@ const POWER_DEFS = [
       const pick = mine[Math.floor(Math.random()*mine.length)];
       const def = cards.find(c=> c.name === pick.cardName);
       if(def){ grantCardToPlayer(me, mkUidCard(def), '권능 리콜'); pwLog(`↩️ "${escapeHtml(def.name)}"이(가) 손으로 돌아왔습니다.`); } } },
-  { key:'crush', rarity:'epic', icon:'🔨', name:'분쇄', target:'self', cd:49, amt:0, up:{k:'cd',per:5},
+  /* [Ver 13.10 너프] 구매가 1.5배(13.6)가 붙은 뒤로 쿨 49초는 너무 자주 돌았다. */
+  { key:'crush', rarity:'epic', icon:'🔨', name:'분쇄', target:'self', cd:135, amt:0, up:{k:'cd',per:2},
     desc:v=>`자신의 카드 한 장을 부수고 그 <b>구매가의 1.5배</b>만큼 골드를 얻습니다.`,
     run:(me,t,v)=>{ const i = pwHandIdxRandom(me); if(i<0) return;
       const c = me.hand[i]; const g = Math.floor(pwCardWorth(c, me) * 1.5);
@@ -14635,15 +14637,27 @@ const POWER_DEFS = [
       const nc = pwCardOfGrade(pwGradeShift(g, 1));
       [i1,i2].sort((a,b)=>b-a).forEach(i=> me.hand.splice(i,1));
       if(nc){ me.hand.push(nc); pwLog(`🪐 ${g}등급 2장이 <b>${escapeHtml(nc.name)}</b>(으)로 합쳐졌습니다.`); } } },
-  { key:'nou', rarity:'legend', icon:'🪞', name:'NO U', target:'self', cd:99, amt:7, up:{k:'amt',per:1},
+  /* [Ver 13.10 너프] 13.6에서 5→7초로 올렸더니 반사 창이 너무 넓었다. 2.5초로 좁히고 쿨도 올린다.
+     ⚠ 강화량(per:1)은 그대로다 — 기본이 7일 땐 +14%였지만 2.5가 되면서 **+40%**가 됐다.
+       강화가 유독 세게 먹히는 권능이 되었으니, 세다 싶으면 per 를 먼저 볼 것. */
+  { key:'nou', rarity:'legend', icon:'🪞', name:'NO U', target:'self', cd:125, amt:2.5, up:{k:'amt',per:1},
     desc:v=>`<b>${v}초</b> 동안 자신이 받는 피해를 <b>시전자에게 반사</b>합니다.`,
     run:(me,t,v)=>{ me.pwReflectUntil = Date.now() + v*1000; pwLog(`🪞 ${J(me.name,'이','가')} ${v}초간 모든 것을 되돌려보냅니다.`); } },
-  { key:'matrix', rarity:'legend', icon:'🟩', name:'매트릭스', target:'self', cd:126, amt:0, up:{k:'cd',per:5},
-    desc:v=>`즉시 <b>매트릭스</b>로 들어갑니다. 다시 쓰면 나옵니다.`,
-    run:(me,t,v)=>{ if(me.matrixId != null){ me.matrixId = null; me.matrixDueRound = 0; me.matrixAtkMod = 0;
-        pwLog(`🟩 ${J(me.name,'이','가')} 매트릭스에서 빠져나왔습니다.`); }
-      else { me.matrixId = 'pw'+me.id; me.matrixDueRound = 99999; me.matrixAtkMod = 0;
-        pwLog(`🟩 ${J(me.name,'이','가')} 매트릭스로 들어갔습니다.`); } } },
+  /* [Ver 13.10 리워크] 예전엔 "들어갔다 나오는 토글"이었다. 한 번 들어가면 나올 때까지
+     완전 무적·지목 불가라, 쓰는 쪽은 판을 구경하고 상대는 손쓸 방법이 없었다.
+     이제 **지목하고 5초만 가라앉았다가, 나오면서 그 대상을 친다.**
+     ⚠ 5초는 실시간이다(바퀴가 아니다). 만료는 powerCooldownTick → pwMatrixDiveTick 이 맡는다.
+       matrixDueRound 를 99999 로 두는 것은 **바퀴 기준** 자동복귀(tickMatrixReturn)가
+       중간에 끼어들어 먼저 꺼내가지 않게 하기 위한 것이다. */
+  { key:'matrix', rarity:'legend', icon:'🟩', name:'매트릭스', target:'enemy', cd:126, amt:350, up:{k:'cd',per:2},
+    desc:v=>`대상을 지목하고 <b>매트릭스</b>로 가라앉습니다. <b>${PW_MATRIX_DIVE_MS/1000}초</b> 뒤 빠져나오면서 그 대상에게 <b>${v}</b> 피해를 입힙니다. <span style="opacity:.7">(잠수 중에는 지목당하지 않습니다)</span>`,
+    run:(me,t,v)=>{ if(!t) return;
+      me.matrixId = 'pw'+me.id; me.matrixDueRound = 99999; me.matrixAtkMod = 0;
+      me.pwMatrixUntil = Date.now() + PW_MATRIX_DIVE_MS;
+      me.pwMatrixTargetId = t.id;
+      me.pwMatrixDmg = v;
+      pwLog(`🟩 ${J(me.name,'이','가')} ${J(t.name,'을','를')} 노려본 채 매트릭스로 가라앉았습니다. (${PW_MATRIX_DIVE_MS/1000}초)`);
+      try{ renderBoard(); }catch(e){} } },
   { key:'timewarp', rarity:'legend', icon:'⏳', name:'시간 왜곡', target:'self', cd:80, amt:1.5, up:{k:'amt',per:0.1},
     desc:v=>`<b>3바퀴</b>간 자신이 내는 카드의 반응시간이 <b>${v}초 감소</b>하고, 상대가 자신에게 쓰는 카드의 반응시간은 <b>1초 증가</b>합니다. <span style="opacity:.7">(고유 반응시간이 정해진 카드는 제외)</span>`,
     run:(me,t,v)=>{ me.pwWarp = { cut: Math.round(v*1000), add: 1000, dueRound: turnCount + 3 };
@@ -14659,7 +14673,7 @@ const POWER_DEFS = [
       pwLog(`😱 악몽 — ${J(t.name,'의','의')} 몸이 쪼그라듭니다. (최대 체력 ${om.toLocaleString()} → ${t.maxHp.toLocaleString()}, 1바퀴)`);
     } },
   { key:'monolith', rarity:'legend', icon:'🗿', name:'모노리스', target:'enemy', cd:140, amt:0, up:{k:'cd',per:5},
-    desc:v=>`손패에서 카드 한 장을 골라 <b>제물로 바치고</b>, 그 <b>등급이 높을수록</b> 지목 대상의 <b>현재 체력에 비례한</b> 피해를 입힙니다. <span style="opacity:.7">(E 5% · D 10% · C 15% … 등급당 +5%)</span>`,
+    desc:v=>`손패에서 카드 한 장을 골라 <b>제물로 바치고</b>, 그 <b>등급이 높을수록</b> 지목 대상의 <b>현재 체력에 비례한</b> 피해를 입힙니다. <span style="opacity:.7">(E 8% · D 16% · C 24% … 등급당 +8%)</span>`,
     run:(me,t,v)=>{ pwMonolithPick(me, t); } },
   { key:'neuter', rarity:'legend', icon:'✂️', name:'중성화', target:'enemy', cd:6974, amt:45, up:{k:'amt',per:2},
     desc:v=>`<b>${v}%</b> 확률로 지목 대상을 <b>고자</b>로 만듭니다. <b>실패하면 자신이</b> 고자가 됩니다. <span style="opacity:.7">(쿨타임이 아주 깁니다)</span>`,
@@ -15257,6 +15271,34 @@ function myPowerSlotsPayload(){
 
 /* ---------- 쿨타임 시계 ---------- */
 let __pwLastTick = 0;
+/* [Ver 13.10] 매트릭스 잠수 만료 — 5초가 지나면 꺼내고 지목했던 대상을 친다.
+   ⚠ 끌려나온 경우를 따로 처리하지 않는 이유:
+     매트릭스를 푸는 곳은 다섯 군데다(바퀴 자동복귀 · IOI 전면봉쇄 · 매트릭스 탈출 카드 ·
+     격리 복귀 · 사망). 전부 matrixId 를 null 로 만든다. 그래서 여기서 **내 매트릭스가
+     아직 내 것인지**만 확인하면 다섯 경우가 한꺼번에 걸러진다 — 남이 먼저 꺼냈으면
+     반격은 무산된다. 앞으로 매트릭스를 푸는 코드가 늘어도 여기는 고칠 필요가 없다. */
+function pwMatrixDiveTick(now){
+  if(!Array.isArray(players)) return;
+  players.forEach(p=>{
+    if(!p || !p.pwMatrixUntil) return;
+    if(p.matrixId !== 'pw'+p.id){    // 남이 먼저 꺼냈다 → 예약도 같이 사라진다
+      p.pwMatrixUntil = 0; p.pwMatrixTargetId = null; p.pwMatrixDmg = 0;
+      return;
+    }
+    if(now < p.pwMatrixUntil) return;
+    const t = players.find(x=> x && x.id === p.pwMatrixTargetId);
+    const dmg = p.pwMatrixDmg || 350;
+    p.pwMatrixUntil = 0; p.pwMatrixTargetId = null; p.pwMatrixDmg = 0;
+    p.matrixId = null; p.matrixDueRound = 0; p.matrixAtkMod = 0;
+    if(p.alive && t && t.alive){
+      pwLog(`🟩 ${J(p.name,'이','가')} 매트릭스에서 튀어나오며 ${J(t.name,'을','를')} 내리쳤습니다.`);
+      try{ dealDamage(p, t, dmg, 'NONE', false); }catch(e){}
+    } else {
+      pwLog(`🟩 ${J(p.name,'이','가')} 매트릭스에서 빠져나왔습니다.`);
+    }
+    try{ renderBoard(); }catch(e){}
+  });
+}
 function powerCooldownTick(){
   const now = Date.now();
   const dt = __pwLastTick ? Math.min(2000, now - __pwLastTick) : PW_TICK_MS;
@@ -15271,6 +15313,9 @@ function powerCooldownTick(){
   }
   /* 랜서버 참가자는 호스트가 굴린 값을 스냅샷으로 받는다 — 여기서 또 깎으면 두 배로 준다 */
   if(typeof lanIsRemoteClient==='function' && lanIsRemoteClient()){ renderPowerBar(); return; }
+  /* ⚠ 슬롯 루프보다 **먼저** 부른다. 그 루프에는 "자기 턴에는 자기 시계가 멈춘다"가 있는데,
+     잠수 5초는 실시간이라 자기 턴에도 흘러야 한다. */
+  try{ pwMatrixDiveTick(now); }catch(e){}
   const cur = (typeof currentPlayer==='function') ? currentPlayer() : null;
   players.forEach(p=>{
     if(!p || !p.alive || !Array.isArray(p.pwSlots)) return;
@@ -15617,7 +15662,9 @@ function pwBoltChain(me, t, amount){
 }
 
 /* ---- 모노리스 : 손패에서 제물을 고른다 ---- */
-const PW_MONOLITH_PCT_STEP = 5;                    // 등급 한 칸당 +5%
+/* [Ver 13.10] 등급 한 칸당 +8%. E 8 · D 16 · C 24 … LR 80 (현재 체력 기준) */
+const PW_MONOLITH_PCT_STEP = 8;
+const PW_MATRIX_DIVE_MS = 5000;                    // [Ver 13.10] 매트릭스 잠수 시간
 function pwMonolithPctOf(grade){
   const i = PW_GRADES.indexOf(String(grade||'E'));
   return PW_MONOLITH_PCT_STEP * ((i < 0 ? 0 : i) + 1);   // E=5 · D=10 · C=15 …
@@ -16635,8 +16682,6 @@ function updateDevMenuButtons(){
      (12.0까지는 켜도 아무 표시가 없어 "개발자 모드가 사라졌다"고 느껴졌다) */
   try{ document.body.classList.toggle('dev-mode', !!devMode); }catch(e){}
   try{ document.body.classList.toggle('subdev-mode', !!subDevMode); }catch(e){} // [Ver 12.6]
-  const b = document.getElementById('devCodeListBtn');
-  if(b) b.style.display = devAnyMode() ? '' : 'none'; // [Ver 12.6] 부개발자도 코드 확인은 쓴다
   const e = document.getElementById('devEventBtn');
   if(e) e.style.display = devMode ? '' : 'none';
   const u = document.getElementById('devUbiniteBtn');   // [Ver 13.0] 우비나이트 조절
@@ -16744,34 +16789,8 @@ function openDevEventForce(){
       }}
   ]);
 }
-function openCodeList(){
-  const used = (function(){ try{ return loadRedeemed(); }catch(e){ return []; } })();
-  const keys = Object.keys(REDEEM_CODES);
-  const rows = keys.map(k=>{
-    const d = REDEEM_CODES[k];
-    const isUsed = d.once && used.includes(k);
-    return `<div class="cl-row${isUsed?' used':''}">
-      <div class="cl-code" onclick="devCopyCode(${attrArgQ(k)})" title="눌러서 복사">${escapeHtml(k)}</div>
-      <div class="cl-info">
-        <b>${escapeHtml(d.title||'')}</b>
-        <small>${mailRewardText(d.reward)}${d.once?' · 1회 한정':''}${isUsed?' · <b>사용됨</b>':''}</small>
-      </div>
-    </div>`;
-  }).join('');
-  showModal('🔑 코드 확인 <span style="font-size:11px;opacity:.6;">(개발자 전용)</span>', `<div class="cl-wrap">
-      <div class="code-desc">이 빌드에 등록된 코드 <b>${keys.length}개</b>입니다. 코드를 누르면 복사됩니다.</div>
-      <div class="cl-list">${rows}</div>
-      <div class="cl-note" id="clNote"></div>
-    </div>`, [{ label:'닫기', solid:true }]);
-}
-function devCopyCode(code){
-  const note = document.getElementById('clNote');
-  const done = ()=>{ if(note) note.textContent = `"${code}" 복사했습니다.`; };
-  try{
-    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done).catch(()=>{ if(note) note.textContent = code; });
-    else if(note) note.textContent = code;
-  }catch(e){ if(note) note.textContent = code; }
-}
+/* [Ver 13.9] openCodeList() · devCopyCode() 를 지웠다.
+   코드가 해시로만 들어 있어 목록을 보여줄 수 없다. 원본은 Desktop\갱우카_코드표.md 에. */
 function submitRedeemCode(){
   const input = document.getElementById('redeemCodeInput');
   const out = document.getElementById('codeResult');
@@ -16779,7 +16798,7 @@ function submitRedeemCode(){
   const raw = String(input.value||'').trim();
   /* [Ver 9.13] 내장 코드에 없으면 서버의 원격 코드를 한 번 물어본다.
      게임 파일을 새로 배포하지 않고도 보상 코드를 뿌릴 수 있다. */
-  if(raw && !REDEEM_CODES[raw] && fbAvailable()){
+  if(raw && !REDEEM_CODES[sha256Hex(raw)] && fbAvailable()){   // [Ver 13.9] 해시로 찾는다
     out.innerHTML = '<span style="color:var(--fg-dim);">코드를 확인하는 중...</span>';
     fbLookupRemoteCode(raw).then(d=>{
       if(!d){ out.innerHTML = '<span class="code-bad">존재하지 않는 코드입니다. 대소문자와 띄어쓰기를 확인해주세요.</span>'; return; }
@@ -17752,6 +17771,39 @@ async function fbLookupRemoteCode(code){
    새 패치를 넣을 땐 BALANCE_PATCHES 맨 앞에 한 덩어리를 추가하면 된다.
    ########################################################################## */
 const BALANCE_PATCHES = [
+  {
+    version: 'Ver 13.10', date: '2026-09-05',
+    groups: [
+      { title:'매트릭스 — 숨는 권능에서 치고 빠지는 권능으로', kind:'power',
+        note:'예전엔 <b>들어갔다 나오는 토글</b>이었습니다. 한 번 들어가면 나올 때까지 지목당하지 않아, 쓰는 쪽은 판을 구경하고 상대는 손쓸 방법이 없었습니다. 이제 <b>노리는 상대를 정하고 5초만 가라앉았다가, 나오면서 내리칩니다.</b> 숨는 시간이 곧 준비 동작이 됩니다.',
+        rows:[
+          { name:'매트릭스', icon:'\u{1F7E9}', rows:[
+            { label:'사용',   from:'자신 (토글)',    to:'상대 지목',        dir:'neutral' },
+            { label:'지속',   from:'나올 때까지',    to:'5초 후 자동 복귀', dir:'down' },
+            { label:'피해',   from:'없음',          to:'350',             dir:'up' },
+            { label:'강화',   from:'쿨타임 -5초',    to:'쿨타임 -2초',      dir:'down' }]},
+        ]},
+      { title:'너무 자주 돌던 것 — 쿨타임을 늘린다', kind:'power',
+        note:'수치가 아니라 <b>돌아오는 속도</b>가 문제였던 둘입니다.',
+        rows:[
+          { name:'분쇄',  icon:'\u{1F528}', rows:[
+            { label:'쿨타임', from:'49초', to:'135초', dir:'down' },
+            { label:'강화',   from:'쿨타임 -5초', to:'쿨타임 -2초', dir:'down' }]},
+          { name:'NO U', icon:'\u{1FA9E}', rows:[
+            { label:'지속',   from:'7초',  to:'2.5초', dir:'down' },
+            { label:'쿨타임', from:'99초', to:'125초', dir:'down' }]},
+        ]},
+      { title:'모노리스 — 바친 값을 하게', kind:'power',
+        note:'카드를 통째로 버리는 대가치고는 깎이는 양이 적었습니다. 등급당 증가폭을 올려, <b>높은 등급을 바칠수록</b> 확실히 티가 나게 했습니다.',
+        rows:[
+          { name:'모노리스', icon:'\u{1F5FF}', rows:[
+            { label:'등급당 피해', from:'+5%',  to:'+8%',  dir:'up' },
+            { label:'E 등급',     from:'5%',   to:'8%',   dir:'up' },
+            { label:'C 등급',     from:'15%',  to:'24%',  dir:'up' },
+            { label:'S 등급',     from:'30%',  to:'48%',  dir:'up' }]},
+        ]},
+    ]
+  },
   {
     version: 'Ver 13.6', date: '2026-09-03',
     groups: [
@@ -21021,6 +21073,22 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 13.10', date: '2026-09-05',
+    items: [
+      '\u{1F7E9} <b>[리워크] 매트릭스</b> — 이제 <b>대상을 지목하고</b> 매트릭스로 가라앉습니다. <b>5초</b> 뒤 빠져나오면서 그 대상에게 <b>350 피해</b>를 입힙니다. 잠수하는 동안에는 지목당하지 않습니다.',
+      '\u{1F528} <b>[너프] 분쇄</b> — 쿨타임 <b>49 → 135초</b>. 강화당 감소량도 5 → <b>2초</b>.',
+      '\u{1FA9E} <b>[너프] NO U</b> — 지속 <b>7 → 2.5초</b> · 쿨타임 <b>99 → 125초</b>.',
+      '\u{1F5FF} <b>[버프] 모노리스</b> — 등급당 피해가 <b>+5% → +8%</b>로 올랐습니다. (E 8% · D 16% · C 24% …)',
+    ]
+  },
+  {
+    version: 'Ver 13.9', date: '2026-09-04',
+    items: [
+      '\u{1F510} <b>[정리] 개발자 전용 기능을 손봤습니다.</b> 게임 진행에는 영향이 없습니다.',
+      '\u{1F5D1} 메뉴 ≡ 서랍의 <b>코드 확인</b>(개발자 전용)을 없앴습니다.',
+    ]
+  },
   {
     version: 'Ver 13.8', date: '2026-09-04',
     items: [
@@ -26590,42 +26658,47 @@ function projectSimplifyRefund(){
   return n;
 }
 
+/* ⚠ [Ver 13.9] key 는 **코드의 SHA-256 해시**다. 코드 문자열 자체는 이 파일에 없다.
+   새 코드를 넣으려면 해시를 먼저 구할 것 — 게임을 열고 콘솔에 `sha256Hex('코드')`.
+   ▶ 여기 있는 title/desc/reward 는 그대로 보인다. 그건 상관없다 —
+     "어떤 보상이 있다"를 아는 것과 "코드를 아는 것"은 다르다.
+   ▶ 원본 코드 문자열은 `Desktop\갱우카_코드표.md` 에 따로 적어뒀다. 배포하지 말 것. */
 const REDEEM_CODES = {
-  'imgangwoodeveloper090205': { title:'개발자 코드', desc:'개발자에게서 온 선물입니다.', reward:{ ubinite:999999999999 }, once:true },
-  'VIP777':                   { title:'VIP 코드',   desc:'VIP 전용 보상입니다.',        reward:{ ubinite:777  }, once:true, noExpire:true },
-  'RaptorLover':              { title:'랩터 러버',  desc:'랩터를 사랑하는 당신에게.',   reward:{ ubinite:1000 }, once:true, noExpire:true },
+  'b2b5cce780769307a5780456d5a76a61ec13904b9cc250e40930b3b9cba197fa': { title:'개발자 코드', desc:'개발자에게서 온 선물입니다.', reward:{ ubinite:999999999999 }, once:true },
+  '7a10760dddc7c77ec9c51682b83193d4f7f9a342b00f95362edf56131d9c1b3d': { title:'VIP 코드',   desc:'VIP 전용 보상입니다.',        reward:{ ubinite:777  }, once:true, noExpire:true },
+  '53446794d4025ea94476c8d129bf412cd88a244e88d0ce1f8b25abb975bbb86c': { title:'랩터 러버',  desc:'랩터를 사랑하는 당신에게.',   reward:{ ubinite:1000 }, once:true, noExpire:true },
   // [Ver 9.11] 신규 유저 환영 코드 — 카드뽑기 티켓 5장
-  'WELCOMEGIFT':              { title:'환영 선물',  desc:'갱갱갱 우빈랩터 카드게임에 오신 걸 환영합니다!', reward:{ tickets:5 }, once:true, noExpire:true },
+  'a9fe3c0e14e10dc50633360fc7adae7bf18b7e63d897dddb379f632dd9d6b256': { title:'환영 선물',  desc:'갱갱갱 우빈랩터 카드게임에 오신 걸 환영합니다!', reward:{ tickets:5 }, once:true, noExpire:true },
   // [Ver 9.12] 지후펫 전량 회수 보상
-  'BYEBYEPET':                { title:'지후펫 회수 보상', desc:'지후펫 가격 개편으로 보유 펫이 회수되었습니다. 그동안 함께해준 지후펫들에게 작별 인사를.', reward:{ ubinite:3000 }, once:true, noExpire:true },
+  '8379b2ff8dda8b3c9f521e15ce2e518374ceab39586a4c9459476c5d20b6dc25': { title:'지후펫 회수 보상', desc:'지후펫 가격 개편으로 보유 펫이 회수되었습니다. 그동안 함께해준 지후펫들에게 작별 인사를.', reward:{ ubinite:3000 }, once:true, noExpire:true },
   /* [Ver 10.5] 버그 제보 보상 — 야차 부자 지후 사기 / 카지노딜러 미작동 / 폐업 상점 봇 이용 제보.
      onlyCode로 제보자 본인(EMGVA)만 쓸 수 있게 묶어둔다. */
-  'THXMENEW':                 { title:'버그 제보 감사', desc:'야차 모드 부자 지후 밸런스 · 카지노딜러 지후 미작동 · 폐업 상점 봇 이용을 제보해주셔서 감사합니다. 덕분에 10.5에서 전부 고쳤습니다.', reward:{ ubinite:3000 }, once:true, noExpire:true, onlyCode:'EMGVA' },
+  '225b3c2dffe3fad7c1851180eb2702840d05b9569ae8a3ae1e0e783ee04cb322': { title:'버그 제보 감사', desc:'야차 모드 부자 지후 밸런스 · 카지노딜러 지후 미작동 · 폐업 상점 봇 이용을 제보해주셔서 감사합니다. 덕분에 10.5에서 전부 고쳤습니다.', reward:{ ubinite:3000 }, once:true, noExpire:true, onlyCode:'EMGVA' },
   // [Ver 9.12.1] 버그 제보자 감사 코드
-  'MAJOBUG':                  { title:'버그 제보 감사', desc:'버그를 제보해주셔서 감사합니다!', reward:{ ubinite:500 }, once:true, noExpire:true },
+  'c6b1af047b973d505d05313c5868328be020a1196e939270c2eb00925e4e6b20': { title:'버그 제보 감사', desc:'버그를 제보해주셔서 감사합니다!', reward:{ ubinite:500 }, once:true, noExpire:true },
   // [Ver 9.13.1] 서버를 파이어베이스로 옮기며 전 유저 데이터가 초기화된 것에 대한 보상
-  'BYEBYEDATA':               { title:'데이터 초기화 보상', desc:'서버 이전 과정에서 모든 유저의 데이터가 초기화되었습니다. 불편을 드려 죄송합니다. 다시 시작하는 길에 보태주세요.',
+  'c9b641807940e865b8db4805345ab09d08eb034209d1a5588e4e9e924f81adcf': { title:'데이터 초기화 보상', desc:'서버 이전 과정에서 모든 유저의 데이터가 초기화되었습니다. 불편을 드려 죄송합니다. 다시 시작하는 길에 보태주세요.',
                                 reward:{ evoPick:{ tier:'Ephemeral', n:1 }, tickets:5 }, once:true, noExpire:true },
   // [Ver 9.16] 유물 리워크로 전 유저의 유물이 초기화된 것에 대한 보상
-  'BYEBYEATF':                { title:'유물 초기화 보상', desc:'유물 리워크(레벨 상한 Lv10 · 등급별 강화 비용)로 보유 유물이 초기화되었습니다. 다시 캐러 가는 길에 보태주세요.',
+  '1d34f978f92f51e9a0369cd12e53a659fc6f9018478f6c1330461d0963dc4a4e': { title:'유물 초기화 보상', desc:'유물 리워크(레벨 상한 Lv10 · 등급별 강화 비용)로 보유 유물이 초기화되었습니다. 다시 캐러 가는 길에 보태주세요.',
                                 reward:{ pickaxe:50, goldPickaxe:1 }, once:true, noExpire:true },
   // [Ver 12.6.1] 업데이트 재개 기념
-  'ORENMAN':                  { title:'업데이트 재개 기념', desc:'오랜만입니다. 갱갱갱 우빈랩터 카드게임 업데이트를 다시 시작합니다!',
+  '2a1ba6b5128b337b8ad5b9a6801e15f79e3a150125095db55edb9468a6f1ea79': { title:'업데이트 재개 기념', desc:'오랜만입니다. 갱갱갱 우빈랩터 카드게임 업데이트를 다시 시작합니다!',
                                 reward:{ ubinite:1000 }, once:true, noExpire:true },
   // [Ver 12.4.4] 버그 제보 보상 — 사과의 의미로 썬크림 · 우비나이트 · 에피메랄 확정권 지급
-  'BUGSORRY':                  { title:'버그 제보 보상', desc:'불편을 드려 죄송합니다. 제보해주신 덕분에 문제를 고칠 수 있었습니다.',
+  'a1e9674d158e619ed7cdf996285319498ed2ed6866dbfba5233a52a35bbac046': { title:'버그 제보 보상', desc:'불편을 드려 죄송합니다. 제보해주신 덕분에 문제를 고칠 수 있었습니다.',
                                 reward:{ cream:500, ubinite:3000, evoPick:{ tier:'Ephemeral', n:1 } }, once:true, noExpire:true },
   /* [Ver 13.1] 랩터의 권능 출시 기념 — **7일 한정**.
      until 은 절대 시각으로 못박는다(2026-09-07 23:59 KST). 배포일 기준 7일이다.
      ⚠ 기간을 늘리려면 이 숫자만 고치면 된다. 상대 시간(첫 실행 + 7일)으로 두면
        사람마다 만료일이 달라져 공지와 어긋난다. */
-  'GETTEETH':                 { title:'랩터의 이빨 30개', desc:'랩터의 권능이 문을 열었습니다. 재단에 바쳐 첫 권능을 받아보세요.',
+  '0dc5b035599168199f823e2de0fd5ff4782272547b6d6263be90fd26fa09d958': { title:'랩터의 이빨 30개', desc:'랩터의 권능이 문을 열었습니다. 재단에 바쳐 첫 권능을 받아보세요.',
                                 reward:{ teeth:30 }, once:true, noExpire:true,
                                 until: Date.parse('2026-09-07T23:59:59+09:00') },
   /* [Ver 13.1] Project Simplify 보상.
      ⚠ 보상이 사람마다 다르므로 reward 대신 make()를 쓴다 — redeemCode가 코드를 넣는 순간
        한 번만 부르고, 그 안에서 삭제된 유물을 세고 지운다. */
-  'PROJECTSIMP':              { title:'Project Simplify 보상',
+  '44368f2ac8974af8b34f63d8bc865b4f66238d0a78a065adef944f6e64c7cfbe': { title:'Project Simplify 보상',
                                 desc:'단순화 작업으로 카드 마스터리 · 파밍 · 사이비 · 10인 난투 · 클래식 모드가 잠시 내려갔고, 유물 16종이 삭제되었습니다. 그동안 캐신 만큼 돌려드립니다.',
                                 once:true, noExpire:true,
                                 make:()=>({ ubinite:3000, pickaxe: projectSimplifyRefund() }) },
@@ -26640,11 +26713,83 @@ const REDEEM_CODES = {
        지워버려서, 이미 PROJECTSIMP를 쓴 사람은 "엄마 Lv7이었다"는 증거가 남아 있지 않다.
        그래서 개인별 정산 대신 **정액 보상**으로 간다. PROJECTSIMP와 별개 코드라
        이미 쓴 사람도 안 쓴 사람도 똑같이 받는다. */
-  'UBINMOMREFUND':            { title:'우빈 엄마 환급',
+  '530fe27cf7e5a3796706ba81f9344fbad3ee97b042261426cbadb339d5dbbd8f': { title:'우빈 엄마 환급',
                                 desc:'유물 삭제 환급이 캔 개수만 세는 바람에, 어렵게 캐신 만큼을 돌려드리지 못했습니다. 늦었지만 다시 보내드립니다.',
                                 once:true, noExpire:true,
                                 reward:{ power:{ key:'summon', n:10 }, goldPickaxe:5 } },
 };
+/* ##########################################################################
+   [Ver 13.9] SHA-256 — 개발자 비번과 보상 코드를 파일에서 감추기 위한 것
+   --------------------------------------------------------------------------
+   ▶ 왜 필요했나
+     개발자 비번과 코드 14개가 HTML 에 **평문으로** 박혀 있었다. Ctrl+U 로 소스를
+     열고 검색 한 번이면 전부 나왔다. CSS 주석에까지 개발자 코드가 예시로 적혀 있었다.
+     ⚠ 그러니 **주석에도 실제 값을 쓰지 말 것.** 숨긴 의미가 없어진다.
+   ▶ 이제 파일에는 **해시만** 들어간다. 입력값을 그 자리에서 해시로 바꿔 비교한다.
+   ▶ 한계를 알고 쓸 것 — 클라이언트에 있는 건 원래 다 읽힌다.
+     이건 "못 뚫는 자물쇠"가 아니라 **"눈에 안 띄게" 하는 장치**다.
+     · 뜻 있는 짧은 코드는 사전 대입으로 뚫린다. 그래도 소스 검색으로는 안 나온다.
+       (공개 코드는 어차피 업데이트 로그에서 대놓고 알려주므로 상관없다.
+        숨겨야 하는 건 개발자 코드와 개인 지급 코드뿐이다)
+     · 개발자 비번은 그래서 길고 무작위에 가깝게 잡았다.
+     · 작정한 사람은 검사문 자체를 지우면 그만이다. 그건 어떤 방법으로도 못 막는다.
+   ⚠ crypto.subtle 을 쓰지 않았다 — 비동기라 호출부를 전부 async 로 바꿔야 하고,
+     백업본을 file:// 로 열면 보안 컨텍스트가 아니라 아예 없을 수 있다.
+   ########################################################################## */
+const __SHA_K = [
+  0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+  0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+  0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+  0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+  0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+  0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+  0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+  0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+function sha256Hex(str){
+  const rr = (x,n)=> (x>>>n) | (x<<(32-n));
+  /* UTF-8 바이트로 편다 — 한글 코드를 쓸 수도 있으니 charCodeAt 로 자르면 안 된다 */
+  const bytes = [];
+  for(const ch of String(str)){
+    let c = ch.codePointAt(0);
+    if(c < 0x80) bytes.push(c);
+    else if(c < 0x800) bytes.push(0xC0|(c>>6), 0x80|(c&63));
+    else if(c < 0x10000) bytes.push(0xE0|(c>>12), 0x80|((c>>6)&63), 0x80|(c&63));
+    else bytes.push(0xF0|(c>>18), 0x80|((c>>12)&63), 0x80|((c>>6)&63), 0x80|(c&63));
+  }
+  const bitLen = bytes.length * 8;
+  bytes.push(0x80);
+  while(bytes.length % 64 !== 56) bytes.push(0);
+  /* 길이는 64비트 빅엔디안. 상위 32비트는 이 용도에서 항상 0이다. */
+  bytes.push(0,0,0,0, (bitLen>>>24)&255, (bitLen>>>16)&255, (bitLen>>>8)&255, bitLen&255);
+
+  let h0=0x6a09e667,h1=0xbb67ae85,h2=0x3c6ef372,h3=0xa54ff53a,
+      h4=0x510e527f,h5=0x9b05688c,h6=0x1f83d9ab,h7=0x5be0cd19;
+  const w = new Array(64);
+  for(let i=0; i<bytes.length; i+=64){
+    for(let t=0; t<16; t++){
+      w[t] = (bytes[i+t*4]<<24) | (bytes[i+t*4+1]<<16) | (bytes[i+t*4+2]<<8) | bytes[i+t*4+3];
+    }
+    for(let t=16; t<64; t++){
+      const s0 = rr(w[t-15],7) ^ rr(w[t-15],18) ^ (w[t-15]>>>3);
+      const s1 = rr(w[t-2],17) ^ rr(w[t-2],19) ^ (w[t-2]>>>10);
+      w[t] = (w[t-16] + s0 + w[t-7] + s1) | 0;
+    }
+    let a=h0,b=h1,c=h2,d=h3,e=h4,f=h5,g=h6,h=h7;
+    for(let t=0; t<64; t++){
+      const S1 = rr(e,6) ^ rr(e,11) ^ rr(e,25);
+      const ch = (e & f) ^ (~e & g);
+      const t1 = (h + S1 + ch + __SHA_K[t] + w[t]) | 0;
+      const S0 = rr(a,2) ^ rr(a,13) ^ rr(a,22);
+      const mj = (a & b) ^ (a & c) ^ (b & c);
+      const t2 = (S0 + mj) | 0;
+      h=g; g=f; f=e; e=(d+t1)|0; d=c; c=b; b=a; a=(t1+t2)|0;
+    }
+    h0=(h0+a)|0; h1=(h1+b)|0; h2=(h2+c)|0; h3=(h3+d)|0;
+    h4=(h4+e)|0; h5=(h5+f)|0; h6=(h6+g)|0; h7=(h7+h)|0;
+  }
+  return [h0,h1,h2,h3,h4,h5,h6,h7].map(x=> (x>>>0).toString(16).padStart(8,'0')).join('');
+}
+
 let REDEEMED_CODES = null;
 function loadRedeemed(){
   if(REDEEMED_CODES) return REDEEMED_CODES;
@@ -26657,7 +26802,7 @@ function saveRedeemed(){ try{ localStorage.setItem(STORAGE_KEYS.redeemed, JSON.s
 function redeemCode(raw){
   const code = String(raw||'').trim();   // 대소문자·중간 띄어쓰기는 그대로 둔다 (구분함)
   if(!code) return { ok:false, msg:'코드를 입력해주세요.' };
-  const def = REDEEM_CODES[code];
+  const def = REDEEM_CODES[sha256Hex(code)];   // [Ver 13.9] 표의 key 는 해시다
   if(!def) return { ok:false, msg:'존재하지 않는 코드입니다. 대소문자와 띄어쓰기를 확인해주세요.' };
   /* [Ver 10.5] onlyCode — 특정 유저 코드에게만 주는 코드(버그 제보 보상 등).
      유저 코드는 클라이언트가 가진 값이라 마음만 먹으면 바꿀 수 있다. 즉 이건
@@ -32248,6 +32393,7 @@ function mkPlayer(id,name,isBot){
     matrixId:null, // 매트릭스: 들어가 있는 매트릭스 인스턴스 id (null이면 일반 필드)
     matrixDueRound:0, // 매트릭스: 자동 복귀되는 turnCount
     matrixAtkMod:0, // [Ver 8.1.9] 매트릭스: 매트릭스 안에 있는 동안만 적용되는 임시 공격력 %증감치 (가산식, 0=변화없음)
+    pwMatrixUntil:0, pwMatrixTargetId:null, pwMatrixDmg:0, // [Ver 13.10] 권능 매트릭스: 잠수 만료 시각(실시간) · 나오며 칠 대상 · 피해량
     hostageTargetId:null, hostageDueRound:0, hostageMarkUsed:false, // 트릭: 몰래 지목해둔 인질, 효력 기한(turnCount), 그리고 "최초 1회만 지목 가능" 잠금 플래그
     nutrientProUsedRound:null, // [버그수정] 양분 pro: 마지막으로 사용한 turnCount (같은 바퀴 내 재사용 방지)
     farewellStealOnDeath:false, // 떠나는 길에 니가 내게 말했지: 자신이 사망하면 모두에게서 카드 한 장씩 강탈
@@ -33285,7 +33431,12 @@ function getStatusChips(p){
   }
   if(p.fateChainWith){ const partner = players.find(pp=>pp.id===p.fateChainWith); addChip('fateChainWith', '⛓️', `사슬 · ${partner?partner.name:'?'}`, 'blue'); }
   if(p.matrixId!=null && !isExcluded(p)){
-    addChip('matrixDueRound', '🟩', `매트릭스 · ${Math.max(0,p.matrixDueRound-turnCount)}바퀴 후 복귀`, 'blue');
+    /* [Ver 13.10] 권능 매트릭스는 바퀴가 아니라 실시간 5초다. 남은 초를 적으면
+       renderBoard 가 250ms 마다 도는 게 아니라 숫자가 멈춘 채로 보인다 — 그래서 안 적는다. */
+    if(p.pwMatrixUntil && p.matrixId === 'pw'+p.id)
+      addChip('matrixDueRound', '🟩', `매트릭스 잠수 중 · 나오면서 ${p.pwMatrixDmg||350} 반격`, 'blue');
+    else
+      addChip('matrixDueRound', '🟩', `매트릭스 · ${Math.max(0,p.matrixDueRound-turnCount)}바퀴 후 복귀`, 'blue');
     // [Ver 5.7.1 편의] 코델리우스 등으로 매트릭스에 있는 동안 적용되는 공격력 증감을 칩으로 명시한다.
     //   (기존엔 "매트릭스" 칩만 있어서 내 공격력이 오른 건지 깎인 건지 화면에서 알 수 없었다)
     const am = p.matrixAtkMod;
