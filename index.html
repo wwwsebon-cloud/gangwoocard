@@ -6743,7 +6743,7 @@ body.high-contrast.theme-light-shell{
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.11</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.12</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -21100,6 +21100,14 @@ function exitPlaygroundBar(){
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
   {
+    version: 'Ver 13.12', date: '2026-09-05',
+    items: [
+      '\u{1F5BC} <b>[UI] 상태칩 그림 8종을 더했습니다.</b> 이제 <b>28종</b>이 그림으로 나옵니다.',
+      '\u{1F9CA} LK69 · 거지 · 공유기 · 느려 · 리베로 · 문단속(매트릭스 이동 불가) · 백호랩터 · 텔레키네시스',
+      '\u{1F50D} 그림이 없는 칩은 <b>예전 그대로</b> 나옵니다. 설정 → 상태칩 모양에서 <b>글자형</b>으로 되돌릴 수도 있습니다.',
+    ]
+  },
+  {
     version: 'Ver 13.11', date: '2026-09-05',
     items: [
       '\u{1F3C6} <b>[신규] 판 요약</b> — 결과창에 <b>이 판의 장면</b>이 생겼습니다. <b>최고 한 방</b>(누가 무슨 카드로 얼마나)과 <b>마지막 탈락</b>을 보여줍니다.',
@@ -21107,6 +21115,7 @@ const CHANGELOG = [
       '\u{1F916} <b>[공개] 봇의 성격</b> — 봇들은 예전부터 <b>공격적 · 방어적 · 과감한 투자</b> 같은 성격을 가지고 움직이고 있었습니다. 이제 <b>판이 끝나면</b> 누가 어떤 성격이었는지 결과창에서 밝혀집니다. (판 중에는 여전히 비밀입니다)',
       '\u{1F310} <b>[버그수정] 온라인에서 결과창이 안 뜨던 문제</b> — 참가자에게는 "호스트의 게임이 종료되었습니다" 안내만 떴습니다. 이제 <b>혼자 할 때와 똑같은 결과창</b>이 뜹니다.',
       '\u{1F50C} <b>[변경] 온라인에서 누가 나가도 판은 계속됩니다.</b> 예전에는 한 명만 빠져도 <b>판 전체가 끝났습니다.</b> 이제 나간 사람만 <b>연결 끊김</b>으로 탈락하고 남은 사람끼리 계속합니다. (호스트가 나간 경우는 예전처럼 종료됩니다)',
+      '\u{23F3} <b>[13.11.1] 연결이 끊겨도 20초를 기다립니다.</b> 잠깐 끊긴 것과 진짜 나간 것을 가릅니다. 그 사이 돌아오면 <b>자리를 되찾고 계속 플레이</b>할 수 있습니다. 남은 시간은 모두의 화면에 <b>🔌 연결 끊김 · N초 후 탈락</b>으로 보입니다.',
     ]
   },
   {
@@ -33031,7 +33040,8 @@ const CHIP_DEBUFF = new Set([
   /* [Ver 13.5.1] 중립에 있던 것을 디버프로 옮겼다 — 효과가 통째로 초기화되는 건
      좋게 봐줄 여지가 없다. */
   'amnesiaActive',
-  'pwSeize',]);   // [Ver 13.6] 압류 예고
+  'pwSeize',      // [Ver 13.6] 압류 예고
+  'dcPending',]); // [Ver 13.11.1] 연결 끊김 유예
 /* 위 둘에 없으면 전부 중립이다 — 팀·연인·매트릭스처럼 좋다 나쁘다를 가를 수 없는 것들.
    ⚠ 다만 **같은 칩이 상황에 따라 갈리는 것들**이 있다 — 점괘(길조↔흉조) · 회복량(증↔감) ·
      임시 공격력(샤우팅↔지후한테 쳐맞음) · WILD(±) · 누르끼끼(박상현급↔사황급).
@@ -33123,6 +33133,11 @@ const CHIP_ICON_KEYS = new Set([
   'gwagidae','flatDmgReduceTurns','evasionPct','reflexEvasionAdd',
   /* 반응 */
   'nullifyNext','guardNext',
+  /* ── [Ver 13.12] 2차 8종 ──
+     이번 8종은 **수치 배지가 붙는 칩이 하나도 없어서** 그림을 위로 올리지 않았다(LIFT 없음).
+     텔레키네시스만 좌상단에 지속시간 배지(N바퀴)가 붙는데, 머리가 가운데라 가려지지 않는다. */
+  'lk69','beggarIncomeMult','routerShareAll','fastReactionMs',
+  'libero','matrixSealed','whiteTigerReady','telekinesisTarget',
 ]);
 /* 파일 이름이 key 와 다른 칩만 여기 적는다. 없으면 `chip/{key}.png` 다.
    쓰임새는 둘이다 —
@@ -33134,6 +33149,7 @@ const CHIP_ICON_FILE = {
   permaFlatReduce:'drUp.png', permaVulnDown:'drUp.png',
   permaVulnUp:'drDown.png',
   evasionPct:'evasionPct.gif', flatDmgReduceTurns:'flatDmgReduceTurns.gif',
+  telekinesisTarget:'telekinesisTarget.gif',   // [Ver 13.12]
 };
 function chipIconSrc(key){ return 'chip/' + (CHIP_ICON_FILE[key] || (key + '.png')); }
 /* 우하단 수치 배지를 붙일 칩. 여기 없으면 숫자를 뽑지 않는다 —
@@ -33341,6 +33357,8 @@ function getStatusChips(p){
   };
   if(!p.alive) return [{key:'dead', ic:'☠',
     label: p.__disconnected ? '탈락 (연결 끊김)' : '탈락', cls:'dead-chip tone-red'}];   // [Ver 13.11]
+  /* [Ver 13.11.1] 연결이 끊겨 탈락을 기다리는 중. 남은 초는 호스트가 계산해 넣어준다. */
+  if(p.__dcLeft > 0) addChip('dcPending', '🔌', `연결 끊김 · ${p.__dcLeft}초 후 탈락`, 'red');
   if(p.impeached) addChip('impeached', '👑', `탄핵(${Math.max(0,p.impeachDueRound-turnCount)}바퀴)`, 'red');
   if(p.stunned) addChip('stunned', '⏸', p.stunSource ? `${p.stunSource} · 스턴 1턴` : '스턴 · 1턴', 'red');
   if(p.stunLockTurns>0) addChip('stunLockTurns', p.stunLockLabel==='빙결' ? '❄️' : '⏸', `${p.stunLockLabel||'스턴'} · ${p.stunLockTurns}턴`, 'red');
@@ -62199,7 +62217,7 @@ function lanRtRebuildRoom(code){
     if(hostGone){ lanRtEndGame('호스트의 연결이 끊겨 게임이 종료되었습니다.'); return; }
     /* 판정은 호스트만 한다. 참가자는 스냅샷으로 결과를 받는다 —
        각자 판정하면 기기마다 다른 사람이 죽어 있을 수 있다. */
-    if(LAN.isHost) { try{ lanHostKillLeavers(arr); }catch(e){} }
+    if(LAN.isHost) { try{ lanHostDcTick(); }catch(e){} }
     return;                                      // 게임 중에는 로비를 다시 그리지 않는다
   }
 
@@ -62223,26 +62241,72 @@ function lanRtRebuildRoom(code){
    ▶ 부활 수단을 무시하는 forceKillAbsolute 를 쓴다. 자리를 뜬 사람이 예토전생으로
      되살아나 봐야 조작할 사람이 없어 판만 멈춘다.
    ########################################################################## */
-const LAN_DC_GRACE_MS = 0;   // 유예를 주고 싶으면 이 값만 올리면 된다 (0 = 즉시)
-function lanHostKillLeavers(arr){
+/* [Ver 13.11.1] 자리가 비어도 이만큼은 기다린다. 잠깐 끊긴 것과 진짜 나간 것을 가른다.
+   ⚠ 이 값만 바꾸면 되도록 만들었다 — 13.11에서는 상수만 두고 **읽는 코드가 없어서**
+     주석이 거짓말을 하고 있었다. 지금은 lanHostDcTick 이 실제로 이 값을 본다. */
+const LAN_DC_GRACE_MS = 20000;
+const LAN_DC_TAG = '연결 끊김';
+
+/* 방 목록에서 사라진 자리를 표시하고, 유예가 지난 사람만 탈락시킨다.
+   ▶ 두 곳에서 불린다 — 방 목록이 바뀔 때(즉시 반응) + 호스트 하트비트(유예 만료 감시).
+     하트비트가 없으면, 아무도 더 들어오고 나가지 않는 한 만료를 알아챌 계기가 없다.
+   ▶ 여러 번 불려도 안전하다(idempotent). */
+function lanHostDcTick(){
   if(!lanIsHostGame() || !gameActive || !Array.isArray(players)) return 0;
-  const present = new Set((arr||[]).map(p=> p && p.slot).filter(s=> s != null));
-  const gone = players.filter(p=>{
-    if(!p || !p.alive || p.isBot) return false;          // 봇은 자리가 없다
+  const arr = (LAN.rt && LAN.rt.playersArr) || [];
+  const present = new Set(arr.map(p=> p && p.slot).filter(s=> s != null));
+  const now = Date.now();
+  if(!LAN.__dcPending) LAN.__dcPending = {};
+  let killed = 0, changed = false;
+
+  players.forEach(p=>{
+    if(!p || p.isBot) return;                            // 봇은 방에 자리가 없다
     const slot = parseInt(String(p.id||'').slice(1), 10);
-    return !isNaN(slot) && !present.has(slot);
+    if(isNaN(slot)) return;
+
+    if(present.has(slot)){
+      /* 돌아왔다 — 잠깐 끊겼던 것으로 본다. 이미 죽은 사람은 되살리지 않는다. */
+      if(LAN.__dcPending[slot] != null){
+        delete LAN.__dcPending[slot];
+        if(p.alive){
+          p.__dcLeft = 0;
+          log('sys', `🔌 ${J(p.name,'의','의')} 연결이 돌아왔습니다.`);
+          changed = true;
+        }
+      }
+      return;
+    }
+    if(!p.alive) return;                                 // 이미 탈락한 사람은 볼 것 없다
+
+    if(LAN.__dcPending[slot] == null){
+      LAN.__dcPending[slot] = now;
+      log('highlight', `🔌 ${J(p.name,'의','의')} 연결이 끊겼습니다. ${Math.round(LAN_DC_GRACE_MS/1000)}초 안에 돌아오지 않으면 탈락합니다.`);
+      changed = true;
+    }
+    const left = LAN_DC_GRACE_MS - (now - LAN.__dcPending[slot]);
+    /* 남은 시간은 **호스트가 계산해 넣는다.** 참가자가 Date.now() 로 재면
+       기기 시계가 다를 때 엉뚱한 숫자가 나온다 (players 는 통째로 동기화된다). */
+    const leftSec = Math.max(0, Math.ceil(left / 1000));
+    if(p.__dcLeft !== leftSec){ p.__dcLeft = leftSec; changed = true; }
+
+    if(left <= 0){
+      delete LAN.__dcPending[slot];
+      p.__disconnected = true; p.__dcLeft = 0;
+      log('highlight', `🔌 ${J(p.name,'의','의')} 연결이 끊겨 탈락 처리되었습니다.`);
+      try{ forceKillAbsolute(p, LAN_DC_TAG); }catch(e){}
+      killed++; changed = true;
+    }
   });
-  if(!gone.length) return 0;
-  gone.forEach(p=>{
-    p.__disconnected = true;
-    log('highlight', `🔌 ${J(p.name,'의','의')} 연결이 끊겨 탈락 처리되었습니다.`);
-    try{ forceKillAbsolute(p, '연결 끊김'); }catch(e){}
-  });
-  try{ renderBoard(); }catch(e){}
-  /* 남은 사람이 한 명뿐이면 여기서 판이 끝난다. 호스트가 부르므로 판정 권한도 맞다. */
-  try{ checkWinCondition(); }catch(e){}
-  try{ lanHostBroadcastNow(true); }catch(e){}          // 참가자 화면에 즉시 반영
-  return gone.length;
+
+  if(changed){
+    try{ renderBoard(); }catch(e){}
+    try{ lanHostBroadcastNow(true); }catch(e){}         // 참가자 화면에 즉시 반영
+  }
+  if(killed){
+    /* 남은 사람이 한 명뿐이면 여기서 판이 끝난다. 호스트가 부르므로 판정 권한도 맞다. */
+    try{ checkWinCondition(); }catch(e){}
+  }
+  return killed;
 }
 
 /* [Ver 10.0] 온라인 판을 즉시 끝낸다. 방에서도 빠져나오므로 재진입 고리가 생기지 않는다. */
@@ -62255,7 +62319,10 @@ function lanRtEndGame(msg){
 
 function lanRtAttachRoom(code){
   lanRtDetach();
-  const { ref, onValue, onChildAdded, query, orderByKey, startAfter, remove } = FB.rt;
+  /* ⚠ [Ver 13.11.1] onDisconnect · set 을 빠뜨리지 말 것 —
+     아래 '.info/connected' 자리 복구가 둘 다 쓴다. 없으면 방에 붙는 순간 ReferenceError 로
+     온라인 모드가 통째로 죽는데, node --check 는 이걸 못 잡는다(문법이 아니라 스코프다). */
+  const { ref, onValue, onChildAdded, query, orderByKey, startAfter, remove, onDisconnect, set } = FB.rt;
   const roomRef = ref(FB.rtdb, 'rooms/' + code);
   LAN.rt.roomRef = roomRef;
 
@@ -62327,6 +62394,30 @@ function lanRtAttachRoom(code){
     lanOnMessage({ t:'private', payload });
   });
   LAN.rt.listeners.push(offPriv);
+
+  /* ##########################################################################
+     [Ver 13.11.1] 끊겼다 돌아오면 **자리를 되찾는다**
+     --------------------------------------------------------------------------
+     ▶ 이게 없으면 유예(LAN_DC_GRACE_MS)가 아무도 살리지 못한다. 이유는 두 가지다.
+       ① `onDisconnect(...).remove()` 는 방에 들어올 때 **한 번만** 걸린다.
+          연결이 끊기면 서버가 자리를 지우는데, 다시 붙어도 **자리는 돌아오지 않는다.**
+       ② 재입장 경로는 `이미 시작된 방입니다` 로 막혀 있다.
+       → 잠깐 끊겼다 돌아와도 방 목록에는 영영 없는 사람이 되어, 유예는 그저 사망을 미룰 뿐이었다.
+     ▶ `.info/connected` 는 파이어베이스가 붙고 끊길 때마다 알려주는 특수 노드다.
+       **폴링이 아니다** — 붙는 순간에만 깨어나므로 평소 비용이 없다.
+       깨어날 때마다 자리를 다시 쓰고 onDisconnect 도 다시 건다(재접속하면 예약이 풀려 있다).
+     ⚠ 슬롯을 **그대로** 다시 쓴다. 새로 배정받으면 남의 자리를 뺏거나 pN 이 어긋난다.
+     ########################################################################## */
+  const offConn = onValue(ref(FB.rtdb, '.info/connected'), (snap)=>{
+    if(snap.val() !== true) return;                  // 끊긴 순간에는 할 수 있는 게 없다
+    if(LAN.mySlot == null) return;                   // 아직 자리를 못 받았다
+    try{
+      const meRef = ref(FB.rtdb, 'rooms/' + code + '/players/' + LAN.you);
+      onDisconnect(meRef).remove();                  // 재접속하면 예약이 풀려 있다 — 다시 건다
+      set(meRef, { name: LAN.myName || '플레이어', ready: true, slot: LAN.mySlot });
+    }catch(e){}
+  });
+  LAN.rt.listeners.push(offConn);
 
   // 입력(input): 호스트만 구독 — 클라이언트가 카드를 낼 때 여기로 쓴다
   const inputRef = ref(FB.rtdb, 'rooms/' + code + '/inputs');
@@ -63007,6 +63098,10 @@ function lanStartHeartbeat(){
   if(__lanStateTimer) clearInterval(__lanStateTimer);
   __lanStateTimer = setInterval(()=>{
     if(!lanIsHostGame()){ clearInterval(__lanStateTimer); __lanStateTimer=null; return; }
+    /* [Ver 13.11.1] 연결 끊김 유예 만료 감시.
+       ⚠ 여기서 안 보면 만료를 알아챌 계기가 없다 — 방 목록 리스너는 **자리가 바뀔 때만** 깨어나는데,
+         끊긴 뒤로는 아무 일도 안 일어나므로 영원히 유예 중으로 남는다. */
+    try{ lanHostDcTick(); }catch(e){}
     lanHostBroadcastNow();
   }, 400);
 }
