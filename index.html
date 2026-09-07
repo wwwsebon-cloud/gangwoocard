@@ -7186,7 +7186,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.18</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.19</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -14870,9 +14870,15 @@ function pwHeal(p, amt){
   return real;
 }
 function pwShield(p, n){ p.shield = (p.shield||0) + n; try{ showFloatNumber(p.id, '+'+n.toLocaleString(), 'shield'); }catch(e){} }
+/* ⚠ [Ver 13.19 버그수정] 예전에는 `p.stunned = true` 를 함께 세웠다.
+   이 게임의 "행동 불가"는 갈래가 둘이다 — 1턴짜리 `stunned` 와 다중턴 `stunLockTurns`.
+   턴 시작 처리는 stunLockTurns 를 **먼저** 보고 턴을 건너뛰며 1→0 으로 깎는데,
+   그때 stunned 는 건드리지 않는다. 그래서 **다음 턴에 그게 또 걸려 한 번 더 건너뛰었다.**
+   = 놀래키기·눈보라가 "1턴"이라고 적어놓고 실제로는 2턴 묶었고, 상태칩도 둘이 나란히 떴다.
+   다른 다중턴 스턴(스턴 피스트 · 무량공처 pro · 빙하기 · 동상)은 전부 stunLockTurns 하나만
+   쓴다. 권능만 두 곳에 걸고 있었다 — 여기도 하나로 맞춘다. */
 function pwStun(p, turns, label){
-  p.stunned = true;
-  p.stunLockTurns = Math.max(p.stunLockTurns||0, turns);
+  p.stunLockTurns = Math.max(p.stunLockTurns||0, Math.max(1, turns||1));
   p.stunLockLabel = label || '권능';
 }
 function pwHandIdxRandom(p){
@@ -14930,7 +14936,15 @@ const POWER_DEFS = [
     run:(me,t,v)=>{ const g = Math.floor((me.gold||0) * v / 100); if(g>0){ grantGold(me, g); pwLog(`💰 ${J(me.name,'이','가')} 권능 <b>돈벌기</b>로 ${fmtWon(g)}을(를) 벌었습니다.`); } } },
   { key:'corrode', rarity:'rare', icon:'🧪', name:'부식', target:'enemy', cd:52, amt:20, up:{k:'amt',per:2},
     desc:v=>`지목 대상이 받는 피해량을 <b>1바퀴</b>간 <b>${v}%</b> 늘립니다.`,
-    run:(me,t,v)=>{ t.vulnPct = (t.vulnPct||0) + v; t.vulnRounds = Math.max(t.vulnRounds||0, 1);
+    /* ⚠ [Ver 13.19 버그수정] 예전에는 `t.vulnRounds` 를 세웠다. 그 이름은 **카드 정의**용이고
+       (시스테마의 vulnRounds:4), 플레이어 상태는 전부 `vulnDueRound` 를 본다.
+       그래서 해제 검사 `turnCount >= p.vulnDueRound(0)` 가 늘 참이라 **다음 턴 시작에 곧바로 풀렸고**,
+       칩 조건 `turnCount < p.vulnDueRound` 는 영원히 거짓이라 **칩이 한 번도 안 떴다.**
+       쿨 52초를 쓰고도 사실상 아무 일도 안 하던 권능이었다.
+       ⚠ vulnLabel/vulnIcon 도 함께 채운다 — 안 채우면 칩이 '공론화'라는 남의 이름으로 뜬다. */
+    run:(me,t,v)=>{ t.vulnPct = (t.vulnPct||0) + v;
+      t.vulnDueRound = Math.max(t.vulnDueRound||0, turnCount + 1);
+      t.vulnLabel = '부식'; t.vulnIcon = '🧪';
       pwLog(`🧪 ${J(t.name,'이','가')} 부식되어 1바퀴 동안 받는 피해가 ${v}% 늘어납니다.`); } },
   { key:'plunder', rarity:'rare', icon:'🪙', name:'노획', target:'enemy', cd:63, amt:20, up:{k:'amt',per:2},
     desc:v=>`지목 대상이 가진 골드의 <b>${v}%</b>를 빼앗습니다.`,
@@ -22415,6 +22429,20 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 13.19', date: '2026-09-07',
+    items: [
+      '\u{1F5BC}\uFE0F <b>[아트] 상태칩 그림 24종</b>이 새로 들어갔습니다. 고대의 유적 · 고독한남자 · 광전사 · 단골 혜택 · 디아블로 · 라스베가스 · 람보르기니 · 박리다매 · 블루오션 · 상점 독점 · 스턴 · 신의 가호 · 앙갚음 장부 · 예토전생 · 윌슨 · 인과율 조작 · 조광일 · 집중 · 포커 · 힐러, 그리고 움짤로 <b>AURA FARMING · 다이아볼릭 랩터 · 딱지남 · 러시안 룰렛</b>.',
+      '\u{1F4CA} 이제 <b>221종 중 75종</b>에 그림이 들어갔습니다.',
+      '\u{1F62B} <b>[버그수정] 권능 "놀래키기"·"눈보라"가 1턴이 아니라 2턴 스턴시키던 문제.</b> 스턴이 두 갈래로 동시에 걸려서, 상태칩도 두 개가 나란히 떴습니다. 이제 적힌 대로 1턴입니다.',
+      '\u{1F9EA} <b>[버그수정] 권능 "부식"이 사실상 아무 일도 하지 않았습니다.</b> 지속시간이 엉뚱한 칸에 저장돼 다음 턴 시작에 곧바로 풀렸고, 상태칩도 한 번도 뜨지 않았습니다. 이제 <b>1바퀴</b> 제대로 걸리고 전용 아이콘도 생겼습니다.',
+      '\u{1F4E2} 부식에 걸리면 칩 이름이 <b>"공론화"</b>로 잘못 나오던 것도 고쳤습니다.',
+      '\u{1F916} <b>[버그수정] 봇 차례에서 판이 멈추던 문제</b>에 안전장치를 넣었습니다. 봇의 한 턴은 여러 단계가 사슬처럼 이어지는데, 중간에 오류가 나면 <b>아무 말 없이 끊어져</b> 판이 멈췄습니다. 이제 오류가 나도 차례를 넘기고 무엇이 잘못됐는지 기록합니다.',
+      '\u{23F1} 그래도 멈췄을 때 자동으로 넘기기까지 <b>45초 → 20초</b>로 줄였습니다.',
+      '\u{1F91D} <b>[버그수정] 봇의 티밍 제안에 시간 제한이 없었습니다.</b> 창을 닫지 않고 두면 판이 영영 멈췄습니다. 이제 30초가 지나면 자동으로 거절됩니다.',
+      '\u{1F4DD} 티밍을 <b>거절한 사람 이름이 잘못 나오던</b> 문제도 고쳤습니다.',
+    ]
+  },
   {
     version: 'Ver 13.18', date: '2026-09-06',
     items: [
@@ -34438,7 +34466,7 @@ const CHIP_DEBUFF = new Set([
   'paralyzeDueRound','silencedDueTurn','forcedSkipTurns','rawMeatDrainActive','accuracyMod',
   'foreshadow','momCardRecoil','matrixAtkDown','sell1gAll','shopBanned',
   'ledgerMarked','doorOpens','cultNoDraw','shopBlockDueRound','madDogPct',
-  'rouletteLockUid','drDown','goldRedirectRemaining','vulnPct','excitedVulnPct',
+  'rouletteLockUid','drDown','goldRedirectRemaining','vulnPct','vulnCorrode','excitedVulnPct',
   'frostbiteStacks','ashStacks','timeCurseActive','doctorWhoActive','deathBoom',
   'obituaryActive','ubinNicotine','healReducePct','romanticAccDrop','virusMarked',
   'tntPowder','hostBurdened','butterflyStacks','huntedBy','gangseoyunDebuff',
@@ -34553,6 +34581,18 @@ const CHIP_ICON_KEYS = new Set([
   'ignoreNullifyReflect','shield','stunResistCharges','psychoKillHeal','permaPierce',
   'deliciousReviveReady','curseDollTarget','permaAoe','chromaticMultiplier',
   'reflectNext','pwReflect',
+  /* ── [Ver 13.20] 4차 24종 ──
+     이번에도 LIFT 는 쓰지 않는다 — 전부 배경까지 꽉 찬 그림이라 위로 올리면 아래가 빈다.
+     수치 배지가 붙는 여섯(berserkAtkPct · diablo · healerAura · pokerHand · ruinsActive ·
+     wilsonHp)도 배지를 그림 위에 얹는 쪽이 낫다. */
+  'ruinsActive','lonelyManBonus','berserkAtkPct','lowGambleFree','diablo',
+  'gambleExtraChoice','lamboUnlimited','gambleCheap','blueOceanActive','shopLock',
+  'stunned','godBlessed','ledgerRevenge','edoTensei','wilsonHp',
+  'causalityLocked','doubleCastAura','nextCardGuaranteedHit','pokerHand','healerAura',
+  /* 움짤 넷 — 두 장을 칩 둘이 그대로 나눠 쓴다(아래 CHIP_ICON_FILE 참고) */
+  'auraFarmDueRound','diabolicRaptorAura','ddakjiActive','rouletteLockUid',
+  /* 권능 '부식'이 거는 취약 — vulnPct 칩의 부식 전용 갈래다(위 getStatusChips 참고) */
+  'vulnCorrode',
 ]);
 /* 파일 이름이 key 와 다른 칩만 여기 적는다. 없으면 `chip/{key}.png` 다.
    쓰임새는 둘이다 —
@@ -34565,6 +34605,11 @@ const CHIP_ICON_FILE = {
   permaVulnUp:'drDown.png',
   evasionPct:'evasionPct.gif', flatDmgReduceTurns:'flatDmgReduceTurns.gif',
   telekinesisTarget:'telekinesisTarget.gif',   // [Ver 13.12]
+  /* [Ver 13.20] 움짤 넷. 원본은 두 장뿐이고 **한 그림을 칩 둘이 그대로 같이 쓴다.**
+     그래도 파일은 key 이름으로 따로 저장했다 — 여기서 한 파일을 같이 가리키게 하면
+     나중에 한쪽만 다른 그림으로 갈아끼우고 싶을 때 둘이 함께 딸려간다. */
+  auraFarmDueRound:'auraFarmDueRound.gif', diabolicRaptorAura:'diabolicRaptorAura.gif',
+  ddakjiActive:'ddakjiActive.gif',         rouletteLockUid:'rouletteLockUid.gif',
 };
 function chipIconSrc(key){ return 'chip/' + (CHIP_ICON_FILE[key] || (key + '.png')); }
 /* 우하단 수치 배지를 붙일 칩. 여기 없으면 숫자를 뽑지 않는다 —
@@ -34583,7 +34628,7 @@ const CHIP_AMOUNT_KEYS = new Set([
   'protocolDefensePct','rampageOn','raptorExecutionActive','reDottusa','reaperScythePct',
   'romanticAccDrop','ruinsActive','sellPriceLockValue','shield','shopDjDiscount',
   'tempAtkBuffIcon','tntPowder','tripleShieldCharges','ubinNicotine','ufcPartnerId',
-  'untellShieldPerDeath','vengeanceAuraPct','vigilanteStacks','vulnPct','wildAtkDelta',
+  'untellShieldPerDeath','vengeanceAuraPct','vigilanteStacks','vulnPct','vulnCorrode','wildAtkDelta',
   'wilsonHp',]);
 
 function statusChipHtml(c){
@@ -34989,7 +35034,10 @@ function getStatusChips(p){
   /* [Ver 9.7 버그수정] vulnPct는 여러 카드·이벤트가 공유하는 필드인데 칩 이름은 "공론화"로 박혀 있었다.
      랜덤 이벤트 <감기 걸림>에 걸려도 화면에는 "공론화"라고 떠서 원인을 알 수 없었다.
      효과를 건 쪽이 vulnLabel/vulnIcon을 남기면 그 이름으로 뜨고, 없으면 종래대로 공론화다. */
-  if(p.vulnPct > 0 && turnCount < p.vulnDueRound) addChip('vulnPct', p.vulnIcon || '📢', `${p.vulnLabel || '공론화'}(받는피해 +${p.vulnPct}%) · ${Math.max(0,p.vulnDueRound-turnCount)}바퀴`, 'red');
+  /* [Ver 13.19] 이 칩은 여러 출처가 나눠 쓴다(공론화 · 흉조 · 부식 …).
+     그림은 key 로 찾으므로, 출처마다 다른 그림을 쓰려면 key 를 갈라야 한다.
+     ⚠ 라벨만 바뀌고 key 가 같으면 셋이 전부 같은 그림으로 나온다. */
+  if(p.vulnPct > 0 && turnCount < p.vulnDueRound) addChip(p.vulnLabel === '부식' ? 'vulnCorrode' : 'vulnPct', p.vulnIcon || '📢', `${p.vulnLabel || '공론화'}(받는피해 +${p.vulnPct}%) · ${Math.max(0,p.vulnDueRound-turnCount)}바퀴`, 'red');
   if(p.excitedVulnPct > 0 && turnCount < p.excitedDueRound) addChip('excitedVulnPct', '🥵', `흥분(받는피해 +${p.excitedVulnPct}%) · ${Math.max(0,p.excitedDueRound-turnCount)}바퀴`, 'red');
   if(p.frostbiteStacks > 0) addChip('frostbiteStacks', '🧊', `동상 · ${p.frostbiteStacks}중첩`, 'red');
   if(p.ashStacks > 0) addChip('ashStacks', '🌫️', `재 · ${p.ashStacks}중첩`, 'red');
@@ -38935,7 +38983,7 @@ function getCardSharePartners(p){
 function statusText(p){
   const tags = [];
   if(!p.alive) tags.push('DEAD');
-  if(p.stunned) tags.push('STUN');
+  if((typeof isStunnedOrFrozen === 'function') ? isStunnedOrFrozen(p) : p.stunned) tags.push('STUN');   // [Ver 13.19] 두 갈래 모두
   if(p.reflectNext) tags.push('REFLECT-ARMED');
   if(p.nullifyNext) tags.push('NULLIFY-ARMED');
   return tags.join(' · ');
@@ -46234,8 +46282,12 @@ function resolveCardEffect(caster, card, targetId, onDone){
     case 'ATK_STUN_TRIPLE': {
       const target = players.find(p=>p.id===targetId);
       if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
-      const dmg = target.stunned ? card.power*3 : card.power;
-      if(target.stunned) log('sys', `${J(target.name,'이','가')} 스턴 상태라 ${card.name}의 피해가 3배로 적용됩니다!`);
+      /* [Ver 13.19] p.stunned 만 보던 자리 — 권능 스턴(stunLockTurns)도 스턴이다.
+         pwStun 이 stunned 를 더 이상 세우지 않으므로, 여기를 안 고치면
+         "권능으로 재운 상대에게는 3배가 안 터지는" 조용한 약화가 생긴다. */
+      const __stunnedNow = (typeof isStunnedOrFrozen === 'function') ? isStunnedOrFrozen(target) : target.stunned;
+      const dmg = __stunnedNow ? card.power*3 : card.power;
+      if(__stunnedNow) log('sys', `${J(target.name,'이','가')} 스턴 상태라 ${card.name}의 피해가 3배로 적용됩니다!`);
       dealDamage(caster, target, dmg, card.pierce);
       onDone({});
       break;
