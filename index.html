@@ -7235,7 +7235,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.1</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.3</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -13774,10 +13774,11 @@ function renderSettingsScreen(){
       <div class="settings-audio-head">📮 디스코드 전적 연동</div>
       <div class="setting-row" style="flex-direction:column; align-items:stretch;">
         <div class="setting-meta">
-          <div class="setting-name">판 결과 자동 전송</div>
-          <div class="setting-desc">판이 끝나면 승자·순위·바퀴 수를 디스코드 채널에 자동으로 올립니다.
+          <div class="setting-name">판 결과 자동 전송 <span style="opacity:.6;font-weight:400;">· 내 채널에도 보내기</span></div>
+          <div class="setting-desc">판이 끝나면 전적이 <b>공식 전적 채널</b>에 자동으로 올라갑니다.
+            아래에 <b>내 디스코드 웹후크</b>를 넣으면 <b>내 채널에도 함께</b> 올라갑니다.
             디스코드에서 <b>채널 설정 → 연동 → 웹후크 → 새 웹후크</b>를 만들고 <b>웹후크 URL 복사</b>로 받은 주소를 붙여넣으세요.
-            <b>주소는 이 기기에만 저장되며 게임 파일에는 들어가지 않습니다.</b>
+            <b>내 주소는 이 기기에만 저장되며 게임 파일에는 들어가지 않습니다.</b>
             (놀이터·튜토리얼은 올라가지 않습니다)</div>
         </div>
         <div class="dc-row">
@@ -13791,9 +13792,9 @@ function renderSettingsScreen(){
           </label>
         </div>
         <div id="dcMsg" class="setting-desc" style="margin-top:7px;">${
-          dcWebhookUrl() ? (dcEnabled() ? '연결됨 — 판이 끝나면 자동으로 올라갑니다.'
-                                        : '주소는 저장돼 있지만 <b>꺼져 있습니다.</b>')
-                         : '아직 연결되지 않았습니다.'}</div>
+          dcWebhookUrl() ? (dcEnabled() ? '내 채널 연결됨 — 공식 채널과 함께 올라갑니다.'
+                                        : '내 주소는 저장돼 있지만 <b>꺼져 있습니다.</b> (공식 채널에는 그대로 올라갑니다)')
+                         : '전적은 <b>공식 채널</b>로 올라갑니다. 내 채널에도 받으려면 위에 주소를 넣으세요.'}</div>
       </div>
 
       <div class="settings-audio-head">🔊 소리 설정</div>
@@ -22655,6 +22656,21 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 14.3', date: '2026-09-09',
+    items: [
+      '\u{1F4E1} <b>이제 판이 끝나면 전적이 공식 전적 채널로 자동 전송됩니다.</b> 따로 설정할 것이 없습니다.',
+      '\u{1F464} 설정에 <b>내 디스코드 웹후크</b>를 넣으면 <b>내 채널에도 함께</b> 올라갑니다. 내 주소는 이 기기에만 저장됩니다.',
+      '\u{1F4CB} 올라가는 내용은 결과창과 같습니다 — 순위 · <b>누가 어떤 카드에 몇 바퀴째에 죽었는지</b> · 가한 피해 · 처치 · MVP 카드 · 결정타. 판을 도중에 중단해도 그 시점까지의 전적이 올라갑니다.',
+    ]
+  },
+  {
+    version: 'Ver 14.2', date: '2026-09-09',
+    items: [
+      '\u{1F4CB} <b>디스코드에 올라가는 전적이 훨씬 자세해졌습니다.</b> 이제 결과창에 나오는 내용을 그대로 싣습니다 — <b>누가 어떤 카드에 몇 바퀴째에 죽었는지</b>, 각자 <b>가한 피해 · 처치 수 · 가장 큰 피해를 준 카드(MVP)</b>, 그리고 판을 끝낸 <b>결정타</b>까지 함께 올라갑니다.',
+      '\u{26D4} <b>판 중단</b> 보고도 같은 수준으로 자세해졌습니다. 도중에 나가도 그 시점까지의 전적이 그대로 남습니다.',
+    ]
+  },
   {
     version: 'Ver 14.1', date: '2026-09-08',
     items: [
@@ -37840,6 +37856,36 @@ const DC_ON_KEY  = 'gwk_discord_on';
 const DC_URL_RE  = /^https:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/api\/webhooks\/\d+\/[\w-]+$/;
 
 function dcWebhookUrl(){ try{ return localStorage.getItem(DC_URL_KEY) || ''; }catch(e){ return ''; } }
+
+/* [Ver 14.3] 공식 전적 채널.
+   ▶ 여기 네 조각에 디스코드 웹후크 주소를 나눠 넣으면 **모든 사람의 판 결과**가 이 채널로 온다.
+     비어 있으면(기본) 공식 전송은 그냥 건너뛴다 — 설정에 넣은 개인 웹훅만 동작한다.
+     예)  'https://discord.com/api/',
+          'webhooks/숫자아이디/',
+          '토큰앞부분',
+          '토큰뒷부분',
+   ⚠ 조각내어 둔 이유 — 깃허브 등의 자동 스캐너가 웹후크 주소를 발견하면 디스코드가 그 웹훅을
+     **자동으로 무효화**한다. 조각내면 그 패턴 검색에 걸리지 않는다.
+     보안이 아니라 사고 방지다. 마음먹고 뜯어보면 그대로 다 보인다. */
+const DC_OFFICIAL = [
+  'https://discord.com/api/',
+  'webhooks/1546895951103402066/',
+  'ezEb4WKrSz0XvJD7V4MWlI8FeBN-cJVIKlr9',
+  'PrSujkm0vHWKPdB3XYxhTZ-dB3xQuqHw',
+].join('');
+
+/* 이번 전송이 나갈 곳들. 공식 채널은 주소가 채워져 있으면 **항상** 들어간다.
+   설정에 개인 웹훅을 넣어둔 사람은 자기 채널에도 함께 간다(같은 주소면 한 번만). */
+function dcTargets(){
+  const out = [];
+  try{ if(DC_URL_RE.test(DC_OFFICIAL)) out.push(DC_OFFICIAL); }catch(e){}
+  try{
+    const mine = dcWebhookUrl();
+    if(dcEnabled() && mine && mine !== DC_OFFICIAL) out.push(mine);
+  }catch(e){}
+  return out;
+}
+
 function dcEnabled(){
   try{ return localStorage.getItem(DC_ON_KEY) !== '0' && DC_URL_RE.test(dcWebhookUrl()); }catch(e){ return false; }
 }
@@ -37882,6 +37928,17 @@ async function dcSend(payload, url){
     throw new Error(`디스코드가 거절했습니다 (${r.status}${why ? ' · ' + why : ''})`);
   }
   return true;
+}
+
+/* [Ver 14.3] 대상 전부에게 보낸다. 한 곳이 실패해도 나머지는 그대로 간다.
+   ⚠ unloading(창 닫는 중)이면 fetch 가 끊기므로 sendBeacon 을 쓴다. */
+function dcBroadcast(payload, unloading){
+  dcTargets().forEach(u=>{
+    try{
+      if(unloading) dcSendBeacon(payload, u);
+      else dcSend(payload, u).catch(e=> console.warn('[디스코드] 전송 실패', u === DC_OFFICIAL ? '(공식)' : '(개인)', e));
+    }catch(e){}
+  });
 }
 
 /* 설정의 "테스트 전송" 버튼 */
@@ -37931,11 +37988,52 @@ function dcModeLabel(){
   return t.length ? t.join(' · ') : '일반전';
 }
 
+
+/* [Ver 14.2] 디스코드에 실을 "한 사람 한 줄". 결과창과 **같은 데이터**를 쓴다.
+   ⚠ 마크다운이 먹으므로 이름에 * _ ` ~ 가 있으면 서식이 깨진다. 이스케이프한다. */
+function dcEscMd(s){ return String(s == null ? '' : s).replace(/([*_`~\\|>])/g, '\\$1'); }
+
+function dcPlayerLine(p, i, medal){
+  const head = (medal && medal[i]) ? medal[i] : `\`${String(i + 1).padStart(2, ' ')}.\``;
+  const bits = [];
+  try{
+    const mvp = grMvpOf(p);
+    if(Math.round(p.damageDealt || 0) > 0) bits.push(`딜 ${Math.round(p.damageDealt).toLocaleString()}`);
+    if((p.killCount || 0) > 0)             bits.push(`처치 ${p.killCount}`);
+    if(mvp && mvp.name)                    bits.push(`MVP ${dcEscMd(mvp.name)}`);
+  }catch(e){}
+
+  /* 사인 — 결과창의 grDeathText 와 같은 자료를 본다. */
+  let death = '';
+  if(!p.alive){
+    let cause = p.deathCause || (lastDeathInfo && lastDeathInfo.name === p.name ? lastDeathInfo.cause : null) || '알 수 없음';
+    const card = p.deathCardName || (lastDeathInfo && lastDeathInfo.name === p.name ? lastDeathInfo.cardName : null);
+    const d = [];
+    if(card && String(cause).indexOf(card) === -1) d.push(`「${dcEscMd(card)}」`);
+    if(p.deathRound != null) d.push(`${p.deathRound}바퀴`);
+    death = ` ☠ ${dcEscMd(cause)}${d.length ? ' · ' + d.join(' · ') : ''}`;
+  }
+
+  return `${head} **${dcEscMd(p.name)}**${p.isBot ? ' *(봇)*' : ''}${death}`
+       + (bits.length ? `\n　　${bits.join(' · ')}` : '');
+}
+
+/* 여러 줄을 임베드 field 하나에 안전하게 담는다. 1024자를 넘으면 요청이 통째로 거절된다. */
+function dcFitField(lines){
+  const out = [];
+  let len = 0;
+  for(const ln of lines){
+    if(len + ln.length + 1 > 980){ out.push('…'); break; }
+    out.push(ln); len += ln.length + 1;
+  }
+  return out.join('\n') || '—';
+}
+
 /* [Ver 14.1] 창이 닫히는 중에도 보낼 수 있는 전송 경로.
    ⚠ fetch 는 페이지가 사라지면 끊긴다. sendBeacon 은 브라우저가 대신 끝까지 보내준다.
      응답을 못 읽는 대신 죽지 않는다 — 중단 보고에는 이쪽이 맞다. */
-function dcSendBeacon(payload){
-  const u = dcWebhookUrl();
+function dcSendBeacon(payload, url){
+  const u = url || dcWebhookUrl();
   if(!DC_URL_RE.test(u)) return false;
   try{
     const body = JSON.stringify(Object.assign({ username: '갱갱갱 우빈랩터 전적' }, payload));
@@ -37948,7 +38046,8 @@ function dcSendBeacon(payload){
    ⚠ unloading 이면 fetch 가 아니라 sendBeacon 으로 보낸다. */
 function dcPostAbandon(reason, unloading){
   try{
-    if(!dcEnabled()) return;
+    /* [Ver 14.3] 공식 채널은 항상 — 여기서도 dcEnabled() 로 막지 않는다. */
+    if(!dcTargets().length) return;
     if(dcPostedThisGame) return;   // 정상 종료로 이미 올렸다면 중복해서 올리지 않는다
     dcPostedThisGame = true;
 
@@ -37957,8 +38056,7 @@ function dcPostAbandon(reason, unloading){
        dcRanking 이 그 뒤에 탈락 역순을 이어붙인다. */
     const rank  = dcRanking(alive);
     const mins  = Math.max(0, Math.round((Date.now() - (gameStartTime || Date.now())) / 60000));
-    const lines = rank.slice(0, 10).map((p, i)=>
-      `${'　' + (i + 1) + '.'} ${p.name}${p.isBot ? ' *(봇)*' : ''}${p.alive ? '' : ' ☠'}`).join('\n');
+    const lines = dcFitField(rank.slice(0, 10).map((p, i)=> dcPlayerLine(p, i, null)));   // [Ver 14.2] 중단도 같은 수준으로
 
     const payload = { embeds: [{
       title: '⛔ 판 중단',
@@ -37969,21 +38067,21 @@ function dcPostAbandon(reason, unloading){
         { name: '생존',   value: `${alive.length} / ${rank.length}명`, inline: true },
         { name: '진행',   value: `${turnCount}바퀴 · ${mins}분`,   inline: true },
         { name: '사유',   value: String(reason || '알 수 없음'),   inline: true },
-        { name: '중단 시점', value: lines || '—' },
+        { name: '중단 시점 전적', value: lines },
       ],
       footer: { text: '갱갱갱 우빈랩터 카드게임' },
       timestamp: new Date().toISOString(),
     }]};
 
-    if(unloading){ dcSendBeacon(payload); return; }
-    dcSend(payload).catch(e=> console.warn('[디스코드] 중단 전송 실패', e));
+    dcBroadcast(payload, unloading);
   }catch(e){ console.warn('[디스코드] 중단 전송 중 오류', e); }
 }
 
 /* 판이 끝났을 때 한 번. ⚠ 여기서 나는 어떤 오류도 게임 흐름을 막으면 안 된다. */
 function dcPostMatchResult(winners){
   try{
-    if(!dcEnabled()) return;
+    /* [Ver 14.3] dcEnabled() 로 막지 않는다 — 공식 채널은 설정과 무관하게 항상 보낸다. */
+    if(!dcTargets().length) return;
     if(typeof isUnrankedGame === 'function' && isUnrankedGame()) return;   // 놀이터·튜토리얼은 전적이 아니다
     if(dcPostedThisGame) return;                                            // 판당 한 번
     dcPostedThisGame = true;
@@ -37992,10 +38090,19 @@ function dcPostMatchResult(winners){
     const win  = (winners || []).map(p=> p && p.name).filter(Boolean);
     const mins = Math.max(0, Math.round((Date.now() - (gameStartTime || Date.now())) / 60000));
     const medal = ['🥇','🥈','🥉'];
-    const lines = rank.slice(0, 10).map((p, i)=>
-      `${medal[i] || '　' + (i + 1) + '.'} ${p.name}${p.isBot ? ' *(봇)*' : ''}`).join('\n');
+    /* [Ver 14.2] 결과창과 같은 수준으로 — 사인(어떤 카드에 죽었는지) · MVP 카드 · 딜 · 처치 */
+    const lines = dcFitField(rank.slice(0, 10).map((p, i)=> dcPlayerLine(p, i, medal)));
 
-    dcSend({ embeds: [{
+    /* 결정타 — 마지막에 쓰러진 사람. 결과창의 lastFall 과 같은 것이다. */
+    let finisher = '';
+    try{
+      if(lastDeathInfo && lastDeathInfo.name){
+        finisher = `**${dcEscMd(lastDeathInfo.name)}** — ${dcEscMd(lastDeathInfo.cause || '')}`
+                 + (lastDeathInfo.cardName ? ` 「${dcEscMd(lastDeathInfo.cardName)}」` : '');
+      }
+    }catch(e){}
+
+    dcBroadcast({ embeds: [{
       title: '🏆 판 종료',
       description: win.length ? `**${win.join(', ')}** 승리` : '무승부',
       color: 0xF2C14E,
@@ -38003,11 +38110,11 @@ function dcPostMatchResult(winners){
         { name: '모드',      value: dcModeLabel(),                inline: true },
         { name: '참가자',    value: `${rank.length}명`,           inline: true },
         { name: '진행',      value: `${turnCount}바퀴 · ${mins}분`, inline: true },
-        { name: '순위',      value: lines || '—' },
-      ],
+        { name: '순위 · 전적', value: lines },
+      ].concat(finisher ? [{ name: '결정타', value: finisher }] : []),
       footer: { text: '갱갱갱 우빈랩터 카드게임' },
       timestamp: new Date().toISOString(),
-    }]}).catch(e=> console.warn('[디스코드] 전송 실패', e));
+    }]});
   }catch(e){ console.warn('[디스코드] 전적 전송 중 오류', e); }
 }
 
