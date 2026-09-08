@@ -7186,7 +7186,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.19</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.25</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -17621,6 +17621,46 @@ function fbBlockReason(){
   if(location.protocol === 'file:') return '파일을 직접 열면 온라인 기능을 쓸 수 없습니다.<br>Firebase Hosting 등으로 <b>http(s) 주소</b>에서 열어주세요.';
   return null;
 }
+/* ##########################################################################
+   [Ver 13.25] "Database is closing/hidden" 되살리기
+   --------------------------------------------------------------------------
+   firebase-auth.js 는 **화면이 가려지는 순간 자기 IndexedDB 를 닫는다.**
+   (onPageHide → isHiding=true → _openDb() 가 곧바로 이 오류를 던진다)
+   Firestore 는 요청마다 Auth 에게 토큰을 물어보므로, 로그인이 끝난 뒤에도
+   백업·복원·기록 올리기가 통째로 이 오류로 튕긴다.
+
+   ▶ 일시적인 상태다 — 화면이 다시 보이면 Auth 가 스스로 풀린다.
+     그래서 **기다렸다가 한 번 더** 해보면 대부분 그냥 된다.
+   ⚠ 무한 재시도는 하지 않는다. 한 번만 다시 해보고, 그래도 안 되면 사람에게 알린다.
+   ########################################################################## */
+function fbIsHiddenDbError(e){
+  return /closing\/hidden/i.test(String((e && e.message) || e || ''));
+}
+/* 화면이 다시 보일 때까지 기다린다. 이미 보이면 바로 통과. */
+function fbWaitVisible(ms){
+  if(typeof document === 'undefined' || !document.hidden) return Promise.resolve();
+  return new Promise(res=>{
+    let t = null;
+    const done = ()=>{ try{ document.removeEventListener('visibilitychange', h); }catch(e){} clearTimeout(t); res(); };
+    const h = ()=>{ if(!document.hidden) done(); };
+    document.addEventListener('visibilitychange', h);
+    t = setTimeout(done, ms || 8000);   // 계속 가려져 있어도 언젠가는 진행한다
+  });
+}
+async function fbRetryIfHidden(fn){
+  try{ return await fn(); }
+  catch(e){
+    if(!fbIsHiddenDbError(e)) throw e;
+    await fbWaitVisible(8000);
+    return await fn();
+  }
+}
+/* 영어 원문 대신 사람이 읽을 수 있는 안내로 바꾼다. */
+function fbErrText(e){
+  if(fbIsHiddenDbError(e)) return '창이 가려져 있어 잠시 연결이 끊겼습니다. 이 화면을 켜둔 채로 다시 눌러주세요.';
+  return (e && e.message) || String(e);
+}
+
 /* SDK 로드 + 익명 로그인. 여러 번 불러도 한 번만 실제로 돈다. */
 function fbInit(){
   if(FB.ready) return Promise.resolve(FB);
@@ -19774,7 +19814,7 @@ function olError(e){
   if(w) w.innerHTML = `<div class="ol-blocked">
     <div class="ol-blocked-ic">⚠️</div>
     <div class="ol-blocked-t">연결에 실패했습니다</div>
-    <div class="ol-blocked-d">${escapeHtml((e && e.message) || String(e))}</div>
+    <div class="ol-blocked-d">${escapeHtml((typeof fbErrText==='function') ? fbErrText(e) : ((e && e.message) || String(e)))}</div>
   </div>`;
 }
 function renderOnlineTab(){
@@ -19988,7 +20028,7 @@ function openPlayerProfile(idx){
 
 function doSubmitScore(){
   olBusy('기록을 올리는 중...');
-  fbSubmitScore().then(()=>{ renderOnlineRank(); }).catch(olError);
+  fbRetryIfHidden(()=> fbSubmitScore()).then(()=>{ renderOnlineRank(); }).catch(olError);   // [Ver 13.25]
 }
 /* ==========================================================================
    [Ver 12.7 신규] 판이 끝날 때마다 리더보드를 자동으로 올린다
@@ -20024,7 +20064,7 @@ function autoSubmitScoreAfterGame(){
     if(typeof playgroundMode !== 'undefined' && playgroundMode) return;
     setTimeout(()=>{
       try{
-        fbSubmitScore()
+        fbRetryIfHidden(()=> fbSubmitScore())   /* [Ver 13.25] 창이 가려져 실패한 것이면 다시 해본다 */
           .then(()=>{
             /* 랭킹 탭을 마침 열어두고 있었다면 새 값으로 다시 그린다. */
             try{
@@ -20254,9 +20294,10 @@ function doBackupNow(){
   if(!syncGuardAllow('backup')) return;   // [Ver 13.17] 연타 제한
   const m = document.getElementById('olSyncMsg');
   if(m) m.textContent = '백업 중...';
-  fbBackupNow().then(p=>{
+  /* [Ver 13.25] 창이 가려져 있으면 Auth 가 IndexedDB 를 닫아 실패한다 — 보일 때까지 기다렸다 재시도. */
+  fbRetryIfHidden(()=> fbBackupNow()).then(p=>{
     if(m) m.innerHTML = `<b style="color:#3fa860;">백업 완료</b> — ${new Date(p.at).toLocaleString('ko-KR')}`;
-  }).catch(e=>{ if(m) m.innerHTML = `<b style="color:#d64545;">실패</b> — ${escapeHtml(e.message||String(e))}`; });
+  }).catch(e=>{ if(m) m.innerHTML = `<b style="color:#d64545;">실패</b> — ${escapeHtml(fbErrText(e))}`; });
 }
 function doRestorePrompt(){
   /* [Ver 13.16] 제재 중에는 복원도 막는다. 남의 백업을 불러오면 그 사람의 유저 코드를
@@ -20269,7 +20310,8 @@ function doRestorePrompt(){
   const code = (inp && inp.value || '').trim().toUpperCase();
   if(!code){ if(m) m.textContent = '유저 코드를 입력하세요.'; return; }
   if(m) m.textContent = '찾는 중...';
-  fbFindBackupByCode(code).then(found=>{
+  /* [Ver 13.25] 같은 이유로 여기서도 한 번 더 해본다 — "Database is closing/hidden" 대응 */
+  fbRetryIfHidden(()=> fbFindBackupByCode(code)).then(found=>{
     if(!found){ if(m) m.innerHTML = `<b style="color:#d64545;">그 코드의 백업을 찾지 못했습니다.</b>`; return; }
     /* ======================================================================
        [Ver 13.17] 되돌리기 금지
@@ -20316,7 +20358,7 @@ function doRestorePrompt(){
           }
         }}
     ]);
-  }).catch(e=>{ if(m) m.innerHTML = `<b style="color:#d64545;">실패</b> — ${escapeHtml(e.message||String(e))}`; });
+  }).catch(e=>{ if(m) m.innerHTML = `<b style="color:#d64545;">실패</b> — ${escapeHtml(fbErrText(e))}`; });
 }
 function renderOnlineGlobal(){
   olBusy('전체 통계를 모으는 중...');
@@ -22429,6 +22471,55 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 13.25', date: '2026-09-08',
+    items: [
+      '\u{1F41B} <b>[버그수정] 백업·복원이 "Database is closing/hidden"으로 실패하던 문제.</b> 창을 다른 곳으로 넘기거나 게임을 배경에 두면, 로그인 정보를 담아둔 저장소가 닫히면서 요청이 통째로 튕겼습니다. 이제 <b>화면이 다시 보일 때까지 기다렸다가 한 번 더</b> 시도합니다.',
+      '\u{1F4AC} 그래도 안 되면 영어 원문 대신 <b>"창이 가려져 있어 잠시 연결이 끊겼습니다"</b>라고 안내합니다.',
+      '\u{1F3C6} 같은 이유로 <b>기록이 안 올라가던 것</b>도 함께 고쳤습니다. 창을 잠깐 가린 것뿐인데 "서버에 올라가지 않고 있습니다" 경고가 뜨던 문제입니다.',
+    ]
+  },
+  {
+    version: 'Ver 13.24', date: '2026-09-08',
+    items: [
+      '\u{1F5BC}\uFE0F <b>[아트] 상태칩 그림 15종</b>이 더 들어갔습니다. 이번엔 전부 <b>디버프</b>입니다 — 경직 · 공유기(카드 사용불가) · 사채 · 손패 은폐 · 스턴(다턴) · 악마와의 계약 · 앙코르 · 연결 끊김 대기 · 조종 당함 · 징오징오 · 채팅 금지 · 채팅 영구 금지 · 척추뼈 골절 · 화상.',
+      '\u{1F4CA} 이제 <b>155종</b>에 그림이 들어갔습니다. <b>남은 건 69종</b>입니다.',
+    ]
+  },
+  {
+    version: 'Ver 13.23', date: '2026-09-08',
+    items: [
+      '\u{1F5BC}\uFE0F <b>[아트] 상태칩 그림 9종</b>이 더 들어갔습니다. <b>[가면라이더 강서윤] 각성 · [강서윤] 변신 대기 · 누르끼끼 [강서윤급] · 류라이 · 권모술수 pro · 코치조 · 스턴 면역(영구) · 숙련어쌔신 · 영웅은 죽지 않아요</b>.',
+      '\u{1F504} 뒤 다섯은 이미 있던 그림을 그대로 씁니다 — 권모술수는 일반과 같은 그림, 코치조는 과기대 로고, 스턴 면역(영구)은 기존 스턴 면역, 숙련어쌔신은 권능 <b>암살</b> 아이콘, 영웅은 죽지 않아요는 지후펫 <b>의사 지후</b>입니다.',
+      '\u{1F4CA} 이제 <b>140종</b>에 그림이 들어갔습니다.',
+    ]
+  },
+  {
+    version: 'Ver 13.22', date: '2026-09-08',
+    items: [
+      '\u{1F5BC}\uFE0F <b>[아트] 상태칩 그림 16종</b>이 더 들어갔습니다. sigmastone · 골드샷 · 도뜨사 면역 · 도파민 · 마조히스트 · 방해금지 · 빙결 면역 · 사디스트 · 승진 · 의뢰(청부업자) · 인성질 · 자경단원 · 축복 · 축복패키지 면역 · 통 속의 뇌 · 홀리 쉴드.',
+      '\u{1F52B} <b>러시안 룰렛</b> 그림을 새로 그렸습니다. 예전에는 딱지남과 같은 움짤을 나눠 써서 첫 화면이 뿌옇게 보였습니다.',
+      '\u{1F3B4} <b>[버그수정] 딱지남 상태칩이 회색으로 나오던 문제.</b> 매 턴 회복·골드를 주는 이로운 상태인데 분류가 빠져 있었습니다. 이제 다른 버프와 같은 빨간 칩입니다.',
+      '\u{1F4CA} 이제 <b>131종</b>에 그림이 들어갔습니다.',
+    ]
+  },
+  {
+    version: 'Ver 13.21', date: '2026-09-07',
+    items: [
+      '\u{1F5BC}\uFE0F <b>[아트] 상태칩 그림 20종</b>이 더 들어갔습니다. 급소노리기 · 도굴꾼 · 랩터 익스큐션 · 막순아! · 불로초 · Ego:붉은안개 · 다음 구매 무료 · 상해보험 · 소울스틸러 · 수익성 투자 · 운빨보험 · 원리합계 · 추모 · 팔리아치, 그리고 움짤로 <b>DJ · 감스트 · 메타톤 잼민이 · 파티 타임</b>.',
+      '\u{1F3BB} <b>[신규] symphony</b>에 상태칩이 생겼습니다. 매 턴 자신·아군을 회복시키고 있다는 게 판에서 바로 보입니다.',
+      '\u{1F3AD} <b>[신규] 감옥에서 누가 돌아왔게</b>도 칩이 생겼습니다. <b>손에 들고만 있어도</b> 스턴이 풀릴 때마다 터지는 카드라, 상대가 알고 대응할 수 있어야 합니다.',
+      '\u{1F4CA} 이제 <b>221종 중 114종</b> — <b>절반을 넘었습니다.</b>',
+    ]
+  },
+  {
+    version: 'Ver 13.20', date: '2026-09-07',
+    items: [
+      '\u{1F5BC}\uFE0F <b>[아트] 상태칩 그림 18종</b>이 더 들어갔습니다. VIP 고객님 · 경기 회복 · 광전사 대기 · 디버프 면역 · 무신정변 · 무조건반사 · 불타는남자 · 선인장랩터 · 언텔 · 영계의 낫 · 우빈 리커버리 · 운수좋은날 · 유혹 · 직사광선 · 탄핵 · 탄핵 면역 · 탱크보이전두광, 그리고 움짤로 <b>케인</b>.',
+      '\u{1F578}\uFE0F <b>[신규] 권모술수에 전용 상태칩</b>이 생겼습니다. 예전에는 그냥 "공격력 +20% / -20%"로만 보여서 무엇 때문인지 알 수 없었습니다. 이제 <b>쓴 사람은 빨간 칩, 맞은 사람은 파란 칩</b>이 따로 붙습니다.',
+      '\u{1F4CA} 이제 <b>221종 중 94종</b>에 그림이 들어갔습니다. 절반에 가까워졌습니다.',
+    ]
+  },
   {
     version: 'Ver 13.19', date: '2026-09-07',
     items: [
@@ -33882,6 +33973,7 @@ function mkPlayer(id,name,isBot){
     stunImmuneDueRound:0, // 캡틴아메리카노: 이 turnCount까지 모든 스턴/빙결 면역
     hpBlindDueRound:0, // 징오징오: 이 turnCount까지 자신 제외 모두의 체력바가 안 보임
     gotchaBonusPending:false, // 잡았죠?: 다음 공격에 1200 추가피해, 대상이 안 죽으면 자신이 사망
+    schemeUpPct:0, schemeDownPct:0, // [Ver 13.20] 권모술수 전용 상태칩용 표시(+받은 쪽 / -받은 쪽)
     atkMultiplier:0, // [Ver 8.1.9] 공격력 %증감 누적치(가산식). 예: +30%면 30, -20%면 -20. 최종 적용시 amount*(1+atkMultiplier/100) 한 번만 계산. 김자점 등 여러 버프가 겹쳐도 서로 더해질 뿐 곱해지지 않는다.
     chromaticMultiplier:0, // [Ver 8.1.9] 크로마틱 우빈권: 명중할 때마다 영구적으로 +40%씩 가산되는 공격력 %증감치. 빗나가면 0으로 초기화 (가산식 통일)
     nextAtkCritChance:0, // 매의 눈: 다음 공격 한 번에 한해 이 확률(%)로 데미지 2배
@@ -34431,6 +34523,30 @@ function drawCardRespectingGacha(p){
      없는 칩도 전부 정사각형(이모지)으로 그려진다. 배치·크기를 눈으로 확인하는 용도.
    ########################################################################## */
 const CHIP_BUFF = new Set([
+  /* ⚠ 새 칩 key 를 만들면 여기(또는 CHIP_DEBUFF)에 **반드시** 넣는다.
+     빠뜨리면 k-neutral 로 그려져 테두리가 회색이 되고, 수치 배지가
+     흰 알약 위 흰 글씨가 되어 숫자가 아예 안 보인다. (13.19 부식에서 겪었다) */
+  'schemeUpPct',   // [Ver 13.20] 권모술수를 쓴 쪽 — 빨강
+  /* [Ver 13.22] 13.19에 넣고 분류를 빠뜨려 회색으로 나오던 것 — 매 턴 회복·골드를 주는 버프다. */
+  'ddakjiActive',
+  /* [Ver 13.21] 6차 — 전부 자신에게 이로운 상태다 */
+  /* [Ver 13.23] 8차 — 전부 이로운 상태다.
+     ⚠ gangseoyunDebuff 는 이름이 '디버프'지만 **각성으로 가는 과정**이라 여기 두지 않는다 —
+       실제로 공격력 -40% 를 받는 동안이므로 아래 CHIP_DEBUFF 쪽이 맞다. */
+  /* ⚠ nuleukkiTier 는 여기 넣지 않는다 — **등급마다 분류가 다르다.**
+     박상현급(공격력 -40%)만 디버프고 나머지는 버프라, getStatusChips 가 그 자리에서 정해 넘긴다. */
+  'gangseoyunAwaken','ryuraiActive',
+  'schemeProDue','coachJoActive','stunImmunePerma','assassinAccBonus','reviveCharge',
+  /* [Ver 13.22] 7차 — 자신에게 이로운 쪽 */
+  'sigmaStoneActive','goldshotActive','dottusaImmune','dopamineActive','masochistActive',
+  'untargetableDueRound','stunImmuneTimed','sadist','__reIncomeMult','petJobs',
+  'vengeanceAuraPct','vigilanteStacks','reBless','blessPackImmune','brainInVat',
+  'holyShieldCharges',
+  'symphonyAura','prisonReturnHeld','freePurchase','immortalHerbActive','graveRobber',
+  'soulStealer','profitInvestActive','lowGradeInsurance','compoundInterest','memorialActive',
+  'injuryInsuranceActive','pagliacciReady','egoRedMistPending','maksoonaActive',
+  'raptorExecutionActive','permaDeathChance','shopDjDiscount','shopPartyDiscount','metatonGrowth',
+  'gamstActive',
   'reflectNext','pwReflect','nullifyNext','guardNext','shield','tripleShieldCharges',
   'routerShareAll','matrixSealed','fastReactionMs','reflexEvasionAdd','lk69',
   'beggarIncomeMult','whiteTigerReady','telekinesisTarget','curseDollTarget','permaVulnDown',
@@ -34467,6 +34583,8 @@ const CHIP_DEBUFF = new Set([
   'foreshadow','momCardRecoil','matrixAtkDown','sell1gAll','shopBanned',
   'ledgerMarked','doorOpens','cultNoDraw','shopBlockDueRound','madDogPct',
   'rouletteLockUid','drDown','goldRedirectRemaining','vulnPct','vulnCorrode','excitedVulnPct',
+  'schemeDownPct',   // [Ver 13.20] 권모술수를 맞은 쪽 — 파랑
+  'gangseoyunDebuff',  // [Ver 13.23] 각성 전까지 공격력 -40% — 이름 그대로 디버프다
   'frostbiteStacks','ashStacks','timeCurseActive','doctorWhoActive','deathBoom',
   'obituaryActive','ubinNicotine','healReducePct','romanticAccDrop','virusMarked',
   'tntPowder','hostBurdened','butterflyStacks','huntedBy','gangseoyunDebuff',
@@ -34593,6 +34711,35 @@ const CHIP_ICON_KEYS = new Set([
   'auraFarmDueRound','diabolicRaptorAura','ddakjiActive','rouletteLockUid',
   /* 권능 '부식'이 거는 취약 — vulnPct 칩의 부식 전용 갈래다(위 getStatusChips 참고) */
   'vulnCorrode',
+  /* ── [Ver 13.20] 5차 18종 ──
+     ⚠ 권모술수는 여기 없다. 그 카드는 전용 상태가 없고 범용 atkUp/atkDown 을 그대로 쓴다
+       (atkMultiplier 한 칸에 모든 출처가 합산된다). 그림을 넣으려면 그 둘을 덮어야 한다. */
+  'vipRefillBonus','ecoRebatePct','berserkOnHit','debuffImmune','musinCoupActive',
+  'reflexHalfPending','burningManBurn','cactusThornPct','untellShieldPerDeath','reaperScythePct',
+  'dmgRebatePct','luckyDayStage','tempDmgReductionPct','laserBeamActive','impeached',
+  'impeachImmune','tankBoyShieldDueRound','kaneActive',
+  /* 권모술수 — 쓰는 쪽(빨강) · 받는 쪽(파랑) */
+  'schemeUpPct','schemeDownPct',
+  /* ── [Ver 13.21] 6차 20종 — 파일은 **chip2/** 에 있다 (CHIP_ICON_DIR2 참고) ── */
+  'symphonyAura','permaDeathChance','graveRobber','raptorExecutionActive','maksoonaActive',
+  'immortalHerbActive','egoRedMistPending','freePurchase','injuryInsuranceActive','soulStealer',
+  'profitInvestActive','lowGradeInsurance','compoundInterest','memorialActive',
+  'pagliacciReady','prisonReturnHeld',
+  'shopDjDiscount','gamstActive','metatonGrowth','shopPartyDiscount',
+  /* ── [Ver 13.22] 7차 17종 — 파일은 **chip2/** 에 있다 ── */
+  'sigmaStoneActive','goldshotActive','dottusaImmune','dopamineActive','masochistActive',
+  'untargetableDueRound','stunImmuneTimed','sadist','__reIncomeMult','petJobs',
+  'vengeanceAuraPct','vigilanteStacks','reBless','blessPackImmune','brainInVat',
+  'holyShieldCharges',
+  /* ── [Ver 13.23] 8차 9종 — 파일은 **chip2/** 에 있다 ──
+     뒤 다섯은 기존 그림을 그대로 쓴다(권모술수 · 과기대 로고 · 스턴면역 · 권능 암살 · 의사 지후). */
+  'gangseoyunAwaken','gangseoyunDebuff','nuleukkiTier','ryuraiActive',
+  'schemeProDue','coachJoActive','stunImmunePerma','assassinAccBonus','reviveCharge',
+  /* ── [Ver 13.24] 9차 15종 — 전부 디버프. 분류는 이미 CHIP_DEBUFF 에 있었다.
+     스턴 두 종(stunned · stunLockTurns)과 화상 두 종(burn · burnTimed)이 각각 같은 그림을 쓴다. */
+  'rigidTurns','routerLockedBy','loanDebt','maskedBySource','stunLockTurns',
+  'devilContractActive','encoreLockUid','dcPending','telekinesisPuppetOf','hpBlindDueRound',
+  'chatBanned','chatMuteUntil','spineFractured','burn','burnTimed',
 ]);
 /* 파일 이름이 key 와 다른 칩만 여기 적는다. 없으면 `chip/{key}.png` 다.
    쓰임새는 둘이다 —
@@ -34609,9 +34756,53 @@ const CHIP_ICON_FILE = {
      그래도 파일은 key 이름으로 따로 저장했다 — 여기서 한 파일을 같이 가리키게 하면
      나중에 한쪽만 다른 그림으로 갈아끼우고 싶을 때 둘이 함께 딸려간다. */
   auraFarmDueRound:'auraFarmDueRound.gif', diabolicRaptorAura:'diabolicRaptorAura.gif',
-  ddakjiActive:'ddakjiActive.gif',         rouletteLockUid:'rouletteLockUid.gif',
+  ddakjiActive:'ddakjiActive.gif',   // 딱지남은 움짤 그대로 (chip/)
+  /* ⚠ [Ver 13.22] rouletteLockUid 의 .gif 지정만 **뺐다.** 정지 그림(chip2/*.png)으로
+     갈아끼웠으므로 여기 남겨두면 없는 .gif 를 찾아 깨진다.
+     확장자가 png 면 이 표에 적을 필요가 없다 — 기본이 {key}.png 다. */
+  kaneActive:'kaneActive.gif',             // [Ver 13.20]
+  /* [Ver 13.21] chip2/ 의 움짤 넷 */
+  shopDjDiscount:'shopDjDiscount.gif', gamstActive:'gamstActive.gif',
+  metatonGrowth:'metatonGrowth.gif',   shopPartyDiscount:'shopPartyDiscount.gif',
 };
-function chipIconSrc(key){ return 'chip/' + (CHIP_ICON_FILE[key] || (key + '.png')); }
+/* ##########################################################################
+   [Ver 13.21] 칩 그림 폴더가 둘이다
+   --------------------------------------------------------------------------
+   깃허브에 한 번에 100개까지밖에 못 올려서 폴더를 갈랐다.
+     chip/   1~5차 (89장)
+     chip2/  6차부터
+   ⚠ 파일 이름만 봐서는 어느 폴더인지 알 수 없다. **key 로 가른다.**
+   ⚠ chip2/ 에 새 그림을 넣었으면 **CHIP_ICON_KEYS 와 이 목록 둘 다** 적어야 한다.
+     · KEYS 만 적으면 → 없는 chip/ 경로를 찾아 그림이 깨진다.
+     · DIR2 만 적으면 → 그림이 있는 줄 모르고 예전 글자 칩으로 나간다.
+   ########################################################################## */
+const CHIP_ICON_DIR2 = new Set([
+  'symphonyAura','permaDeathChance','graveRobber','raptorExecutionActive','maksoonaActive',
+  'immortalHerbActive','egoRedMistPending','freePurchase','injuryInsuranceActive','soulStealer',
+  'profitInvestActive','lowGradeInsurance','compoundInterest','memorialActive',
+  'pagliacciReady','prisonReturnHeld',
+  'shopDjDiscount','gamstActive','metatonGrowth','shopPartyDiscount',
+  /* ── [Ver 13.22] 7차 17종 ── */
+  'sigmaStoneActive','goldshotActive','dottusaImmune','dopamineActive','masochistActive',
+  'untargetableDueRound','stunImmuneTimed','sadist','__reIncomeMult','petJobs',
+  'vengeanceAuraPct','vigilanteStacks','reBless','blessPackImmune','brainInVat',
+  'holyShieldCharges',
+  /* 교체 — 러시안 룰렛만 움짤(chip/*.gif)에서 정지 그림(chip2/*.png)으로 옮겼다.
+     ⚠ 아래 CHIP_ICON_FILE 에서 이 key 의 .gif 지정을 함께 뺐다. 한쪽만 고치면 깨진다.
+     ⚠ 딱지남(ddakjiActive)은 **예전 움짤 그대로다** — chip/ddakjiActive.gif. 여기 넣지 말 것. */
+  'rouletteLockUid',
+  /* ── [Ver 13.23] 8차 9종 ── */
+  'gangseoyunAwaken','gangseoyunDebuff','nuleukkiTier','ryuraiActive',
+  'schemeProDue','coachJoActive','stunImmunePerma','assassinAccBonus','reviveCharge',
+  /* ── [Ver 13.24] 9차 15종 (전부 디버프) ── */
+  'rigidTurns','routerLockedBy','loanDebt','maskedBySource','stunLockTurns',
+  'devilContractActive','encoreLockUid','dcPending','telekinesisPuppetOf','hpBlindDueRound',
+  'chatBanned','chatMuteUntil','spineFractured','burn','burnTimed',
+]);
+function chipIconSrc(key){
+  const dir = CHIP_ICON_DIR2.has(key) ? 'chip2/' : 'chip/';
+  return dir + (CHIP_ICON_FILE[key] || (key + '.png'));
+}
 /* 우하단 수치 배지를 붙일 칩. 여기 없으면 숫자를 뽑지 않는다 —
    ⚠ 전부 뽑으려 들면 "LK69"의 69 같은 이름 속 숫자를 집어 온다. 화이트리스트가 맞다. */
 const CHIP_AMOUNT_KEYS = new Set([
@@ -34628,6 +34819,7 @@ const CHIP_AMOUNT_KEYS = new Set([
   'protocolDefensePct','rampageOn','raptorExecutionActive','reDottusa','reaperScythePct',
   'romanticAccDrop','ruinsActive','sellPriceLockValue','shield','shopDjDiscount',
   'tempAtkBuffIcon','tntPowder','tripleShieldCharges','ubinNicotine','ufcPartnerId',
+  'schemeUpPct','schemeDownPct',
   'untellShieldPerDeath','vengeanceAuraPct','vigilanteStacks','vulnPct','vulnCorrode','wildAtkDelta',
   'wilsonHp',]);
 
@@ -34930,6 +35122,15 @@ function getStatusChips(p){
   if(p.forcedSkipTurns > 0) addChip('forcedSkipTurns', '⛏️', `노가다(스킵 ${p.forcedSkipTurns}턴 남음)`, 'red');
   if(p.stunResistCharges > 0) addChip('stunResistCharges', '🔨', `스턴저항(${p.stunResistCharges}회)`, 'blue');
   if(p.immortalHerbActive) addChip('immortalHerbActive', '🌿', '불로초(매턴 +1000)', 'green');
+  /* [Ver 13.21] symphony — 지속 치유 오라. 플래그는 예전부터 있었는데 칩이 없어서
+     "이 사람이 매 턴 회복 중"이라는 게 판에서 안 보였다. */
+  if(p.symphonyAura) addChip('symphonyAura', '🎻', 'symphony(매턴 자신·아군 회복)', 'green');
+  /* [Ver 13.21] 감옥에서 누가 돌아왔게 — **손에 들고만 있어도** 스턴이 풀릴 때마다 터지는
+     패시브라 플래그가 없다. 손패를 훑어 판정한다.
+     ⚠ 남의 손패는 원래 안 보이지만, 이 카드는 "스턴을 풀면 터진다"를 상대가 알아야
+       대응할 수 있는 종류다. 다른 소지 패시브 칩들과 같은 취급이다. */
+  try{ if((p.hand||[]).some(c=> c && c.type === 'PRISON_RETURN_PASSIVE'))
+    addChip('prisonReturnHeld', '🎭', '감옥에서 누가 돌아왔게 (스턴 해제 시 발동)', 'yellow'); }catch(e){}
   if(p.rawMeatDrainActive) addChip('rawMeatDrainActive', '🥩', '익히지않은고기(매턴 -30)', 'red');
   if(p.deliciousReviveReady) addChip('deliciousReviveReady', '🍜', '사망시 즉시부활 대기', 'yellow');
   if(p.ignoreNullifyReflect) addChip('ignoreNullifyReflect', '⚡', 'Sudo(무효/반사 무시)', 'yellow');
@@ -35014,6 +35215,14 @@ function getStatusChips(p){
   if(p.dmgRebatePct) addChip('dmgRebatePct', '🩹', `우빈 리커버리 (받은 피해 ${p.dmgRebatePct}% 회복)`, 'green');
   if(p.madDogPct) addChip('madDogPct', '🐕', `개쉐끼 랩터 (매 턴 ${p.madDogPct}% 고자)`, 'red');
   if(p.schemeProDue && turnCount < p.schemeProDue) addChip('schemeProDue', '🕸️', `권모술수pro · ${p.schemeProDue - turnCount}바퀴`, 'yellow');
+  /* [Ver 13.20] 권모술수 — 공용 atkMultiplier 로는 출처를 알 수 없어 따로 적어둔 표시를 쓴다.
+     ⚠ 여기서 **한 번 맞춘다.** atkMultiplier 를 0으로 만드는 곳이 다섯 군데(정화 · 강탈 ·
+       강서윤 · 버프 스트립 ×2)라 그쪽을 전부 고치면 하나 빠뜨리는 순간 풀린 칩이 영영 남는다.
+       부호가 사라졌으면 표시도 걷는 쪽이 안전하다. */
+  if(p.schemeUpPct   && !((p.atkMultiplier||0) > 0)) p.schemeUpPct = 0;
+  if(p.schemeDownPct && !((p.atkMultiplier||0) < 0)) p.schemeDownPct = 0;
+  if(p.schemeUpPct   > 0) addChip('schemeUpPct',   '🕸️', `권모술수 (공격력 +${p.schemeUpPct}%)`,   'red');
+  if(p.schemeDownPct > 0) addChip('schemeDownPct', '🕸️', `권모술수 (공격력 -${p.schemeDownPct}%)`, 'blue');
   if(p.reflexHalfPending) addChip('reflexHalfPending', '🤸', '무조건반사 대기 (다음 피격 50% 반사)', 'blue');
   if(p.musinCoupActive) addChip('musinCoupActive', '⚔️', `무신정변 (${p.musinTargetedStreak||0}/3)`, 'blue'); // [Ver 6.8]
   if(p.flowerScentOnDeath) addChip('flowerScentOnDeath', '🌸', '꽃향기 (사망 시 전원 공격력↑)', 'blue'); // [Ver 6.8]
@@ -47603,6 +47812,10 @@ function resolveCardEffect(caster, card, targetId, onDone){
       const pct = card.power||20;
       caster.atkMultiplier = (caster.atkMultiplier||0) + (pct);
       target.atkMultiplier = (target.atkMultiplier||0) - (pct);
+      /* [Ver 13.20] 상태칩용 표시. atkMultiplier 는 모든 출처가 합산되는 공용 칸이라
+         "권모술수 때문"이라는 걸 여기 따로 적어두지 않으면 화면에서 구분할 수 없다. */
+      caster.schemeUpPct   = (caster.schemeUpPct||0) + pct;
+      target.schemeDownPct = (target.schemeDownPct||0) + pct;
       log('sys', `${J(caster.name,'이','가')} "${card.name}"을 발동! 자신의 공격력이 영구적으로 ${pct}% 증가하고, ${target.name}의 공격력이 영구적으로 ${pct}% 감소합니다.`);
       renderBoard();
       onDone({});
