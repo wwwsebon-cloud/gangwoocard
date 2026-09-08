@@ -4764,6 +4764,15 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 .shop-slot-name{ font-size:13.5px; font-weight:700; letter-spacing:-0.015em; }
 
 /* ── [Ver 14.0] 시세 ─────────────────────────────────────────────── */
+/* [Ver 14.1] 디스코드 전적 연동 */
+.dc-row{ display:flex; gap:8px; align-items:center; margin-top:9px; flex-wrap:wrap; }
+.dc-input{
+  flex:1; min-width:180px; padding:8px 10px; border-radius:var(--r-xs);
+  background:var(--bg-1); color:var(--fg); border:1px solid var(--line-soft);
+  font-family:var(--font-mono); font-size:11px;
+}
+.dc-input:focus{ outline:none; border-color:var(--accent); }
+
 .mkt-clickable{ cursor:pointer; }
 .mkt-clickable:hover{ text-decoration:underline dotted; }
 .mkt-badge{
@@ -7226,7 +7235,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.0</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.1</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -8167,6 +8176,7 @@ let pendingCard = null;
 let gameActive = false;
 /* [Ver 5.7.1] 한 판의 승/패가 결과 화면 중복 호출로 두 번 집계되는 것을 막는 가드 */
 let victoryStatsCounted = false;
+let dcPostedThisGame = false;   // [Ver 14.1] 디스코드 전적 — 판당 한 번만 올린다
 let gameStartTime = null; // 게임 시작 시각(Date.now()) — 승리 연출의 "게임 시간" 계산용
 let lastDeathInfo = null; // 마지막으로 사망한 사람의 정보: {name, cause} — 승리 연출용
 let eliminationOrder = []; // 사망한 순서대로 쌓이는 player id 목록 — 결과창 순위 계산용
@@ -13758,6 +13768,32 @@ function renderSettingsScreen(){
           <input type="checkbox" ${chipInvertOn() ? 'checked' : ''} onchange="setChipInvert(this.checked)">
           <span>${chipInvertOn() ? 'ON' : 'OFF'}</span>
         </label>
+      </div>
+
+      ${/* [Ver 14.1] 디스코드 전적 연동 — 웹훅 주소는 이 기기에만 저장된다(소스에 없다) */''}
+      <div class="settings-audio-head">📮 디스코드 전적 연동</div>
+      <div class="setting-row" style="flex-direction:column; align-items:stretch;">
+        <div class="setting-meta">
+          <div class="setting-name">판 결과 자동 전송</div>
+          <div class="setting-desc">판이 끝나면 승자·순위·바퀴 수를 디스코드 채널에 자동으로 올립니다.
+            디스코드에서 <b>채널 설정 → 연동 → 웹후크 → 새 웹후크</b>를 만들고 <b>웹후크 URL 복사</b>로 받은 주소를 붙여넣으세요.
+            <b>주소는 이 기기에만 저장되며 게임 파일에는 들어가지 않습니다.</b>
+            (놀이터·튜토리얼은 올라가지 않습니다)</div>
+        </div>
+        <div class="dc-row">
+          <input id="dcUrlInput" type="password" class="dc-input" placeholder="https://discord.com/api/webhooks/..."
+            value="${escapeHtml(dcWebhookUrl())}" autocomplete="off" spellcheck="false"
+            onchange="dcSaveUrl(this.value); renderSettingsScreen();">
+          <button class="btn btn-sm btn-ghost" onclick="dcTest()">테스트 전송</button>
+          <label class="setting-switch">
+            <input type="checkbox" ${dcEnabled() ? 'checked' : ''} onchange="dcSetEnabled(this.checked)">
+            <span>${dcEnabled() ? 'ON' : 'OFF'}</span>
+          </label>
+        </div>
+        <div id="dcMsg" class="setting-desc" style="margin-top:7px;">${
+          dcWebhookUrl() ? (dcEnabled() ? '연결됨 — 판이 끝나면 자동으로 올라갑니다.'
+                                        : '주소는 저장돼 있지만 <b>꺼져 있습니다.</b>')
+                         : '아직 연결되지 않았습니다.'}</div>
       </div>
 
       <div class="settings-audio-head">🔊 소리 설정</div>
@@ -22559,12 +22595,15 @@ function doSurrender(){
      (=정상적으로 끝나고 결과 화면을 본 판)에서 메뉴로 나가는 건 중퇴가 아니다.
    ▶ 놀이터·튜토리얼은 애초에 리더보드 대상이 아니므로 건드리지 않는다(isUnrankedGame).
    ########################################################################## */
-function abandonGameAsLoss(reason){
+function abandonGameAsLoss(reason, unloading){
   try{
     if(!gameActive) return false;          // 이미 끝난 판 — 중퇴가 아니다
     if(victoryStatsCounted) return false;  // 이 판의 승패는 이미 집계됐다
     if(isUnrankedGame()) return false;     // 놀이터·튜토리얼은 리더보드 대상이 아니다
     victoryStatsCounted = true;
+    /* [Ver 14.1] 디스코드 — 중단도 올린다. 통계 집계보다 먼저 부르는 이유는
+       아래에서 무엇이 실패하더라도 보고는 나가야 하기 때문이다. */
+    try{ dcPostAbandon(reason, unloading); }catch(e){}
     bumpStat('losses');
     STATS.currentStreak = 0;
     STATS.lastPlayedAt = Date.now();
@@ -22580,7 +22619,8 @@ function abandonGameAsLoss(reason){
    ⚠ 이 때문에 게임 도중 브라우저가 죽거나 실수로 새로고침해도 1패가 붙는다. 의도된 동작이다 —
      그렇지 않으면 위의 [게임 종료] 차단이 "새로고침으로 나가면 그만"이 되어 아무 의미가 없다. */
 try{
-  window.addEventListener('beforeunload', ()=>{ abandonGameAsLoss('창 닫기·새로고침'); });
+  /* [Ver 14.1] unloading=true — 이 시점엔 fetch 가 끊기므로 sendBeacon 으로 보낸다 */
+  window.addEventListener('beforeunload', ()=>{ abandonGameAsLoss('창 닫기·새로고침', true); });
 }catch(e){}
 
 function confirmExitGame(){
@@ -22615,6 +22655,16 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 14.1', date: '2026-09-08',
+    items: [
+      '\u{1F4EE} <b>디스코드 전적 연동이 생겼습니다.</b> 설정에서 디스코드 <b>웹후크 주소</b>를 한 번 넣어두면, 판이 끝날 때마다 <b>승자 · 순위 · 바퀴 수 · 소요 시간</b>이 그 채널에 자동으로 올라갑니다.',
+      '\u{1F512} 주소는 <b>넣은 기기에만 저장</b>되며 게임 파일에는 들어가지 않습니다. 다른 사람이 게임 파일을 뜯어봐도 채널 주소를 알아낼 수 없습니다.',
+      '\u{1F9EA} 설정에 <b>테스트 전송</b> 버튼이 있어, 주소를 제대로 넣었는지 그 자리에서 확인할 수 있습니다.',
+      '\u{26D4} <b>승부가 나기 전에 판을 떠나도 올라갑니다.</b> [게임 종료]를 누르거나 창을 닫아도 <b>판 중단</b>으로 그때까지의 상황(생존자 · 바퀴 수 · 사유)이 기록됩니다. 불리한 판만 골라서 나가는 것이 기록에 그대로 남습니다.',
+      '\u{2139}️ 랜서버에서는 <b>주소를 넣어둔 사람만</b> 보내므로 같은 판이 여러 번 올라가지 않습니다. 놀이터·튜토리얼은 올라가지 않으며, 전송에 실패해도 게임 진행에는 전혀 영향이 없습니다.',
+    ]
+  },
   {
     version: 'Ver 14.0', date: '2026-09-08',
     items: [
@@ -32909,6 +32959,7 @@ function actuallyStartGame(){
     if(o){ o.classList.remove('show','flash','darkening'); o.style.pointerEvents='none'; }
   }catch(e){}
   victoryStatsCounted = false; // [Ver 5.7.1] 새 판 시작 — 승패 중복 집계 방지 가드 해제
+  dcPostedThisGame = false;    // [Ver 14.1] 디스코드 전적 가드도 함께 푼다
   resetGameAchFlags(); // [Ver 5.9] 이번 게임의 업적 판정용 임시 플래그 초기화
   tierSettledThisGame = false; classSettledThisGame = false;
   lastTierSettlement = null; // [Ver 4.28] 새 게임 시작 — 이전 정산 카드 리셋
@@ -37773,6 +37824,193 @@ function checkWinCondition(){
 /* ---------- 승리 연출 ---------- */
 /* winners: 승리한 플레이어 객체 배열 (전멸로 무승부가 된 경우 빈 배열).
    forcedMessage가 있으면 그 문구를 그대로 쓰고, 없으면 마지막 사망자(lastDeathInfo) 정보로 문구를 조립한다. */
+
+/* ##########################################################################
+   [Ver 14.1] 디스코드 전적 연동
+   --------------------------------------------------------------------------
+   판이 끝나면 승자·순위·바퀴 수를 디스코드 채널에 임베드로 올린다.
+
+   ▶ 웹훅 URL 은 **소스에 없다.** 설정에서 입력받아 이 기기의 localStorage 에만 둔다.
+     (index.html 은 공개돼 있어서, 박아두면 누구나 뽑아다 채널을 도배할 수 있다)
+   ▶ URL 을 넣어둔 사람만 쏘므로 랜서버에서 같은 판이 여러 번 올라가지 않는다.
+   ########################################################################## */
+const DC_URL_KEY = 'gwk_discord_webhook';
+const DC_ON_KEY  = 'gwk_discord_on';
+/* 디스코드 웹훅 주소인지 최소한만 본다. 오타를 잡으려는 것이지 위조를 막으려는 게 아니다. */
+const DC_URL_RE  = /^https:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/api\/webhooks\/\d+\/[\w-]+$/;
+
+function dcWebhookUrl(){ try{ return localStorage.getItem(DC_URL_KEY) || ''; }catch(e){ return ''; } }
+function dcEnabled(){
+  try{ return localStorage.getItem(DC_ON_KEY) !== '0' && DC_URL_RE.test(dcWebhookUrl()); }catch(e){ return false; }
+}
+function dcSetEnabled(on){
+  try{ localStorage.setItem(DC_ON_KEY, on ? '1' : '0'); }catch(e){}
+  try{ renderSettingsScreen(); }catch(e){}
+}
+function dcSaveUrl(url){
+  const u = String(url || '').trim();
+  try{
+    if(!u) localStorage.removeItem(DC_URL_KEY);
+    else   localStorage.setItem(DC_URL_KEY, u);
+  }catch(e){}
+  return u;
+}
+/* 설정 화면의 안내 문구를 갱신한다. 저장·테스트 결과를 같은 자리에 보여준다. */
+function dcMsg(html, tone){
+  const el = document.getElementById('dcMsg');
+  if(!el) return;
+  el.innerHTML = html;
+  el.style.color = tone === 'ok' ? 'var(--tone-green, #3fa860)'
+                 : tone === 'bad' ? 'var(--tone-red, #d64545)' : 'var(--fg-faint)';
+}
+
+/* 실제 전송. 실패해도 절대 예외를 밖으로 내보내지 않는다. */
+async function dcSend(payload, url){
+  const u = url || dcWebhookUrl();
+  if(!DC_URL_RE.test(u)) throw new Error('웹훅 주소 형식이 올바르지 않습니다.');
+  const r = await fetch(u, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.assign({
+      username: '갱갱갱 우빈랩터 전적',
+    }, payload)),
+  });
+  /* 디스코드는 성공 시 204(본문 없음)를 준다. 실패는 본문에 이유가 들어 있다. */
+  if(!r.ok){
+    let why = '';
+    try{ why = (await r.json()).message || ''; }catch(e){}
+    throw new Error(`디스코드가 거절했습니다 (${r.status}${why ? ' · ' + why : ''})`);
+  }
+  return true;
+}
+
+/* 설정의 "테스트 전송" 버튼 */
+function dcTest(){
+  const input = document.getElementById('dcUrlInput');
+  const u = dcSaveUrl(input ? input.value : '');
+  if(!u){ dcMsg('웹훅 주소를 먼저 입력하세요.', 'bad'); return; }
+  if(!DC_URL_RE.test(u)){
+    dcMsg('주소 형식이 다릅니다. 디스코드 채널 설정 → 연동 → 웹훅에서 <b>웹후크 URL 복사</b>로 받은 주소를 그대로 붙여넣으세요.', 'bad');
+    return;
+  }
+  dcMsg('보내는 중...');
+  dcSend({ content: '✅ 갱갱갱 우빈랩터 카드게임 — 연결되었습니다. 이제 판이 끝날 때마다 결과가 여기 올라갑니다.' }, u)
+    .then(()=> dcMsg('보냈습니다. 디스코드 채널을 확인하세요.', 'ok'))
+    .catch(e=> dcMsg('실패 — ' + escapeHtml(e.message || String(e)), 'bad'));
+}
+
+/* 이 판의 등수를 만든다.
+   ⚠ eliminationOrder 는 **먼저 탈락한 사람이 앞**이다. 뒤집어야 상위권이 앞에 온다.
+   ⚠ 승자를 맨 앞에 두고, 나머지를 뒤집은 탈락 순서로 잇는다. 어느 목록에도 없는 사람
+     (연결이 끊긴 채 남은 경우 등)이 빠지지 않도록 마지막에 한 번 더 훑는다. */
+function dcRanking(winners){
+  const out = [];
+  const seen = new Set();
+  const push = p => { if(p && !seen.has(p.id)){ seen.add(p.id); out.push(p); } };
+  (winners || []).forEach(push);
+  (Array.isArray(eliminationOrder) ? eliminationOrder.slice().reverse() : []).forEach(id=>{
+    push((players || []).find(p=> p && p.id === id) || (id && id.id ? id : null));
+  });
+  (players || []).forEach(push);
+  return out;
+}
+
+/* 지금 판의 모드 이름. 없으면 '일반전'. */
+function dcModeLabel(){
+  const t = [];
+  try{
+    if(typeof lanMode !== 'undefined' && lanMode) t.push('랜서버');
+    if(typeof hotseatMode !== 'undefined' && hotseatMode) t.push('핫시트');
+    if(typeof battleRoyaleMode !== 'undefined' && battleRoyaleMode) t.push('10인 난투');
+    if(typeof cultMode !== 'undefined' && cultMode) t.push('사이비');
+    if(typeof draftMode !== 'undefined' && draftMode) t.push('야차');
+    if(typeof teamBattleMode !== 'undefined' && teamBattleMode) t.push('팀전');
+    if(typeof farmingMode !== 'undefined' && farmingMode) t.push('파밍');
+    if(typeof classicMode !== 'undefined' && classicMode) t.push('클래식');
+  }catch(e){}
+  return t.length ? t.join(' · ') : '일반전';
+}
+
+/* [Ver 14.1] 창이 닫히는 중에도 보낼 수 있는 전송 경로.
+   ⚠ fetch 는 페이지가 사라지면 끊긴다. sendBeacon 은 브라우저가 대신 끝까지 보내준다.
+     응답을 못 읽는 대신 죽지 않는다 — 중단 보고에는 이쪽이 맞다. */
+function dcSendBeacon(payload){
+  const u = dcWebhookUrl();
+  if(!DC_URL_RE.test(u)) return false;
+  try{
+    const body = JSON.stringify(Object.assign({ username: '갱갱갱 우빈랩터 전적' }, payload));
+    /* Content-Type 을 실으려면 Blob 의 type 을 쓰는 수밖에 없다(sendBeacon 은 헤더 인자가 없다) */
+    return navigator.sendBeacon(u, new Blob([body], { type: 'application/json' }));
+  }catch(e){ return false; }
+}
+
+/* [Ver 14.1] 승부가 나기 전에 판을 떠났을 때. 사용자 지정으로 **중단도 무조건 올린다.**
+   ⚠ unloading 이면 fetch 가 아니라 sendBeacon 으로 보낸다. */
+function dcPostAbandon(reason, unloading){
+  try{
+    if(!dcEnabled()) return;
+    if(dcPostedThisGame) return;   // 정상 종료로 이미 올렸다면 중복해서 올리지 않는다
+    dcPostedThisGame = true;
+
+    const alive = (players || []).filter(p=> p && p.alive);
+    /* 승자는 없지만 **살아남은 사람이 위**다. 생존자를 앞에 넘기면
+       dcRanking 이 그 뒤에 탈락 역순을 이어붙인다. */
+    const rank  = dcRanking(alive);
+    const mins  = Math.max(0, Math.round((Date.now() - (gameStartTime || Date.now())) / 60000));
+    const lines = rank.slice(0, 10).map((p, i)=>
+      `${'　' + (i + 1) + '.'} ${p.name}${p.isBot ? ' *(봇)*' : ''}${p.alive ? '' : ' ☠'}`).join('\n');
+
+    const payload = { embeds: [{
+      title: '⛔ 판 중단',
+      description: '승부가 나기 전에 판을 떠났습니다.',
+      color: 0x8A8A8A,
+      fields: [
+        { name: '모드',   value: dcModeLabel(),                  inline: true },
+        { name: '생존',   value: `${alive.length} / ${rank.length}명`, inline: true },
+        { name: '진행',   value: `${turnCount}바퀴 · ${mins}분`,   inline: true },
+        { name: '사유',   value: String(reason || '알 수 없음'),   inline: true },
+        { name: '중단 시점', value: lines || '—' },
+      ],
+      footer: { text: '갱갱갱 우빈랩터 카드게임' },
+      timestamp: new Date().toISOString(),
+    }]};
+
+    if(unloading){ dcSendBeacon(payload); return; }
+    dcSend(payload).catch(e=> console.warn('[디스코드] 중단 전송 실패', e));
+  }catch(e){ console.warn('[디스코드] 중단 전송 중 오류', e); }
+}
+
+/* 판이 끝났을 때 한 번. ⚠ 여기서 나는 어떤 오류도 게임 흐름을 막으면 안 된다. */
+function dcPostMatchResult(winners){
+  try{
+    if(!dcEnabled()) return;
+    if(typeof isUnrankedGame === 'function' && isUnrankedGame()) return;   // 놀이터·튜토리얼은 전적이 아니다
+    if(dcPostedThisGame) return;                                            // 판당 한 번
+    dcPostedThisGame = true;
+
+    const rank = dcRanking(winners);
+    const win  = (winners || []).map(p=> p && p.name).filter(Boolean);
+    const mins = Math.max(0, Math.round((Date.now() - (gameStartTime || Date.now())) / 60000));
+    const medal = ['🥇','🥈','🥉'];
+    const lines = rank.slice(0, 10).map((p, i)=>
+      `${medal[i] || '　' + (i + 1) + '.'} ${p.name}${p.isBot ? ' *(봇)*' : ''}`).join('\n');
+
+    dcSend({ embeds: [{
+      title: '🏆 판 종료',
+      description: win.length ? `**${win.join(', ')}** 승리` : '무승부',
+      color: 0xF2C14E,
+      fields: [
+        { name: '모드',      value: dcModeLabel(),                inline: true },
+        { name: '참가자',    value: `${rank.length}명`,           inline: true },
+        { name: '진행',      value: `${turnCount}바퀴 · ${mins}분`, inline: true },
+        { name: '순위',      value: lines || '—' },
+      ],
+      footer: { text: '갱갱갱 우빈랩터 카드게임' },
+      timestamp: new Date().toISOString(),
+    }]}).catch(e=> console.warn('[디스코드] 전송 실패', e));
+  }catch(e){ console.warn('[디스코드] 전적 전송 중 오류', e); }
+}
+
 function showVictorySequence(winners, forcedMessage){
   /* [Ver 9.7] 랜덤 이벤트 연출 도중에 게임이 끝나면(즉사·밥상 뒤집기 등) 결과 화면을 바로 띄우지 않고,
      안내문구를 다 읽을 수 있을 때까지 미룬다. 실제 표시는 연출이 닫힐 때 reFlushVictory()가 맡는다.
@@ -37840,6 +38078,9 @@ function showVictorySequence(winners, forcedMessage){
        클래스·시즌 정산(settleTierForHuman)이 끝난 뒤에 이뤄진다. */
     try{ autoSubmitScoreAfterGame(); }catch(e){}
   }catch(e){}
+  /* [Ver 14.1] 디스코드 전적 — 설정에 웹훅을 넣어둔 사람만 쏜다.
+     ⚠ 화면 그리기보다 먼저 부르되, 안에서 모든 예외를 삼키므로 결과창을 막을 수 없다. */
+  dcPostMatchResult(winners || []);
   // [Ver 8.9.1] 실제 화면 그리기는 전부 grRenderResult가 담당한다.
   //   화면을 못 그렸더라도 위의 통계·업적 정산은 이미 끝난 뒤이므로 서로 영향을 주지 않는다.
   grRenderResult(winners || [], forcedMessage);
