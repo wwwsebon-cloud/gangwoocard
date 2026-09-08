@@ -4762,6 +4762,46 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
   font-size:9px; font-weight:700;
 }
 .shop-slot-name{ font-size:13.5px; font-weight:700; letter-spacing:-0.015em; }
+
+/* ── [Ver 14.0] 시세 ─────────────────────────────────────────────── */
+.mkt-clickable{ cursor:pointer; }
+.mkt-clickable:hover{ text-decoration:underline dotted; }
+.mkt-badge{
+  display:inline-block; margin-left:5px; padding:0 5px; border-radius:var(--r-pill);
+  font-family:var(--font-mono); font-size:9px; font-weight:700;
+  background:var(--bg-2); color:var(--fg-faint); vertical-align:middle;
+}
+.mkt-badge.up  { background:rgba(242,100,90,0.16);  color:var(--tone-red); }
+.mkt-badge.down{ background:rgba(90,150,242,0.16);  color:var(--tone-blue); }
+
+/* 판매 탭 2단 — 왼쪽 손패, 오른쪽 시세 */
+.mkt-wrap{ display:flex; gap:12px; align-items:flex-start; }
+.mkt-left{ flex:1; min-width:0; }          /* min-width:0 이 없으면 그리드가 오른쪽을 밀어낸다 */
+.mkt-right{ width:218px; flex:0 0 218px; }
+@media (max-width:720px){
+  .mkt-wrap{ flex-direction:column; }
+  .mkt-right{ width:100%; flex:none; }
+}
+.mkt-panel{
+  padding:11px 12px 12px; border-radius:var(--r-sm);
+  background:var(--bg-1); box-shadow:inset 0 0 0 1px var(--line-soft);
+}
+.mkt-panel.mkt-empty{ color:var(--fg-faint); font-size:11.5px; text-align:center; padding:26px 12px; }
+.mkt-title{ font-size:12.5px; font-weight:700; letter-spacing:-0.015em; margin-bottom:7px; overflow-wrap:anywhere; }
+.mkt-grade{ font-family:var(--font-mono); font-size:9.5px; font-weight:700; color:var(--fg-faint); }
+.mkt-graph{ display:block; width:100%; height:74px; }
+.mkt-now{ margin-top:7px; font-family:var(--font-mono); font-size:15px; font-weight:700; color:var(--tone-yellow); }
+.mkt-now .mkt-pct{ font-size:11px; margin-left:4px; color:var(--fg-faint); }
+.mkt-now.up   .mkt-pct{ color:var(--tone-red); }
+.mkt-now.down .mkt-pct{ color:var(--tone-blue); }
+.mkt-orig{
+  display:block; margin-top:1px;
+  font-family:var(--font-mono); font-size:9px; font-weight:400; color:var(--fg-faint);
+}
+.mkt-minmax{ margin-top:3px; font-family:var(--font-mono); font-size:9.5px; color:var(--fg-faint); }
+.mkt-guide{ stroke:var(--line-soft); stroke-width:1; stroke-dasharray:3 3; }
+.mkt-pop{ width:min(320px, 78vw); }
+.shop-sell-card.focused{ box-shadow:inset 0 0 0 2px var(--accent); }
 .shop-slot-desc{ font-size:11.5px; line-height:1.75; color:var(--fg-dim); flex:1; overflow-wrap:anywhere; }
 .shop-slot-buy-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; padding-top:9px; border-top:1px solid var(--line-soft); }
 .shop-price{ font-family:var(--font-mono); font-size:12px; font-weight:700; color:var(--tone-yellow); }
@@ -7186,7 +7226,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 13.25</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.0</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -8285,6 +8325,108 @@ function shopBasePrice(grade){
   const raw = (SHOP_BUY_PRICE[grade] ?? 20) * (shopInflation ? 2 : 1) * shopMegaInflationMult * partyMult * djMult;
   return Math.max(1, Math.floor(raw));
 }
+
+/* ##########################################################################
+   [Ver 14.0] 시세 (market) — 카드마다 값이 살아 움직인다
+   --------------------------------------------------------------------------
+   ▶ 왜 만들었나
+     SHOP_BUY_PRICE 는 등급만 본다. D·C·B 가 전부 20골드라 "무엇을 살까"가 아니라
+     "뭐가 떴나"만 남았다. 판매가도 고정이라 "싸게 사서 비싸게"가 원천 불가였다.
+
+   ▶ 무엇을 하나
+     카드 **이름마다** 배율(m)을 하나 들고, 매 사람의 턴마다 흔든다.
+     실제 가격 = shopBasePrice(등급) × m.
+     ⚠ 절대가가 아니라 **배율**인 이유 — 인플레이션·파티타임·DJ부스·재단할인 등
+       이미 곱해지는 배수가 10가지다. 배율이면 그 맨 앞에 한 번만 곱하면 끝난다.
+
+   ▶ 추적 대상
+     상점·암시장 슬롯에 떴거나 누군가의 손패에 있는 카드만. 841장을 전부 들고 있으면
+     LAN 스냅샷이 그만큼 무거워진다. 안 보인 지 오래된 항목은 버린다.
+   ########################################################################## */
+/* 실측으로 맞춘 값이다. 0.16 일 때 변동폭 중앙값이 9.4% 로 너무 얌전했다.
+   0.22 → 중앙값 약 13%, 상위 25% 는 20% 넘게 움직인다. */
+const MKT_DRIFT   = 0.22;   // 평상시 흔들림의 최대치 (×변동성 0.7~1.5)
+const MKT_BOOM_P  = 0.05;   // 폭발(떡상·떡락)이 날 확률
+const MKT_BOOM_LO = 0.30;   // 폭발 폭 하한 [사용자 지정] 30%
+const MKT_BOOM_HI = 1.00;   // 폭발 폭 상한 [사용자 지정] 100%
+const MKT_PULL    = 0.04;   // 정가(1.0)로 되돌아오는 힘
+const MKT_MIN     = 0.25;   // 배율 하한 — 이 밑으로는 안 떨어진다
+const MKT_MAX     = 5.00;   // 배율 상한
+const MKT_HIST    = 16;     // 그래프에 쓸 과거 점 개수
+const MKT_KEEP_ROUNDS = 8;  // 이 바퀴 수만큼 안 보이면 버린다
+
+let MKT = {};
+
+/* 카드마다 **성격이 다르게** 흔들리게 한다. 이름 해시라 판이 바뀌어도 그 카드는 늘 같은 성격이다.
+   ⚠ Math.random 으로 매번 뽑으면 안 된다 — "이 카드는 원래 널뛰는 카드"라는 인상이 안 생긴다. */
+function mktVol(name){ return 0.7 + (hashStr(String(name||'')) % 80) / 100; }   // 0.70 ~ 1.49
+
+function mktOf(name){
+  const k = String(name || '');
+  if(!k) return null;
+  if(!MKT[k]) MKT[k] = { m:1, h:[1], seen:(typeof turnCount==='number' ? turnCount : 0) };
+  return MKT[k];
+}
+function mktMult(name){
+  const e = MKT[String(name||'')];
+  return e ? e.m : 1;
+}
+/* 지금 시세로 환산한 값. 등급 기본가에 배율을 곱한 것뿐이다. */
+function mktPriceOf(card){
+  if(!card) return 0;
+  return Math.max(1, Math.floor(shopBasePrice(card.grade) * mktMult(card.name)));
+}
+/* 정가 대비 몇 % 인가 (그래프·배지용) */
+function mktPct(name){ return Math.round((mktMult(name) - 1) * 100); }
+
+/* 지금 화면에 관련 있는 카드 이름들 — 이것만 추적한다. */
+function mktLiveNames(){
+  const s = new Set();
+  try{
+    (Array.isArray(shopSlots) ? shopSlots : []).forEach(sl=>{ if(sl && sl.card) s.add(sl.card.name); });
+    (Array.isArray(blackMarketSlots) ? blackMarketSlots : []).forEach(sl=>{ if(sl && sl.card) s.add(sl.card.name); });
+    (Array.isArray(players) ? players : []).forEach(p=>{
+      if(!p) return;
+      (p.hand || []).forEach(c=>{ if(c && c.name) s.add(c.name); });
+      (p.fdnShopSlots || []).forEach(sl=>{ if(sl && sl.card) s.add(sl.card.name); });
+    });
+  }catch(e){}
+  return s;
+}
+
+/* 매 사람의 턴마다 한 번. ⚠ 바퀴(turnCount) 틱에 걸면 안 된다 — 사용자 지정은 "매 사람의 턴". */
+function mktTick(){
+  try{
+    const live = mktLiveNames();
+    live.forEach(n=>{ const e = mktOf(n); if(e) e.seen = turnCount; });
+
+    Object.keys(MKT).forEach(name=>{
+      const e = MKT[name];
+      if(!e) return;
+      /* 오래 안 보인 건 버린다 — 안 그러면 스냅샷이 계속 불어난다 */
+      if(!live.has(name) && (turnCount - (e.seen||0)) > MKT_KEEP_ROUNDS){ delete MKT[name]; return; }
+
+      if(Math.random() < MKT_BOOM_P){
+        /* 떡상·떡락. ⚠ 곱연산이라 하락은 **나누기**여야 상승과 폭이 대칭이다.
+           (×0.7 과 ×1.3 은 대칭이 아니다 — ÷1.3 이 ×1.3 의 짝이다) */
+        const r = MKT_BOOM_LO + Math.random() * (MKT_BOOM_HI - MKT_BOOM_LO);
+        e.m = (Math.random() < 0.5) ? e.m * (1 + r) : e.m / (1 + r);
+      } else {
+        e.m *= 1 + (Math.random() * 2 - 1) * MKT_DRIFT * mktVol(name);
+      }
+      /* 정가로 되돌아오려는 힘. 없으면 배율이 한쪽으로 영영 달아난다. */
+      e.m += (1 - e.m) * MKT_PULL;
+      e.m = Math.min(MKT_MAX, Math.max(MKT_MIN, e.m));
+
+      e.h.push(e.m);
+      if(e.h.length > MKT_HIST) e.h.splice(0, e.h.length - MKT_HIST);
+
+      /* [Ver 14.0] 폭발 로그는 뺐다 — 매 턴 여러 장이 움직여 로그가 도배됐다.
+         값의 변화는 매물의 ▲/▼ 배지와 시세 그래프로 본다. */
+    });
+  }catch(e){ console.error('[시세] 틱 실패', e); }
+}
+
 let shopLockDueRound = 0;   // 상점 독점이 해제되는 turnCount (3바퀴 뒤)
 let shopAutoReroll = false; // [5.2.1] 광창시장: 매 턴 상점 자동 리롤
 let shopDiscountPct = 0; // [5.5] DJ 부스: 상점 구매가 % 할인(누적)
@@ -13464,6 +13606,8 @@ const PERSISTENT_GAME_STATE = [
   { key:'shopOwnerId', get:()=>shopOwnerId, set:v=>{ shopOwnerId=v; }, reset:()=>(null), load:v=>(v||null) },
   { key:'nineNineDigitsActive', get:()=>nineNineDigitsActive, set:v=>{ nineNineDigitsActive=v; }, reset:()=>(false), load:v=>(!!v) },
   { key:'lastHpLossAmount', get:()=>lastHpLossAmount, set:v=>{ lastHpLossAmount=v; }, reset:()=>(0), load:v=>(v||0) },
+  /* [Ver 14.0] 카드 시세. 전역이므로 여기 없으면 이어하기에서 값이 전부 정가로 돌아간다. */
+  { key:'MKT', get:()=>MKT, set:v=>{ MKT=v; }, reset:()=>({}), load:v=>((v && typeof v==='object') ? v : {}) },
 ];
 function resetPersistentGameState(){ PERSISTENT_GAME_STATE.forEach(e=> e.set(e.reset())); }
 function snapshotPersistentGameState(state){ PERSISTENT_GAME_STATE.forEach(e=>{ if(e.persist!==false) state[e.key] = e.get(); }); }
@@ -22472,6 +22616,19 @@ function exitPlaygroundBar(){
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
   {
+    version: 'Ver 14.0', date: '2026-09-08',
+    items: [
+      '\u{1F4C8} <b>[대규모] 카드마다 <u>시세</u>가 생겼습니다.</b> 이제 카드값은 등급으로 고정되지 않고, <b>매 사람의 턴마다</b> 움직입니다. 카드마다 성격이 달라 잔잔한 카드가 있고 널뛰는 카드가 있으며, 가끔은 <b>떡상·떡락</b>이 터집니다.',
+      '\u{1F4B0} <b>판매가도 시세를 그대로 따라갑니다.</b> 고정 매입가가 사라져, 처음으로 <b>싸게 사서 비싸게 파는 것</b>이 가능해졌습니다. (한 턴에 5장 제한은 그대로입니다)',
+      '\u{1F4CA} <b>판매 탭이 손패 인벤토리로 바뀌었습니다.</b> 왼쪽에서 카드를 고르면 오른쪽에 그 카드의 <b>시세 그래프</b>와 최고·최저·정가가 나옵니다. 상점 매물도 <b>이름을 누르면</b> 같은 그래프가 뜹니다.',
+      '\u{1F3F7}️ 값에 익숙해지기 전까지는 현재가 옆에 <b>원래 가격(정가)</b>을 함께 적어둡니다.',
+      '\u{1F6D2} <b>상점 매물이 5칸 → 3칸</b>이 되었고, 마지막 칸의 <b>50% SALE 이 없어졌습니다.</b> 값의 재미는 이제 시세가 맡습니다. (파티타임 · DJ부스 · 재단 할인 · 무정부 · 랩터 팬클럽 · 짐바브웨 · 방해공작은 전부 그대로입니다)',
+      '\u{1F5A4} <b>암시장의 모든 거래가 외상이 되었습니다.</b> 돈이 없어도 카드를 먼저 가져갈 수 있지만, 살 때마다 <b>20~60%</b>의 이자가 새로 붙습니다. <b>2바퀴</b> 안에 갚아야 하고, 갚지 못하면 부족한 만큼 <b>HP로 상환</b>합니다. (1골드 = 10HP)',
+      '\u{1F5A4} 암시장 매물도 <b>3칸</b>으로 줄었습니다. 출현 확률 5%와 A등급 이상 조건은 그대로입니다.',
+      '\u{1F5D1}️ <b>암시장 카드 패키지가 삭제되었습니다.</b> 암시장은 이제 "외상으로 좋은 카드를 사는 곳" 하나로 성격이 좁혀졌습니다. 방해공작(턴당 1회)과 도박 탭은 그대로입니다.',
+    ]
+  },
+  {
     version: 'Ver 13.25', date: '2026-09-08',
     items: [
       '\u{1F41B} <b>[버그수정] 백업·복원이 "Database is closing/hidden"으로 실패하던 문제.</b> 창을 다른 곳으로 넘기거나 게임을 배경에 두면, 로그인 정보를 담아둔 저장소가 닫히면서 요청이 통째로 튕겼습니다. 이제 <b>화면이 다시 보일 때까지 기다렸다가 한 번 더</b> 시도합니다.',
@@ -29955,7 +30112,6 @@ function buildStatsPanelHtml(){
       ['도박 횟수', `${STATS.gambles}회`],
       ['도박하다 죽은 횟수', `${STATS.gambleDeaths}회`],
       ['암시장 방문', `${STATS.blackMarketVisits}회`],
-      ['카드 패키지 개봉', `${STATS.packagesOpened}회`],
       ['방해공작 실행', `${STATS.sabotages}회`]
     ]],
     ['📏 기록', [
@@ -34166,8 +34322,10 @@ function mkPlayer(id,name,isBot){
     kaneActive:false, kanePct:35, kaneDmg:670,
     // [Ver 5.7] 지금 바로 윤회: 손패에 E등급 카드가 생길 때마다 손패를 5장으로 리셋
     samsaraActive:false,
-    // [Ver 5.7.1] 암시장 턴당 사용 제한: 패키지는 종류당 1개, 방해공작은 턴당 1회 (매 턴 초기화)
-    pkgBoughtThisTurn:{}, sabotageUsedThisTurn:false,
+    // [Ver 5.7.1] 암시장 방해공작은 턴당 1회 (매 턴 초기화). [Ver 14.0] 패키지 삭제로 pkgBoughtThisTurn 은 사라졌다.
+    sabotageUsedThisTurn:false,
+    /* [Ver 14.0] 암시장 외상 — { amount:원리금, due:갚아야 하는 turnCount, card:카드이름 } 목록 */
+    bmDebts:[],
     /* [Ver 5.8] 𝓢𝓞𝓛𝓔𝓜𝓝 𝓛𝓐𝓜𝓔𝓝𝓣 — 소지 중 모드를 전환해 쓰는 카드.
        solemnMode: null(미소지) | 'BLACK' | 'WHITE' | 'DUAL'
        모드 버프는 스택처럼 쌓이면 안 되므로, 항상 "현재 모드 기준으로 재계산"하는 방식으로 적용한다.
@@ -35043,6 +35201,13 @@ function getStatusChips(p){
   if(p.routerLockedBy && p.routerLockedBy !== p.id) addChip('routerLockedBy', '🔌', '공유기에 연결됨 (카드 사용 불가)', 'red');
   if(p.encoreLockUid) addChip('encoreLockUid', '🎤', '앙코르 (지목된 카드만 사용 가능)', 'red');
   if(p.loanDebt) addChip('loanDebt', '💸', `사채 ${fmtWon(p.loanDebt.amount)} (${Math.max(0,(p.loanDebt.dueRound||0)-turnCount)}바퀴 뒤 상환)`, 'red');
+  /* [Ver 14.0] 암시장 외상 — 같은 loanDebt 칩에 합계와 가장 급한 기한을 보여준다.
+     ⚠ 새 key 를 만들지 않는다. 만들면 CHIP_BUFF/CHIP_DEBUFF 등록을 또 빠뜨린다(하루에 두 번 겪었다). */
+  if(Array.isArray(p.bmDebts) && p.bmDebts.length){
+    const __owe = bmDebtTotal(p);
+    const __due = Math.min.apply(null, p.bmDebts.map(d=> d.due||0));
+    addChip('loanDebt', '💸', `암시장 외상 ${fmtWon(__owe)} (${Math.max(0, __due-turnCount)}바퀴 뒤 상환 · 못 갚으면 1골드당 ${BM_HP_PER_GOLD}HP)`, 'red');
+  }
   if(p.ddakjiActive) addChip('ddakjiActive', '🎴', '딱지남 (매 턴 빵·복권·꽝)', 'green');
   if(p.matrixSealed) addChip('matrixSealed', '🚪', '문단속 (매트릭스 이동 불가)', 'blue');
   if(p.fastReactionMs) addChip('fastReactionMs', '⏩', '느려 (내 카드 반응 1.5초)', 'blue');
@@ -35871,6 +36036,7 @@ function runTurnStart(){
     if(!p.alive){ advanceTurn(); return; }
   }
   totalIndividualTurns++;
+  mktTick();   // [Ver 14.0] 시세는 **매 사람의 턴마다** 움직인다
   bumpStat('totalTurns'); // [Ver 5.6] 통계
   tickExclusionReturns();
   tickGangseoyunTransform(); // [버그수정/Ver 6.3] 전체 개인턴 8번 경과 기준으로 재조정
@@ -35880,8 +36046,7 @@ function runTurnStart(){
   p.shopRerollsUsed = 0; // [Ver 8.6] 턴당 리롤 횟수 초기화
   p.gambleUsedThisTurn = false;
   p.turnActed = false;   // [Ver 9.12.1] 이번 턴에 이미 카드를 냈는가 (냈으면 상점·드로우·진화 등 잠금)
-  // [Ver 5.7.1] 암시장 턴당 사용 제한 초기화 — 패키지는 종류당 1개, 방해공작은 1회
-  p.pkgBoughtThisTurn = {};
+  // [Ver 5.7.1] 암시장 방해공작 턴당 1회 초기화
   p.sabotageUsedThisTurn = false;
   // [Ver 9.0] 랩터 재단 — 개인 매물(매물의 재단 Lv3) 재입고 + 봇의 자동 후원
   try{ refreshFoundationShopSlots(p); }catch(e){}
@@ -36031,7 +36196,7 @@ function runTurnStart(){
         : (!__wasBlackMarket && Math.random() < 0.05);
       if(blackMarketActive && isMyPlayer(p)) bumpStat('blackMarketVisits'); // [Ver 5.6] 통계
       if(blackMarketActive){
-        const __bmWant = 5;
+        const __bmWant = SHOP_SLOT_COUNT;   // [Ver 14.0] 상점과 같은 3칸
         const __bmMinRank = GRADE_RANK['A'];
         blackMarketSlots = [];
         let guard = 0;
@@ -36041,7 +36206,7 @@ function runTurnStart(){
           if(c && (GRADE_RANK[c.grade]||0) >= __bmMinRank) blackMarketSlots.push({ card:c });
         }
         if(!p.isBot){
-          log('sys', `🖤 상점이 "암시장"으로 변이했습니다!${p.blackMarketRegular?' (암시장 단골 혜택)':''} (A등급 이상만 판매 · 40% 할인 · 패키지/방해공작 이용 가능)`);
+          log('sys', `🖤 상점이 "암시장"으로 변이했습니다!${p.blackMarketRegular?' (암시장 단골 혜택)':''} (A등급 이상만 판매 · 10~30% 할인 · 방해공작 이용 가능)\n⚠ 암시장의 모든 거래는 **이자가 붙는 외상**입니다. 2바퀴 안에 갚지 못하면 HP로 갚습니다.`);
           showBlackMarketAlert(); // [Ver 5.7.1] 검은 알림창으로 확실히 알려준다
         }
       } else {
@@ -36596,8 +36761,9 @@ function showBlackMarketAlert(){
         <div class="blackmarket-alert-title">암시장이 열렸습니다</div>
         <div class="blackmarket-alert-desc">
           이번 턴 상점이 <b>암시장</b>으로 변이했습니다.<br>
-          <b>A등급 이상</b>만 판매되며 <b>40% 할인</b>이 적용됩니다.<br>
-          <b>카드 패키지</b>와 <b>방해공작</b>도 이용할 수 있습니다.
+          <b>A등급 이상</b>만 판매되며 카드마다 <b>10~30% 할인</b>이 적용됩니다.<br>
+          <b>방해공작</b>도 이용할 수 있습니다.<br>
+          모든 거래는 <b>이자가 붙는 외상</b>입니다.
         </div>
         <button class="btn btn-solid" id="bmAlertOk">확인</button>
       </div>`;
@@ -37000,6 +37166,7 @@ function grantGold(p, amount){
 /* 매 바퀴(전원이 한 번씩 도는 라운드)마다 생존자 전원에게 기본 소득으로 30골드씩 지급 */
 function tickRoundIncome(){
   try{ pwRoundTick(); }catch(e){ console.error('[권능] 바퀴 정산 오류', e); }   // [Ver 13.1] 메아리 · 포효
+  try{ if(bmDebtTick()) return; }catch(e){ console.error('[암시장] 빚 정산 오류', e); }   // [Ver 14.0]
   // [Ver 11.4] 클래식 모드 — 골드 시스템(월급)을 아예 쓰지 않는다.
   if(classicMode){ renderBoard(); return; }
   alivePlayers().forEach(p=>{
@@ -55886,35 +56053,22 @@ function botUseBlackMarketStep(bot){
     if((GRADE_RANK[card.grade]||0) >= __botBmMin){
       // [Ver 9.10] 상점 업그레이드 할인만 적용된다 (사람 쪽 shopSlotPrice와 같은 규칙)
       const __botDisc = Math.min(95, fdnShopBuyDiscountPct(bot));
-      const price = Math.floor(shopBasePrice(card.grade) * 0.60 * (1 - __botDisc/100)); // [Ver 5.7.1] 암시장 할인 40%로 통일
-      if(bot.gold >= price){
-        bot.gold -= price; bot.goldSpent = (bot.goldSpent||0) + price;
+      /* [Ver 14.0] 등급 기본가가 아니라 **시세**를 본다 — 사람 쪽 shopSlotPrice 와 같은 규칙이다. */
+      const price = Math.floor(mktPriceOf(card) * (1 - bmDiscount(card.name)) * (1 - __botDisc/100)); // [Ver 14.0] 사람과 같은 할인 규칙
+      if(price > 0){
+        /* [Ver 14.0] 암시장은 외상이다. 골드는 안 나가고 빚이 남는다.
+           딜러 징수(petDealerCollect)는 실제로 돈이 오갈 때만 도는 것이므로 여기선 빠진다. */
         grantCardToPlayer(bot, mkUidCard(card), '봇 암시장 구매');
-        /* [Ver 10.5 버그수정] 카지노딜러 — 봇 암시장 구매도 하우스 수익 대상이다.
-           사람은 암시장도 buyShopSlot을 지나 이미 챙기고 있었는데, 봇 암시장만 별도 함수라 빠져 있었다. */
-        try{ petDealerCollect(bot, price, '암시장 구매'); }catch(e){}
-        log('gold', `${J(bot.name,'이','가')} 암시장에서 ${J(card.name,'을','를')} ${fmtWon(price)}에 구매했습니다.`);
+        bmTakeLoan(bot, price, card.name, bmRollRate());
         bot.__shopBuysThisTurn = already + 1;
         renderHand(); renderBoard();
         return 'bought';
       }
     }
   }
-  // 더 살 수 없으면(또는 안 사기로 하면) 패키지·방해공작을 마무리로 한 번에 처리한다.
+  // 더 살 수 없으면(또는 안 사기로 하면) 방해공작을 마무리로 처리한다.
+  // [Ver 14.0] 카드 패키지는 삭제됐다.
   let acted = false;
-  if(bot.gold >= 100 && Math.random() < 0.35){
-    const which = (bot.gold>=100 && Math.random()<0.5) ? 2 : 1;
-    const cost = which===1?50:100, keep=which===1?2:4; // [Ver 5.9] 패키지 너프
-    // [Ver 5.7.1] 봇도 패키지는 종류당 턴에 1개까지만 구매한다.
-    if(!bot.pkgBoughtThisTurn) bot.pkgBoughtThisTurn = {};
-    if(bot.gold >= cost && !bot.pkgBoughtThisTurn[which]){
-      bot.pkgBoughtThisTurn[which] = true;
-      bot.gold -= cost; bot.goldSpent=(bot.goldSpent||0)+cost;
-      for(let i=0;i<keep;i++){ const c = botRandomShopCard(); if(c) grantCardToPlayer(bot, mkUidCard(c), '봇 카드 패키지'); }
-      log('gold', `${J(bot.name,'이','가')} 암시장에서 "카드 패키지 ${which===1?'I':'II'}"를 구매했습니다.`);
-      acted = true;
-    }
-  }
   if(bot.gold >= SABOTAGE_COST && !bot.sabotageUsedThisTurn && Math.random() < 0.4){
     const cands = alivePlayers().filter(p=>p.id!==bot.id);
     if(cands.length){
@@ -56993,7 +57147,6 @@ let shopSlots = [];
 const SHOP_REROLL_MAX = 2; // [Ver 8.6] 턴당 상점 리롤 가능 횟수
 let sellSelected = new Set();
 let gambleState = null;
-let packageState = null; // [Ver BATCH 1.5] 카드 패키지 뒤집기 애니메이션 상태
 let currentShopTab = 'buy';
 let blackMarketActive = false; // [5.5] 암시장: 이번 턴 상점이 암시장으로 변이했는지
 let blackMarketSlots = [];     // 암시장 판매 슬롯(A등급 이상, 원가의 75%)
@@ -58802,7 +58955,11 @@ function shopSlotsFor(p){
    맨 마지막에 재단 할인을 곱한다. me.freePurchase는 구매 시점 전용이라 여기서 다루지 않는다. */
 function shopSlotPrice(me, slot){
   if(!me || !slot || !slot.card) return 0;
-  const base = shopBasePrice(slot.card.grade);
+  /* [Ver 14.0] 등급 기본가에 **시세 배율**을 먼저 곱한다.
+     여기 한 곳이면 사람·봇·화면 표시가 전부 같은 값을 본다(봇은 이 함수를 그대로 부른다).
+     ⚠ 뒤에 오는 배수들(무정부 0원 · 랩터팬클럽 무료 · 암시장 -40% · 방해공작 · 재단 할인)은
+       하나도 건드리지 않았다. 시세는 그 맨 앞에 한 번 곱해질 뿐이다. */
+  const base = mktPriceOf(slot.card);
   /* [Ver 12.7] 무정부 — 값이 사라진다. 대신 buyShopSlot/botShopBuyStep이 구매 직후
      anarchyDamage만큼 산 사람을 때린다. 값 계산은 여기 한 곳뿐이므로 사람·봇·표시가
      자동으로 같은 값을 본다. */
@@ -58810,8 +58967,8 @@ function shopSlotPrice(me, slot){
   if(hasRaptorFanclub(me) && isRaptorNamedCard(slot.card)) return 0;
   const priceMult = (me.sabPriceMult && me.sabPriceMult > 1) ? me.sabPriceMult : 1;
   let price = blackMarketActive
-    ? base * 0.60 * priceMult
-    : (slot.sale ? base/2 : base) * priceMult;
+    ? base * (1 - bmDiscount(slot.card.name)) * priceMult   /* [Ver 14.0] 40% 고정 → 카드별 10~30% */
+    : base * priceMult;   // [Ver 14.0] SALE 칸 삭제 — 값의 재미는 이제 시세가 맡는다
   // [Ver 9.10] 상점 업그레이드 할인은 일반 상점·암시장 어디서나 상시 적용된다
   const disc = fdnShopBuyDiscountPct(me);
   if(disc > 0) price = price * (1 - Math.min(95, disc)/100);
@@ -59250,7 +59407,8 @@ function grantCardToPlayer(player, card, sourceLabel=''){
   return card;
 }
 function grantCardsToPlayer(player, cardList, sourceLabel=''){ (cardList||[]).forEach(card=> grantCardToPlayer(player, card, sourceLabel)); }
-function makeSoldOutShopSlot(i){ return { soldOut:true, sale:i===4 }; }
+const SHOP_SLOT_COUNT = 3;   // [Ver 14.0] 상점·암시장 매물 수 (기존 5)
+function makeSoldOutShopSlot(i){ return { soldOut:true }; }   // [Ver 14.0] sale 폐지
 function isShopSlotSoldOut(slot){ return !slot || slot.soldOut || !slot.card; }
 
 /* [Ver 9.0] forPlayer를 주면 그 사람의 "매물의 재단" 등급 배제(Lv3: E, Lv5: E~D)가 적용된다.
@@ -59259,14 +59417,15 @@ function isShopSlotSoldOut(slot){ return !slot || slot.soldOut || !slot.card; }
 function initShopSlots(forPlayer){
   const ex = forPlayer ? fdnShopExcludedGrades(forPlayer) : null;
   shopSlots = [];
-  for(let i=0;i<5;i++) shopSlots.push({ card: (ex && ex.length) ? foundationPickCard(ex, null) : randomShopCard(), sale: i===4 });
+  /* [Ver 14.0] 5칸 → 3칸. 값이 매 턴 움직이므로 "지금 이 세 개" 만으로도 고를 거리가 생긴다. */
+  for(let i=0;i<SHOP_SLOT_COUNT;i++) shopSlots.push({ card: (ex && ex.length) ? foundationPickCard(ex, null) : randomShopCard() });
 }
 function refillSoldOutShopSlots(){
   if(!Array.isArray(shopSlots) || shopSlots.length===0){ initShopSlots(); return; }
   // [Ver 8.6] 공유 상점 규칙 — 개별 매진 칸을 바퀴마다 채우지 않는다.
   //   구매한 칸은 "재입고 대기"로 남아있다가, 5칸이 전부 대기가 되었을 때만 통째로 리롤된다.
   //   (야차 모드·암시장 중에는 이 함수가 사실상 관여하지 않는다. 광창시장 자동리롤은 별도 경로.)
-  if(shopSlots.length===5 && shopSlots.every(sl=> isShopSlotSoldOut(sl))){
+  if(shopSlots.length===SHOP_SLOT_COUNT && shopSlots.every(sl=> isShopSlotSoldOut(sl))){
     initShopSlots();
   }
 }
@@ -59504,7 +59663,7 @@ function updateShopSideLog(){
     sideArea.innerHTML = '';
   }
 }
-function closeShop(){ if(shopIsBusy()) return; shopBusy=false; document.getElementById('shopBg').classList.remove('show'); const __sidePanel = document.getElementById('shopSideLog'); if(__sidePanel) __sidePanel.classList.remove('show'); try{ stopGambleSpinTimer(); }catch(e){} gambleState=null; packageState=null; try{ if(gameActive) ambientBgmPlay('calltoadventure'); }catch(e){} }
+function closeShop(){ if(shopIsBusy()) return; shopBusy=false; document.getElementById('shopBg').classList.remove('show'); const __sidePanel = document.getElementById('shopSideLog'); if(__sidePanel) __sidePanel.classList.remove('show'); try{ stopGambleSpinTimer(); }catch(e){} gambleState=null; try{ if(gameActive) ambientBgmPlay('calltoadventure'); }catch(e){} }
 
 /* [Ver 9.10] 탭 정의를 함수 밖에서 계산해두고, **탭 구성이 바뀔 때만** 탭 바 DOM을 새로 만든다.
    기존엔 탭을 누를 때마다 shopBody 전체(탭 바 + 내용)를 innerHTML로 통째 갈아끼워, 탭 바까지
@@ -59512,7 +59671,7 @@ function closeShop(){ if(shopIsBusy()) return; shopBusy=false; document.getEleme
 function shopTabDef(){
   // [Ver 5.5] 암시장 변이 시 패키지/방해공작 탭 추가
   return blackMarketActive
-    ? [['buy','🖤 암시장'],['package','패키지'],['sabotage','방해공작'],['sell','판매'],['gamble','도박'],['upgrade','업그레이드']]
+    ? [['buy','🖤 암시장'],['sabotage','방해공작'],['sell','판매'],['gamble','도박'],['upgrade','업그레이드']]
     : [['buy','구매'],['sell','판매'],['gamble','도박'],['upgrade','업그레이드']];
 }
 function renderShopTab(tab){
@@ -59535,7 +59694,6 @@ function renderShopTab(tab){
     b.classList.toggle('active', b.dataset.tab === tab);
   });
   if(tab==='buy') renderShopBuy();
-  else if(tab==='package') renderShopPackage();
   else if(tab==='sabotage') renderShopSabotage();
   else if(tab==='sell') renderShopSell();
   else if(tab==='gamble') renderShopGamble();
@@ -59627,7 +59785,7 @@ function renderShopBuy(){
       </div>`;
       return;
     }
-    const base = shopBasePrice(slot.card.grade);
+    const base = mktPriceOf(slot.card);   // [Ver 14.0] 취소선 정가도 시세 기준
     const raptorFree = hasRaptorFanclub(me) && isRaptorNamedCard(slot.card);
     // [Ver 9.0] 가격 계산은 shopSlotPrice() 한 곳으로 통일 (렌더·구매·봇이 같은 값을 본다)
     const price = shopSlotPrice(me, slot);
@@ -59635,13 +59793,13 @@ function renderShopBuy(){
     html += `<div class="shop-slot ${glow}">
       <div class="shop-slot-top">
         <span class="shop-slot-grade">${escapeHtml(displayGrade(slot.card))}</span>
-        ${anarchyActive ? `<span class="shop-sale-badge">🏴 무정부 · 공짜 (-${anarchyDamage.toLocaleString()} HP)</span>` : (slot.personal ? '<span class="shop-sale-badge">🏛️ 개인 매물</span>' : (blackMarketActive ? '<span class="shop-sale-badge">🖤 암시장 -40%</span>' : (raptorFree ? '<span class="shop-sale-badge">랩터 팬클럽 무료</span>' : (slot.sale ? '<span class="shop-sale-badge">50% SALE</span>' : ''))))}
+        ${anarchyActive ? `<span class="shop-sale-badge">🏴 무정부 · 공짜 (-${anarchyDamage.toLocaleString()} HP)</span>` : (slot.personal ? '<span class="shop-sale-badge">🏛️ 개인 매물</span>' : (blackMarketActive ? `<span class="shop-sale-badge">🖤 암시장 -${bmDiscPct(slot.card.name)}%</span>` : (raptorFree ? '<span class="shop-sale-badge">랩터 팬클럽 무료</span>' : '')))}
       </div>
-      <div class="shop-slot-name">${escapeHtml(slot.card.name)}</div>
+      <div class="shop-slot-name mkt-clickable" onclick="mktShowCard(${mktAttr(slot.card.name)})" title="시세 보기">${escapeHtml(slot.card.name)} <span class="mkt-badge ${mktPct(slot.card.name)>0?'up':(mktPct(slot.card.name)<0?'down':'')}">${mktPct(slot.card.name)>0?'▲':(mktPct(slot.card.name)<0?'▼':'—')}${Math.abs(mktPct(slot.card.name))}%</span></div>
       <div class="shop-slot-desc">${escapeHtml(slot.card.desc||'')}</div>
       ${cardMarkRowHtml(slot.card)}
       <div class="shop-slot-buy-row">
-        <span class="shop-price">${(price < base)?`<span class="strike">${fmtWon(base)}</span>`:''}${fmtWon(price)}</span>
+        <span class="shop-price">${(price < base)?`<span class="strike">${fmtWon(base)}</span>`:''}${fmtWon(price)}<span class="mkt-orig">정가 ${fmtWon(shopBasePrice(slot.card.grade))}</span></span>
         <button class="shop-buy-btn" ${me.gold<price?'disabled':''} onclick="buyShopSlot(${i})">구매</button>
       </div>
     </div>`;
@@ -59668,184 +59826,12 @@ function showShopWait(text){
 /* [Ver 5.6 버그수정] 도박·구매가 진행 중일 때는 상점을 닫지 못하게 X 버튼과 탭을 잠근다.
    (도박 중 닫으면 이미 지불한 골드가 사라지고, 구매 대기 중 도박하면 골드가 마이너스가 되던 문제 차단) */
 let shopBusy = false;
-function shopIsBusy(){ return shopBusy || (gambleState && !gambleState.dead) || !!packageState; }
+function shopIsBusy(){ return shopBusy || (gambleState && !gambleState.dead); }
 function updateShopCloseBtn(){
   const busy = shopIsBusy();
   const x = document.querySelector('.shop-close-btn');
   if(x) x.style.display = busy ? 'none' : '';
   document.querySelectorAll('.shop-tab-btn').forEach(b=>{ b.style.pointerEvents = busy?'none':''; b.style.opacity = busy?'0.4':''; });
-}
-/* -- [Ver 5.5] 암시장: 패키지 탭 -- */
-function renderShopPackage(){
-  packageState = null;
-  const me = viewer();
-  const content = document.getElementById('shopTabContent');
-  if(!content) return;
-  const bought = me.pkgBoughtThisTurn || {};
-  // [Ver 9.10] 암시장의 재단 삭제로 "카드 패키지 무료" 혜택도 함께 사라졌다 — 항상 정가다.
-  const pkgSlot = (which, rawPrice, descText)=>{
-    const price = rawPrice;
-    const sold = !!bought[which];
-    return `<div class="shop-slot ${sold?'sold-out':''}">
-        <div class="shop-slot-top">
-          <span class="shop-slot-grade">📦</span>
-          ${sold?'<span class="shop-sale-badge">구매 완료</span>':''}
-        </div>
-        <div class="shop-slot-name">카드 패키지 ${which===1?'I':'II'}</div>
-        <div class="shop-slot-desc">${sold?'이번 턴에는 이미 구매했습니다. 다음 턴에 다시 구매할 수 있습니다.':descText}</div>
-        <div class="shop-slot-buy-row"><span class="shop-price">${sold?'다음 턴 가능':(price>0?fmtWon(price):'🏛️ 무료')}</span>
-          <button class="shop-buy-btn" ${(sold||me.gold<price)?'disabled':''} onclick="buyPackage(${which})">구매</button></div>
-      </div>`;
-  };
-  content.innerHTML = `
-    <div style="font-size:12px;color:var(--fg-dim);margin-bottom:10px;">패키지는 <b>종류당 턴에 1개씩</b> 구매할 수 있습니다(다음 턴에 초기화). 카드는 뒤집힌 상태로 뽑혀, 처음 뽑힌 일부만 획득하고 나머지는 공개 후 폐기됩니다.</div>
-    <div class="shop-slots">
-      ${pkgSlot(1, 50, '4장을 뽑아 그중 처음 2장을 획득 (나머지 2장은 공개 후 폐기)')}
-      ${pkgSlot(2, 100, '6장을 뽑아 그중 처음 4장을 획득 (나머지 2장은 공개 후 폐기)')}
-    </div>`;
-  updateShopCloseBtn();
-}
-function buyPackage(which){
-  if(typeof lanIsRemoteClient==='function' && lanIsRemoteClient()){ lanSend({ t:'to_host', payload:{ action:'shop', op:'package', which:which } }); return; }
-
-  const me = viewer();
-  // [Ver 9.0] 암시장의 재단 Lv5 — 카드 패키지 무료
-  const cost = (which===1 ? 50 : 100);
-  // [Ver 5.9 밸런스] 암시장 패키지 너프 — I: 4장 중 2장, II: 6장 중 4장
-  const total = which===1 ? 4 : 6;
-  const keep = which===1 ? 2 : 4;
-  if(me.gold < cost) return;
-  // [Ver 5.7.1] 패키지는 종류당 턴에 1개씩만 구매할 수 있다. (다음 턴에 초기화)
-  if(!me.pkgBoughtThisTurn) me.pkgBoughtThisTurn = {};
-  if(me.pkgBoughtThisTurn[which]) return;
-  me.pkgBoughtThisTurn[which] = true;
-  me.gold -= cost; me.goldSpent = (me.goldSpent||0) + cost;
-  if(isMyPlayer(me)) bumpStat('goldSpent', cost); // [Ver 5.7.1] 통계
-  updateShopGoldBadge(true);
-  shopBusy = true; // [Ver 5.7.1] 패키지 개봉 중에는 다른 탭으로 이동하지 못하게 잠근다
-  const pool = [];
-  for(let i=0;i<total;i++){ const c = randomShopCard(); if(c) pool.push(c); }
-  log('gold', `${J(me.name,'이','가')} "카드 패키지 ${which===1?'I':'II'}"를 구매했습니다. (${fmtWon(cost)})`);
-  if(isMyPlayer(me)) bumpStat('packagesOpened'); // [Ver 5.6] 통계
-  packageState = { which, keep, total, pool, flipped:new Set(), kept:new Set(), flipOrder:[] };
-  renderBoard();
-  renderShopPackageReveal();
-  updateShopCloseBtn();
-}
-/* [Ver BATCH 1.5] 카드 패키지: 도박과 같은 뒤집기 UI를 쓰되, 직접 고르는 게 아니라
-   "먼저 뒤집은 순서대로" 앞의 keep장을 자동 획득한다. keep장이 다 채워지면
-   남은 카드들도 순서대로 자동 공개되며 폐기된다(선택권 없음). */
-function renderShopPackageReveal(){
-  const { which, keep, total, pool } = packageState;
-  let cardsHtml = '';
-  pool.forEach((c,i)=>{
-    cardsHtml += `<div class="gflip-outer">
-      <div class="gflip-inner" id="pflip-${i}" onclick="flipPackageCard(${i})">
-        <div class="gflip-face gflip-back">?</div>
-        <div class="gflip-face gflip-front ${cardVisualClass(c)}" id="pfront-${i}">
-          <span class="gflip-grade">[${escapeHtml(displayGrade(c))}]</span>
-          <div class="gflip-name">${escapeHtml(c.name)}</div>
-          <div class="gflip-desc">${escapeHtml(c.desc||'')}</div>
-        </div>
-      </div>
-    </div>`;
-  });
-  const html = `
-  <div class="gamble-active-head">
-    <div class="gamble-active-title">📦 카드 패키지 ${which===1?'I':'II'}</div>
-    <div class="gamble-active-sub">카드를 클릭해 뒤집으세요. 먼저 뒤집는 ${keep}장을 획득합니다 (나머지 ${total-keep}장은 자동 공개 후 폐기)</div>
-  </div>
-  <div class="gamble-grid">${cardsHtml}</div>
-  <div class="gamble-footer">
-    <span class="gamble-progress">획득 <b id="packageKeepCount">0</b> / ${keep}</span>
-  </div>`;
-  document.getElementById('shopTabContent').innerHTML = html;
-  fadeIn(document.getElementById('shopTabContent'));
-  updateShopCloseBtn();
-}
-function flipPackageCard(i){
-  if(!packageState) return;
-  const { pool, flipped, kept, keep, flipOrder } = packageState;
-  if(flipped.has(i)) return;
-  if(packageState.resolving) return;
-  flipped.add(i);
-  flipOrder.push(i);
-  const inner = document.getElementById(`pflip-${i}`);
-  if(inner) inner.classList.add('flipped');
-  setTimeout(()=>{
-    if(kept.size < keep){
-      kept.add(i);
-      const front = document.getElementById(`pfront-${i}`);
-      if(front) front.classList.add('picked');
-      const cnt = document.getElementById('packageKeepCount');
-      if(cnt) cnt.textContent = kept.size;
-      if(kept.size >= keep){
-        packageState.resolving = true;
-        setTimeout(()=> autoRevealRestOfPackage(), 550);
-      }
-    }
-  }, 260);
-}
-function autoRevealRestOfPackage(){
-  if(!packageState) return;
-  const { pool, flipped } = packageState;
-  const remaining = pool.map((_,i)=>i).filter(i=>!flipped.has(i));
-  let idx = 0;
-  const revealNext = ()=>{
-    if(idx >= remaining.length){ setTimeout(finishPackage, 700); return; }
-    const i = remaining[idx];
-    flipped.add(i);
-    const inner = document.getElementById(`pflip-${i}`);
-    if(inner) inner.classList.add('flipped');
-    setTimeout(()=>{
-      const front = document.getElementById(`pfront-${i}`);
-      if(front) front.classList.add('discarded');
-    }, 260);
-    idx++;
-    setTimeout(revealNext, 380);
-  };
-  revealNext();
-}
-function finishPackage(){
-  if(!packageState) return;
-  const me = viewer();
-  const { which, pool, kept } = packageState;
-  const keptCards = [...kept].map(i=>pool[i]);
-  const discarded = pool.filter((_,i)=>!kept.has(i));
-  // [Ver 8.9.9 버그수정/소프트락] "뽑뜨사"(TRAP_INSTANT_DEATH)는 noShop이 아니라서 암시장 패키지 풀에도
-  // 뜰 수 있고, 자동 획득 대상(kept)에 포함되면 grantCardToPlayer 내부에서 즉사(handleTrapDeath)까지
-  // 처리해버린다. 기존엔 이걸 모른 채 나머지 카드를 계속 지급하고 결과 모달을 띄우려 해, 이미 사망한
-  // 플레이어의 상점 UI가 멈췄다(도박·상점구매와 동일한 원인). 즉사가 감지되면 즉시 지급을 중단하고
-  // 상점을 닫은 뒤 다음 사람에게 턴을 넘긴다.
-  let trapDied = false;
-  for(const c of keptCards){
-    grantCardToPlayer(me, mkUidCard(c), '카드 패키지');
-    if(!me.alive){ trapDied = true; break; }
-  }
-  packageState = null;
-  if(trapDied){
-    shopBusy = false;
-    renderHand(); renderBoard();
-    closeShop();
-    if(checkWinCondition()) return;
-    advanceTurn();
-    return;
-  }
-  log('gold', `${J(me.name,'이','가')} "카드 패키지 ${which===1?'I':'II'}"를 열어 카드 ${keptCards.length}장을 획득했습니다.`);
-  renderHand(); renderBoard();
-  const body = `
-    <div style="margin-bottom:8px;">획득 (${keptCards.length}장):</div>
-    <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:12px;">${keptCards.map(c=>`<div>✅ [${escapeHtml(c.grade)}] ${escapeHtml(c.name)}</div>`).join('')}</div>
-    <div style="margin-bottom:8px;color:var(--fg-dim);">폐기 (${discarded.length}장):</div>
-    <div style="display:flex;flex-direction:column;gap:3px;opacity:.6;">${discarded.map(c=>`<div>❌ [${escapeHtml(c.grade)}] ${escapeHtml(c.name)}</div>`).join('')}</div>`;
-  // [Ver 5.7.1] 패키지 개봉이 끝나면 잠금을 풀고, 결과 모달에 "상점 나가기"를 함께 제공한다.
-  //   (기존엔 확인만 있어서 개봉 후 암시장을 빠져나갈 수단이 바로 보이지 않았다)
-  shopBusy = false;
-  showModal(`카드 패키지 ${which===1?'I':'II'}`, body, [
-    {label:'상점 나가기', action:()=>{ shopBusy=false; packageState=null; updateShopCloseBtn(); closeShop(); }},
-    {label:'확인', solid:true, action:()=>{ renderShopPackage(); }}
-  ]);
-  updateShopCloseBtn();
 }
 /* -- [Ver 5.5] 암시장: 방해공작 탭 -- */
 /* [Ver 5.7.1 밸런스] 방해공작 비용 150 → 100골드로 하향. 비용을 상수로 빼서 UI/차감/표기가 항상 함께 움직이게 한다. */
@@ -59948,7 +59934,8 @@ function applySabotage(kind, pid){
 /* 랩터 팬클럽: 이 카드를 소지하고 있는 한, 이름에 "랩터"가 들어간 상점 카드는 항상 무료 */
 function hasRaptorFanclub(p){ return !!(p && p.hand && p.hand.some(c=>c.type==='RAPTOR_FANCLUB_PASSIVE')); }
 function isRaptorNamedCard(card){ return !!(card && card.name && card.name.includes('랩터')); }
-function buyShopSlot(i){
+/* [Ver 14.0] __bmRate 가 넘어오면 "확인창을 이미 거친 외상 구매"다. */
+function buyShopSlot(i, __bmRate){
   if(typeof lanIsRemoteClient==='function' && lanIsRemoteClient()){ lanSend({ t:'to_host', payload:{ action:'shop', op:'buy', i:i } }); return; }
   const me = viewer();
   // [Ver 9.0] 매물의 재단 Lv3의 개인 매물이 공유 매물 뒤에 붙어 있으므로 렌더와 같은 목록을 본다
@@ -59962,19 +59949,41 @@ function buyShopSlot(i){
       return;
     }
   }
-  const base = shopBasePrice(slot.card.grade);
+  const base = mktPriceOf(slot.card);   // [Ver 14.0]
   const raptorFree = hasRaptorFanclub(me) && isRaptorNamedCard(slot.card);
   // [Ver 9.0] 가격은 렌더/봇과 공유하는 shopSlotPrice()로 통일. freePurchase만 구매 시점 전용이라 여기서 처리한다.
   const price = me.freePurchase ? 0 : shopSlotPrice(me, slot);
-  if(me.gold < price) return;
+  /* [Ver 14.0] 암시장은 **무조건 외상**이다. 돈이 없어도 살 수 있는 대신 이자가 붙는다.
+     공짜 구매(랩터 팬클럽·사장님이 미쳤어요·무정부 0원)는 빚질 게 없으니 그대로 통과시킨다. */
+  const __isLoan = blackMarketActive && price > 0 && !me.freePurchase && !raptorFree;
+  if(__isLoan && __bmRate == null){
+    const rate = bmSlotRate(slot);   // [Ver 14.0] 이 매물의 고정 이자율 — 다시 눌러도 같다
+    const owe  = Math.max(1, Math.round(price * (1 + rate)));
+    showModal('🖤 암시장 거래', `<div style="text-align:left;line-height:1.9;">
+      <b>${escapeHtml(slot.card.name)}</b> <span style="opacity:.7;">[${escapeHtml(displayGrade(slot.card))}]</span> · ${fmtWon(price)}<br>
+      이자율 <b>${Math.round(rate*100)}%</b> → <b>${BM_DUE_ROUNDS}바퀴</b> 뒤 <b>${fmtWon(owe)}</b>${Jp(fmtWon(owe),'을','를')} 갚아야 합니다.<br>
+      <span style="opacity:.8;">갚지 못하면 부족한 만큼 HP로 상환합니다. (1골드 = ${BM_HP_PER_GOLD}HP)</span>
+    </div>`, [
+      { label:'빌린다', solid:true, action:()=> buyShopSlot(i, rate) },
+      { label:'그만두기' }
+    ]);
+    return;
+  }
+  if(!__isLoan && me.gold < price) return;
   showShopWait('카드 구매 중...');
   setTimeout(()=>{
-    me.gold -= price;
-    me.goldSpent = (me.goldSpent||0) + price;
-    if(isMyPlayer(me)) bumpStat('goldSpent', price); // [Ver 5.7.1] 통계: 소비한 골드가 집계되지 않던 문제 수정
-    payShopOwner(me, price, '카드 구매'); // [Ver 5.8] 상점 인수: 매출을 인수자에게
-    // [Ver 10.1] 카지노딜러 지후 — 이제 남이 카드를 살 때도 그 값만큼 하우스가 챙긴다
-    try{ petDealerCollect(me, price, '카드 구매'); }catch(e){}
+    if(__isLoan){
+      /* [Ver 14.0] 외상 — 지금은 아무도 돈을 안 받는다. 그래서 상점주 배당(payShopOwner)과
+         딜러 징수(petDealerCollect)도 여기서는 돌지 않는다. 빚만 진다. */
+      bmTakeLoan(me, price, slot.card.name, __bmRate);
+    } else {
+      me.gold -= price;
+      me.goldSpent = (me.goldSpent||0) + price;
+      if(isMyPlayer(me)) bumpStat('goldSpent', price); // [Ver 5.7.1] 통계: 소비한 골드가 집계되지 않던 문제 수정
+      payShopOwner(me, price, '카드 구매'); // [Ver 5.8] 상점 인수: 매출을 인수자에게
+      // [Ver 10.1] 카지노딜러 지후 — 이제 남이 카드를 살 때도 그 값만큼 하우스가 챙긴다
+      try{ petDealerCollect(me, price, '카드 구매'); }catch(e){}
+    }
     const wasFree = me.freePurchase || raptorFree;
     /* [Ver 9.13.1] 사장님이 미쳤어요+ — 무료 구매 여분(freePurchaseCount)이 있으면 그걸 먼저 쓴다. */
     if(me.freePurchase && !raptorFree){
@@ -60018,7 +60027,7 @@ function buyShopSlot(i){
        [Ver 9.0] 매물의 재단 Lv5(30%)도 같은 환급 판정에 합산된다. */
     const __fdnRefund = fdnShopRefundChance(me);
     const __refundChance = (me.shopRefundChance||0) + __fdnRefund;
-    if(!wasFree && price>0 && __refundChance>0 && Math.random()*100 < __refundChance){
+    if(!wasFree && !__isLoan && price>0 && __refundChance>0 && Math.random()*100 < __refundChance){
       me.gold += price;
       const __src = (me.shopRefundChance && __fdnRefund) ? '"영수증"·상점 업그레이드'
                   : (__fdnRefund ? '상점 업그레이드' : '"영수증"');
@@ -60036,6 +60045,76 @@ function buyShopSlot(i){
     renderShopBuy();
   }, blackMarketActive ? 350 : 1500); // [Ver 8.7] 구매 대기시간 절반으로 단축
 }
+
+/* ##########################################################################
+   [Ver 14.0] 암시장 외상
+   --------------------------------------------------------------------------
+   이자율은 살 때마다 새로 뽑는다(20~60%). "얼마가 붙을지 모르는" 것 자체가
+   암시장의 성격이다. 갚는 기한은 2바퀴.
+   ########################################################################## */
+const BM_INTEREST_LO = 0.20;
+const BM_INTEREST_HI = 0.60;
+const BM_DUE_ROUNDS  = 2;
+const BM_HP_PER_GOLD = 10;   // 1골드를 못 갚으면 100HP... 가 아니라 10HP다 (10골드 = 100HP)
+
+const BM_DISC_LO = 0.10;   // [Ver 14.0] 암시장 할인 하한 (기존 일괄 40% 는 너무 셌다)
+const BM_DISC_HI = 0.30;   // 상한
+/* 카드마다 고정된 할인율. ⚠ Math.random 이면 다시 그릴 때마다 값이 춤춘다. */
+function bmDiscount(name){
+  return BM_DISC_LO + (hashStr(String(name||'')) % Math.round((BM_DISC_HI - BM_DISC_LO) * 100 + 1)) / 100;
+}
+function bmDiscPct(name){ return Math.round(bmDiscount(name) * 100); }
+
+function bmRollRate(){ return BM_INTEREST_LO + Math.random() * (BM_INTEREST_HI - BM_INTEREST_LO); }
+/* 이 매물의 이자율. **한 번 정해지면 안 바뀐다** — 확인창을 다시 열어도 같은 값이다.
+   (예전엔 열 때마다 새로 굴려서, 취소·재시도로 이자를 고를 수 있었다) */
+function bmSlotRate(slot){
+  if(!slot) return bmRollRate();
+  if(typeof slot.__bmRate !== 'number') slot.__bmRate = bmRollRate();
+  return slot.__bmRate;
+}
+function bmDebtTotal(p){
+  if(!p || !Array.isArray(p.bmDebts)) return 0;
+  return p.bmDebts.reduce((s,d)=> s + (d && d.amount || 0), 0);
+}
+/* 빚을 지고 카드를 받는다. 골드는 지금 한 푼도 안 나간다. */
+function bmTakeLoan(p, price, cardName, rate){
+  if(!p || !(price > 0)) return 0;
+  const owe = Math.max(1, Math.round(price * (1 + rate)));
+  p.bmDebts = Array.isArray(p.bmDebts) ? p.bmDebts : [];
+  p.bmDebts.push({ amount: owe, due: turnCount + BM_DUE_ROUNDS, card: String(cardName||'') });
+  log('gold', `🖤 ${J(p.name,'이','가')} 암시장에서 외상으로 ${J(String(cardName||''),'을','를')} 가져갔습니다. 이자 ${Math.round(rate*100)}% — ${BM_DUE_ROUNDS}바퀴 뒤 <b>${fmtWon(owe)}</b>${Jp(fmtWon(owe),'을','를')} 갚아야 합니다.`);
+  return owe;
+}
+/* 바퀴마다 만기된 빚을 정산한다. pwSeize 와 같은 자리에서 도는 검증된 패턴이다. */
+function bmDebtTick(){
+  let died = false;
+  players.forEach(p=>{
+    if(!p || !p.alive || !Array.isArray(p.bmDebts) || !p.bmDebts.length) return;
+    const due = p.bmDebts.filter(d=> d && turnCount >= d.due);
+    if(!due.length) return;
+    p.bmDebts = p.bmDebts.filter(d=> d && turnCount < d.due);
+    due.forEach(d=>{
+      if(!p.alive) return;
+      const pay = Math.min(p.gold||0, d.amount);
+      p.gold = (p.gold||0) - pay;
+      const left = d.amount - pay;
+      if(left <= 0){
+        log('gold', `💰 ${J(p.name,'이','가')} 암시장 빚 ${fmtWon(d.amount)}${Jp(fmtWon(d.amount),'을','를')} 갚았습니다.`);
+        return;
+      }
+      const hp = left * BM_HP_PER_GOLD;
+      log('highlight', `💸 ${J(p.name,'이','가')} 암시장 빚 ${fmtWon(left)}${Jp(fmtWon(left),'을','를')} 갚지 못해 <b>${hp.toLocaleString()} HP</b>로 상환합니다.`);
+      currentAttackContext = { attackerName:'암시장', attackerId:null, cardName:'암시장 외상' };
+      applyDamageToPlayer(p, hp, 'NONE');
+      currentAttackContext = null;
+      if(!p.alive) died = true;
+    });
+  });
+  if(died){ try{ if(checkWinCondition()) return true; }catch(e){} }
+  return false;
+}
+
 function rerollShop(){
   if(typeof lanIsRemoteClient==='function' && lanIsRemoteClient()){ lanSend({ t:'to_host', payload:{ action:'shop', op:'reroll' } }); return; }
 
@@ -60094,11 +60173,76 @@ function sellPriceForBase(card, owner){
   if(owner && owner.sellPriceLockValue != null && owner.sellPriceLockDueRound && turnCount < owner.sellPriceLockDueRound){
     return owner.sellPriceLockValue;
   }
-  const __base = SHOP_SELL_PRICE[card.grade] ?? null;
+  /* [Ver 14.0] 판매가도 **시세 그대로**다. 고정 매입가(SHOP_SELL_PRICE)로는
+     "싸게 사서 비싸게"가 원천 불가했다. 같은 턴에 사서 팔면 시세가 안 움직였으니 본전이고,
+     이득을 보려면 최소 한 턴을 기다려야 한다. 턴당 5장 제한(SELL_MAX_PER_TURN)은 그대로다. */
+  if(card.grade === 'E') return null;   // E 는 지금도 판매 불가 — 유지
+  const __base = Math.max(1, Math.floor(shopBasePrice(card.grade) * mktMult(card.name)));
   /* [Ver 10.5] 이자 — 판매가 1.2배. (대금을 다음 턴에 주는 쪽은 confirmSell이 처리한다) */
   if(__base != null && owner && owner.interestSellActive) return Math.floor(__base * (1.2));
   return __base;
 }
+
+/* ##########################################################################
+   [Ver 14.0] 시세 그래프
+   --------------------------------------------------------------------------
+   MKT[name].h (최근 16틱 배율) 를 폴리라인 하나로 그린다.
+   ⚠ 점이 1개뿐일 때(막 추적을 시작한 카드) 도 깨지지 않아야 한다 — 가로 직선으로 그린다.
+   ⚠ 값이 전부 같으면 (max-min) 이 0 이라 나누기가 터진다. 바닥값을 깔아둔다.
+   ########################################################################## */
+function mktGraphSvg(name, w, h){
+  const e = MKT[String(name||'')];
+  let pts = (e && Array.isArray(e.h) && e.h.length) ? e.h.slice() : [1];
+  if(pts.length === 1) pts = [pts[0], pts[0]];
+  const lo = Math.min.apply(null, pts), hi = Math.max.apply(null, pts);
+  const span = Math.max(0.0001, hi - lo);
+  const pad = 6;
+  const X = i => pad + (w - pad*2) * (i / (pts.length - 1));
+  const Y = v => (h - pad) - (h - pad*2) * ((v - lo) / span);
+  const line = pts.map((v,i)=> X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ');
+  const area = `${pad},${h-pad} ${line} ${(w-pad)},${h-pad}`;
+  const up   = pts[pts.length-1] >= pts[0];
+  const col  = up ? 'var(--chip-red, #FF4040)' : 'var(--chip-blue, #5B9BFF)';
+  const lx = X(pts.length-1), ly = Y(pts[pts.length-1]);
+  return `<svg class="mkt-graph" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <line x1="${pad}" y1="${Y(hi).toFixed(1)}" x2="${w-pad}" y2="${Y(hi).toFixed(1)}" class="mkt-guide"/>
+    <line x1="${pad}" y1="${Y(lo).toFixed(1)}" x2="${w-pad}" y2="${Y(lo).toFixed(1)}" class="mkt-guide"/>
+    <polygon points="${area}" fill="${col}" opacity="0.12"/>
+    <polyline points="${line}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="3" fill="${col}"/>
+  </svg>`;
+}
+
+/* 그래프 + 숫자를 묶은 패널. 판매 탭 오른쪽과 매물 클릭 팝업이 **같은 것**을 쓴다. */
+function mktPanelHtml(card, opts){
+  if(!card) return `<div class="mkt-panel mkt-empty">카드를 선택하면 시세가 나옵니다.</div>`;
+  const o = opts || {};
+  const name = card.name;
+  const e = MKT[String(name||'')];
+  const hs = (e && Array.isArray(e.h) && e.h.length) ? e.h : [1];
+  const g = shopBasePrice(card.grade);
+  const pct = mktPct(name);
+  const now = mktPriceOf(card);
+  const hi  = Math.max(1, Math.floor(g * Math.max.apply(null, hs)));
+  const lo  = Math.max(1, Math.floor(g * Math.min.apply(null, hs)));
+  const cls = pct > 0 ? 'up' : (pct < 0 ? 'down' : '');
+  return `<div class="mkt-panel">
+    <div class="mkt-title">${escapeHtml(name)} <span class="mkt-grade">${escapeHtml(displayGrade(card))}</span></div>
+    ${mktGraphSvg(name, 200, 74)}
+    <div class="mkt-now ${cls}">${fmtWon(now)} <span class="mkt-pct">${pct>0?'▲':(pct<0?'▼':'—')}${Math.abs(pct)}%</span></div>
+    <div class="mkt-minmax">최고 ${fmtWon(hi)} · 최저 ${fmtWon(lo)} · 정가 ${fmtWon(g)}</div>
+    ${o.foot || ''}
+  </div>`;
+}
+/* onclick 속성 안에 안전하게 박을 수 있는 JS 문자열 리터럴 */
+function mktAttr(s){ return JSON.stringify(String(s==null?'':s)).replace(/"/g,'&quot;'); }
+/* 상점 매물을 클릭했을 때 뜨는 팝업. cmOpen/cmClose 를 그대로 재사용한다. */
+function mktShowCard(name){
+  const c = (typeof cards !== 'undefined' && cards) ? cards.find(x=> x && x.name === name) : null;
+  if(!c) return;
+  try{ cmOpen('📈 시세', `<div class="mkt-pop">${mktPanelHtml(c)}</div>`); }catch(e){}
+}
+
 function sumSelectedSell(){
   const me = viewer();
   let sum = 0;
@@ -60111,24 +60255,30 @@ function renderShopSell(){
   if(me.hand.length===0){
     html = `<div class="shop-empty">손패가 없습니다.</div>`;
   } else {
-    html += `<div class="shop-sell-grid">`;
+    /* [Ver 14.0] 왼쪽은 손패, 오른쪽은 방금 만진 카드의 시세. 판매 규칙은 그대로다. */
+    const __focus = (typeof sellFocusIdx==='number' && me.hand[sellFocusIdx]) ? me.hand[sellFocusIdx] : null;
+    html += `<div class="mkt-wrap"><div class="mkt-left">`;
+    html += `<div class="shop-sell-grid">`
     me.hand.forEach((c,idx)=>{
       const price = sellPriceFor(c, me);
       const sellable = (price != null) && !c.__masked; // [Ver 8.3] 은폐 카드는 팔 수 없다(팔면 정체가 드러남)
       const sel = sellSelected.has(idx);
       // [Ver 8.3] 은폐된 카드는 등급 발광 색으로도 등급을 짐작할 수 없게 한다
       const glow = c.__masked ? '' : ((typeof gradeGlowClass==='function') ? gradeGlowClass(c.grade) : '');
-      html += `<div class="shop-sell-card ${glow} ${sellable?'':'disabled'} ${sel?'selected':''}" onclick="${sellable?`toggleSell(${idx})`:''}">
+      /* [Ver 14.0] 팔 수 없는 카드도 **시세는 볼 수 있어야** 한다 — 클릭은 언제나 먹는다.
+         파는 것과 보는 것을 분리했다(sellFocus 는 판매 규칙에 관여하지 않는다). */
+      const __click = sellable ? `toggleSell(${idx})` : `sellFocus(${idx})`;
+      html += `<div class="shop-sell-card ${glow} ${sellable?'':'disabled'} ${sel?'selected':''} ${sellFocusIdx===idx?'focused':''}" onclick="${__click}">
         <div class="shop-sell-card-top">
           <span class="shop-slot-grade">${c.__masked ? '???' : escapeHtml(displayGrade(c))}</span>
           <div class="shop-check">${sel?'<svg viewBox="0 0 12 12"><path d="M1 6l3 3 7-7" stroke="#1a1208" stroke-width="2" fill="none"/></svg>':''}</div>
         </div>
         <div class="shop-sell-name">${c.__masked ? '???' : escapeHtml(c.name)}</div>
-        <div class="shop-sell-price">${c.__masked ? '???' : (sellable?fmtWon(price):'판매불가')}</div>
+        <div class="shop-sell-price">${c.__masked ? '???' : (sellable?`${fmtWon(price)}<span class="mkt-orig">정가 ${fmtWon(shopBasePrice(c.grade))}</span>`:'판매불가')}</div>
         ${cardMarkRowHtml(c, 'cmk-mini')}
       </div>`;
     });
-    html += `</div>
+    html += `</div></div><div class="mkt-right">${mktPanelHtml(__focus && !__focus.__masked ? __focus : null)}</div></div>
     <div class="shop-sell-footer">
       <div class="shop-sell-total">선택 합계 <b>${fmtWon(sumSelectedSell())}</b>
         <small style="display:block;font-size:11px;color:var(--fg-faint);">이번 턴 남은 판매 <b>${sellLeftThisTurn(viewer())}</b> / ${SELL_MAX_PER_TURN}장</small></div>
@@ -60140,6 +60290,10 @@ function renderShopSell(){
 /* [Ver 9.14 글로벌 패치] 한 턴에 팔 수 있는 카드는 최대 5장.
    손패를 통째로 현금화해 한 턴에 판을 뒤집던 것을 막는다. (판매 횟수가 아니라 "장수" 기준) */
 const SELL_MAX_PER_TURN = 5;
+/* [Ver 14.0] 판매 탭에서 **마지막으로 만진** 손패 인덱스. 오른쪽 시세 패널이 이걸 본다.
+   ⚠ 판매 규칙(선택 집합 sellSelected)과는 별개다 — 섞으면 "봤더니 팔렸다"가 된다. */
+let sellFocusIdx = -1;
+function sellFocus(idx){ sellFocusIdx = idx; renderShopSell(); }
 function sellLeftThisTurn(p){
   if(!p) return 0;
   const key = (typeof totalIndividualTurns !== 'undefined') ? totalIndividualTurns : 0;
@@ -60148,6 +60302,7 @@ function sellLeftThisTurn(p){
 }
 function toggleSell(idx){
   const me = viewer();
+  sellFocusIdx = idx;   // [Ver 14.0] 고르는 순간 오른쪽 시세도 그 카드로 옮긴다
   if(sellSelected.has(idx)){
     sellSelected.delete(idx);
   } else {
@@ -61043,7 +61198,7 @@ function actuallyStartTutorial(){
   turnOrder = [0,1];
   currentTurnIdx = 0;
   shopSlots = [];
-  gambleState = null; packageState = null;
+  gambleState = null;
   pendingCard = null;
   armedCardIdx = -1; armedCardUid = null; clearTimeout(armedCardTimer);
   awaitingReaction = false; awaitingReactionCard = null;
@@ -64985,6 +65140,8 @@ function lanHostSnapshot(){
       // [버그수정/랜서버] 암시장 판매 슬롯이 스냅샷에 빠져 있어, 참가자 화면에서는 blackMarketActive만
       //   true로 바뀌고 실제 슬롯 목록(blackMarketSlots)은 항상 빈 배열이라 암시장 UI가 텅 비어 보였다.
       blackMarketSlots: (typeof blackMarketSlots!=='undefined') ? blackMarketSlots.map(sl=> sl?JSON.parse(JSON.stringify(sl)):null) : [],
+      /* [Ver 14.0] 카드 시세 — 전역이라 여기 없으면 참가자 화면의 값이 호스트와 다르게 나온다 */
+      mkt: (typeof MKT!=='undefined' && MKT) ? JSON.parse(JSON.stringify(MKT)) : {},
       closed: (typeof shopClosedForever!=='undefined')?!!shopClosedForever:false,
       lockOwner: (typeof shopLockOwnerId!=='undefined')?shopLockOwnerId:null,
       /* [Ver 10.5] 그린벨트·상점 영구 점거
@@ -65319,14 +65476,12 @@ function lanHostDoShop(pid, payload){
   const _rtab = (typeof renderShopTab==='function')?renderShopTab:null;
   const _ucb = (typeof updateShopCloseBtn==='function')?updateShopCloseBtn:null;
   const _fadeIn = (typeof fadeIn==='function')?fadeIn:null;
-  const _preveal = (typeof renderShopPackageReveal==='function')?renderShopPackageReveal:null;
   const _roulette = (typeof showRouletteOverlay==='function')?showRouletteOverlay:null;
   try{
     window.showShopWait = function(){};
     window.setTimeout = function(fn){ try{ fn(); }catch(e){} return 0; }; // 상점/도박 지연을 즉시 처리
     // 도박/상점 렌더 함수는 DOM(호스트에 없는 오버레이)에 의존하므로 no-op으로 대체 (상태 변경만 필요)
     if(_reveal) renderShopGambleReveal = function(){};
-    if(_preveal) renderShopPackageReveal = function(){};
     if(_rgamble) renderShopGamble = function(){};
     if(_ucb) updateShopCloseBtn = function(){};
     if(_fadeIn) fadeIn = function(){};
@@ -65334,15 +65489,6 @@ function lanHostDoShop(pid, payload){
     if(payload.op==='buy') buyShopSlot(payload.i);
     else if(payload.op==='reroll') rerollShop();
     else if(payload.op==='sell'){ sellSelected = new Set(payload.idxs||[]); confirmSell(); sellSelected = new Set(); }
-    else if(payload.op==='package'){
-      buyPackage(payload.which);
-      // 패키지는 "먼저 뒤집은 순서대로" keep장 자동 획득 — 호스트가 앞에서부터 채우고 즉시 정산한다.
-      if(typeof packageState!=='undefined' && packageState){
-        packageState.kept = new Set();
-        for(let k=0;k<packageState.pool.length && packageState.kept.size<packageState.keep;k++) packageState.kept.add(k);
-        if(typeof finishPackage==='function') finishPackage();
-      }
-    }
     else if(payload.op==='gamble'){
       // [버그수정/랜서버] 예전엔 여기서 풀을 만들자마자 자동으로 카드를 골라 즉시 정산해버려서,
       //   참가자는 실제로 카드를 뒤집거나 고를 기회 없이 도박이 끝나 있었다.
@@ -65376,7 +65522,6 @@ function lanHostDoShop(pid, payload){
   finally{
     window.showShopWait = _wait; window.setTimeout = _st;
     if(_reveal) renderShopGambleReveal = _reveal;
-    if(_preveal) renderShopPackageReveal = _preveal;
     if(_rgamble) renderShopGamble = _rgamble;
     if(_ucb) updateShopCloseBtn = _ucb;
     if(_fadeIn) fadeIn = _fadeIn;
@@ -65820,6 +65965,7 @@ function lanClientApplyState(snap){
       // [버그수정/랜서버] 암시장 판매 슬롯도 함께 반영 — 이게 빠져 있으면 blackMarketActive만 true가 되고
       //   슬롯은 항상 빈 배열이라 참가자 화면에 암시장 진열이 하나도 뜨지 않았다.
       blackMarketSlots = Array.isArray(snap.shop.blackMarketSlots) ? snap.shop.blackMarketSlots.map(sl=>sl?sl:null) : [];
+      MKT = (snap.shop.mkt && typeof snap.shop.mkt === 'object') ? snap.shop.mkt : {};   // [Ver 14.0]
       shopClosedForever = !!snap.shop.closed;
       shopLockOwnerId = snap.shop.lockOwner || null;
       /* [Ver 10.5] 그린벨트·상점 영구 점거 */
@@ -65944,7 +66090,7 @@ function lanClientApplyState(snap){
           if(me0 && me0.alive){ try{ renderShopGamble(); }catch(e){} }
           else { try{ closeShop(); }catch(e){} }
         }
-        if(!isMyGamble && !(typeof gambleState!=='undefined' && gambleState) && !(typeof packageState!=='undefined' && packageState)){
+        if(!isMyGamble && !(typeof gambleState!=='undefined' && gambleState)){
           const me = players.find(p=>p.id===LAN.myPid);
           // 내 골드/손패수 + 상점 슬롯 구성 + 현재 탭이 바뀌었는지로 상점 화면 변경 여부를 판단
           const sig = JSON.stringify({
@@ -65955,7 +66101,7 @@ function lanClientApplyState(snap){
             // [Ver 9.0] 재단 레벨이 오르면 가격·리롤 횟수·개인 매물이 전부 달라지므로 시그니처에 포함해야
             //   참가자 화면이 새 값으로 다시 그려진다. (개인 매물도 shopSlotsFor로 함께 본다)
             fdn: me ? FOUNDATION_KEYS.map(k=> fdnLv(me,k)).join(',') : '',
-            slots: (blackMarketActive?(blackMarketSlots||[]):shopSlotsFor(me)).map(sl=> (sl&&sl.card&&!sl.soldOut) ? (sl.card.name+'|'+(sl.sale?1:0)) : 'x')
+            slots: (blackMarketActive?(blackMarketSlots||[]):shopSlotsFor(me)).map(sl=> (sl&&sl.card&&!sl.soldOut) ? (sl.card.name+'|'+mktMult(sl.card.name).toFixed(3)) : 'x')   /* [Ver 14.0] 시세가 바뀌면 참가자 화면도 다시 그려야 한다 */
           });
           if(LAN.__shopSig !== sig){
             LAN.__shopSig = sig;
