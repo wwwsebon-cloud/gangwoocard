@@ -7235,7 +7235,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.3</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.4</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -22657,6 +22657,13 @@ function exitPlaygroundBar(){
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
   {
+    version: 'Ver 14.4', date: '2026-09-09',
+    items: [
+      '\u{1F3C1} <b>탈락한 뒤 관전을 그만두고 나가도 "판 중단"으로 기록되지 않습니다.</b> 이미 죽은 시점에서 그 판은 끝난 것이므로, 이제 <b>몇 위로 탈락했는지</b>와 함께 정상 종료로 올라갑니다.',
+      '\u{26D4} <b>판 중단</b>은 이제 <b>살아 있는 상태로</b> 판을 떠날 때만 표시됩니다.',
+    ]
+  },
+  {
     version: 'Ver 14.3', date: '2026-09-09',
     items: [
       '\u{1F4E1} <b>이제 판이 끝나면 전적이 공식 전적 채널로 자동 전송됩니다.</b> 따로 설정할 것이 없습니다.',
@@ -38043,7 +38050,9 @@ function dcSendBeacon(payload, url){
 }
 
 /* [Ver 14.1] 승부가 나기 전에 판을 떠났을 때. 사용자 지정으로 **중단도 무조건 올린다.**
-   ⚠ unloading 이면 fetch 가 아니라 sendBeacon 으로 보낸다. */
+   ⚠ unloading 이면 fetch 가 아니라 sendBeacon 으로 보낸다.
+   [Ver 14.4] 단, **내가 이미 죽어 있으면 중단이 아니다.** 관전을 그만둔 것뿐이고
+     그 사람의 판은 죽은 순간 이미 끝났다. 완주(🏁)로 올린다. */
 function dcPostAbandon(reason, unloading){
   try{
     /* [Ver 14.3] 공식 채널은 항상 — 여기서도 dcEnabled() 로 막지 않는다. */
@@ -38055,20 +38064,28 @@ function dcPostAbandon(reason, unloading){
     /* 승자는 없지만 **살아남은 사람이 위**다. 생존자를 앞에 넘기면
        dcRanking 이 그 뒤에 탈락 역순을 이어붙인다. */
     const rank  = dcRanking(alive);
+    /* [Ver 14.4] 내가 이미 탈락했는가 — 이게 "중단"과 "완주"를 가른다.
+       ⚠ players[0] 로 보면 안 된다. 랜서버에서는 내 자리가 p0 가 아니다. */
+    let me = null;
+    try{ me = (typeof myPlayer === 'function') ? myPlayer() : null; }catch(e){}
+    const iDied = !!(me && !me.alive);
+    const myRank = iDied ? (rank.findIndex(p=> p && p.id === me.id) + 1) : 0;
     const mins  = Math.max(0, Math.round((Date.now() - (gameStartTime || Date.now())) / 60000));
     const lines = dcFitField(rank.slice(0, 10).map((p, i)=> dcPlayerLine(p, i, null)));   // [Ver 14.2] 중단도 같은 수준으로
 
+    /* [Ver 14.4] 내가 죽은 뒤 나간 것이면 "완주"로 적는다. 살아있는 채로 나가야 중단이다. */
     const payload = { embeds: [{
-      title: '⛔ 판 중단',
-      description: '승부가 나기 전에 판을 떠났습니다.',
-      color: 0x8A8A8A,
+      title: iDied ? '🏁 탈락 — 판 종료' : '⛔ 판 중단',
+      description: iDied
+        ? `**${dcEscMd(me.name)}**${myRank ? ` — ${myRank}위로 탈락` : ' 탈락'}`
+        : '승부가 나기 전에 판을 떠났습니다.',
+      color: iDied ? 0x6E86B8 : 0x8A8A8A,
       fields: [
         { name: '모드',   value: dcModeLabel(),                  inline: true },
         { name: '생존',   value: `${alive.length} / ${rank.length}명`, inline: true },
         { name: '진행',   value: `${turnCount}바퀴 · ${mins}분`,   inline: true },
-        { name: '사유',   value: String(reason || '알 수 없음'),   inline: true },
-        { name: '중단 시점 전적', value: lines },
-      ],
+      ].concat(iDied ? [] : [{ name: '사유', value: String(reason || '알 수 없음'), inline: true }])
+       .concat([{ name: iDied ? '탈락 시점 전적' : '중단 시점 전적', value: lines }]),
       footer: { text: '갱갱갱 우빈랩터 카드게임' },
       timestamp: new Date().toISOString(),
     }]};
