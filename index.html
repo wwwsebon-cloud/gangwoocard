@@ -835,6 +835,25 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
   transition:transform var(--t) var(--ease), background var(--t) var(--ease), box-shadow var(--t) var(--ease);
 }
 .nm-mart:hover{ transform:translateY(-2px); background:var(--bg-2); box-shadow:var(--sh-ring), var(--sh-2); }
+/* [Ver 14.5] 랩터마트 · 상자 두 칸.
+   ⚠ 한 줄을 둘로 쪼개면 폭이 절반(약 106px)이 된다. 가로 배치로는 "랩터마트24"가
+     줄바꿈되므로 **아이콘을 위로 올리고** 글자를 줄여 한 줄에 앉힌다. */
+.nm-mart-row{ display:flex; gap:var(--sp-2); flex:0 0 auto; }
+.nm-mart-row > .nm-mart{
+  flex:1 1 0; min-width:0;
+  flex-direction:column; gap:4px; padding:11px 8px; min-height:64px;
+}
+.nm-mart-row > .nm-mart > .ic{ font-size:20px; }
+.nm-mart-row > .nm-mart > .tx{ font-size:13px; white-space:nowrap; }
+.nm-mart-box{ position:relative; }
+/* 열쇠 수 — 열 수 있으면(renderBoxKeyBadge 가 .ready 를 붙인다) 금색으로 살아난다 */
+.nm-mart-keys{
+  position:absolute; right:9px; top:7px;
+  padding:1px 7px; border-radius:var(--r-pill);
+  background:var(--bg-2); color:var(--fg-faint);
+  font-family:var(--font-mono); font-size:9.5px; font-weight:700;
+}
+.nm-mart-keys.ready{ background:rgba(240,180,74,.18); color:var(--tone-yellow,#f0b429); }
 .nm-mart > .ic{ font-size:22px; }
 .nm-mart > .tx{ font-size:17px; font-weight:700; }
 /* [Ver 13.1] 테두리·배경 없이 자리만 잡는다. 여기 들어올 것은 일러스트지 상자가 아니다.
@@ -1064,7 +1083,7 @@ body.ink.force-dark .nm-stage-art{ filter:invert(1); }   /* 강제 다크는 언
 .pw-card.locked{ opacity:0.42; }
 .pw-card.equipped{ box-shadow:inset 0 0 0 2px var(--accent); }
 /* 카드 폭의 45% — "절반보다 조금 적게" */
-.pw-card-art{ flex:0 0 45%; align-self:stretch; min-height:96px; }
+.pw-card-art{ flex:0 0 45%; align-self:stretch; min-height:96px; padding:3px; }
 .pw-card-art .pw-img{ height:100%; border-radius:var(--r-xs); }
 .pw-card-art .pw-img-fb{ font-size:34px; background:#fff; border-radius:var(--r-xs); }
 .pw-card-body{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:6px; }
@@ -1102,8 +1121,138 @@ body.ink.force-dark .nm-stage-art{ filter:invert(1); }   /* 강제 다크는 언
 /* ---------- 아이콘 그림 ----------
    원본이 흰 배경이라 어두운 테마에서 네모가 도드라진다. 살짝 둥글려 카드처럼 앉힌다.
    그림을 못 불러오면 .pw-img-fb(이모지)로 대체된다 — 크기를 맞춰 둔다. */
+/* [Ver 14.6] 권능 상세 창 */
+.pwd{ line-height:1.7; }
+.pwd-head{ display:flex; gap:12px; align-items:center; margin-bottom:11px; }
+.pwd-ic{ flex:0 0 auto; width:76px; height:76px; }
+.pwd-ic .pw-img{ border-radius:var(--r-sm); }
+.pwd-ic .pw-img-fb{ font-size:34px; }
+.pwd-meta{ flex:1 1 auto; min-width:0; }
+.pwd-nm{ font-size:17px; font-weight:800; letter-spacing:-0.02em; overflow-wrap:anywhere; }
+.pwd-sub{ font-size:11.5px; color:var(--fg-dim); }
+.pwd-cdnote{ color:var(--pw-legend,#f0b429); font-weight:700; }
+.pwd-desc{
+  padding:10px 12px; border-radius:var(--r-sm);
+  background:var(--bg-1); box-shadow:inset 0 0 0 1px var(--line-soft);
+  font-size:12.5px; line-height:1.8;
+}
+.pwd-sec{ margin-top:13px; }
+.pwd-sec-t{ font-size:11.5px; font-weight:700; color:var(--fg-dim); margin-bottom:6px; }
+.pwd-sec-t small{ font-weight:400; color:var(--fg-faint); margin-left:5px; }
+.pwd-note{
+  margin-top:9px; padding:8px 11px; border-radius:var(--r-xs);
+  background:var(--bg-1); font-size:11.5px; color:var(--fg-dim); line-height:1.7;
+}
+/* 특성 설명 카드 */
+.pwd-trait{
+  margin-top:6px; padding:9px 11px; border-radius:var(--r-xs);
+  background:var(--bg-1); box-shadow:inset 0 0 0 1px var(--line-soft);
+}
+.pwd-trait.locked{ opacity:.5; }
+.pwd-trait.on{ box-shadow:inset 0 0 0 1.5px var(--pw-legend,#f0b429); }
+.pwd-trait-h{ display:flex; align-items:center; gap:7px; font-size:12.5px; }
+.pwd-trait-cd{ font-family:var(--font-mono); font-size:9.5px; color:var(--tone-red,#e0596b); }
+.pwd-trait-tag{
+  margin-left:auto; padding:1px 7px; border-radius:var(--r-pill);
+  background:var(--bg-2); color:var(--fg-faint); font-size:9.5px; font-weight:700;
+}
+.pwd-trait.on .pwd-trait-tag{ background:var(--pw-legend,#f0b429); color:#1a1408; }
+.pwd-trait-d{ margin-top:4px; font-size:11.5px; line-height:1.7; color:var(--fg-dim); }
+/* 장착 버튼 */
+.pwd-foot{ margin-top:15px; }
+.pwd-eq{
+  width:100%; padding:12px; border-radius:var(--r-sm);
+  background:var(--accent); color:var(--accent-fg);
+  font-size:13.5px; font-weight:800; cursor:pointer;
+  transition:background var(--t) var(--ease);
+}
+.pwd-eq:hover{ background:var(--accent-dim); }
+.pwd-eq.off{ background:var(--bg-2); color:var(--fg-dim); }
+.pwd-eq.off:hover{ background:var(--bg-1); }
+/* 교체할 칸 고르기 */
+.pwd-swap-list{ display:flex; flex-direction:column; gap:6px; }
+.pwd-swap{
+  display:flex; align-items:center; gap:10px; width:100%;
+  padding:9px 11px; border-radius:var(--r-xs);
+  background:var(--bg-1); box-shadow:inset 0 0 0 1px var(--line-soft);
+  color:var(--fg); text-align:left; cursor:pointer;
+  transition:background var(--t) var(--ease);
+}
+.pwd-swap:hover{ background:var(--bg-2); }
+.pwd-swap-k{
+  flex:0 0 auto; width:22px; height:22px; line-height:22px; text-align:center;
+  border-radius:var(--r-xs); background:var(--bg-2);
+  font-family:var(--font-mono); font-size:11px; font-weight:800; color:var(--fg-faint);
+}
+.pwd-swap-ic{ flex:0 0 auto; width:34px; height:34px; }
+.pwd-swap-tx{ flex:1 1 auto; min-width:0; font-size:12.5px; }
+.pwd-swap-tx small{ display:block; font-size:10.5px; font-weight:400; color:var(--fg-faint); }
+.pwd-swap-x{ flex:0 0 auto; font-size:10.5px; font-weight:700; color:var(--accent); }
+/* 방금 들어간 칸을 잠깐 빛낸다 */
+@keyframes pwSlotJust{
+  0%   { box-shadow:0 0 0 0 rgba(240,180,74,.85); }
+  60%  { box-shadow:0 0 0 7px rgba(240,180,74,0); }
+  100% { box-shadow:0 0 0 0 rgba(240,180,74,0); }
+}
+.pw-slot.pw-slot-just{ animation:pwSlotJust 1.3s ease-out 2; }
+@media (prefers-reduced-motion: reduce){ .pw-slot.pw-slot-just{ animation:none; } }
+
+/* [Ver 14.5] 암살 · 청부 — 손패에서 자리를 고르는 목록 */
+.pw-hire-list{ display:flex; flex-direction:column; gap:5px; max-height:46vh; overflow-y:auto; }
+.pw-hire-b{
+  display:flex; align-items:center; gap:9px; width:100%;
+  padding:8px 11px; border-radius:var(--r-xs);
+  background:var(--bg-1); box-shadow:inset 0 0 0 1px var(--line-soft);
+  color:var(--fg); text-align:left; cursor:pointer;
+  transition:background var(--t) var(--ease);
+}
+.pw-hire-b:hover{ background:var(--bg-2); }
+.pw-hire-n{
+  flex:0 0 auto; min-width:20px; height:20px; line-height:20px; text-align:center;
+  border-radius:var(--r-pill); background:var(--bg-2);
+  font-family:var(--font-mono); font-size:10px; font-weight:700; color:var(--fg-faint);
+}
+.pw-hire-nm{ flex:1 1 auto; font-size:12.5px; font-weight:700; overflow-wrap:anywhere; }
+.pw-hire-g{ flex:0 0 auto; font-family:var(--font-mono); font-size:9.5px; font-weight:700; color:var(--fg-faint); }
+
+/* [Ver 14.5] 권능석 블록 */
+.pw-stone-row{ display:flex; gap:var(--sp-2); align-items:stretch; flex-wrap:wrap; }
+.pw-stone-have{
+  display:flex; flex-direction:column; justify-content:center; gap:2px;
+  padding:8px 14px; border-radius:var(--r-sm); background:var(--bg-1);
+  box-shadow:inset 0 0 0 1px var(--line-soft); font-size:13px; font-weight:700;
+}
+.pw-stone-have small{ display:block; font-size:10.5px; font-weight:400; color:var(--fg-faint); }
+
+/* [Ver 14.5] 카드 안 특성 토글 */
+.pw-trait-row{ display:flex; gap:5px; align-items:center; flex-wrap:wrap; margin-top:7px; padding-top:7px; border-top:1px solid var(--line-soft); }
+.pw-trait-row.locked{ opacity:.72; }
+.pw-trait-lock{ font-size:10.5px; color:var(--fg-faint); }
+.pw-trait-b{
+  padding:3px 9px; border-radius:var(--r-pill); font-size:10.5px; font-weight:700;
+  background:var(--bg-2); color:var(--fg-dim); cursor:pointer;
+  transition:background var(--t) var(--ease), color var(--t) var(--ease);
+}
+.pw-trait-b:hover{ background:var(--bg-3, var(--bg-2)); }
+.pw-trait-b.on{ background:var(--pw-legend,#f0b429); color:#1a1408; }
+.pw-trait-b.off{ opacity:.4; cursor:default; }
+.pw-trait-desc{ flex:1 1 100%; font-size:10.5px; line-height:1.6; color:var(--fg-dim); margin-top:3px; }
+
+/* [Ver 14.5] 특성 표시 — 아이콘 왼쪽 위의 작은 노란 육각형 */
+.pw-icwrap{ position:relative; display:inline-block; line-height:0; }
+.pw-trait-hex{
+  position:absolute; left:2px; top:2px; width:10px; height:11px; z-index:2;
+  background:var(--pw-legend,#f0b429);
+  clip-path:polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  filter:drop-shadow(0 0 1.5px rgba(0,0,0,.75));
+}
+.pw-cell .pw-trait-hex{ width:8px; height:9px; left:1px; top:1px; }
+
+/* ⚠ contain 이다. 그림은 정사각인데 칸은 직사각이라 cover 로는 좌우가 잘려 나간다.
+   (배리어의 방패 왼쪽, 핵미사일 로켓 꼬리가 사라지던 자리)
+   원본도 판때기도 흰 바탕이라 남는 여백은 보이지 않는다 — 상태칩(.sc-img)과 같은 처리다. */
 .pw-img{
-  display:block; width:100%; height:100%; object-fit:cover;
+  display:block; width:100%; height:100%; object-fit:contain;
   border-radius:calc(var(--r-xs) - 1px); background:#fff;
   user-select:none; -webkit-user-drag:none;
 }
@@ -2837,6 +2986,37 @@ body.mobile-mode .zone-bots .status-icons{ flex-wrap:nowrap; overflow:hidden; }
 .mine-dig-ov.on .mine-dig-bar > i{ width:100%; }
 
 /* ---------- 우빈이의 수상한 상자 ---------- */
+/* [Ver 14.5] 개봉 연출 — 광산 진행 바를 빌려 쓰던 것을 상자 전용으로 바꿨다.
+   상자가 점점 크게 흔들리다가, 마지막에 빛이 번지며 뚜껑이 열린다. */
+.bx-open{ position:relative; display:flex; flex-direction:column; align-items:center; gap:14px; }
+.bx-open-box{ position:relative; font-size:76px; line-height:1; animation:bxShake 1.6s cubic-bezier(.36,.07,.19,.97) both; }
+.bx-open-lid{ display:block; transform-origin:50% 85%; }
+.bx-open-t{ font-size:13px; font-weight:700; color:#f0e2c0; letter-spacing:.02em; }
+.bx-open-burst{
+  position:absolute; left:50%; top:34px; width:12px; height:12px; margin-left:-6px; border-radius:50%;
+  background:radial-gradient(circle, #ffe9a8 0%, rgba(240,180,74,.75) 45%, rgba(240,180,74,0) 72%);
+  opacity:0; animation:bxBurst 1.6s ease-out both;
+}
+@keyframes bxShake{
+  0%,12%   { transform:rotate(0) scale(1); }
+  20%      { transform:rotate(-7deg) scale(1.03); }
+  30%      { transform:rotate(7deg)  scale(1.03); }
+  42%      { transform:rotate(-10deg) scale(1.06); }
+  54%      { transform:rotate(10deg)  scale(1.06); }
+  66%      { transform:rotate(-13deg) scale(1.1); }
+  78%      { transform:rotate(13deg)  scale(1.1); }
+  88%      { transform:rotate(0) scale(1.18); }
+  100%     { transform:rotate(0) scale(1.05); }
+}
+@keyframes bxBurst{
+  0%,70%   { opacity:0; transform:scale(.2); }
+  86%      { opacity:1; transform:scale(9); }
+  100%     { opacity:0; transform:scale(15); }
+}
+@media (prefers-reduced-motion: reduce){
+  .bx-open-box{ animation:none; }
+  .bx-open-burst{ animation:none; opacity:0; }
+}
 .bx-tbls{ display:flex; flex-direction:column; gap:var(--sp-3); }
 .bx-tbl{ display:flex; flex-direction:column; gap:4px; padding:14px; border-radius:var(--r); background:var(--bg-2); }
 .bx-tbl-h{ font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--fg-faint); margin-bottom:3px; }
@@ -7235,7 +7415,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.4</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.6.2</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -7369,9 +7549,19 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
         <!-- ===== C열 : 키우는 것 (랩터마트24가 맨 위) ===== -->
         <div class="nm-col nm-col-c">
-          <button class="nm-mart" data-art="mart" onclick="openRaptorMart()">
-            <span class="ic">🏪</span><span class="tx">랩터마트24</span>
-          </button>
+          <!-- [Ver 14.5] 랩터마트와 상자를 한 줄에 나란히.
+               상자는 이 게임의 보상 시스템이라 자기 자리가 필요하다.
+               ⚠ #nmBoxKeys 는 renderBoxKeyBadge(14874)가 이미 찾는 id 다 —
+                 열쇠가 충분하면 저절로 .ready 가 붙어 금색이 된다. -->
+          <div class="nm-mart-row">
+            <button class="nm-mart" data-art="mart" onclick="openRaptorMart()">
+              <span class="ic">🏪</span><span class="tx">랩터마트24</span>
+            </button>
+            <button class="nm-mart nm-mart-box" data-art="box" onclick="openBoxScreen()">
+              <span class="ic">🎁</span><span class="tx">상자</span>
+              <span class="nm-mart-keys" id="nmBoxKeys">🔑 0</span>
+            </button>
+          </div>
           <button class="nm-big" data-art="mine" onclick="openMineScreen()">
             <span class="ic">⛏️</span><b>유물</b><small>곡괭이로 캐는 영구 능력</small>
           </button>
@@ -7435,9 +7625,6 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
                 nmNewCardsDot · nmBalanceDot
              ========================================================================== -->
         <!-- [Ver 13.15] '카드 뽑기'를 뺐다 — C열의 <b>카드 진화석 뽑기</b>와 같은 화면이라 중복이었다. -->
-        <button class="nm-drawer-item" onclick="closeMenuDrawer(); openBoxScreen();">
-          <span class="ic">🎁</span><span class="tx"><b>수상한 상자</b><small>열쇠로 여는 무작위 상자</small></span>
-        </button>
         <!-- [Ver 13.15] 리더보드 · 신규 카드 · 밸런스 패치는 서랍 밖(메뉴 D열)으로 나갔다.
              자주 여는 것들이라 두 번 눌러 들어갈 이유가 없었다. -->
         <div class="nm-drawer-sep"></div>
@@ -7480,6 +7667,9 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
           <span class="ic">💎</span><span class="tx"><b>우비나이트 조절</b><small>개발자 전용 · 더하기/빼기/직접 지정</small></span>
         </button>
         <!-- [Ver 13.16] 밴을 걸 때 콘솔에 붙여넣을 문서 ID 를 그대로 보여준다 -->
+        <button class="nm-drawer-item nm-drawer-dev" id="devPwStoneBtn" style="display:none;" onclick="closeMenuDrawer(); openDevPwStone();">
+          <span class="ic">🔷</span><span class="tx"><b>권능석 조절</b><small>개발자 전용 · 더하기/빼기/직접 지정</small></span>
+        </button>
         <button class="nm-drawer-item nm-drawer-dev" id="devBanInfoBtn" style="display:none;" onclick="closeMenuDrawer(); openDevBanInfo();">
           <span class="ic">🚫</span><span class="tx"><b>내 신원 · 밴 정보</b><small>개발자 전용 · admin 문서 ID 확인</small></span>
         </button>
@@ -11235,6 +11425,13 @@ const STORAGE_KEYS = {
   pickaxe: 'gang_card_pickaxe_v1',        // [Ver 9.11] 곡괭이 { n, at } — at은 마지막 충전 시각
   goldPickaxe: 'gang_card_gold_pickaxe_v1', // [Ver 9.16] 개쩌는 곡괭이 (강화 성공분 · 상자 드롭)
   boxKeys: 'gang_card_box_keys_v1',       // [Ver 9.16] 우빈이의 수상한 상자 열쇠
+  /* [Ver 14.5] 랩터의 권능 '특성' — 권능석으로 뽑는다.
+     pwTraits  : 얻은 특성 { traitKey:true }   (영구, 권능 보유와 무관)
+     pwTraitOn : 지금 켜둔 것 { powerKey:traitKey } (자유 전환)
+     pwStones  : 권능석 개수 (수상한 상자에서 2%) */
+  pwTraits:  'gang_card_pw_traits_v1',
+  pwTraitOn: 'gang_card_pw_trait_on_v1',
+  pwStones:  'gang_card_pw_stones_v1',
   gachaTickets: 'gang_card_gacha_tickets_v1', // [Ver 9.11] 카드뽑기 티켓
   mailbox: 'gang_card_mailbox_v1',    // [Ver 9.10.1] 우편함
   redeemed: 'gang_card_redeemed_v1',  // [Ver 9.10.1] 이미 사용한 코드
@@ -15173,38 +15370,82 @@ const POWER_DEFS = [
   { key:'diablo', rarity:'epic', icon:'👹', name:'디아블로', target:'none', cd:121, amt:0, up:{k:'cd',per:5},
     desc:v=>`<b>모든 상대</b>의 가장 높은 등급 카드 <b>3장</b>을 한 단계 아래 카드로 변이시킵니다.`,
     run:(me,t,v)=>{ let n=0;
+      /* 특성 · 보이드 — 장수를 3→2로 줄이는 대신 **두 단계** 아래로, 대상은 최고등급이 아니라 랜덤. */
+      const isVoid = pwIs('void');
+      const cnt = isVoid ? 2 : 3, step = isVoid ? -2 : -1;
       pwEnemies(me).forEach(e=>{
         /* 한 사람당 최대 3장 — 매번 "지금 가장 높은 것"을 다시 찾아 깎아내린다 */
-        for(let k=0;k<3;k++){ const i = pwHandIdxHighest(e); if(i<0) break;
-          const nc = pwCardOfGrade(pwGradeShift(e.hand[i].grade, -1)); if(!nc) break;
+        for(let k=0;k<cnt;k++){ const i = isVoid ? pwHandIdxRandom(e) : pwHandIdxHighest(e); if(i<0) break;
+          const nc = pwCardOfGrade(pwGradeShift(e.hand[i].grade, step)); if(!nc) break;
           e.hand[i] = nc; n++; }
       });
-      pwLog(`👹 디아블로 — 카드 ${n}장이 강등되었습니다.`); } },
+      pwLog(isVoid
+        ? `👹 <b>보이드</b> — 카드 ${n}장이 <b>두 단계</b>씩 무너져 내렸습니다.`
+        : `👹 디아블로 — 카드 ${n}장이 강등되었습니다.`); } },
   { key:'crit', rarity:'epic', icon:'💢', name:'치명상', target:'self', cd:98, amt:0, up:{k:'cd',per:5},
     desc:v=>`다음에 자신이 가하는 공격이 <b>무조건 크리티컬</b>이 됩니다.`,
     run:(me,t,v)=>{ me.pwCritNext = true; pwLog(`💢 ${J(me.name,'의','의')} 다음 공격이 반드시 크리티컬로 꽂힙니다.`); } },
   { key:'reset', rarity:'epic', icon:'🔄', name:'리셋', target:'self', cd:84, amt:0, up:{k:'cd',per:5},
-    desc:v=>`손패를 <b>전부 같은 등급의 다른 카드</b>로 바꿉니다.`,
-    run:(me,t,v)=>{ me.hand = me.hand.map(c=> pwCardOfGrade(c.grade) || c);
+    desc:v=> pwTraitOf('reset')==='factory'
+      ? `손패를 <b>등급까지 무작위</b>인 다른 카드로 전부 바꿉니다. <small>(특성 · 공장초기화)</small>`
+      : `손패를 <b>전부 같은 등급의 다른 카드</b>로 바꿉니다.`,
+    run:(me,t,v)=>{
+      /* 특성 · 공장초기화 — 등급까지 굴린다. 대박도 쪽박도 날 수 있다. */
+      if(pwIs('factory')){
+        me.hand = me.hand.map(c=> pwCardOfGrade(PW_GRADES[Math.floor(Math.random()*PW_GRADES.length)]) || c);
+        pwLog(`🔄 <b>공장초기화</b> — ${J(me.name,'의','의')} 손패가 <b>등급째로</b> 새로 깔렸습니다.`); return;
+      }
+      me.hand = me.hand.map(c=> pwCardOfGrade(c.grade) || c);
       pwLog(`🔄 ${J(me.name,'의','의')} 손패가 전부 새로 깔렸습니다.`); } },
   { key:'seal', rarity:'epic', icon:'🔒', name:'봉인', target:'enemy', cd:84, amt:5, up:{k:'cd',per:5},
-    desc:v=>`지목 대상의 최고 등급 카드를 <b>5바퀴</b>간 사용할 수 없게 만듭니다.`,
-    run:(me,t,v)=>{ const i = pwHandIdxHighest(t); if(i<0) return;
-      t.hand[i].pwSealedUntil = turnCount + 5;
-      pwLog(`🔒 ${J(t.name,'의','의')} "${escapeHtml(t.hand[i].name)}"이(가) 5바퀴간 봉인되었습니다.`); } },
+    desc:v=> pwTraitOf('seal')==='lockdown'
+      ? `지목 대상의 <b>무작위</b> 카드 한 장을 <b>영구히</b> 사용할 수 없게 만듭니다. <small>(특성 · 활성화잠금)</small>`
+      : `지목 대상의 최고 등급 카드를 <b>5바퀴</b>간 사용할 수 없게 만듭니다.`,
+    run:(me,t,v)=>{
+      /* 특성 · 활성화잠금 — 영구히 잠그는 대신 어느 카드가 걸릴지는 운이다. */
+      const lock = pwIs('lockdown');
+      const i = lock ? pwHandIdxRandom(t) : pwHandIdxHighest(t); if(i<0) return;
+      t.hand[i].pwSealedUntil = lock ? Number.MAX_SAFE_INTEGER : (turnCount + 5);
+      pwLog(lock
+        ? `🔒 <b>활성화잠금</b> — ${J(t.name,'의','의')} "${escapeHtml(t.hand[i].name)}"이(가) <b>영구히</b> 봉인되었습니다.`
+        : `🔒 ${J(t.name,'의','의')} "${escapeHtml(t.hand[i].name)}"이(가) 5바퀴간 봉인되었습니다.`); } },
   { key:'nourish', rarity:'epic', icon:'🌱', name:'양분', target:'self', cd:70, amt:0, up:{k:'cd',per:5},
-    desc:v=>`손패의 카드 한 장의 등급을 <b>한 단계</b> 올립니다.`,
+    desc:v=> pwTraitOf('nourish')==='gmo'
+      ? `손패의 카드 한 장의 등급을 <b>두 단계</b> 올립니다. 다만 <b>다음 자기 턴에 쓰지 않으면</b> 원래대로 돌아옵니다. <small>(특성 · GMO)</small>`
+      : `손패의 카드 한 장의 등급을 <b>한 단계</b> 올립니다.`,
     run:(me,t,v)=>{ const i = pwHandIdxRandom(me); if(i<0) return;
-      const nc = pwCardOfGrade(pwGradeShift(me.hand[i].grade, 1)); if(!nc) return;
-      pwLog(`🌱 "${escapeHtml(me.hand[i].name)}"이(가) <b>${escapeHtml(nc.name)}</b>(으)로 자랐습니다.`);
+      /* 특성 · GMO — 두 단계를 올리는 대신 시한부다. 원본을 카드에 달아두고
+         다음 자기 턴 시작에 tickGmoRevert() 가 되돌린다. */
+      const gmo = pwIs('gmo');
+      const nc = pwCardOfGrade(pwGradeShift(me.hand[i].grade, gmo ? 2 : 1)); if(!nc) return;
+      if(gmo){
+        nc.__gmoUndo = me.hand[i];
+        nc.__gmoDue  = (typeof totalIndividualTurns==='number' ? totalIndividualTurns : 0) + (players ? players.length : 4);
+        pwLog(`🧬 <b>GMO</b> — "${escapeHtml(me.hand[i].name)}"이(가) <b>${escapeHtml(nc.name)}</b>(으)로 급성장했습니다. <small>다음 턴까지 쓰지 않으면 되돌아갑니다.</small>`);
+      } else {
+        pwLog(`🌱 "${escapeHtml(me.hand[i].name)}"이(가) <b>${escapeHtml(nc.name)}</b>(으)로 자랐습니다.`);
+      }
       me.hand[i] = nc; } },
   /* [Ver 13.4] 쿨 77 → 40. 카드 한 장 얻자고 77초를 비워두느니 다른 걸 끼는 게 나았다.
      ⚠ 강화폭은 0.5초다. 기본 쿨을 40으로 내린 마당에 per를 크게 두면 고레벨에서
        pwCd의 하한(0.5초)에 닿아 레벨 차이가 사라지고 무한 카드 생성기가 된다.
        지금은 Lv1 40초 → Lv10 35.5초. 강화는 "조금 빨라지는" 정도로만 둔다. */
   { key:'summon', rarity:'epic', icon:'🌀', name:'소환', target:'self', cd:40, amt:0, up:{k:'cd',per:0.5},
-    desc:v=>`무작위 카드 <b>한 장</b>을 얻습니다.`,
-    run:(me,t,v)=>{ const c = drawCard(me); if(c){ grantCardToPlayer(me, c, '권능 소환'); pwLog(`🌀 ${J(me.name,'이','가')} 카드 한 장을 소환했습니다.`); } } },
+    desc:v=> pwTraitOf('summon')==='ritual'
+      ? `<b>A등급 이상</b>의 카드 한 장을 얻습니다. <small>(특성 · 신성한 의식 — 쿨타임 2배)</small>`
+      : `무작위 카드 <b>한 장</b>을 얻습니다.`,
+    run:(me,t,v)=>{
+      /* 특성 · 신성한 의식 — 등급을 A 이상으로 고정한다. 쿨 2배는 pwCd 가 처리한다. */
+      if(pwIs('ritual')){
+        const hi = PW_GRADES.slice(PW_GRADES.indexOf('A'));   // A · S · SR · SSR · UR · LR
+        for(let k=0;k<24;k++){
+          const g = hi[Math.floor(Math.random()*hi.length)];
+          const c = pwCardOfGrade(g);
+          if(c){ grantCardToPlayer(me, c, '권능 소환'); pwLog(`🌀 <b>신성한 의식</b> — ${J(me.name,'이','가')} [${g}] 카드를 소환했습니다.`); return; }
+        }
+        pwLog(`🌀 소환할 A등급 이상 카드를 찾지 못했습니다.`); return;
+      }
+      const c = drawCard(me); if(c){ grantCardToPlayer(me, c, '권능 소환'); pwLog(`🌀 ${J(me.name,'이','가')} 카드 한 장을 소환했습니다.`); } } },
   { key:'recall', rarity:'epic', icon:'↩️', name:'리콜', target:'self', cd:84, amt:0, up:{k:'cd',per:5},
     desc:v=>`지금까지 자신이 낸 카드 중 <b>한 장</b>을 되돌려 받습니다.`,
     run:(me,t,v)=>{ const mine = (typeof playedCardHistory!=='undefined' && Array.isArray(playedCardHistory))
@@ -15217,34 +15458,86 @@ const POWER_DEFS = [
   { key:'crush', rarity:'epic', icon:'🔨', name:'분쇄', target:'self', cd:135, amt:0, up:{k:'cd',per:2},
     desc:v=>`자신의 카드 한 장을 부수고 그 <b>구매가의 1.5배</b>만큼 골드를 얻습니다.`,
     run:(me,t,v)=>{ const i = pwHandIdxRandom(me); if(i<0) return;
-      const c = me.hand[i]; const g = Math.floor(pwCardWorth(c, me) * 1.5);
+      const c = me.hand[i];
+      /* 특성 · 부품용 — 배수는 0.8로 낮지만 **절반은 카드가 남는다.** */
+      if(pwIs('parts')){
+        const g2 = Math.floor(pwCardWorth(c, me) * 0.8);
+        const keep = Math.random() < 0.5;
+        if(!keep) me.hand.splice(i,1);
+        grantGold(me, g2);
+        pwLog(`🔨 <b>부품용</b> — "${escapeHtml(c.name)}"에서 ${fmtWon(g2)}${Jp(fmtWon(g2),'을','를')} 뽑았습니다.${keep?' <b>카드는 남았습니다!</b>':''}`);
+        return;
+      }
+      const g = Math.floor(pwCardWorth(c, me) * 1.5);
       me.hand.splice(i,1); grantGold(me, g);
       pwLog(`🔨 "${escapeHtml(c.name)}"을(를) 분쇄해 ${fmtWon(g)}을(를) 얻었습니다.`); } },
   { key:'landmine', rarity:'epic', icon:'💣', name:'지뢰', target:'enemy', cd:112, amt:600, up:{k:'cd',per:5},
     desc:v=>`지목 대상에게 지뢰를 심습니다. 그 사람이 <b>상점에 들어가면 600 피해</b>를 입고 지뢰는 사라집니다.`,
-    run:(me,t,v)=>{ t.pwMine = { by: me.id, dmg: 600 }; pwLog(`💣 ${J(t.name,'에게','에게')} 지뢰가 심어졌습니다. (상점 입장 시 폭발)`); } },
+    run:(me,t,v)=>{
+      /* 특성 · 클레이모어 — 사람이 아니라 **상점**에 심는다. 누가 밟을지는 아무도 모른다. */
+      if(pwIs('claymore')){
+        pwShopMine = { by: me.id, dmg: 800 };
+        pwLog(`💣 <b>클레이모어</b> — 상점 문턱에 지뢰가 깔렸습니다. <b>가장 먼저 들어가는 사람</b>이 800 피해를 입습니다. <small>자신일 수도 있습니다.</small>`);
+        return;
+      }
+      t.pwMine = { by: me.id, dmg: 600 }; pwLog(`💣 ${J(t.name,'에게','에게')} 지뢰가 심어졌습니다. (상점 입장 시 폭발)`); } },
   { key:'antigrav', rarity:'epic', icon:'🌌', name:'반중력', target:'enemy', cd:105, amt:0, up:{k:'cd',per:5},
     desc:v=>`지목 대상의 최고 등급 카드를 <b>두 단계 아래 카드 2장</b>으로 쪼갭니다.`,
-    run:(me,t,v)=>{ const i = pwHandIdxHighest(t); if(i<0) return;
-      const gone = t.hand[i]; const g = pwGradeShift(gone.grade, -2);
+    run:(me,t,v)=>{
+      /* 특성 · 중력파 — 세 단계 아래 3장. 대신 최고등급이 아니라 무작위 카드가 걸린다. */
+      const gw = pwIs('gwave');
+      const i = gw ? pwHandIdxRandom(t) : pwHandIdxHighest(t); if(i<0) return;
+      const gone = t.hand[i]; const g = pwGradeShift(gone.grade, gw ? -3 : -2);
       t.hand.splice(i,1);
-      for(let k=0;k<2;k++){ const c = pwCardOfGrade(g); if(c) t.hand.push(c); }
-      pwLog(`🌌 ${J(t.name,'의','의')} "${escapeHtml(gone.name)}"이(가) ${g}등급 2장으로 쪼개졌습니다.`); } },
+      const cnt = gw ? 3 : 2;
+      for(let k=0;k<cnt;k++){ const c = pwCardOfGrade(g); if(c) t.hand.push(c); }
+      pwLog(`🌌 ${gw?'<b>중력파</b> — ':''}${J(t.name,'의','의')} "${escapeHtml(gone.name)}"이(가) ${g}등급 ${cnt}장으로 쪼개졌습니다.`); } },
   { key:'attune', rarity:'epic', icon:'🎚️', name:'조율', target:'self', cd:91, amt:0, up:{k:'cd',per:5},
     desc:v=>`자신의 최고 등급 카드를 <b>같은 등급의 다른 카드</b>로 바꿉니다.`,
-    run:(me,t,v)=>{ const i = pwHandIdxHighest(me); if(i<0) return;
+    run:(me,t,v)=>{
+      /* 특성 · 마에스트로 — 가장 약한 카드를 손패 최고 등급까지 끌어올린다. */
+      if(pwIs('maestro')){
+        if(!me.hand || me.hand.length < 2){ pwLog(`🎚️ 조율할 카드가 모자랍니다.`); return; }
+        let lo = 0, hi = 0;
+        me.hand.forEach((c,idx)=>{
+          if(gradeRankOf(c.grade) < gradeRankOf(me.hand[lo].grade)) lo = idx;
+          if(gradeRankOf(c.grade) > gradeRankOf(me.hand[hi].grade)) hi = idx;
+        });
+        if(lo === hi){ pwLog(`🎚️ 손패 등급이 전부 같아 조율할 것이 없습니다.`); return; }
+        const target = me.hand[hi].grade;
+        const nc2 = pwCardOfGrade(target); if(!nc2) return;
+        pwLog(`🎚️ <b>마에스트로</b> — "${escapeHtml(me.hand[lo].name)}" [${me.hand[lo].grade}] → <b>${escapeHtml(nc2.name)}</b> [${target}]`);
+        me.hand[lo] = nc2; return;
+      }
+      const i = pwHandIdxHighest(me); if(i<0) return;
       const nc = pwCardOfGrade(me.hand[i].grade); if(!nc) return;
       pwLog(`🎚️ "${escapeHtml(me.hand[i].name)}" → <b>${escapeHtml(nc.name)}</b>`);
       me.hand[i] = nc; } },
   { key:'filch', rarity:'epic', icon:'🖐️', name:'도벽', target:'enemy', cd:30, amt:0, up:{k:'cd',per:2},
     desc:v=>`지목 대상의 카드 <b>한 장</b>을 훔쳐 옵니다.`,
-    run:(me,t,v)=>{ const i = pwHandIdxRandom(t); if(i<0){ pwLog(`🖐️ 훔칠 카드가 없습니다.`); return; }
-      const c = t.hand.splice(i,1)[0];
-      grantCardToPlayer(me, c, '권능 도벽');
-      pwLog(`🖐️ ${J(me.name,'이','가')} ${J(t.name,'의','의')} "${escapeHtml(c.name)}"을(를) 훔쳤습니다.`); } },
+    run:(me,t,v)=>{
+      /* 특성 · 나쁜손 — 두 장. 쿨 2배는 pwCd 가 처리한다. */
+      const times = pwIs('badhand') ? 2 : 1;
+      const sell  = pwIs('reseller');
+      let did = 0;
+      for(let k=0;k<times;k++){
+        const i = pwHandIdxRandom(t); if(i<0) break;
+        const c = t.hand.splice(i,1)[0];
+        if(sell){
+          /* 특성 · 리셀러 — 손패에 넣지 않고 곧바로 판다. 손패가 안 늘어나는 대신 현금이 된다. */
+          const g = Math.floor(pwCardWorth(c, me) * 1.2);
+          grantGold(me, g);
+          pwLog(`🖐️ <b>리셀러</b> — ${J(t.name,'의','의')} "${escapeHtml(c.name)}"을(를) 훔쳐 ${fmtWon(g)}에 팔았습니다.`);
+        } else {
+          grantCardToPlayer(me, c, '권능 도벽');
+          pwLog(`🖐️ ${J(me.name,'이','가')} ${J(t.name,'의','의')} "${escapeHtml(c.name)}"을(를) 훔쳤습니다.`);
+        }
+        did++;
+      }
+      if(!did) pwLog(`🖐️ 훔칠 카드가 없습니다.`); } },
   { key:'bolt', rarity:'epic', icon:'⚡', name:'번개', target:'enemy', cd:84, amt:200, up:{k:'amt',per:10},
     desc:v=>`지목 대상에게 <b>${v}</b> 피해. <b>50%</b> 확률로 0.5초 뒤 <b>무작위 대상</b>에게 피해가 <b>+30</b> 되어 다시 떨어집니다. (연쇄, 자신 제외)`,
-    run:(me,t,v)=>{ pwBoltChain(me, t, v); } },
+    run:(me,t,v)=>{ const rod = pwIs('rod'); pwBoltChain(me, t, rod ? (v + 100) : v, rod); } },
   /* [Ver 13.6] %가 아니라 **고정 수치**다. atkMultiplier(퍼센트 증감)가 아니라
      permaAtkFlat(최종 피해에 그대로 더해지는 값)에 쌓는다 — 사디스트·마조히스트와 같은 통이라
      상태칩("영구 공격력 +N")과 기록 패널에도 함께 잡힌다.
@@ -15254,6 +15547,15 @@ const POWER_DEFS = [
     run:(me,t,v)=>{ const eaten = [];
       for(let k=0;k<3;k++){ const i = pwHandIdxRandom(me); if(i<0) break; eaten.push(me.hand.splice(i,1)[0].name); }
       if(!eaten.length){ pwLog(`🍖 먹어치울 카드가 없습니다.`); return; }
+      /* 특성 · 굶주림 — +250 으로 크게 오르는 대신 2바퀴짜리다.
+         ⚠ 되돌릴 양을 따로 기억해 둔다. permaAtkFlat 은 다른 카드도 쓰는 통이라
+           만료 때 그냥 0으로 밀면 남의 것까지 지워진다. */
+      if(pwIs('hunger')){
+        me.permaAtkFlat = (me.permaAtkFlat||0) + 250;
+        me.pwHunger = { amt:250, dueRound: turnCount + 2 };
+        pwLog(`🍖 <b>굶주림</b> — 카드 ${eaten.length}장을 삼켜 공격력이 <b>+250</b>. <small>2바퀴 뒤 사라집니다.</small>`);
+        return;
+      }
       me.permaAtkFlat = (me.permaAtkFlat||0) + v;
       pwLog(`🍖 카드 ${eaten.length}장을 삼켜 공격력이 <b>+${v}</b> 올랐습니다. (누적 +${me.permaAtkFlat}) (${eaten.map(escapeHtml).join(' · ')})`); } },
 
@@ -15264,20 +15566,75 @@ const POWER_DEFS = [
   { key:'barrier', rarity:'legend', icon:'🛡️', name:'배리어', target:'self', cd:98, amt:300, up:{k:'cd',per:5},
     desc:v=>`즉시 쉴드 <b>300</b>을 얻습니다.`,
     run:(me,t,v)=>{ pwShield(me, 300); pwLog(`🛡️ ${J(me.name,'이','가')} 쉴드 300을 둘렀습니다.`); } },
+  /* ⚠ 특성 '자동화'는 직접 발동을 막고(usePower) 피격 직전에 대신 터진다(applyDamageToPlayer). */
   { key:'nuke', rarity:'legend', icon:'☢️', name:'핵미사일', target:'none', cd:168, amt:99999, up:{k:'cd',per:8},
     desc:v=>`<b>7%</b> 확률로 모두에게 <b>99,999</b> 피해를 입힙니다. <b>(쉴드 관통 · 전체 공격)</b>`,
-    run:(me,t,v)=>{ if(Math.random()*100 >= 7){ pwLog(`☢️ 핵미사일이 불발되었습니다.`); return; }
-      pwLog(`☢️ <b>핵미사일 발사!</b>`);
-      pwEnemies(me).forEach(e=> dealDamage(me, e, 99999, 'PIERCE', true)); } },
+    run:(me,t,v)=>{
+      /* 특성 · 소형화 — 확률 3배(7%→21%), 피해는 1000. 한 방 로또에서 꾸준한 압박으로 성격이 바뀐다. */
+      const mini = pwIs('mini');
+      const rate = mini ? 21 : 7, dmg = mini ? 1000 : 99999;
+      if(Math.random()*100 >= rate){ pwLog(`☢️ 핵미사일이 불발되었습니다.`); return; }
+      pwLog(mini ? `☢️ <b>소형 핵 발사!</b>` : `☢️ <b>핵미사일 발사!</b>`);
+      pwEnemies(me).forEach(e=> dealDamage(me, e, dmg, 'PIERCE', true)); } },
   /* [Ver 13.6 너프] 즉시 → **2바퀴 뒤**. 그 사이에 카드를 쓰거나 넘길 시간을 준다.
      예고가 상태칩으로 보이므로 대상은 대비할 수 있다. */
-  { key:'seize', rarity:'legend', icon:'📉', name:'압류', target:'enemy', cd:175, amt:2, up:{k:'cd',per:5},
-    desc:v=>`지목 대상의 손패를 <b>2바퀴 뒤에</b> 전부 없앱니다. (예고가 상대에게 보입니다)`,
-    run:(me,t,v)=>{ t.pwSeize = { by: me.id, dueRound: turnCount + 2 };
-      pwLog(`📉 ${J(t.name,'의','의')} 손패에 압류가 예고되었습니다. <b>2바퀴 뒤</b> 전부 사라집니다.`); } },
+  /* [Ver 14.5 리워크] 지목 → **랜덤 딱지 3장**.
+     ⚠ target 은 'enemy' 그대로 둔다. 지목한 사람이 아니라 무작위로 붙지만,
+       지목 UI 를 없애면 "누구를 노리는 척"하는 심리전이 사라진다. */
+  { key:'seize', rarity:'legend', icon:'📉', name:'압류', target:'enemy', cd:175, amt:3, up:{k:'cd',per:5},
+    desc:v=>{
+      const tr = pwTraitOf('seize');
+      if(tr === 'legacy')    return `지목 대상의 손패를 <b>3바퀴 뒤에</b> 전부 없앱니다. 딱지를 쓰지 않습니다. <small>(특성 · 레거시)</small>`;
+      if(tr === 'loanshark') return `<b>무작위 상대</b>에게 압류딱지를 1장 붙입니다. <b>3장</b>이 모이면 그 사람의 골드 <b>${SEIZE_BURN_GOLD}</b>이 <b>사라집니다.</b> <small>(특성 · 사채업 — 마이너스까지 내려갑니다)</small>`;
+      return `<b>무작위 상대</b>에게 압류딱지를 1장 붙입니다. <b>3장</b>이 모이면 그 사람의 손패가 즉시 사라집니다.<br>
+      <small>딱지는 <b>이미 탈락한 사람에게도</b> 붙습니다 — 헛되이 날아갈 수 있습니다.</small>`; },
+    run:(me,t,v)=>{
+      /* [Ver 14.7] 특성 · 레거시 — **딱지를 아예 쓰지 않는다.** 리워크 전 압류 그대로,
+         지목한 상대에게 곧바로 예고한다. 실제 소멸은 pwRoundTick 의 기존 처리가 맡는다.
+         ⚠ 그래서 딱지를 붙이는 코드보다 앞에서 갈라진다. */
+      if(pwIs('legacy')){
+        if(!t){ pwLog(`📉 압류할 대상이 없습니다.`); return; }
+        t.pwSeize = { by: me.id, dueRound: turnCount + SEIZE_LEGACY_ROUNDS };
+        pwLog(`📉 <b>레거시</b> — ${J(t.name,'의','의')} 손패에 압류가 예고되었습니다. <b>${SEIZE_LEGACY_ROUNDS}바퀴 뒤</b> 전부 사라집니다.`);
+        return;
+      }
+      /* ⚠ alive 를 거르지 않는다. 사망자에게도 붙는 것이 의도된 약점이다(사용자 지정). */
+      const pool = (players||[]).filter(p=> p && p.id !== me.id);
+      if(!pool.length){ pwLog(`📉 압류딱지를 붙일 상대가 없습니다.`); return; }
+      const vic = pool[Math.floor(Math.random()*pool.length)];
+      vic.seizeMarks = (vic.seizeMarks||0) + 1;
+      if(vic.seizeMarks < 3){
+        pwLog(`📉 ${J(vic.name,'에게','에게')} 압류딱지가 붙었습니다. <b>${vic.seizeMarks}/3</b>${vic.alive?'':' <small>(이미 탈락한 상대 — 헛되이 날아갔습니다)</small>'}`);
+        return;
+      }
+      vic.seizeMarks = 0;                       // [사용자 지정] 3장에서 터지고 0으로 초기화
+      /* [Ver 14.7] 특성 · 사채업 — 뜯어가는 게 아니라 **태워 없앤다.**
+         ⚠ 0 에서 멈추지 않는다. 빈털터리를 더 깊은 빚으로 밀어 넣을 수 있어야 한다(사용자 지정).
+           받아 가는 사람이 없으므로 grantGold 를 쓰지 않고 직접 뺀다. */
+      if(pwIs('loanshark')){
+        const before = vic.gold || 0;
+        vic.gold = before - SEIZE_BURN_GOLD;
+        pwLog(`📉 <b>사채업</b> — ${J(vic.name,'의','의')} 골드 <b>${SEIZE_BURN_GOLD.toLocaleString()}</b>이 재가 되어 사라졌습니다. `
+            + `<small>${before.toLocaleString()} → ${vic.gold.toLocaleString()}${vic.gold < 0 ? ' <b>(빚)</b>' : ''}</small>`);
+        return;
+      }
+      const n = (vic.hand||[]).length;
+      vic.hand = [];
+      pwLog(`📉 압류딱지 3장 — ${J(vic.name,'의','의')} 손패 ${n}장이 <b>즉시</b> 전부 사라졌습니다!`);
+    } },
   { key:'joker', rarity:'legend', icon:'🃏', name:'조커', target:'self', cd:154, amt:0, up:{k:'cd',per:5},
     desc:v=>`손패의 <b>최고 등급 카드</b>를 복제합니다.`,
-    run:(me,t,v)=>{ const i = pwHandIdxHighest(me); if(i<0) return;
+    run:(me,t,v)=>{
+      /* 특성 · 전이 — 복제가 아니라 손패 전체를 랜덤 카드 하나로 덮는다. 도박이다. */
+      if(pwIs('transfer')){
+        const j = pwHandIdxRandom(me); if(j<0) return;
+        const src = me.hand[j];
+        const n = me.hand.length;
+        me.hand = me.hand.map(()=> Object.assign({}, src, { uid:'u'+Date.now().toString(36)+Math.random().toString(36).slice(2,8) }));
+        pwLog(`🃏 <b>전이</b> — 손패 ${n}장이 전부 "<b>${escapeHtml(src.name)}</b>"이(가) 되었습니다.`);
+        return;
+      }
+      const i = pwHandIdxHighest(me); if(i<0) return;
       const c = me.hand[i];
       me.hand.push(Object.assign({}, c, { uid:'u'+Date.now().toString(36)+Math.random().toString(36).slice(2,8) }));
       pwLog(`🃏 "${escapeHtml(c.name)}"이(가) 복제되었습니다.`); } },
@@ -15293,32 +15650,87 @@ const POWER_DEFS = [
   /* [Ver 13.6] 전설 → **영웅** 하향. 4바퀴 확률 무력화는 전설 칸에서 존재감이 옅었다.
      ⚠ 등급이 내려가면 강화 비용이 1·2·3… → 2·4·6… 으로 비싸지고, 재단에서 더 자주 나온다. */
   { key:'emp', rarity:'epic', icon:'📡', name:'EMP', target:'enemy', cd:140, amt:25, up:{k:'amt',per:2},
-    desc:v=>`지목 대상에게 <b>4바퀴</b>간 EMP. 그 사람의 공격이 <b>${v}%</b> 확률로 ATK 0이 됩니다.`,
-    run:(me,t,v)=>{ t.pwEmp = { pct:v, dueRound: turnCount + 4 };
-      pwLog(`📡 ${J(t.name,'이','가')} 4바퀴 동안 EMP에 걸렸습니다. (공격 ${v}% 확률로 무력화)`); } },
+    desc:v=> pwTraitOf('emp')==='ddos'
+      ? `지목 대상에게 <b>2바퀴</b>간 EMP. 그 사람의 공격이 <b>${v}%</b> 확률로 <b>자기 자신에게</b> 꽂힙니다. <small>(특성 · 디도스)</small>`
+      : `지목 대상에게 <b>4바퀴</b>간 EMP. 그 사람의 공격이 <b>${v}%</b> 확률로 ATK 0이 됩니다.`,
+    run:(me,t,v)=>{
+      /* 특성 · 디도스 — 지속이 절반이 되는 대신, 무력화가 아니라 **반사**가 된다. */
+      const dd = pwIs('ddos');
+      t.pwEmp = { pct:v, dueRound: turnCount + (dd ? 2 : 4), ddos: dd };
+      pwLog(dd
+        ? `📡 <b>디도스</b> — ${J(t.name,'이','가')} 2바퀴 동안 감염되었습니다. (공격 ${v}% 확률로 <b>자신에게</b> 꽂힘)`
+        : `📡 ${J(t.name,'이','가')} 4바퀴 동안 EMP에 걸렸습니다. (공격 ${v}% 확률로 무력화)`); } },
   { key:'hack', rarity:'legend', icon:'💻', name:'해킹', target:'enemy', cd:40, amt:0, up:{k:'cd',per:1},
     desc:v=>`지목 대상의 <b>공격 카드 한 장</b>을 해킹합니다. 그 카드는 공격 대신 <b>피격 대상을 회복</b>시킵니다.`,
     run:(me,t,v)=>{ const atkIdx = (t.hand||[]).map((c,i)=>({c,i})).filter(x=> (x.c.power||0) > 0);
       if(!atkIdx.length){ pwLog(`💻 해킹할 공격 카드가 없습니다.`); return; }
+      /* 특성 · 말웨어 — 한 장이 아니라 **전부**. 대신 1바퀴 뒤 원래대로 돌아온다. */
+      if(pwIs('malware')){
+        const due = turnCount + 1;
+        atkIdx.forEach(x=>{ x.c.pwHacked = true; x.c.pwHackedUntil = due; });
+        pwLog(`💻 <b>말웨어</b> — ${J(t.name,'의','의')} 공격 카드 <b>${atkIdx.length}장</b>이 전부 감염되었습니다. <small>1바퀴 뒤 복구</small>`);
+        return;
+      }
       const pick = atkIdx[Math.floor(Math.random()*atkIdx.length)];
       pick.c.pwHacked = true;
       pwLog(`💻 ${J(t.name,'의','의')} "${escapeHtml(pick.c.name)}"이(가) 해킹당했습니다.`); } },
   { key:'blizzard', rarity:'legend', icon:'❄️', name:'눈보라', target:'none', cd:70, amt:1, up:{k:'cd',per:5},
-    desc:v=>`<b>모두</b>를 1바퀴 스턴시킵니다.`,
-    run:(me,t,v)=>{ pwEnemies(me).forEach(e=> pwStun(e, 1, '눈보라'));
+    desc:v=> pwTraitOf('blizzard')==='polar'
+      ? `<b>5바퀴</b> 동안 빙결지대를 만듭니다. 카드를 낼 때 <b>25%</b>로 1바퀴 스턴 — <b>자신은 예외</b>입니다. <small>(특성 · 극지방)</small>`
+      : `<b>모두</b>를 1바퀴 스턴시킵니다.`,
+    run:(me,t,v)=>{
+      /* 특성 · 극지방 — 한 번 얼리는 대신 5바퀴 동안 판을 얼려둔다. */
+      if(pwIs('polar')){
+        pwFrostZone = { by: me.id, until: turnCount + 5 };
+        pwLog(`❄️ <b>극지방</b> — <b>5바퀴</b> 동안 빙결지대가 깔렸습니다. 카드를 낼 때 25%로 얼어붙습니다. <small>(${escapeHtml(me.name)} 제외)</small>`);
+        return;
+      }
+      pwEnemies(me).forEach(e=> pwStun(e, 1, '눈보라'));
       pwLog(`❄️ 눈보라가 몰아쳐 모두가 1바퀴 얼어붙었습니다.`); } },
   { key:'assassin', rarity:'legend', icon:'🔪', name:'암살', target:'enemy', cd:28, amt:0, up:{k:'cd',per:0.5},
-    desc:v=>`지목 대상의 카드 한 장을 <b>한 단계 아래</b> 카드로 변이시킵니다.`,
-    run:(me,t,v)=>{ const i = pwHandIdxRandom(t); if(i<0) return;
+    desc:v=>{ const tr = pwTraitOf('assassin');
+      if(tr === 'elite')  return `지목 대상의 카드 한 장을 <b>없애버립니다.</b> <small>(특성 · ELITE — 쿨타임 2배)</small>`;
+      if(tr === 'hire')   return `내 손패에서 카드를 고르면, 상대의 <b>같은 자리</b> 카드가 한 단계 아래로 떨어집니다. <small>(특성 · 청부)</small>`;
+      return `지목 대상의 카드 한 장을 <b>한 단계 아래</b> 카드로 변이시킵니다.`; },
+    run:(me,t,v)=>{
+      /* 특성 · 청부 — 내가 고른 자리와 **같은 번호**의 카드를 노린다.
+         사람은 usePower 에서 미리 고르고(__pwHireIdx), 봇·원격은 무작위다. */
+      let i;
+      if(pwIs('hire')){
+        const want = (typeof me.__pwHireIdx === 'number') ? me.__pwHireIdx : -1;
+        me.__pwHireIdx = null;
+        if(!t.hand || !t.hand.length){ pwLog(`🔪 상대 손패가 비어 있습니다.`); return; }
+        i = (want >= 0 && want < t.hand.length) ? want : pwHandIdxRandom(t);
+        if(i < 0) return;
+        if(want >= 0 && want >= t.hand.length) pwLog(`🔪 <b>청부</b> — ${want+1}번 자리가 비어 무작위로 대신 노립니다.`);
+      } else {
+        i = pwHandIdxRandom(t); if(i<0) return;
+      }
+      /* 특성 · ELITE — 강등이 아니라 소멸이다. */
+      if(pwIs('elite')){
+        const gone = t.hand.splice(i,1)[0];
+        pwLog(`🔪 <b>ELITE</b> — ${J(t.name,'의','의')} "${escapeHtml(gone.name)}"이(가) <b>소멸했습니다.</b>`);
+        return;
+      }
       const nc = pwCardOfGrade(pwGradeShift(t.hand[i].grade, -1)); if(!nc) return;
-      pwLog(`🔪 ${J(t.name,'의','의')} "${escapeHtml(t.hand[i].name)}"이(가) 강등되었습니다.`);
+      pwLog(`🔪 ${pwIs('hire')?`<b>청부</b> — ${i+1}번 자리 `:''}${J(t.name,'의','의')} "${escapeHtml(t.hand[i].name)}"이(가) 강등되었습니다.`);
       t.hand[i] = nc; } },
   /* [Ver 13.6 너프] 300% → 150%.
      ⚠ 예전엔 run 이 amt(v)를 안 쓰고 300 을 박아 써서, **강화해도 아무 변화가 없었다.**
        이제 v 를 그대로 쓴다(설명과 실제가 같아진다). */
   { key:'snipe', rarity:'legend', icon:'🎯', name:'저격', target:'enemy', cd:210, amt:150, up:{k:'amt',per:10},
-    desc:v=>`<b>5바퀴 뒤</b>부터 자신의 공격 카드가 그 대상에게 <b>${v}% 추가 피해</b>를 줍니다.`,
-    run:(me,t,v)=>{ me.pwSnipe = { targetId: t.id, fromRound: turnCount + 5, pct: v };
+    desc:v=> pwTraitOf('snipe')==='sniper'
+      ? `<b>3바퀴 뒤</b> 대상에게 <b>1,500 쉴드관통</b> 피해가 떨어집니다. 대상이 <b>E등급</b> 카드를 내면 풀립니다. <small>(특성 · 스나이퍼 — 쿨타임 절반)</small>`
+      : `<b>5바퀴 뒤</b>부터 자신의 공격 카드가 그 대상에게 <b>${v}% 추가 피해</b>를 줍니다.`,
+    run:(me,t,v)=>{
+      /* 특성 · 스나이퍼 — 상시 배수가 아니라 **예약된 한 방**. 대상은 E등급을 내서 풀 수 있다. */
+      if(pwIs('sniper')){
+        if(t.pwSniped){ pwLog(`🎯 ${J(t.name,'은','는')} 이미 조준당하고 있습니다.`); return; }
+        t.pwSniped = { by: me.id, dueRound: turnCount + 3, dmg: 1500 };
+        pwLog(`🎯 <b>스나이퍼</b> — ${J(t.name,'이','가')} 조준되었습니다. <b>3바퀴 뒤 1,500 관통</b>. <small>E등급 카드를 내면 풀립니다.</small>`);
+        return;
+      }
+      me.pwSnipe = { targetId: t.id, fromRound: turnCount + 5, pct: v };
       pwLog(`🎯 ${J(me.name,'이','가')} ${J(t.name,'을','를')} 조준했습니다. (5바퀴 뒤부터 +${v}%)`); } },
   { key:'warp', rarity:'legend', icon:'🧬', name:'변이', target:'enemy', cd:65, amt:3, up:{k:'cd',per:2},
     desc:v=>`지목 대상의 카드 <b>3장</b>을 무작위 카드로 바꿉니다.`,
@@ -15328,31 +15740,79 @@ const POWER_DEFS = [
       pwLog(`🧬 ${J(t.name,'의','의')} 카드 ${n}장이 무작위로 변이했습니다.`); } },
   { key:'silence', rarity:'legend', icon:'🤐', name:'침묵', target:'enemy', cd:189, amt:0, up:{k:'cd',per:5},
     desc:v=>`지목 대상의 권능 하나를 <b>영구히</b> 못 쓰게 만듭니다.`,
-    run:(me,t,v)=>{ const live = (t.pwSlots||[]).map((s,i)=>({s,i})).filter(x=> x.s && !x.s.dead);
+    desc:v=> pwTraitOf('silence')==='period'
+      ? `지목 대상의 권능 하나를 <b>30초</b>간 못 쓰게 만듭니다. <small>(특성 · 기간제 — 쿨타임 1/4)</small>`
+      : `지목 대상의 권능 하나를 <b>영구히</b> 못 쓰게 만듭니다.`,
+    run:(me,t,v)=>{ const live = (t.pwSlots||[]).map((s,i)=>({s,i})).filter(x=> x.s && !pwSlotSilenced(x.s));
       if(!live.length){ pwLog(`🤐 침묵시킬 권능이 없습니다.`); return; }
       const pick = live[Math.floor(Math.random()*live.length)];
+      /* 특성 · 기간제 — 영구가 아니라 30초. 대신 쿨이 1/4 이라 계속 걸 수 있다. */
+      if(pwIs('period')){
+        pick.s.deadUntil = Date.now() + 30000;
+        pwLog(`🤐 <b>기간제</b> — ${J(t.name,'의','의')} 권능 <b>${escapeHtml(powerDefOf(pick.s.key)?.name || '?')}</b>이(가) <b>30초</b>간 침묵합니다.`);
+        return;
+      }
       pick.s.dead = true;
       pwLog(`🤐 ${J(t.name,'의','의')} 권능 <b>${escapeHtml(powerDefOf(pick.s.key)?.name || '?')}</b>이(가) 영구히 침묵했습니다.`); } },
   { key:'magic', rarity:'legend', icon:'🎩', name:'매직', target:'enemy', cd:196, amt:0, up:{k:'cd',per:5},
     desc:v=>`지목 대상과 <b>손패를 통째로 맞바꿉니다.</b>`,
     run:(me,t,v)=>{ const a = me.hand; me.hand = t.hand; t.hand = a;
-      pwLog(`🎩 ${J(me.name,'이','가')} ${J(t.name,'과','와')} 손패를 통째로 바꿨습니다!`); } },
+      pwLog(`🎩 ${J(me.name,'이','가')} ${J(t.name,'과','와')} 손패를 통째로 바꿨습니다!`);
+      /* 특성 · 밑장빼기 — 바꾼 뒤 한 장이 더 오거나 한 장을 뺏긴다. 반반이다. */
+      if(!pwIs('bottomdeal')) return;
+      if(Math.random() < 0.5){
+        const i = pwHandIdxRandom(t);
+        if(i < 0){ pwLog(`🎩 <b>밑장빼기</b> — 더 가져올 카드가 없었습니다.`); return; }
+        const c = t.hand.splice(i,1)[0];
+        grantCardToPlayer(me, c, '권능 매직');
+        pwLog(`🎩 <b>밑장빼기 성공</b> — "${escapeHtml(c.name)}"을(를) 한 장 더 챙겼습니다.`);
+      } else {
+        const i = pwHandIdxRandom(me);
+        if(i < 0){ pwLog(`🎩 <b>밑장빼기</b> — 뺏길 카드가 없었습니다.`); return; }
+        const c = me.hand.splice(i,1)[0];
+        grantCardToPlayer(t, c, '권능 매직');
+        pwLog(`🎩 <b>밑장빼기 실패</b> — "${escapeHtml(c.name)}"을(를) 도로 뺏겼습니다.`);
+      } } },
   /* [Ver 13.6 조정] 전부 초기화 → **각 권능 전체 쿨타임의 50%만큼 단축.**
      ⚠ "남은 시간의 50%"가 아니라 **"그 권능 전체 쿨의 50%"** 다. 그래서 쿨이 긴 권능일수록
        더 많이 깎이고, 짧은 권능은 사실상 즉시 준비된다. 대신 자기 쿨은 182 → 90 으로 줄었다. */
   { key:'nocool', rarity:'legend', icon:'🔃', name:'노쿨', target:'self', cd:90, amt:50, up:{k:'amt',per:3},
     desc:v=>`자신의 다른 권능들의 쿨타임을 <b>각자 전체 쿨타임의 ${v}%</b>만큼 앞당깁니다.`,
-    run:(me,t,v)=>{ let n=0;
+    run:(me,t,v)=>{
+      /* 특성 · 시간역행 — 전체를 조금씩이 아니라 **한 칸을 완전히** 되돌린다. */
+      if(pwIs('rewind')){
+        const cands = (me.pwSlots||[]).map((s,i)=>({s,i})).filter(x=> x.s && x.i !== me.__pwUsingSlot && x.s.left > 0 && !pwSlotSilenced(x.s));
+        if(!cands.length){ pwLog(`⏪ 되돌릴 쿨타임이 없습니다.`); return; }
+        const pick = cands[Math.floor(Math.random()*cands.length)];
+        pick.s.left = 0;
+        const d2 = powerDefOf(pick.s.key);
+        pwLog(`⏪ <b>시간역행</b> — "${escapeHtml(d2?d2.name:pick.s.key)}"이(가) <b>즉시</b> 준비되었습니다.`);
+        return;
+      }
+      let n=0;
       (me.pwSlots||[]).forEach((s,i)=>{
         if(!s || i === me.__pwUsingSlot || !(s.left > 0)) return;
         const def = powerDefOf(s.key); if(!def) return;
-        const cut = pwCd(def, s.lv || 1) * 1000 * (v/100);
+        const cut = pwCd(def, s.lv || 1, s.trait || null) * 1000 * (v/100);
         s.left = Math.max(0, s.left - cut); n++;
       });
       pwLog(`🔃 ${J(me.name,'의','의')} 권능 ${n}개가 ${v}%만큼 앞당겨졌습니다.`); } },
   { key:'purify', rarity:'legend', icon:'🕊️', name:'정화', target:'self', cd:150, amt:0, up:{k:'cd',per:5},
     desc:v=>`자신에게 걸린 <b>디버프를 전부</b> 없앱니다.`,
-    run:(me,t,v)=>{ pwPurify(me); pwLog(`🕊️ ${J(me.name,'이','가')} 몸을 깨끗이 씻어냈습니다.`); } },
+    run:(me,t,v)=>{ pwPurify(me);
+      /* 특성 · 지후우유 — 쿨이 절반인 대신 **내 버프까지** 씻겨 나간다. */
+      if(pwIs('jihoomilk')){
+        try{
+          if((me.atkMultiplier||0) > 0) me.atkMultiplier = 0;
+          if((me.damageReductionPct||0) > 0) me.damageReductionPct = 0;
+          if((me.accuracyMod||0) > 0) me.accuracyMod = 0;
+          me.permaAtkFlat = 0; me.pwHunger = null;
+          me.shield = 0;
+        }catch(e){}
+        pwLog(`🥛 <b>지후우유</b> — ${J(me.name,'이','가')} 몸을 씻어냈습니다. <small>버프까지 함께 사라졌습니다.</small>`);
+        return;
+      }
+      pwLog(`🕊️ ${J(me.name,'이','가')} 몸을 깨끗이 씻어냈습니다.`); } },
   { key:'gravity', rarity:'legend', icon:'🪐', name:'중력조작', target:'self', cd:98, amt:0, up:{k:'cd',per:5},
     desc:v=>`<b>같은 등급 카드 2장</b>을 합쳐 한 단계 위 카드 <b>1장</b>으로 만듭니다.`,
     run:(me,t,v)=>{ const by = {};
@@ -15423,6 +15883,158 @@ const POWER_DEFS = [
     run:(me,t,v)=>{ me.pwEcho = { dueRound: turnCount + 1 }; pwLog(`🔁 ${J(me.name,'이','가')} 1바퀴 동안 낸 카드를 되돌려 받습니다.`); } },
 ];
 function powerDefOf(key){ return POWER_DEFS.find(d=> d.key===key) || null; }
+
+/* ##########################################################################
+   [Ver 14.5] 랩터의 권능 — 특성(Trait)
+   --------------------------------------------------------------------------
+   ▶ 무엇인가
+     권능의 능력을 **다른 방식으로 바꾼다.** 더 세지는 것이 아니라 성격이 달라진다.
+     대부분 대가가 붙는다 — 쿨타임 2배 · 자신도 대상이 됨 · 지속시간 감소.
+     같은 권능을 쓰는 두 사람이 서로 다르게 싸우게 만드는 것이 목적이다.
+
+   ▶ 어떻게 얻나
+     **권능석**(수상한 상자 2%)을 쓰면 아직 없는 특성 하나가 랜덤으로 나온다.
+     ⚠ 권능을 갖고 있지 않아도 그 특성이 나온다 — 나중에 그 권능을 얻으면 이미 준비돼 있다.
+     ⚠ 레벨 조건이 없다. 얻는 즉시 켤 수 있다.
+
+   ▶ 필드
+     key   — 고유 문자열(저장 키)
+     name  — 화면에 뜨는 이름
+     cd    — 쿨타임 배수 (없으면 1배). pwCd 한 곳에서만 곱해진다
+     desc  — 설명 문자열
+   ########################################################################## */
+const PW_TRAITS = {
+  summon:  [{ key:'ritual',    name:'신성한 의식', cd:2.0, desc:'<b>A등급 이상</b>만 소환됩니다. 대신 쿨타임이 <b>2배</b>가 됩니다.' }],
+  diablo:  [{ key:'void',      name:'보이드',            desc:'각 상대의 <b>랜덤 2장</b>을 <b>두 단계</b> 아래로 떨어뜨립니다.' }],
+  seal:    [{ key:'lockdown',  name:'활성화잠금',        desc:'대상 카드를 <b>영구히</b> 못 쓰게 만듭니다. 대신 어느 카드가 걸릴지는 <b>무작위</b>입니다.' }],
+  reset:   [{ key:'factory',   name:'공장초기화',        desc:'손패를 <b>등급까지 무작위</b>인 다른 카드로 전부 바꿉니다.' }],
+  nourish: [{ key:'gmo',       name:'GMO',               desc:'랜덤 카드의 등급을 <b>2단계</b> 올립니다. 다만 <b>다음 자기 턴에 쓰지 않으면</b> 원래대로 돌아옵니다.' }],
+  crush:   [{ key:'parts',     name:'부품용',            desc:'<b>50%</b> 확률로 카드가 사라지지 않습니다. 대신 받는 골드가 구매가의 <b>0.8배</b>로 고정됩니다.' }],
+  landmine:[{ key:'claymore',  name:'클레이모어',        desc:'사람이 아니라 <b>상점</b>에 지뢰를 심습니다. <b>가장 먼저 상점을 연 사람</b>이 800 피해를 입습니다 — <b>자신일 수도 있습니다.</b>' }],
+  antigrav:[{ key:'gwave',     name:'중력파',            desc:'<b>세 단계</b> 아래 카드 <b>3장</b>으로 쪼갭니다. 대신 대상 카드는 <b>무작위</b>입니다.' }],
+  attune:  [{ key:'maestro',   name:'마에스트로',        desc:'자신의 <b>가장 낮은 등급</b> 카드를 손패의 <b>가장 높은 등급</b>으로 끌어올립니다.' }],
+  filch:   [{ key:'reseller',  name:'리셀러',            desc:'훔친 카드를 손패에 넣지 않고 <b>즉시 구매가의 1.2배</b>로 팔아 골드를 챙깁니다.' },
+            { key:'badhand',   name:'나쁜손',    cd:2.0, desc:'한 번에 <b>2장</b>을 훔칩니다. 대신 쿨타임이 <b>2배</b>가 됩니다.' }],
+  bolt:    [{ key:'rod',       name:'피뢰침',            desc:'기본 피해가 <b>+100</b>. 연쇄될 때 피해가 +30이 아니라 <b>1.5배</b>로 불어납니다. 다만 <b>자신도 맞을 수 있습니다.</b>' }],
+  devour:  [{ key:'hunger',    name:'굶주림',            desc:'공격력이 <b>+250</b>으로 크게 오릅니다. 대신 <b>2바퀴</b>만 지속됩니다.' }],
+  emp:     [{ key:'ddos',      name:'디도스',            desc:'지속이 <b>2바퀴</b>로 짧아집니다. 대신 공격력이 0이 되는 대신 그 <b>공격이 자신에게 돌아갑니다.</b>' }],
+  barrier: [{ key:'autoshield',name:'자동화',            desc:'직접 쓸 수 없습니다. 대신 <b>1000 이상의 피해를 맞기 직전</b> 자동으로 발동합니다.' }],
+  nuke:    [{ key:'mini',      name:'소형화',            desc:'발동 확률이 <b>3배</b>가 됩니다. 대신 피해량이 <b>1000</b>으로 줄어듭니다.' }],
+  seize:   [{ key:'loanshark', name:'사채업',            desc:'딱지 3장이 모이면 손패 대신 <b>골드 250</b>이 <b>사라집니다.</b> 가진 돈이 모자라면 <b>마이너스</b>까지 내려갑니다.' },
+            { key:'legacy',    name:'레거시',            desc:'딱지를 쓰지 않습니다. <b>지목한 상대</b>의 손패를 <b>3바퀴 뒤</b>에 전부 없앱니다. (리워크 전 압류 방식)' }],
+  joker:   [{ key:'transfer',  name:'전이',              desc:'복제가 아니라, 손패의 <b>랜덤 카드 하나로 손패 전체</b>를 바꿔버립니다.' }],
+  hack:    [{ key:'malware',   name:'말웨어',            desc:'대상의 <b>공격 카드 전부</b>를 해킹합니다. 다만 <b>1바퀴 뒤</b> 원래대로 돌아옵니다.' }],
+  blizzard:[{ key:'polar',     name:'극지방',            desc:'<b>5바퀴</b> 동안 빙결지대를 만듭니다. 카드를 낼 때 <b>25%</b>로 1바퀴 스턴 — <b>자신은 예외</b>입니다.' }],
+  assassin:[{ key:'hire',      name:'청부',              desc:'내 손패에서 카드를 고르면, 상대의 <b>같은 자리</b> 카드에 발동합니다.' },
+            { key:'elite',     name:'ELITE',     cd:2.0, desc:'등급을 떨어뜨리는 대신 그 카드를 <b>없애버립니다.</b> 쿨타임은 <b>2배</b>입니다.' }],
+  snipe:   [{ key:'sniper',    name:'스나이퍼',  cd:0.5, desc:'쿨타임이 <b>절반</b>. <b>3바퀴 뒤</b> 대상에게 <b>1500 쉴드관통</b> 피해. 대상이 <b>E등급</b>을 내면 풀립니다.' }],
+  silence: [{ key:'period',    name:'기간제',    cd:0.25,desc:'쿨타임이 <b>4분의 1</b>. 대신 침묵이 영구가 아니라 <b>30초</b>만 갑니다.' }],
+  magic:   [{ key:'bottomdeal',name:'밑장빼기',          desc:'손패를 맞바꾼 뒤, <b>50%</b>로 상대 카드를 <b>1장 더 얻거나</b> 내 카드를 <b>1장 뺏깁니다.</b>' }],
+  nocool:  [{ key:'rewind',    name:'시간역행',          desc:'전체가 아니라 <b>랜덤한 권능 하나</b>의 쿨타임을 <b>통째로</b> 없앱니다.' }],
+  purify:  [{ key:'jihoomilk', name:'지후우유',  cd:0.5, desc:'쿨타임이 <b>절반</b>. 대신 <b>자신의 버프까지</b> 함께 사라집니다.' }],
+};
+
+/* 특성 key 전체 목록 (뽑기 풀) — 정의에서 한 번만 뽑아 만든다 */
+const PW_TRAIT_ALL = (function(){
+  const out = [];
+  Object.keys(PW_TRAITS).forEach(pk=> PW_TRAITS[pk].forEach(t=> out.push(t.key)));
+  return out;
+})();
+/* traitKey → { powerKey, def } 역인덱스 */
+const PW_TRAIT_INDEX = (function(){
+  const m = {};
+  Object.keys(PW_TRAITS).forEach(pk=> PW_TRAITS[pk].forEach(t=>{ m[t.key] = { powerKey:pk, def:t }; }));
+  return m;
+})();
+function pwTraitDefOf(traitKey){ const e = PW_TRAIT_INDEX[traitKey]; return e ? e.def : null; }
+function pwTraitPowerOf(traitKey){ const e = PW_TRAIT_INDEX[traitKey]; return e ? e.powerKey : null; }
+
+/* ── 소유 (얻은 특성) ── */
+let PW_TRAITS_OWNED = null;
+function loadPwTraits(){
+  if(PW_TRAITS_OWNED) return PW_TRAITS_OWNED;
+  try{ const raw = localStorage.getItem(STORAGE_KEYS.pwTraits); PW_TRAITS_OWNED = raw ? (JSON.parse(raw)||{}) : {}; }
+  catch(e){ PW_TRAITS_OWNED = {}; }
+  return PW_TRAITS_OWNED;
+}
+function savePwTraits(){ try{ localStorage.setItem(STORAGE_KEYS.pwTraits, JSON.stringify(loadPwTraits())); }catch(e){} }
+function pwTraitOwned(t){ return !!loadPwTraits()[t]; }
+function grantPwTrait(t){ loadPwTraits()[t] = true; savePwTraits(); return t; }
+function pwTraitOwnedCount(){ return PW_TRAIT_ALL.filter(pwTraitOwned).length; }
+
+/* ── 장착 (지금 켜둔 것) ── */
+let PW_TRAIT_ON = null;
+function loadPwTraitOn(){
+  if(PW_TRAIT_ON) return PW_TRAIT_ON;
+  try{ const raw = localStorage.getItem(STORAGE_KEYS.pwTraitOn); PW_TRAIT_ON = raw ? (JSON.parse(raw)||{}) : {}; }
+  catch(e){ PW_TRAIT_ON = {}; }
+  return PW_TRAIT_ON;
+}
+function savePwTraitOn(){ try{ localStorage.setItem(STORAGE_KEYS.pwTraitOn, JSON.stringify(loadPwTraitOn())); }catch(e){} }
+/* ⚠ 켜져 있어도 **소유 중일 때만** 인정한다. loadEquippedPowers 가 미보유 권능을 거르는 것과 같은 이유 —
+   백업 복원·데이터 손상으로 "없는 걸 켜둔 상태"가 되면 안 된다. */
+function pwTraitOf(powerKey){
+  const t = loadPwTraitOn()[powerKey];
+  return (t && pwTraitOwned(t)) ? t : null;
+}
+function setPwTraitOn(powerKey, traitKey){
+  const on = loadPwTraitOn();
+  if(traitKey && !pwTraitOwned(traitKey)) return;
+  if(traitKey) on[powerKey] = traitKey; else delete on[powerKey];
+  savePwTraitOn();
+}
+
+/* ##########################################################################
+   [Ver 14.5] 인게임에서의 특성 판정
+   --------------------------------------------------------------------------
+   ⚠ 두 경로가 다르다.
+     · 화면(권능 목록·설명)  → **내 계정 설정**(PW_TRAIT_ON)
+     · 판 안에서의 실제 발동 → **그 슬롯에 실린 값**(s.trait)
+   랜서버에서 남의 특성은 내 계정에 없다. 그래서 슬롯에 실어 보낸다.
+   ########################################################################## */
+/* [Ver 14.5] 이 슬롯이 지금 침묵 중인가.
+   ⚠ s.dead 를 보는 곳이 여섯이다(쿨 틱·준비 판정·발동·안내 모달·렌더·봇).
+     만료 계산을 흩어 놓으면 어디선가 30초가 안 풀린다. 여기 한 곳으로 묶는다. */
+function pwSlotSilenced(s){
+  if(!s) return false;
+  if(s.dead) return true;
+  if(s.deadUntil){
+    if(Date.now() < s.deadUntil) return true;
+    s.deadUntil = 0;                 // 만료 — 다시 살아난다
+  }
+  return false;
+}
+function pwSlotTrait(p, slot){
+  try{
+    const s = (p && Array.isArray(p.pwSlots)) ? p.pwSlots[slot] : null;
+    return (s && s.trait) || null;
+  }catch(e){ return null; }
+}
+/* 지금 발동 중인 권능의 특성 — pwFire 가 __pwTraitNow 에 세워둔다 */
+function pwActiveTrait(){ return (typeof __pwTraitNow !== 'undefined') ? __pwTraitNow : null; }
+function pwIs(t){ return pwActiveTrait() === t; }
+let __pwTraitNow = null;
+
+/* [Ver 14.5] 특성이 만드는 **판 전체 상태** 두 가지.
+   ⚠ 플레이어 필드가 아니라 전역이다 — 랜서버 스냅샷에 반드시 실어야 한다.
+     (65015 주석: "플레이어 객체는 통째로 동기화되지만 전역 변수는 아니다") */
+/* [Ver 14.7] 압류 특성 수치. desc 와 run 이 같은 값을 봐야 설명과 실제가 어긋나지 않는다. */
+const SEIZE_BURN_GOLD     = 250;   // 사채업 — 태워 없애는 골드 (마이너스까지 내려간다)
+const SEIZE_LEGACY_ROUNDS = 3;     // 레거시 — 예고 후 손패가 사라지기까지의 바퀴
+
+let pwShopMine  = null;   // 지뢰·클레이모어 { by, dmg } — 가장 먼저 상점을 연 사람이 밟는다
+let pwFrostZone = null;   // 눈보라·극지방 { by, until } — 시전자 외 전원이 카드를 낼 때 25% 스턴
+
+/* ── 뽑기 ── */
+/* 아직 없는 특성 중 하나. 전부 모았으면 null. (boxPickUnownedPet 과 같은 방식) */
+function pwTraitRoll(){
+  const pool = PW_TRAIT_ALL.filter(t=> !pwTraitOwned(t));
+  if(!pool.length) return null;
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+const PW_STONE_FULL_UBINITE = 3000;   // 28개를 다 모은 뒤의 대체 보상 (펫의 BOX_PET_FALLBACK_UBINITE 와 같은 취지)
+
+
 /* ==========================================================================
    [Ver 13.1] 권능 아이콘 — `pw/{key}.jpg` (46종, 손그림)
    --------------------------------------------------------------------------
@@ -15443,23 +16055,43 @@ const POWER_ICON_KEYS = new Set([
   'warp','silence','magic','nocool','purify','gravity','nou','matrix','echo',
   'bolt','timewarp','nightmare','monolith','neuter','wildcard',   // [Ver 13.3] 신규 6종
 ]);
-function powerIconHtml(def, cls){
+/* [Ver 14.5] 특성이 켜져 있으면 왼쪽 위에 작은 노란 육각형을 얹는다.
+   ⚠ 아이콘을 그리는 곳이 넷(카드·장착칸·인게임 Q·W·E·뽑기 결과)인데, 전부 이 함수를 지난다.
+     그래서 여기 한 곳에만 넣으면 네 곳이 동시에 따라온다.
+   ⚠ traitOn 을 넘기면 그 값을 쓴다(랜서버에서 남의 슬롯을 그릴 때). 안 넘기면 내 설정. */
+function powerIconHtml(def, cls, traitOn){
   if(!def) return '';
   const fb = String(def.icon || '👑').replace(/'/g, "\\'");
-  if(!POWER_ICON_KEYS.has(def.key)) return `<span class="pw-img-fb ${cls||''}">${def.icon || '👑'}</span>`;
-  return `<img class="pw-img ${cls||''}" src="pw/${def.key}.jpg" alt="" draggable="false"
-    onerror="this.outerHTML='<span class=&quot;pw-img-fb ${cls||''}&quot;>${fb}</span>';">`;
+  const inner = POWER_ICON_KEYS.has(def.key)
+    ? `<img class="pw-img ${cls||''}" src="pw/${def.key}.jpg" alt="" draggable="false"
+        onerror="this.outerHTML='<span class=&quot;pw-img-fb ${cls||''}&quot;>${fb}</span>';">`
+    : `<span class="pw-img-fb ${cls||''}">${def.icon || '👑'}</span>`;
+  let on = null;
+  try{ on = (traitOn !== undefined) ? traitOn : pwTraitOf(def.key); }catch(e){}
+  if(!on) return inner;
+  const td = pwTraitDefOf(on);
+  return `<span class="pw-icwrap">${inner}<i class="pw-trait-hex" title="특성: ${escapeHtml(td?td.name:'')}"></i></span>`;
 }
 function pwAmt(def, lv){
   if(!def) return 0;
   const per = (def.up && def.up.k === 'amt') ? def.up.per : 0;
   return Math.round(((def.amt || 0) + per * (Math.max(1, lv||1) - 1)) * 100) / 100;
 }
-function pwCd(def, lv){
+/* [Ver 14.5] traitOverride 를 주면 그 특성 기준으로 계산한다(랜서버 슬롯용).
+   주지 않으면 **내 계정 설정**을 본다 — 화면 표시가 이 경로다. */
+function pwCd(def, lv, traitOverride){
   if(!def) return 60;
   const per = (def.up && def.up.k === 'cd') ? def.up.per : 0;
   /* [Ver 13.1] 하한 0.5초 — '노가다'는 기본 쿨이 3초라 하한을 3으로 두면 강화가 통째로 무의미해진다 */
-  return Math.max(0.5, Math.round(((def.cd || 60) - per * (Math.max(1, lv||1) - 1)) * 10) / 10);
+  let out = Math.max(0.5, Math.round(((def.cd || 60) - per * (Math.max(1, lv||1) - 1)) * 10) / 10);
+  /* [Ver 14.5] 특성 쿨 배수 — **여기 한 곳**에만 얹는다.
+     각 run 에 흩으면 화면에 뜨는 쿨과 실제 쿨이 어긋난다. */
+  try{
+    const tk = (traitOverride !== undefined) ? traitOverride : pwTraitOf(def.key);
+    const td = tk ? pwTraitDefOf(tk) : null;
+    if(td && td.cd) out = Math.max(0.5, Math.round(out * td.cd * 10) / 10);
+  }catch(e){}
+  return out;
 }
 function powerDescOf(def, lv){ try{ return def.desc(pwAmt(def, lv)); }catch(e){ return ''; } }
 
@@ -15603,7 +16235,24 @@ function renderPowerScreen(){
           <span class="pw-offer-bonus">보너스 — ${escapeHtml(bonusTx)}</span>
         </button>`;
       }).join('')}</div>
-      <div class="pw-note">이빨은 <b>랩터마트24 › 재화</b> 탭에서 150 우비나이트에 하나씩 살 수 있습니다.</div>`;
+      <div class="pw-note">이빨은 <b>랩터마트24 › 재화</b> 탭에서 우비나이트로 살 수 있습니다.</div>
+
+      ${/* [Ver 14.5] 권능석 — 특성 뽑기. 재단과 같은 모양으로 나란히 둔다. */''}
+      <div class="pw-sec-t" style="margin-top:18px;">🔷 권능석 <small>특성을 하나 얻습니다 · 상자에서 나옵니다</small></div>
+      <div class="pw-stone-row">
+        <div class="pw-stone-have">🔷 <b>${pwStoneCount().toLocaleString()}</b>개 보유
+          <small>특성 ${pwTraitOwnedCount()} / ${PW_TRAIT_ALL.length}종</small></div>
+        ${[1,5].map(n=>{
+          const can = pwStoneCount() >= n;
+          return `<button class="pw-offer${can?'':' off'}" ${can?'':'disabled'} onclick="doPwStoneRoll(${n})">
+            <span class="pw-offer-n">🔷 ${n}</span>
+            <span class="pw-offer-fix">특성 ${n}개</span>
+            <span class="pw-offer-bonus">아직 없는 것만 나옵니다</span>
+          </button>`;
+        }).join('')}
+      </div>
+      <div class="pw-note">특성은 권능을 <b>더 세게</b> 만드는 게 아니라 <b>다르게</b> 바꿉니다.
+        아직 얻지 못한 권능의 특성도 나올 수 있습니다. 권능석은 <b>우빈이의 수상한 상자</b>에서 나옵니다.</div>`;
   }
 
   /* ---- 장착 3슬롯 ---- */
@@ -15696,36 +16345,229 @@ function powerCardHtml(d){
         <button class="pw-up-btn${canUp?' on':''}" ${canUp?'':'disabled'}
           onclick="event.stopPropagation(); doPowerUpgrade('${d.key}')">⬆ ${dup}/${need}</button>
       </div>` : ''}
+      ${pwTraitRowHtml(d)}
     </div>
   </div>`;
 }
+/* [Ver 14.5] 카드 안의 특성 줄. 특성이 없는 권능이면 아무것도 그리지 않는다. */
+function pwTraitRowHtml(d){
+  const list = PW_TRAITS[d.key];
+  if(!list || !list.length) return '';
+  const on = pwTraitOf(d.key);
+  const anyOwned = list.some(t=> pwTraitOwned(t.key));
+  if(!anyOwned){
+    return `<div class="pw-trait-row locked">
+      <span class="pw-trait-lock">🔷 권능석으로 <b>${escapeHtml(list.map(t=>t.name).join(' · '))}</b> 특성을 얻을 수 있습니다</span>
+    </div>`;
+  }
+  const btn = (key, label, active)=>
+    `<button class="pw-trait-b${active?' on':''}" onclick="event.stopPropagation(); setPwTraitOn('${d.key}', ${key?`'${key}'`:'null'}); renderPowerScreen();">${escapeHtml(label)}</button>`;
+  return `<div class="pw-trait-row">
+    ${btn(null, '기본', !on)}
+    ${list.map(t=> pwTraitOwned(t.key)
+        ? btn(t.key, t.name, on === t.key)
+        : `<button class="pw-trait-b off" disabled title="아직 얻지 못한 특성입니다">${escapeHtml(t.name)}</button>`).join('')}
+    ${on ? `<span class="pw-trait-desc">${pwTraitDefOf(on).desc}</span>` : ''}
+  </div>`;
+}
+
+/* [Ver 14.5] 권능석을 써서 특성을 뽑는다. 재단(doAltarOffer)과 같은 흐름이다. */
+function doPwStoneRoll(n){
+  n = Math.max(1, n|0);
+  if(pwStoneCount() < n){
+    showModal('🔷 권능석', `권능석이 부족합니다.<br><br>
+      <span style="font-size:12px;color:var(--fg-dim);">필요 <b>🔷 ${n}</b> · 보유 <b>🔷 ${pwStoneCount()}</b><br>
+      권능석은 <b>우빈이의 수상한 상자</b>에서 나옵니다.</span>`, [{label:'확인', solid:true}]);
+    return;
+  }
+  /* ⚠ 먼저 굴리고, 굴린 만큼만 차감한다. 전부 모은 상태면 대체 보상으로 넘어간다. */
+  const got = [];
+  for(let i=0;i<n;i++){
+    const t = pwTraitRoll();
+    if(t){ grantPwTrait(t); got.push(t); }
+    else   got.push(null);          // 전부 모음 → 우비나이트로 대체
+  }
+  if(!spendPwStones(n)){ showModal('🔷 권능석', '권능석이 부족합니다.', [{label:'확인', solid:true}]); return; }
+  const fullN = got.filter(x=> !x).length;
+  if(fullN > 0) grantUbinite(PW_STONE_FULL_UBINITE * fullN);
+
+  renderPowerScreen();
+  const items = got.map(t=>{
+    if(!t) return { icon:'💎', name:`우비나이트 ${PW_STONE_FULL_UBINITE.toLocaleString()}개`, rarity:'대체 보상',
+                    tier:1, color:RV_TIER_COLOR[1], tag:'ALL', sub:'특성을 전부 모았습니다' };
+    const pk = pwTraitPowerOf(t), td = pwTraitDefOf(t), pd = powerDefOf(pk);
+    return { icon: powerIconHtml(pd, '', t), name: td.name, rarity: pd ? pd.name : '', tier:3,
+             color: RV_TIER_COLOR[3], tag:'특성', sub: ownsPower(pk) ? `${pd.name} 특성` : `${pd.name} — 아직 없는 권능` };
+  });
+  revealSequence(items, { onDone: ()=>{
+    const rows = got.filter(Boolean).map(t=>{
+      const pk = pwTraitPowerOf(t), td = pwTraitDefOf(t), pd = powerDefOf(pk);
+      return `<div class="pw-got pw-legend">
+        <span class="pw-got-ic">${powerIconHtml(pd, '', t)}</span>
+        <span class="pw-got-nm">${escapeHtml(td.name)}</span>
+        <span class="pw-got-r">${escapeHtml(pd ? pd.name : '')}</span>
+        <span class="pw-got-tag">${ownsPower(pk) ? '특성' : '권능 미보유'}</span>
+      </div>`;
+    }).join('');
+    showModal('🔷 권능석', `<div class="pw-got-wrap">
+        <div class="pw-got-sum">권능석 <b>${n}</b>개로 특성 <b>${got.filter(Boolean).length}</b>개를 얻었습니다.
+          ${fullN ? `<br><small>이미 전부 모아 ${fullN}개는 우비나이트로 대신 받았습니다.</small>` : ''}</div>
+        ${rows}
+        <div class="pw-note" style="margin-top:10px;">권능 카드에서 <b>기본 ↔ 특성</b>을 언제든 바꿀 수 있습니다.</div>
+      </div>`, [{label:'확인', solid:true}]);
+  }});
+}
+
 function pwSetFilter(v){ pwRarityFilter = v || ''; renderPowerScreen(); }
 function pwSlotClick(i){
   pwPickingSlot = (pwPickingSlot === i) ? -1 : i;
   renderPowerScreen();
 }
 function pwUnequip(i){ equipPower(i, null); renderPowerScreen(); }
-function pwCardClick(key){
-  if(!ownsPower(key)){
-    const d = powerDefOf(key);
-    showModal(`${escapeHtml(d.name)}`, `<div style="line-height:1.8">
-      <div class="pw-modal-ic">${powerIconHtml(d)}</div>
-      <div style="font-size:12px;color:var(--fg-dim);margin-bottom:8px;">${powerRarityDef(d.rarity).label} · 쿨타임 ${pwCd(d,1)}초</div>
-      ${powerDescOf(d, 1)}
-      <div style="margin-top:12px;font-size:12px;color:var(--fg-faint);">
-        아직 얻지 못한 권능입니다. <b>랩터의 재단</b>에 이빨을 바쳐 얻으세요.</div>
-    </div>`, [{label:'확인', solid:true}]);
-    return;
+
+/* ##########################################################################
+   [Ver 14.6] 권능 상세 창
+   --------------------------------------------------------------------------
+   목록의 카드를 누르면 여기로 온다. 보는 것과 끼는 것을 한자리에서 끝낸다.
+   ########################################################################## */
+function pwDetailHtml(key){
+  const d = powerDefOf(key); if(!d) return '';
+  const rd  = powerRarityDef(d.rarity);
+  const lv  = powerLv(key), own = lv > 0;
+  const dup = powerDup(key);
+  const need = own ? powerNeedFor(lv, d.rarity) : null;
+  const canUp = own && need != null && dup >= need;
+  const eqAt = loadEquippedPowers().indexOf(key);
+  const list = PW_TRAITS[key] || [];
+  const on   = pwTraitOf(key);
+
+  /* 특성 줄 — 얻은 것만 고를 수 있다. 없는 권능이면 통째로 생략한다. */
+  let traits = '';
+  if(list.length){
+    const anyOwned = list.some(t=> pwTraitOwned(t.key));
+    const btn = (tk, label, active)=>
+      `<button class="pw-trait-b${active?' on':''}" onclick="setPwTraitOn('${key}', ${tk?`'${tk}'`:'null'}); pwOpenDetail('${key}'); renderPowerScreen();">${escapeHtml(label)}</button>`;
+    traits = `<div class="pwd-sec">
+      <div class="pwd-sec-t">🔷 특성 <small>권능을 다르게 바꿉니다</small></div>
+      ${anyOwned ? `<div class="pw-trait-row" style="border:0;margin:0;padding:0;">
+          ${btn(null, '기본', !on)}
+          ${list.map(t=> pwTraitOwned(t.key)
+              ? btn(t.key, t.name, on === t.key)
+              : `<button class="pw-trait-b off" disabled title="아직 얻지 못한 특성입니다">${escapeHtml(t.name)}</button>`).join('')}
+        </div>` : ''}
+      ${list.map(t=>{
+        const has = pwTraitOwned(t.key), act = on === t.key;
+        return `<div class="pwd-trait${has?'':' locked'}${act?' on':''}">
+          <div class="pwd-trait-h"><b>${escapeHtml(t.name)}</b>
+            ${t.cd ? `<span class="pwd-trait-cd">쿨타임 ×${t.cd}</span>` : ''}
+            <span class="pwd-trait-tag">${act ? '적용 중' : (has ? '보유' : '미보유')}</span></div>
+          <div class="pwd-trait-d">${t.desc}</div>
+        </div>`;
+      }).join('')}
+      ${anyOwned ? '' : `<div class="pwd-note">🔷 <b>권능석</b>으로 얻을 수 있습니다. 권능석은 <b>우빈이의 수상한 상자</b>에서 나옵니다.</div>`}
+    </div>`;
   }
-  if(pwPickingSlot >= 0){ equipPower(pwPickingSlot, key); pwPickingSlot = -1; renderPowerScreen(); return; }
-  /* 고르는 중이 아니면 빈 칸에 넣고, 빈 칸이 없으면 안내한다 */
+
+  /* 장착 버튼 — 상태에 따라 셋 중 하나 */
+  let equipBtn;
+  if(!own){
+    equipBtn = `<div class="pwd-note">아직 얻지 못한 권능입니다. <b>랩터의 재단</b>에 이빨을 바쳐 얻으세요.</div>`;
+  } else if(eqAt >= 0){
+    equipBtn = `<button class="pwd-eq off" onclick="pwUnequipFrom(${eqAt});">${['Q','W','E'][eqAt]} 칸에서 빼기</button>`;
+  } else {
+    equipBtn = `<button class="pwd-eq" onclick="pwEquipFlow('${key}');">장착하기</button>`;
+  }
+
+  return `<div class="pwd ${rd.cls}">
+    <div class="pwd-head">
+      <div class="pwd-ic">${powerIconHtml(d)}</div>
+      <div class="pwd-meta">
+        <div class="pwd-nm">${escapeHtml(d.name)}</div>
+        <div class="pwd-sub">${rd.label} · 쿨타임 <b>${pwCd(d, own?lv:1)}초</b>${on?` <span class="pwd-cdnote">(특성 반영)</span>`:''}</div>
+        <div class="pwd-sub">${own ? `Lv${lv}${lv>=POWER_MAX_LV?' MAX':''}` : '미보유'}${eqAt>=0?` · <b>${['Q','W','E'][eqAt]}</b> 칸 장착 중`:''}</div>
+      </div>
+    </div>
+    <div class="pwd-desc">${own ? powerDescOf(d, lv) : powerDescOf(d, 1)}</div>
+    ${own && need != null ? `<div class="pwd-sec">
+      <div class="pwd-sec-t">⬆ 강화 <small>같은 권능을 모아서 올립니다</small></div>
+      <div class="pw-card-up" style="margin:0;">
+        <div class="pw-card-bar"><i style="width:${Math.min(100, Math.round(dup/need*100))}%"></i></div>
+        <button class="pw-up-btn${canUp?' on':''}" ${canUp?'':'disabled'}
+          onclick="doPowerUpgrade('${key}'); pwOpenDetail('${key}');">⬆ ${dup}/${need}</button>
+      </div>
+    </div>` : ''}
+    ${traits}
+    <div class="pwd-foot">${equipBtn}</div>
+  </div>`;
+}
+
+function pwOpenDetail(key){
+  const d = powerDefOf(key); if(!d) return;
+  showModal(`👑 ${d.name}`, pwDetailHtml(key), [{label:'닫기', solid:true}]);
+}
+
+/* 장착 — 빈 칸이 있으면 그리로, 없으면 바꿀 칸을 고르게 한다. */
+function pwEquipFlow(key){
+  if(!ownsPower(key)) return;
   const eq = loadEquippedPowers();
-  const at = eq.indexOf(key);
-  if(at >= 0){ equipPower(at, null); renderPowerScreen(); return; }   // 이미 낀 것을 누르면 뺀다
   const free = eq.indexOf(null);
-  if(free < 0){ showModal('🎛️ 장착', '세 칸이 모두 찼습니다.<br><br><span style="font-size:12px;color:var(--fg-dim);">바꿀 칸을 먼저 누른 뒤 권능을 고르세요.</span>', [{label:'확인', solid:true}]); return; }
-  equipPower(free, key);
+  if(free >= 0){ pwEquipInto(free, key); return; }
+  /* 세 칸이 다 찼다 — 여기서 바로 고르게 한다. 목록으로 돌려보내지 않는다. */
+  const KEYS = ['Q','W','E'];
+  const rows = eq.map((k,i)=>{
+    const od = powerDefOf(k);
+    return `<button class="pwd-swap" onclick="pwEquipInto(${i}, '${key}');">
+      <span class="pwd-swap-k">${KEYS[i]}</span>
+      <span class="pwd-swap-ic">${powerIconHtml(od, '', pwTraitOf(k))}</span>
+      <span class="pwd-swap-tx"><b>${escapeHtml(od?od.name:'?')}</b>
+        <small>Lv${powerLv(k)} · 쿨 ${pwCd(od, powerLv(k))}초</small></span>
+      <span class="pwd-swap-x">교체</span>
+    </button>`;
+  }).join('');
+  showModal('🎛️ 어느 칸을 바꿀까요?', `<div style="line-height:1.7;">
+      <div style="font-size:12.5px;color:var(--fg-dim);margin-bottom:9px;">
+        세 칸이 모두 차 있습니다. 바꿀 칸을 고르면 <b>${escapeHtml(powerDefOf(key).name)}</b>이(가) 그 자리에 들어갑니다.</div>
+      <div class="pwd-swap-list">${rows}</div>
+    </div>`, [{label:'취소'}]);
+}
+
+/* 실제로 끼우고, 덱으로 화면을 올려 어디에 들어갔는지 보여준다. */
+function pwEquipInto(slot, key){
+  equipPower(slot, key);
+  try{ closeModal(); }catch(e){}
   renderPowerScreen();
+  pwFocusDeck(slot);
+}
+function pwUnequipFrom(slot){
+  equipPower(slot, null);
+  try{ closeModal(); }catch(e){}
+  renderPowerScreen();
+  pwFocusDeck(slot);
+}
+
+/* [Ver 14.6] 장착 3칸으로 화면을 올리고 그 칸을 잠깐 빛낸다.
+   ⚠ 목록이 길어서, 장착해도 화면이 그대로면 어디에 들어갔는지 알 수 없다. */
+function pwFocusDeck(slot){
+  try{
+    const su = document.getElementById('pwSlotsUi');
+    if(!su) return;
+    su.scrollIntoView({ behavior:'smooth', block:'center' });
+    const cell = su.querySelectorAll('.pw-slot')[slot];
+    if(!cell) return;
+    cell.classList.remove('pw-slot-just');
+    void cell.offsetWidth;                 // 애니메이션을 다시 틀기 위한 리플로우
+    cell.classList.add('pw-slot-just');
+    setTimeout(()=>{ try{ cell.classList.remove('pw-slot-just'); }catch(e){} }, 1400);
+  }catch(e){}
+}
+
+function pwCardClick(key){
+  /* [Ver 14.6] 미보유도 같은 상세 창을 쓴다 — 무엇인지 자세히 봐야 얻고 싶어진다. */
+  if(!ownsPower(key)){ pwOpenDetail(key); return; }
+  /* 슬롯을 먼저 눌러 "고르는 중"이면 그 칸에 바로 넣는다 — 예전 흐름을 그대로 살린다. */
+  if(pwPickingSlot >= 0){ const s = pwPickingSlot; pwPickingSlot = -1; pwEquipInto(s, key); return; }
+  /* [Ver 14.6] 그 외에는 **상세 창**을 연다. 장착은 그 안에서 한다. */
+  pwOpenDetail(key);
 }
 function doPowerUpgrade(key){
   const res = upgradePower(key);
@@ -15942,7 +16784,8 @@ function applyPowersToGame(){
       p.pwSlots = [0,1,2].map(i=>{
         const d = picks[i]; if(!d) return null;
         const lv = 1 + Math.floor(Math.random()*2);
-        return { key:d.key, lv, left: pwStartLeftMs({key:d.key, lv}), dead:false,
+        /* [Ver 14.5] 봇은 특성을 쓰지 않는다 — 권능석으로 얻는 것이라 봇에게 줄 근거가 없다 */
+        return { key:d.key, lv, trait:null, left: pwStartLeftMs({key:d.key, lv}), dead:false,
                  botWait: PW_BOT_OPEN_MIN_MS + Math.random()*PW_BOT_OPEN_SPREAD_MS };
       });
     } else if(isMyPlayer(p)){
@@ -15951,7 +16794,9 @@ function applyPowersToGame(){
         if(!k) return null;
         const d = powerDefOf(k); if(!d) return null;
         const lv = Math.max(1, powerLv(k));
-        return { key:k, lv, left: pwStartLeftMs({key:k, lv}), dead:false };   // [Ver 13.2.1] 시작하자마자 쓸 수 있다 (startOnCd 권능만 예외)
+        /* [Ver 14.5] 특성을 슬롯에 박아 넣는다 — 판이 도는 동안은 이 값만 본다.
+           (전역 설정을 그때그때 읽으면 판 중간에 바꿔 끼울 수 있게 되어버린다) */
+        return { key:k, lv, trait: pwTraitOf(k), left: pwStartLeftMs({key:k, lv}), dead:false };   // [Ver 13.2.1] 시작하자마자 쓸 수 있다 (startOnCd 권능만 예외)
       });
     } else if(!Array.isArray(p.pwSlots)){
       p.pwSlots = [null,null,null];   // 원격 참가자 — 본인 기기에서 도착할 때까지 빈 칸
@@ -15987,12 +16832,16 @@ function lanApplyPowerSlots(p, slots){
     const s = slots[i]; if(!s || !s.key) return null;
     const d = powerDefOf(s.key); if(!d) return null;
     const lv = Math.max(1, Math.min(POWER_MAX_LV, parseInt(s.lv,10) || 1));
-    return { key:s.key, lv, left: pwCd(d, lv)*1000, dead:false };
+    /* [Ver 14.5] 참가자가 보낸 특성을 그대로 심는다. 쿨도 **그 특성 기준**으로 계산해야
+       원격 참가자의 쿨이 호스트 것과 어긋나지 않는다. */
+    const tr = (s.trait && pwTraitDefOf(s.trait)) ? s.trait : null;
+    return { key:s.key, lv, trait:tr, left: pwCd(d, lv, tr)*1000, dead:false };
   });
 }
 /* 내 장착 정보를 랜서버로 보낼 꼴로 납작하게 */
 function myPowerSlotsPayload(){
-  return loadEquippedPowers().map(k=> k ? { key:k, lv: powerLv(k) } : null);
+  /* [Ver 14.5] ⚠ trait 를 함께 보내지 않으면 원격 참가자의 특성이 호스트에서 통째로 무시된다. */
+  return loadEquippedPowers().map(k=> k ? { key:k, lv: powerLv(k), trait: pwTraitOf(k) } : null);
 }
 
 /* ---------- 쿨타임 시계 ---------- */
@@ -16060,7 +16909,7 @@ function powerCooldownTick(){
     if(!p || !p.alive || !Array.isArray(p.pwSlots)) return;
     if(cur && cur.id === p.id) return;          // 자기 턴에는 자기 시계가 멈춘다
     p.pwSlots.forEach(s=>{
-      if(!s || s.dead) return;
+      if(!s || pwSlotSilenced(s)) return;
       if(s.left > 0){
         s.left = Math.max(0, s.left - dt);
         /* [Ver 13.4] 쿨이 다시 돌기 시작하면 뜸들이기도 다시 굴려둔다 —
@@ -16079,20 +16928,22 @@ try{ setInterval(powerCooldownTick, PW_TICK_MS); }catch(e){}
 /* ---------- 발동 ---------- */
 function pwSlotReady(p, slot){
   const s = p && Array.isArray(p.pwSlots) ? p.pwSlots[slot] : null;
-  return !!(s && !s.dead && s.left <= 0);
+  return !!(s && !pwSlotSilenced(s) && s.left <= 0);
 }
 /* 실제 실행 — 호스트/싱글 공용. tgt는 target:'enemy'인 권능에만 쓰인다. */
 function pwFire(p, slot, targetId){
   if(!powersActive() || !p || !p.alive) return false;
   const s = Array.isArray(p.pwSlots) ? p.pwSlots[slot] : null;
-  if(!s || s.dead || s.left > 0) return false;
+  if(!s || pwSlotSilenced(s) || s.left > 0) return false;
   const def = powerDefOf(s.key); if(!def) return false;
   let tgt = null;
   if(def.target === 'enemy'){
     tgt = players.find(x=> x && x.id === targetId);
     if(!tgt || !tgt.alive || !canTarget(p, tgt)) return false;
   }
-  s.left = pwCd(def, s.lv) * 1000;
+  /* [Ver 14.5] ⚠ 반드시 **슬롯의 trait** 로 계산한다. pwCd(def, s.lv) 로 부르면
+     내 계정 설정을 보게 되어, 랜서버에서 남의 쿨이 내 특성 기준으로 계산된다. */
+  s.left = pwCd(def, s.lv, s.trait || null) * 1000;
   p.__pwUsingSlot = slot;                       // '노쿨'이 자기 자신은 비켜가도록
   /* [Ver 13.1 버그수정] 남이 권능을 쓸 때마다 renderHand()가 **내 손패를 통째로 다시 그려서**
      카드가 계속 튀어 보였다("뿅뿅"). 손패 DOM은 innerHTML을 통째로 갈아엎기 때문에,
@@ -16101,8 +16952,12 @@ function pwFire(p, slot, targetId){
   const __meNow = viewer();
   const __handBefore = (__meNow && Array.isArray(__meNow.hand))
     ? __meNow.hand.map(c=> c && c.uid).join(',') : '';
+  /* [Ver 14.5] 실행 중인 특성을 세워둔다. run 안에서는 pwIs('키') 로 갈라진다.
+     ⚠ finally 로 반드시 되돌린다 — 안 그러면 다음 권능이 남의 특성으로 돈다. */
+  __pwTraitNow = s.trait || null;
   try{ def.run(p, tgt, pwAmt(def, s.lv)); }
   catch(e){ console.error('[권능] 실행 오류', def.key, e); }
+  finally{ __pwTraitNow = null; }
   p.__pwUsingSlot = null;
   /* [Ver 13.1] '노가다'처럼 쿨이 아주 짧은 권능은 로그를 도배한다.
      def.quiet 가 붙은 권능은 **판마다 처음 한 번만** 알리고 그 뒤로는 조용히 넘어간다. */
@@ -16131,15 +16986,28 @@ function usePower(slot){
   if(!me || !me.alive) { UISfx.deny(); return; }
   const s = Array.isArray(me.pwSlots) ? me.pwSlots[slot] : null;
   if(!s){ UISfx.deny(); return; }
-  if(s.dead){ showModal('👑 랩터의 권능', '이 권능은 <b>침묵</b>당해 이번 판에는 쓸 수 없습니다.', [{label:'확인', solid:true}]); return; }
+  if(pwSlotSilenced(s)){
+    const left = s.deadUntil ? Math.max(1, Math.ceil((s.deadUntil - Date.now())/1000)) : 0;
+    showModal('👑 랩터의 권능', left
+      ? `이 권능은 <b>침묵</b> 중입니다. <b>${left}초</b> 뒤에 다시 쓸 수 있습니다.`
+      : '이 권능은 <b>침묵</b>당해 이번 판에는 쓸 수 없습니다.', [{label:'확인', solid:true}]); return; }
   if(s.left > 0){ UISfx.deny(); return; }
   const def = powerDefOf(s.key); if(!def) return;
+  /* [Ver 14.5] 배리어 · 자동화 — 직접 쓸 수 없다. 맞기 직전에 스스로 터지는 것이 이 특성이다. */
+  if(def.key === 'barrier' && (s.trait === 'autoshield')){
+    showModal('🛡️ 자동화', '<b>자동화</b> 특성이 켜져 있어 직접 쓸 수 없습니다.<br><br>'
+      + '<span style="font-size:12px;color:var(--fg-dim);">1000 이상의 피해를 맞기 직전에 <b>스스로</b> 펼쳐집니다.</span>',
+      [{label:'확인', solid:true}]); return;
+  }
+  /* [Ver 14.5] 암살 · 청부 — 대상을 고르기 전에 **내 손패에서 자리**를 먼저 고른다. */
+  if(def.key === 'assassin' && s.trait === 'hire'){ pwHirePick(slot, def); return; }
   if(def.target === 'enemy'){ pwBeginTargeting(slot, def); return; }
   pwSend(slot, null);
 }
 function pwSend(slot, targetId){
   if(typeof lanIsRemoteClient==='function' && lanIsRemoteClient()){
-    lanSend({ t:'to_host', payload:{ action:'power', slot, targetId: targetId||null } });
+    lanSend({ t:'to_host', payload:{ action:'power', slot, targetId: targetId||null,
+      hireIdx: (viewer() && typeof viewer().__pwHireIdx === 'number') ? viewer().__pwHireIdx : null } });   // [Ver 14.5] 청부
     return;
   }
   pwFire(viewer(), slot, targetId);
@@ -16151,6 +17019,36 @@ function pwSend(slot, targetId){
    ⚠ .p-card 의 onclick 은 카드 지목(highlightSelectableTargets)이 통째로 덮어쓴다.
      그래서 권능 타겟팅은 **끝나면 반드시 clearSelectableTargets()로 원상복구**한다.
    ========================================================================== */
+/* [Ver 14.5] 암살 · 청부 — 내 손패에서 "몇 번째 자리"를 고른 뒤 대상을 지목한다.
+   상대의 같은 번호 카드가 맞는다. 모노리스의 2단 선택(pwMonolithPick)이 선례다.
+   ⚠ 봇·랜서버 원격은 이 창을 띄우지 않는다 — run 안에서 무작위 자리로 대신 처리한다. */
+function pwHirePick(slot, def){
+  const me = viewer();
+  if(!me || !Array.isArray(me.hand) || !me.hand.length){
+    showModal('🔪 청부', '내 손패가 비어 있어 자리를 고를 수 없습니다.', [{label:'확인', solid:true}]);
+    return;
+  }
+  const rows = me.hand.map((c,i)=>
+    `<button class="pw-hire-b" onclick="pwHireChoose(${slot}, ${i})">
+       <span class="pw-hire-n">${i+1}</span>
+       <span class="pw-hire-nm">${escapeHtml(c.name)}</span>
+       <span class="pw-hire-g">${escapeHtml(c.grade)}</span>
+     </button>`).join('');
+  showModal('🔪 청부 — 자리 고르기', `<div style="line-height:1.7;">
+      <div style="font-size:12.5px;color:var(--fg-dim);margin-bottom:9px;">
+        고른 <b>자리 번호</b>와 같은 번호의 <b>상대 카드</b>가 강등됩니다.<br>
+        상대의 손패가 짧으면 무작위 자리로 대신 들어갑니다.</div>
+      <div class="pw-hire-list">${rows}</div>
+    </div>`, [{label:'취소'}]);
+}
+function pwHireChoose(slot, idx){
+  const me = viewer();
+  if(me) me.__pwHireIdx = idx;
+  try{ closeModal(); }catch(e){}
+  const def = powerDefOf('assassin');
+  pwBeginTargeting(slot, def);
+}
+
 let __pwTargeting = null;
 function pwBeginTargeting(slot, def){
   const me = viewer();
@@ -16223,7 +17121,9 @@ function renderPowerBarInto(host){
   host.classList.remove('pw-off');
   const KEYS = ['Q','W','E'];
   /* 구성이 바뀌었는지 — 키·레벨·침묵 여부만 본다. 남은 쿨은 여기 넣지 않는다(매 틱 달라진다) */
-  const shape = me.pwSlots.map(s=> s ? `${s.key}:${s.lv}:${s.dead?1:0}` : '-').join('|');
+  /* [Ver 14.5] trait 를 넣지 않으면 특성을 껐다 켜도 칸이 다시 안 그려져 육각형이 안 뜬다 */
+  /* [Ver 14.5] 침묵은 s.dead 만 보면 안 된다 — 기간제(30초)가 풀려도 칸이 안 바뀐다 */
+  const shape = me.pwSlots.map(s=> s ? `${s.key}:${s.lv}:${pwSlotSilenced(s)?1:0}:${s.trait||'-'}` : '-').join('|');
   if(shape !== host.dataset.shape){
     host.dataset.shape = shape;
     host.innerHTML = me.pwSlots.map((s,i)=>{
@@ -16231,17 +17131,18 @@ function renderPowerBarInto(host){
       const def = powerDefOf(s.key);
       if(!def) return `<div class="pw-cell empty"><span class="pw-key">${KEYS[i]}</span></div>`;
       const rd = powerRarityDef(def.rarity);
-      return `<button class="pw-cell ${rd.cls}${s.dead?' dead':''}" data-slot="${i}"
+      const __sil = pwSlotSilenced(s);
+      return `<button class="pw-cell ${rd.cls}${__sil?' dead':''}" data-slot="${i}"
                 onclick="usePower(${i})" title="${escapeHtml(def.name)} Lv${s.lv}">
-        <span class="pw-ic">${powerIconHtml(def)}</span>
+        <span class="pw-ic">${powerIconHtml(def, '', s.trait || null)}</span>
         <span class="pw-key">${KEYS[i]}</span>
-        ${s.dead ? '<span class="pw-x">🤐</span>' : '<span class="pw-cool"></span><span class="pw-secs"></span>'}
+        ${__sil ? '<span class="pw-x">🤐</span>' : '<span class="pw-cool"></span><span class="pw-secs"></span>'}
       </button>`;
     }).join('');
   }
   /* 여기부터는 **있는 요소의 값만 고친다** — DOM을 새로 만들지 않는다 */
   me.pwSlots.forEach((s,i)=>{
-    if(!s || s.dead) return;
+    if(!s || pwSlotSilenced(s)) return;
     const cell = host.querySelector(`.pw-cell[data-slot="${i}"]`);
     if(!cell) return;
     const def = powerDefOf(s.key); if(!def) return;
@@ -16358,7 +17259,7 @@ function botMaybeUsePowers(){
   players.forEach(p=>{
     if(!p || !p.isBot || !p.alive || !Array.isArray(p.pwSlots)) return;
     p.pwSlots.forEach((s,i)=>{
-      if(!s || s.dead || s.left > 0) return;
+      if(!s || pwSlotSilenced(s) || s.left > 0) return;
       if(s.botWait > 0) return;          // [Ver 13.4] 아직 뜸들이는 중 (powerCooldownTick이 깎는다)
       const def = powerDefOf(s.key); if(!def) return;
       /* 마지막 잔떨림 — 같은 틱에 두 칸이 겹쳐 터지는 것을 흩어준다 */
@@ -16382,8 +17283,13 @@ function botMaybeUsePowers(){
    ⚠ 왜 안전한가 — 매 단계 50%로 끊기므로 평균 2번이면 멈춘다. 12번을 넘길 확률이 0.05%,
      30번은 20억분의 1이다. 게다가 이어질 때마다 setTimeout(0.5초)으로 넘어가므로
      콜 스택이 쌓이지도 않는다. 진짜 멈춤 조건은 아래 두 줄(gameActive · alive)이다. */
-function pwBoltChain(me, t, amount){
+/* [Ver 14.5] rod=true 면 특성 '피뢰침' — 연쇄가 덧셈(+30)이 아니라 **1.5배**로 불어나고,
+   연쇄 대상 후보에 **자신도 들어간다.** 잘 터지면 판을 쓸지만 자기 머리에 떨어질 수도 있다.
+   ⚠ 연쇄는 setTimeout 으로 넘어가므로 pwIs() 를 그때 부르면 이미 null 이다.
+     그래서 첫 호출에서 읽은 값을 **인자로 들고 다닌다.** */
+function pwBoltChain(me, t, amount, rod){
   if(!me || !me.alive || !t || !t.alive) return;
+  if(rod === undefined) rod = pwIs('rod');
   dealDamage(me, t, amount, 'NONE', false);
   try{ renderBoard(); }catch(e){}
   if(Math.random() >= 0.5) return;                 // 50%에서 멈춘다
@@ -16391,10 +17297,12 @@ function pwBoltChain(me, t, amount){
     try{
       if(!gameActive || !me.alive) return;
       const foes = pwEnemies(me);                  // 자신은 제외된다
-      if(!foes.length) return;
-      const next = foes[Math.floor(Math.random()*foes.length)];
-      log('dmg', `⚡ 번개가 ${J(next.name,'에게','에게')} 다시 떨어집니다!`);
-      pwBoltChain(me, next, amount + 30);
+      /* 피뢰침 — 자신도 후보에 넣는다 */
+      const pool = rod ? foes.concat(me.alive ? [me] : []) : foes;
+      if(!pool.length) return;
+      const next = pool[Math.floor(Math.random()*pool.length)];
+      log('dmg', `⚡ 번개가 ${J(next.name,'에게','에게')} 다시 떨어집니다!${(rod && next.id===me.id)?' <b>(자기 머리 위로!)</b>':''}`);
+      pwBoltChain(me, next, rod ? Math.floor(amount * 1.5) : (amount + 30), rod);
       try{ checkWinCondition(); }catch(e){}
     }catch(e){ console.error('[번개] 연쇄 오류', e); }
   }, 500);
@@ -16882,7 +17790,7 @@ function grantPickaxe(n){
      ⚠ 우비나이트·상자 열쇠는 **일부러 뺐다.** 흔해서 계기판을 싸게 올릴 수 있고,
        그러면 "우비나이트 조금 쓰고 곡괭이 복사" 가 성립한다.
    ########################################################################## */
-const SPEND_ODO_W = { pickaxe:10, goldPickaxe:40, teeth:100 };
+const SPEND_ODO_W = { pickaxe:10, goldPickaxe:40, teeth:100, pwStone:150 };   // [Ver 14.5] 권능석
 let SPEND_ODO = null;
 function loadSpendOdo(){
   if(SPEND_ODO === null){
@@ -17296,6 +18204,34 @@ function buildRaptorMartBodyHtml(){
    ⚠ 곡괭이(pickaxe)와 달리 시간이 지나도 저절로 차지 않는다. 순수 소모 재화다.
    ========================================================================== */
 const TEETH_PRICE_UBINITE = 200;   // [Ver 13.3] 150 → 200. 권능이 너무 빨리 모였다.
+/* ##########################################################################
+   [Ver 14.5] 권능석 — 랩터의 권능 '특성'을 뽑는 재화
+   --------------------------------------------------------------------------
+   우빈이의 수상한 상자에서만 나온다(2%). 하나를 쓰면 **아직 없는 특성 하나**가 랜덤으로 나온다.
+   ⚠ 이빨과 같은 꼴로 둔다 — 지연 로드 캐시가 아니라 단순 숫자 전역이다.
+   ########################################################################## */
+let pwStones = 0;
+try{ const v = parseInt(localStorage.getItem(STORAGE_KEYS.pwStones), 10); if(Number.isFinite(v)) pwStones = Math.max(0, v); }catch(e){}
+function savePwStones(){ try{ localStorage.setItem(STORAGE_KEYS.pwStones, String(pwStones)); }catch(e){} }
+function pwStoneCount(){ return pwStones; }
+function grantPwStones(n){
+  pwStones += (n||1); savePwStones();
+  try{ renderTopResources(); }catch(e){}
+  return pwStones;
+}
+function spendPwStones(n){
+  n = Math.max(1, n|0);
+  /* [Ver 13.15.2] 창 두 개로 복사하는 것을 막는다 — spendUbinite 와 같은 이유 */
+  try{ walletSyncFromStorage(); }catch(e){}
+  if(pwStones < n) return false;
+  pwStones -= n; savePwStones();
+  try{ bumpSpendOdo('pwStone', n); }catch(e){}
+  /* 뽑는 순간이 곧 되돌릴 수 없는 진행도 변화다. 판이 끝날 때까지 기다리지 않는다. */
+  try{ backupAfterTeethSpend(); }catch(e){}
+  try{ renderTopResources(); }catch(e){}
+  return true;
+}
+
 let raptorTeeth = 0;
 try{ const v = parseInt(localStorage.getItem(STORAGE_KEYS.teeth), 10); if(Number.isFinite(v)) raptorTeeth = Math.max(0, v); }catch(e){}
 function saveTeeth(){ try{ localStorage.setItem(STORAGE_KEYS.teeth, String(raptorTeeth)); }catch(e){} }
@@ -17495,6 +18431,8 @@ function updateDevMenuButtons(){
   if(e) e.style.display = devMode ? '' : 'none';
   const u = document.getElementById('devUbiniteBtn');   // [Ver 13.0] 우비나이트 조절
   if(u) u.style.display = devMode ? '' : 'none';
+  const ps = document.getElementById('devPwStoneBtn');  // [Ver 14.6] 권능석 조절
+  if(ps) ps.style.display = devMode ? '' : 'none';
   const bi = document.getElementById('devBanInfoBtn');  // [Ver 13.16] 내 신원 · 밴 정보
   if(bi) bi.style.display = devMode ? '' : 'none';
   const ci = document.getElementById('devChipIconBtn'); // [Ver 13.5] 상태칩 아이콘 모드
@@ -17558,6 +18496,58 @@ function openDevUbinite(){
         <button class="btn btn-sm btn-solid" onclick="devApplyUbinite()">이 값으로</button>
       </div>
       <div style="font-size:10.5px;color:var(--fg-faint);line-height:1.6;">0 아래로는 내려가지 않습니다.</div>
+    </div>`, [{label:'닫기', solid:true}]);
+}
+
+/* ##########################################################################
+   [Ver 14.6] 개발자 — 권능석 조절
+   --------------------------------------------------------------------------
+   우비나이트 조절(openDevUbinite)과 **같은 모양**으로 만든다. 하나만 익히면 둘 다 쓴다.
+   ⚠ 0 아래로 내려가지 않는다. 재화가 음수가 되면 뽑기 판정이 어긋난다.
+   ########################################################################## */
+function devAddPwStone(d){
+  if(!devMode) return;
+  pwStones = Math.max(0, pwStones + d);
+  savePwStones();
+  try{ renderTopResources(); }catch(e){}
+  try{ renderPowerScreen(); }catch(e){}
+  const el = document.getElementById('devPwStoneNow');
+  if(el) el.textContent = pwStones.toLocaleString();
+  const inp = document.getElementById('devPwStoneInput');
+  if(inp) inp.value = pwStones;
+}
+function devApplyPwStone(){
+  if(!devMode) return;
+  const inp = document.getElementById('devPwStoneInput');
+  const v = Math.max(0, parseInt(inp && inp.value, 10) || 0);
+  pwStones = v;
+  savePwStones();
+  try{ renderTopResources(); }catch(e){}
+  try{ renderPowerScreen(); }catch(e){}
+  const el = document.getElementById('devPwStoneNow');
+  if(el) el.textContent = pwStones.toLocaleString();
+}
+function openDevPwStone(){
+  if(!devMode){ showModal('개발자 전용', '개발자 모드에서만 쓸 수 있습니다.', [{label:'확인', solid:true}]); return; }
+  const btn = (label, d)=> `<button class="btn btn-sm" onclick="devAddPwStone(${d})">${label}</button>`;
+  showModal('🔷 권능석 조절', `<div style="display:flex;flex-direction:column;gap:12px;">
+      <div style="text-align:center;line-height:1.6;">
+        <div style="font-size:11px;color:var(--fg-faint);">현재 보유</div>
+        <div style="font-family:var(--font-mono);font-size:28px;font-weight:700;" id="devPwStoneNow">${pwStones.toLocaleString()}</div>
+        <div style="font-size:11px;color:var(--fg-faint);">특성 ${pwTraitOwnedCount()} / ${PW_TRAIT_ALL.length}종 보유</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;">
+        ${btn('+1', 1)}${btn('+10', 10)}${btn('+100', 100)}
+        ${btn('-1', -1)}${btn('-10', -10)}${btn('-100', -100)}
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input id="devPwStoneInput" class="input" type="number" min="0" step="1" value="${pwStones}"
+               style="flex:1;min-width:0;" onkeydown="if(event.key==='Enter'){event.preventDefault();devApplyPwStone();}">
+        <button class="btn btn-sm btn-solid" onclick="devApplyPwStone()">이 값으로</button>
+      </div>
+      <div style="font-size:10.5px;color:var(--fg-faint);line-height:1.6;">
+        0 아래로는 내려가지 않습니다. 하나를 쓰면 <b>아직 없는 특성 하나</b>가 무작위로 나옵니다.
+        ${PW_TRAIT_ALL.length}종을 전부 모으면 우비나이트로 대신 지급됩니다.</div>
     </div>`, [{label:'닫기', solid:true}]);
 }
 
@@ -18112,6 +19102,7 @@ async function fbFetchTop(boardKey, n){
    ⚠ 새 진행도를 만들 때 여기 추가하는 걸 빠뜨리면 기기를 옮길 때 통째로 사라진다 (12.6.1 프사가 그랬다). */
 const BACKUP_KEYS = ['stats','achievements','cardDex','cardMastery','masteryRank','evolved',
                      'teeth','powers','equippedPowers',
+                     'pwTraits','pwTraitOn','pwStones',      // [Ver 14.5] 권능 특성·권능석
                      'artifacts','pickaxe','goldPickaxe','boxKeys','gachaTickets','pets','equippedPet',
                      'evoStones','evoClaws','evoPicks','profile','exp','ubinite','redeemed','mailbox',
                      'bio','friendCode','friends',   // [Ver 10.5] 상태메시지 · 친구 코드 · 친구 목록
@@ -18169,6 +19160,10 @@ function flushPersistentCaches(){
   call(typeof savePowers        !== 'undefined' && savePowers);
   call(typeof saveEquippedPowers!== 'undefined' && saveEquippedPowers);
   call(typeof saveTeeth         !== 'undefined' && saveTeeth);
+  /* [Ver 14.5] 특성·권능석도 메모리에만 있을 수 있다 */
+  call(typeof savePwTraits      !== 'undefined' && savePwTraits);
+  call(typeof savePwTraitOn     !== 'undefined' && savePwTraitOn);
+  call(typeof savePwStones      !== 'undefined' && savePwStones);
   call(typeof savePfps          !== 'undefined' && savePfps);
   /* [Ver 13.1] 출석부·일일 퀘스트 — 메모리에만 있던 오늘 기록이 백업에서 빠지지 않게 */
   call(typeof saveAttend        !== 'undefined' && saveAttend);
@@ -18210,6 +19205,11 @@ function invalidatePersistentCaches(){
      장착하는 순간 savePowers()가 **복원된 목록을 옛 것으로 덮어쓴다.** (12.6.1 프사와 같은 사고) */
   try{ POWERS = null; }catch(e){}
   try{ EQUIPPED_POWERS = null; }catch(e){}
+  /* [Ver 14.5] 특성도 같은 이유로 비운다 — 안 비우면 복원 직후 옛 목록이 덮어쓴다.
+     권능석은 숫자 전역이라 여기서 직접 다시 읽는다(이빨이 빠져 있던 것과 같은 함정). */
+  try{ PW_TRAITS_OWNED = null; }catch(e){}
+  try{ PW_TRAIT_ON = null; }catch(e){}
+  try{ const v = parseInt(localStorage.getItem(STORAGE_KEYS.pwStones), 10); pwStones = Number.isFinite(v) ? Math.max(0, v) : 0; }catch(e){}
   try{ EVO_STONES = null; }catch(e){}
   try{ EVO_PICKS = null; }catch(e){}
   try{ EVOLVED_CARDS = null; }catch(e){}
@@ -19160,6 +20160,36 @@ async function fbLookupRemoteCode(code){
    새 패치를 넣을 땐 BALANCE_PATCHES 맨 앞에 한 덩어리를 추가하면 된다.
    ########################################################################## */
 const BALANCE_PATCHES = [
+  {
+    version: 'Ver 14.5', date: '2026-09-09',
+    groups: [
+      { title:'압류 — 한 방에 날리는 예고에서, 쌓이는 압박으로', kind:'power',
+        note:'예고 후 2바퀴 뒤 손패가 통째로 날아가는 <b>단발성</b>이었습니다. 맞는 쪽은 할 수 있는 게 없고, 쓰는 쪽도 타이밍만 재면 됐습니다. 이제 <b>무작위 상대에게 딱지를 붙이고 3장에서 터집니다.</b> 누가 몇 장인지가 판 위에 드러나고, 무작위라 <b>이미 탈락한 사람에게 헛되이 날아가기도</b> 합니다.',
+        rows:[
+          { name:'압류', icon:'\u{1F4C9}', rows:[
+            { label:'대상',   from:'지목',        to:'무작위',        dir:'down' },
+            { label:'발동',   from:'2바퀴 뒤',     to:'딱지 3장에서 즉시', dir:'up' },
+            { label:'누적',   from:'없음',        to:'딱지 3장',       dir:'neutral' },
+            { label:'사망자', from:'대상 아님',    to:'딱지가 붙음',     dir:'down' }]},
+        ]},
+      { title:'특성 — 권능마다 갈림길이 생겼습니다', kind:'power',
+        note:'<b>권능석</b>으로 얻는 새 시스템입니다. 특성은 상향이 아니라 <b>다른 선택</b>입니다. 아래는 대가가 특히 뚜렷한 몇 가지입니다.',
+        rows:[
+          { name:'소환 · 신성한 의식', icon:'\u{1F300}', rows:[
+            { label:'등급',   from:'무작위',  to:'A 이상',  dir:'up' },
+            { label:'쿨타임', from:'40초',   to:'80초',    dir:'down' }]},
+          { name:'핵미사일 · 소형화', icon:'\u2622\uFE0F', rows:[
+            { label:'발동 확률', from:'7%',     to:'21%',    dir:'up' },
+            { label:'피해',     from:'99,999', to:'1,000',  dir:'down' }]},
+          { name:'침묵 · 기간제', icon:'\u{1F910}', rows:[
+            { label:'쿨타임', from:'189초',  to:'47.3초',  dir:'up' },
+            { label:'지속',   from:'영구',   to:'30초',    dir:'down' }]},
+          { name:'배리어 · 자동화', icon:'\u{1F6E1}\uFE0F', rows:[
+            { label:'사용',   from:'직접',   to:'자동 발동', dir:'neutral' },
+            { label:'조건',   from:'없음',   to:'1000 이상 피격 직전', dir:'down' }]},
+        ]},
+    ]
+  },
   {
     version: 'Ver 13.10', date: '2026-09-05',
     groups: [
@@ -21327,6 +22357,8 @@ const BOX_SPECIALS = [
   { key:'gold',    rate:3,   icon:'🪙', label:'개쩌는 곡괭이' },
   { key:'pet',     rate:0.3, icon:'🐾', label:'랜덤 미보유 지후펫' },
   { key:'evoPick', rate:0.3, icon:'🎫', label:'Ephemeral 확정 진화석 뽑기권' },
+  /* [Ver 14.5] 권능석 — 랩터의 권능 '특성'을 뽑는 재화. 여기가 유일한 출처다. */
+  { key:'pwStone', rate:2,   icon:'🔷', label:'권능석 (권능 특성)' },
 ];
 /* 가중치 표에서 하나 고르기 */
 function boxRollTable(table){
@@ -21366,6 +22398,7 @@ function boxGrantResult(r){
     if(s.key === 'ticket')      grantGachaTickets(1);
     else if(s.key === 'gold')   grantGoldPickaxe(1);
     else if(s.key === 'evoPick')grantEvoPick('Ephemeral', 1);
+    else if(s.key === 'pwStone')grantPwStones(1);   // [Ver 14.5]
     else if(s.key === 'pet'){ loadPets()[s.pet] = true; savePets(); }
     else if(s.key === 'petFull')grantUbinite(BOX_PET_FALLBACK_UBINITE);
   });
@@ -21375,6 +22408,7 @@ function boxSpecialText(s){
   if(s.key === 'ticket')  return '🎟️ 카드 10+1 뽑기권 1장';
   if(s.key === 'gold')    return '🪙 개쩌는 곡괭이 1개';
   if(s.key === 'evoPick') return '🎫 Ephemeral 확정 진화석 뽑기권 1장';
+  if(s.key === 'pwStone') return '🔷 권능석 1개 <span class="bx-sub">(권능 특성 뽑기)</span>';   // [Ver 14.5]
   if(s.key === 'pet'){
     const d = petDefOf(s.pet);
     return `🐾 지후펫 — ${escapeHtml(d ? d.name : s.pet)}`;
@@ -21472,7 +22506,9 @@ function doOpenBox(count){
     rolls.forEach(boxGrantResult);   // 굴린 뒤 한꺼번에 지급 (미보유 펫 판정이 굴릴 때 기준이라 중복 지급이 없다)
     boxBusy = false;
     renderBoxScreen();
-    showBoxResult(rolls);
+    /* [Ver 14.5] 텍스트 모달만 띄우던 것을 **카드 뒤집기**로 바꿨다.
+       재단·광산이 쓰는 revealSequence 를 그대로 쓴다 — 요약 모달은 그 뒤에 그대로 뜬다. */
+    boxRevealThenSummary(rolls);
     /* [Ver 11.4] 상자 개봉 직후 자동 백업 — 뽑기와 동일한 훅. */
     try{ autoBackupAfterGame(); }catch(e){}
   });
@@ -21486,10 +22522,14 @@ function showBoxOpening(onDone){
     ov.className = 'mine-dig-ov';
     document.body.appendChild(ov);
   }
-  ov.innerHTML = `<div class="mine-dig-box">
-      <div class="mine-dig-ic box-shake">🎁</div>
-      <div class="mine-dig-t">상자 여는 중...</div>
-      <div class="mine-dig-bar"><i style="transition-duration:${BOX_OPEN_MS}ms;background:#e0b64a;"></i></div>
+  /* [Ver 14.5] 광산 진행 바를 빌려 쓰던 것을 **상자 전용** 연출로 바꿨다.
+     흔들리다 → 뚜껑이 열리며 → 빛이 터진다. */
+  ov.innerHTML = `<div class="bx-open">
+      <div class="bx-open-burst"></div>
+      <div class="bx-open-box">
+        <div class="bx-open-lid">🎁</div>
+      </div>
+      <div class="bx-open-t">상자 여는 중...</div>
     </div>`;
   requestAnimationFrame(()=> requestAnimationFrame(()=> ov.classList.add('on')));
   setTimeout(()=>{
@@ -21497,6 +22537,31 @@ function showBoxOpening(onDone){
     setTimeout(()=>{ try{ ov.remove(); }catch(e){} }, 220);
     onDone();
   }, BOX_OPEN_MS);
+}
+/* [Ver 14.5] 상자 보상을 한 장씩 뒤집어 보여준 뒤 요약 모달로 넘긴다.
+   ⚠ 낮은 티어부터 → 마지막에 좋은 것. 재단(doAltarOffer)이 쓰는 규칙과 같다. */
+function boxRevealThenSummary(rolls){
+  const items = [];
+  rolls.forEach((r,i)=>{
+    const tag = `#${i+1}`;
+    if(r.pickaxe > 0) items.push({ icon:'⛏️', name:`곡괭이 ${r.pickaxe}개`, rarity:'재료',
+      tier: r.pickaxe >= 5 ? 2 : 0, color: RV_TIER_COLOR[r.pickaxe >= 5 ? 2 : 0], tag, sub:'유물 광산에서 씁니다' });
+    if(r.ubinite > 0){
+      const t = r.ubinite >= 500 ? 2 : (r.ubinite >= 100 ? 1 : 0);
+      items.push({ icon:'💎', name:`우비나이트 ${r.ubinite.toLocaleString()}개`, rarity:'재화',
+        tier:t, color:RV_TIER_COLOR[t], tag, sub:'랩터마트24에서 씁니다' });
+    }
+    /* 특별 보상은 전부 최고 티어 — 금색으로 맨 뒤에 나온다 */
+    r.specials.forEach(s=>{
+      const txt = boxSpecialText(s).replace(/<[^>]+>/g,'').trim();
+      const ic  = (txt.match(/^\S+/)||['🎁'])[0];
+      items.push({ icon:ic, name: txt.replace(/^\S+\s*/,''), rarity:'특별 보상',
+        tier:3, color:RV_TIER_COLOR[3], tag:'SPECIAL', sub:'독립 판정으로 따로 나왔습니다' });
+    });
+  });
+  if(!items.length){ showBoxResult(rolls); return; }
+  items.sort((a,b)=> a.tier - b.tier);
+  revealSequence(items, { onDone: ()=> showBoxResult(rolls) });
 }
 function showBoxResult(rolls){
   const sumPick = rolls.reduce((s,r)=> s + r.pickaxe, 0);
@@ -22656,6 +23721,40 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 14.6.2', date: '2026-09-09',
+    items: [
+      '\u{1F4C9} <b>[수정] 압류 · 사채업</b> — 골드를 <b>빼앗는</b> 것이 아니라 <b>태워 없앱니다.</b> 가진 돈이 모자라도 멈추지 않고 <b>마이너스까지</b> 내려갑니다. 소멸량은 500 \u2192 <b>250</b>으로 낮췄습니다.',
+      '\u{1F4C9} <b>[수정] 압류 · 레거시</b> — <b>딱지를 쓰지 않습니다.</b> 리워크 전 압류 그대로, <b>지목한 상대</b>의 손패를 예고하고 없앱니다. 기한은 2바퀴 \u2192 <b>3바퀴</b>로 늘렸습니다. 무작위가 싫은 사람을 위한 선택지입니다.',
+    ]
+  },
+  {
+    version: 'Ver 14.6.1', date: '2026-09-09',
+    items: [
+      '\u{1F5BC}\uFE0F <b>[버그수정] 권능 아이콘이 잘려 보이던 문제.</b> 그림은 정사각인데 카드의 그림칸은 세로로 늘어나는 직사각형이라, 채우려다 좌우가 통째로 날아갔습니다(배리어의 방패 왼쪽, 핵미사일 로켓 꼬리 등). 이제 <b>그림 전체가 들어옵니다.</b>',
+    ]
+  },
+  {
+    version: 'Ver 14.6', date: '2026-09-09',
+    items: [
+      '\u{1F451} <b>[개편] 권능창</b> — 권능을 누르면 <b>상세 창</b>이 열립니다. 설명 · 쿨타임 · 강화 상태 · <b>특성</b>이 한자리에 모였고, 거기서 바로 장착합니다.',
+      '\u{1F3DB}\uFE0F <b>장착하면 화면이 덱으로 올라갑니다.</b> 방금 들어간 칸이 잠깐 빛나 어디에 끼웠는지 바로 보입니다.',
+      '\u{1F504} <b>세 칸이 꽉 찼으면 그 자리에서 바꿀 칸을 고릅니다.</b> 예전처럼 목록과 슬롯 사이를 오갈 필요가 없습니다.',
+      '\u{1F537} <b>[개발자] 권능석 조절</b> — \u2261 서랍에 추가했습니다. \u00b11 · \u00b110 · \u00b1100 과 정확한 값 지정을 함께 제공합니다. (개발자 모드 전용)',
+    ]
+  },
+  {
+    version: 'Ver 14.5', date: '2026-09-09',
+    items: [
+      '\u{1F451} <b>[신규 시스템] 랩터의 권능 — 특성</b>이 생겼습니다. 특성은 권능을 <b>더 세게</b> 만드는 것이 아니라 <b>다른 방식으로</b> 바꿉니다. 대부분 뚜렷한 대가가 붙습니다 — 쿨타임 2배 · 자신도 대상이 됨 · 지속시간 감소. <b>25종 권능에 28개</b>가 들어갔습니다.',
+      '\u{1F537} <b>[신규 재화] 권능석</b> — 하나를 쓰면 <b>아직 없는 특성 하나</b>가 무작위로 나옵니다. 중복은 나오지 않습니다. <b>아직 얻지 못한 권능의 특성도</b> 나오므로, 나중에 그 권능을 얻으면 이미 준비돼 있습니다. 레벨 조건은 없습니다.',
+      '\u{1F381} 권능석은 <b>우빈이의 수상한 상자</b>에서 <b>2%</b> 확률로 나옵니다.',
+      '\u{1F53A} 특성이 켜진 권능은 아이콘 <b>왼쪽 위에 노란 육각형</b>이 붙습니다. 권능 화면 · 장착 칸 · 인게임 Q·W·E 어디서나 보입니다. <b>기본 ↔ 특성</b>은 언제든 바꿀 수 있습니다.',
+      '\u{1F4C9} <b>[리워크] 압류</b> — 지목한 사람의 손패를 2바퀴 뒤에 날리던 것에서, <b>무작위 상대에게 압류딱지</b>를 붙이는 방식으로 바뀌었습니다. <b>3장</b>이 모이면 그 사람의 손패가 <b>즉시</b> 사라지고 딱지는 0으로 돌아갑니다. 딱지는 <b>이미 탈락한 사람에게도</b> 붙어 헛되이 날아갈 수 있습니다.',
+      '\u{1F3E0} <b>[UI] 메뉴에 <u>상자</u> 버튼</b>이 생겼습니다. 랩터마트24 옆자리입니다. 예전에는 열쇠 배지나 서랍으로만 들어갈 수 있었습니다. 열쇠가 충분하면 버튼이 금색으로 빛납니다.',
+      '\u{1F380} <b>[연출] 상자를 열면 보상이 <u>한 장씩 뒤집힙니다.</u></b> 좋은 것이 마지막에 나옵니다. 상자가 흔들리다 빛이 터지는 개봉 연출도 새로 넣었습니다.',
+    ]
+  },
   {
     version: 'Ver 14.4', date: '2026-09-09',
     items: [
@@ -34370,6 +35469,7 @@ function mkPlayer(id,name,isBot){
     freezeOnBigHit:false, // 빙하기: ATK 600 이상 카드로 명중시킬 때마다 상대를 2턴간 얼림(쉴드 보유 중이면 무시)
     huntedBy:null, // 사냥꾼: 이 값이 있으면 이 사람이 받는 모든 데미지는 1000으로 고정되고, 죽으면 해당 id의 사람이 100골드를 받는다
     pwSeize:null,      // [Ver 13.6] 압류 예고 { by, dueRound } — 그 바퀴가 되면 손패가 통째로 사라진다
+    seizeMarks:0,      // [Ver 14.5] 압류딱지. 3장이 모이면 손패가 날아가고 0으로 돌아간다
     tntPowder:false, tntPowderBy:null, tntPowderPct:20, tntPowderDmg:1000, // [Ver 13.4] trinitrotoluene 화약 표식
     __nosEva:0,        // [Ver 13.4] 급가속으로 올린 회피율 누적치(상한 50%를 재기 위함)
     virusMarked:false, // 랩터바이러스: [바이러스] 표식. 이 표식을 가진 사람이 사망하면 표식을 건 사람을 제외한 모두에게 [숙주] 디버프가 걸린다
@@ -34826,6 +35926,7 @@ const CHIP_DEBUFF = new Set([
      좋게 봐줄 여지가 없다. */
   'amnesiaActive',
   'pwSeize',      // [Ver 13.6] 압류 예고
+  'seizeMarks',   // [Ver 14.5] 압류딱지 (3장이면 손패 소멸)
   'dcPending',    // [Ver 13.11.1] 연결 끊김 유예
   'goja',]);      // [Ver 13.13] 고자 — 최대 체력 1
 /* 위 둘에 없으면 전부 중립이다 — 팀·연인·매트릭스처럼 좋다 나쁘다를 가를 수 없는 것들.
@@ -35530,6 +36631,8 @@ function getStatusChips(p){
   if(p.tntPowder) addChip('tntPowder', '🧨', `화약 (카드 사용 시 ${p.tntPowderPct||20}%로 ${(p.tntPowderDmg||1000).toLocaleString()})`, 'red');
   // [Ver 13.6] 압류 예고 — 몇 바퀴 뒤에 손패가 통째로 날아가는지 보여준다
   if(p.pwSeize) addChip('pwSeize', '📉', `압류 예고 · ${Math.max(0, p.pwSeize.dueRound - turnCount)}바퀴 뒤 손패 전부 삭제`, 'red');
+  /* [Ver 14.5] 압류딱지 — 몇 장 쌓였는지가 판 위에 드러나야 압박이 된다 */
+  if(p.seizeMarks > 0) addChip('seizeMarks', '📉', `압류딱지 ${p.seizeMarks}/3 · 3장이면 손패가 전부 사라집니다`, 'red');
   if(p.hostBurdened) addChip('hostBurdened', '🧟', '숙주(매턴 250 피해)', 'red');
   if((p.butterflyStacks||0) > 0) addChip('butterflyStacks', '🦋', `나비 ${p.butterflyStacks}중첩(자기 턴마다 ${90*p.butterflyStacks} 피해)`, 'red');
   if(shopPartyDiscountStacks > 0) addChip('shopPartyDiscount', '🪩', `파티 타임(상점가 ×${Math.pow(0.5,shopPartyDiscountStacks).toFixed(shopPartyDiscountStacks>2?3:2)})`, 'yellow');
@@ -36111,6 +37214,20 @@ function runTurnStart(){
   }
   totalIndividualTurns++;
   mktTick();   // [Ver 14.0] 시세는 **매 사람의 턴마다** 움직인다
+  /* [Ver 14.5] 양분 · GMO — 다음 자기 턴이 왔는데 아직 손에 있으면 원래대로 돌아간다.
+     ⚠ 카드를 냈으면 손패에 없으므로 자동으로 살아남는다 — 따로 표시할 필요가 없다. */
+  try{
+    if(Array.isArray(p.hand)){
+      for(let gi = p.hand.length - 1; gi >= 0; gi--){
+        const c = p.hand[gi];
+        if(c && c.__gmoUndo && totalIndividualTurns >= (c.__gmoDue||0)){
+          const back = c.__gmoUndo;
+          p.hand[gi] = back;
+          log('sys', `🧬 <b>GMO</b> — ${J(p.name,'의','의')} "${escapeHtml(c.name)}"이(가) "${escapeHtml(back.name)}"(으)로 되돌아갔습니다.`);
+        }
+      }
+    }
+  }catch(e){ console.error('[GMO] 되돌리기 오류', e); }
   bumpStat('totalTurns'); // [Ver 5.6] 통계
   tickExclusionReturns();
   tickGangseoyunTransform(); // [버그수정/Ver 6.3] 전체 개인턴 8번 경과 기준으로 재조정
@@ -41859,6 +42976,17 @@ function pwBeforePlay(p, card){
     }
     return false;
   }
+  /* [Ver 14.5] 스나이퍼 — 대상이 E등급을 내면 조준이 풀린다. 대응할 길을 열어둔 것이다. */
+  if(p.pwSniped && card.grade === 'E'){
+    p.pwSniped = null;
+    log('sys', `🎯 ${J(p.name,'이','가')} E등급 카드를 내 <b>조준을 흩뜨렸습니다.</b>`);
+  }
+  /* [Ver 14.5] 빙결지대 — 시전자를 뺀 전원이 카드를 낼 때 25%로 얼어붙는다.
+     ⚠ 카드는 그대로 나간다. 스턴은 다음 턴에 걸리는 것이므로 여기서 false 를 돌려주면 안 된다. */
+  if(pwFrostZone && turnCount < pwFrostZone.until && p.id !== pwFrostZone.by && Math.random() < 0.25){
+    try{ pwStun(p, 1, '빙결지대'); }catch(e){}
+    log('sys', `❄️ <b>빙결지대</b> — ${J(p.name,'이','가')} 카드를 내다 얼어붙었습니다. (1바퀴 스턴)`);
+  }
   p.__pwHackedNow = !!card.pwHacked;
   if(p.pwEcho && turnCount < p.pwEcho.dueRound){
     if(!Array.isArray(p.pwEchoQueue)) p.pwEchoQueue = [];
@@ -41869,6 +42997,11 @@ function pwBeforePlay(p, card){
 /* 매 바퀴 정산 — 메아리 되돌려주기 · 포효 원복 */
 function pwRoundTick(){
   if(!powersActive() || !Array.isArray(players)) return;
+  /* [Ver 14.5] 빙결지대가 녹는다 */
+  if(pwFrostZone && turnCount >= pwFrostZone.until){
+    pwFrostZone = null;
+    log('sys', `❄️ 빙결지대가 녹아 사라졌습니다.`);
+  }
   players.forEach(p=>{
     if(!p || !p.alive) return;
     /* [Ver 13.6] 압류 — 예고한 바퀴가 되면 손패가 통째로 사라진다.
@@ -41879,6 +43012,32 @@ function pwRoundTick(){
       p.hand = [];
       log('highlight', `📉 ${J(p.name,'의','의')} 손패 ${n}장이 압류로 전부 사라졌습니다.`);
       try{ renderHand(); }catch(e){}
+    }
+    /* [Ver 14.5] 포식 · 굶주림 — 2바퀴 뒤 공격력 보너스를 되돌린다.
+       ⚠ permaAtkFlat 은 다른 카드도 쓰는 통이다. 0으로 밀지 말고 **얹은 만큼만** 뺀다. */
+    if(p.pwHunger && turnCount >= p.pwHunger.dueRound){
+      const back = p.pwHunger.amt || 0;
+      p.pwHunger = null;
+      p.permaAtkFlat = Math.max(0, (p.permaAtkFlat||0) - back);
+      log('sys', `🍖 ${J(p.name,'의','의')} <b>굶주림</b>이 가셨습니다. (공격력 -${back})`);
+    }
+    /* [Ver 14.5] 스나이퍼 — 예약된 한 방이 3바퀴 뒤 떨어진다. */
+    if(p.pwSniped && turnCount >= p.pwSniped.dueRound){
+      const sn = p.pwSniped; p.pwSniped = null;
+      log('highlight', `🎯 <b>저격</b> — ${J(p.name,'에게','에게')} 총알이 도착했습니다. <b>${(sn.dmg||1500).toLocaleString()} 관통</b>`);
+      try{
+        currentAttackContext = { attackerName:'저격', attackerId: sn.by||null, cardName:'저격' };
+        applyDamageToPlayer(p, sn.dmg || 1500, 'PIERCE');
+        currentAttackContext = null;
+      }catch(e){}
+    }
+    /* [Ver 14.5] 말웨어 — 감염된 카드가 1바퀴 뒤 원래대로 돌아온다. */
+    if(Array.isArray(p.hand)){
+      p.hand.forEach(c=>{
+        if(c && c.pwHacked && c.pwHackedUntil && turnCount >= c.pwHackedUntil){
+          c.pwHacked = false; c.pwHackedUntil = 0;
+        }
+      });
     }
     /* [Ver 13.3] 악몽 — 1바퀴가 지나면 최대 체력을 되돌리고 현재 체력도 비례해 복구한다 */
     if(p.pwNightmare && turnCount >= p.pwNightmare.dueRound){
@@ -54505,6 +55664,16 @@ function dealDamage(caster, target, amount, pierce, isAoe, deathChance, onHitRes
       }
       // EMP
       if(caster.pwEmp && turnCount < caster.pwEmp.dueRound && Math.random()*100 < caster.pwEmp.pct){
+        /* [Ver 14.5] 특성 · 디도스 — 무력화 대신 그 공격이 시전자 자신에게 그대로 꽂힌다. */
+        if(caster.pwEmp.ddos){
+          log('sys', `📡 <b>디도스</b> — ${J(caster.name,'의','의')} 공격이 <b>자신에게</b> 돌아왔습니다!`);
+          try{
+            currentAttackContext = { attackerName:'디도스', attackerId:null, cardName:'EMP' };
+            applyDamageToPlayer(caster, amount, 'NONE');
+            currentAttackContext = null;
+          }catch(e){}
+          return false;
+        }
         log('sys', `📡 EMP — ${J(caster.name,'의','의')} 공격이 무력화되었습니다. (ATK 0)`);
         return false;
       }
@@ -55385,6 +56554,19 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
      ========================================================================== */
   if(target && amount > 0){
     const __now = Date.now();
+    /* [Ver 14.5] 배리어 · 자동화 — **맞기 직전** 자동으로 방벽이 선다.
+       ⚠ 반드시 무적·반사보다 먼저 본다. 피해가 깎이기 전의 원래 크기로 판정해야
+         "1000 이상이면"이라는 약속이 지켜진다. */
+    if(amount >= 1000 && Array.isArray(target.pwSlots)){
+      const bi = target.pwSlots.findIndex(s=> s && s.key === 'barrier' && s.trait === 'autoshield' && !pwSlotSilenced(s) && !(s.left > 0));
+      if(bi >= 0){
+        const bs = target.pwSlots[bi];
+        try{ pwShield(target, 300); }catch(e){}
+        bs.left = pwCd(powerDefOf('barrier'), bs.lv || 1, 'autoshield') * 1000;   // 여기서부터 쿨 시작
+        log('sys', `🛡️ <b>자동화</b> — ${J(target.name,'의','의')} 배리어가 스스로 펼쳐졌습니다. (쉴드 +300)`);
+        try{ renderPowerBar(); }catch(e){}
+      }
+    }
     if(target.pwGodUntil && __now < target.pwGodUntil){
       amount = Math.max(1, Math.floor(amount * 0.01));
       try{ showFloatNumber(target.id, '무적', 'shield'); }catch(e){}
@@ -59933,6 +61115,18 @@ function resolveKleptoDebt(p){
 
 /* [Ver 13.1] 권능 '지뢰' — 상점에 들어서는 순간 터진다. 한 번 터지면 사라진다. */
 function pwShopMineCheck(p){
+  /* [Ver 14.5] 클레이모어 — 대상이 정해지지 않은 **상점 지뢰**. 개인 지뢰보다 먼저 터진다.
+     ⚠ 심은 본인도 밟는다(사용자 지정). alive 검사도 걸지 않는다 — 어차피 상점은 산 사람만 연다. */
+  if(p && pwShopMine){
+    const m2 = pwShopMine; pwShopMine = null;
+    log('highlight', `💣 <b>클레이모어</b> — ${J(p.name,'이','가')} 상점에 깔린 지뢰를 밟았습니다!${p.id===m2.by?' <b>(자기가 깐 것을...)</b>':''}`);
+    try{
+      currentAttackContext = { attackerName:'클레이모어', attackerId:m2.by||null, cardName:'지뢰' };
+      applyDamageToPlayer(p, m2.dmg || 800, 'NONE');
+      currentAttackContext = null;
+    }catch(e){}
+    try{ renderBoard(); if(checkWinCondition()) return; }catch(e){}
+  }
   if(!p || !p.pwMine) return;
   const m = p.pwMine; p.pwMine = null;
   const by = players.find(x=> x && x.id === m.by);
@@ -65507,6 +66701,9 @@ function lanHostSnapshot(){
       blackMarketSlots: (typeof blackMarketSlots!=='undefined') ? blackMarketSlots.map(sl=> sl?JSON.parse(JSON.stringify(sl)):null) : [],
       /* [Ver 14.0] 카드 시세 — 전역이라 여기 없으면 참가자 화면의 값이 호스트와 다르게 나온다 */
       mkt: (typeof MKT!=='undefined' && MKT) ? JSON.parse(JSON.stringify(MKT)) : {},
+      /* [Ver 14.5] 특성이 만든 판 전체 상태 — 전역이라 여기 없으면 참가자가 알 방법이 없다 */
+      pwMine:  (typeof pwShopMine!=='undefined'  && pwShopMine)  ? JSON.parse(JSON.stringify(pwShopMine))  : null,
+      pwFrost: (typeof pwFrostZone!=='undefined' && pwFrostZone) ? JSON.parse(JSON.stringify(pwFrostZone)) : null,
       closed: (typeof shopClosedForever!=='undefined')?!!shopClosedForever:false,
       lockOwner: (typeof shopLockOwnerId!=='undefined')?shopLockOwnerId:null,
       /* [Ver 10.5] 그린벨트·상점 영구 점거
@@ -65708,7 +66905,8 @@ function lanHostHandleInput(slot, payload){
     } else if(payload.action==='power'){
       /* [Ver 13.1] 랩터의 권능 — 쿨타임·발동 판정은 전부 호스트가 한다(pwFire가 다시 검사한다).
          ⚠ 턴 검사를 걸지 않는다. 권능은 자기 턴이 아닐 때도 쓰는 것이 규칙이다. */
-      try{ pwFire(p, payload.slot|0, payload.targetId||null); }catch(e){ console.error('[권능/랜서버] 처리 오류', e); }
+      try{ if(typeof payload.hireIdx === 'number') p.__pwHireIdx = payload.hireIdx;   // [Ver 14.5] 청부
+         pwFire(p, payload.slot|0, payload.targetId||null); }catch(e){ console.error('[권능/랜서버] 처리 오류', e); }
     } else if(payload.action==='mutate'){
       /* [Ver 13.1] 카드 변이 — 해금 여부는 "그 참가자 기기의 데이터"이므로 참가자 쪽에서
          판정을 마치고 uid만 보내온다. 호스트는 그대로 실행만 한다.
@@ -66331,6 +67529,8 @@ function lanClientApplyState(snap){
       //   슬롯은 항상 빈 배열이라 참가자 화면에 암시장 진열이 하나도 뜨지 않았다.
       blackMarketSlots = Array.isArray(snap.shop.blackMarketSlots) ? snap.shop.blackMarketSlots.map(sl=>sl?sl:null) : [];
       MKT = (snap.shop.mkt && typeof snap.shop.mkt === 'object') ? snap.shop.mkt : {};   // [Ver 14.0]
+      pwShopMine  = snap.shop.pwMine  || null;   // [Ver 14.5]
+      pwFrostZone = snap.shop.pwFrost || null;
       shopClosedForever = !!snap.shop.closed;
       shopLockOwnerId = snap.shop.lockOwner || null;
       /* [Ver 10.5] 그린벨트·상점 영구 점거 */
