@@ -7836,7 +7836,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.15</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.16</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -12505,8 +12505,12 @@ function seasonDateRangeText(){
 const ARCADE_COIN_REWARD = { 1:5, 2:2, 3:1 };   // 등수별 랩터코인
 const ARCADE_COIN_DAILY_CAP = 30;               // 하루에 얻을 수 있는 상한
 let ARCADE = null;
+/* [Ver 14.16] 출석·일일 퀘스트·상점 한도가 전부 이 한 줄을 본다.
+   ⚠ 예전에는 PC 시계를 그대로 믿어서, 시간을 앞으로 돌리면 **하루가 새로 시작**됐다.
+   ⚠ 시간대는 그대로 둔다 — 날짜는 여전히 그 사람 **지역 기준**으로 센다.
+     바로잡는 것은 '시계가 얼마나 어긋났나'뿐이다. */
 function todayKey(){
-  const t = new Date();
+  const t = new Date(ggNow());
   return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
 }
 function loadArcade(){
@@ -18706,6 +18710,60 @@ function artUbiniteMult(){ return 1 + artMine('ring')/100; }
    ▶ 저장 형식: { n: 보유수, at: 마지막 충전 기준 시각 }
      화면을 꺼둔 동안 지난 시간도 계산해 한꺼번에 채운다.
    ========================================================================== */
+/* ##########################################################################
+   [Ver 14.16] 서버 시각 — PC 시계를 돌리는 수법을 막는다
+   --------------------------------------------------------------------------
+   ▶ 왜 — 곡괭이 충전과 "오늘"(출석·일일 퀘스트·상점 한도)이 전부 **그 사람 PC 시계**를
+     믿고 있었다. 윈도우 설정에서 시간을 앞으로 돌리면 곡괭이가 즉시 차고 하루가 새로
+     시작됐다. 되돌렸다 올리기를 반복하면 끝이 없었다.
+   ▶ 어떻게 — 같은 출처로 HEAD 를 한 번 던지면 `Date` 헤더가 서버의 현재 시각이다.
+     본문이 0바이트라 사실상 공짜고, 1초 단위면 충전(10분)·날짜를 가리기에 충분하다.
+         오프셋 = 서버시각 - 내시계   →   시계를 +48h 돌리면 오프셋이 -48h 로 상쇄된다.
+   ⚠ Age 를 더하지 말 것. GitHub Pages(Fastly)는 캐시된 응답에도 Date 를 **지금 시각으로
+     새로 찍어** 준다. 더하면 그만큼 미래로 어긋난다(실측 확인).
+   ⚠ **같은 출처**여야 한다. 다른 출처의 Date 는 CORS 안전 목록에 없어 읽히지 않는다.
+   ⚠ 시간대는 그대로 둔다. 고치는 것은 '시계가 얼마나 어긋났나'뿐이고,
+     날짜는 여전히 그 사람 지역 기준으로 센다.
+   ########################################################################## */
+const GG_SKEW_KEY   = 'gang_card_clock_skew_v1';
+const GG_SKEW_EVERY = 10 * 60 * 1000;      // 10분마다 다시 맞춘다
+let __ggSkew   = 0;                        // 서버시각 - 내시계
+let __ggSkewOk = false;                    // 한 번이라도 맞췄나
+let __ggSkewTried = false;                 // 시도는 끝났나 (실패해도 true)
+let __ggSkewAt = 0;
+try{
+  const v = parseInt(localStorage.getItem(GG_SKEW_KEY), 10);
+  if(Number.isFinite(v)) __ggSkew = v;     // 지난번 값으로 일단 시작한다
+}catch(e){}
+
+/* 게임 안에서 "지금"이 필요하면 이걸 쓴다. */
+function ggNow(){ return Date.now() + __ggSkew; }
+
+async function ggSyncClock(){
+  try{
+    const t0 = Date.now();
+    /* ⚠ location.href 를 그대로 쓴다 — 같은 출처여야 Date 가 읽힌다.
+       no-store 로 캐시를 건너뛰어야 매번 새 Date 가 온다. */
+    const r = await fetch(location.href, { method:'HEAD', cache:'no-store' });
+    const d = r.headers.get('date');
+    if(!d) return false;
+    const ms = new Date(d).getTime();
+    if(!isFinite(ms)) return false;
+    /* 왕복의 절반만큼은 이미 흘렀다고 본다 */
+    const half = Math.round((Date.now() - t0) / 2);
+    __ggSkew = (ms + half) - Date.now();
+    __ggSkewOk = true; __ggSkewAt = Date.now();
+    try{ localStorage.setItem(GG_SKEW_KEY, String(__ggSkew)); }catch(e){}
+    return true;
+  }catch(e){ return false; }
+  finally{ __ggSkewTried = true; }
+}
+try{
+  ggSyncClock();
+  setInterval(()=>{ try{ ggSyncClock(); }catch(e){} }, GG_SKEW_EVERY);
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) ggSyncClock(); });
+}catch(e){ __ggSkewTried = true; }
+
 /* [Ver 12.7.1] 상한이 유물("우빈이가 정자에 두고온 책가방")로 늘어난다.
    그래서 상수 하나를 그대로 읽던 자리를 전부 pickaxeCap()으로 바꿨다 —
    한 군데라도 옛 상수를 읽으면 "표시는 8개인데 6개에서 멈추는" 어긋남이 생긴다. */
@@ -18725,7 +18783,7 @@ function loadPickaxe(){
     const raw = localStorage.getItem(STORAGE_KEYS.pickaxe);
     PICKAXE = raw ? (JSON.parse(raw)||null) : null;
   }catch(e){ PICKAXE = null; }
-  if(!PICKAXE || typeof PICKAXE.n !== 'number') PICKAXE = { n: pickaxeCap(), at: Date.now() };
+  if(!PICKAXE || typeof PICKAXE.n !== 'number') PICKAXE = { n: pickaxeCap(), at: ggNow() };
   return PICKAXE;
 }
 function savePickaxe(){ try{ localStorage.setItem(STORAGE_KEYS.pickaxe, JSON.stringify(loadPickaxe())); }catch(e){} }
@@ -18754,13 +18812,23 @@ function pickaxeSyncFromStorage(){
        ⚠ at 만으로 갈아끼우면 안 된다 — 상한 이상일 때 at 은 **메모리에서만** 앞으로 가므로
          (위 tickPickaxeRegen 참고) 매 호출마다 객체가 새로 만들어진다. */
     if(PICKAXE && PICKAXE.n === o.n && !(Number.isFinite(o.at) && o.at > (PICKAXE.at || 0))) return;
-    PICKAXE = { n: Math.max(0, o.n), at: Number.isFinite(o.at) ? o.at : Date.now() };
+    PICKAXE = { n: Math.max(0, o.n), at: Number.isFinite(o.at) ? o.at : ggNow() };
   }catch(e){}
 }
 function tickPickaxeRegen(){
   pickaxeSyncFromStorage();   // [Ver 13.15.2] 다른 창의 차감을 덮어쓰지 않도록 먼저 읽는다
   const s = loadPickaxe();
-  const now = Date.now();
+  const now = ggNow();   // [Ver 14.16] PC 시계가 아니라 서버 시각
+  /* ⚠ [Ver 14.16] 서버에 **한 번 물어보기 전까지는 적립하지 않는다.**
+     안 그러면 부팅 직후의 짧은 틈에 시계를 돌려 챙길 수 있다.
+     성공이든 실패든 시도만 끝나면 진행한다 — 오프라인인 사람을 묶어두면 안 된다. */
+  if(!__ggSkewTried) return s.n;
+  /* ★ [Ver 14.16] 기준 시각이 **미래**면 지금으로 끌어온다.
+     ⚠ 이게 없으면 스스로 못 푼다 — 아래 elapsed 가 Math.max(0, ...) 이라
+       미래 시각은 0으로 읽히고, at 은 그대로 남아 그 시각이 올 때까지 멈춰 있다.
+       제보된 "다음 곡괭이까지 2914분"이 정확히 이것이었다(at 이 48시간 미래).
+     ▶ 시계가 뒤로 맞춰지거나, 시계가 앞선 기기의 백업을 불러오면 이렇게 된다. */
+  if(typeof s.at === 'number' && s.at > now){ s.at = now; savePickaxe(); }
   const REGEN = pickaxeRegenMs();
   const CAP = pickaxeCap();
   if(s.n >= CAP){
@@ -18788,7 +18856,11 @@ function pickaxeCount(){ tickPickaxeRegen(); return loadPickaxe().n; }
 function pickaxeNextInMs(){
   const s = loadPickaxe();
   if(s.n >= pickaxeCap()) return null;
-  return Math.max(0, pickaxeRegenMs() - (Date.now() - (s.at || Date.now())));
+  const REGEN = pickaxeRegenMs();
+  /* ⚠ [Ver 14.16] 위아래 **양쪽**을 묶는다. 남은 시간이 충전 주기보다 클 수는 없다.
+     기준 시각이 어떤 이유로든 미래로 가 있어도 화면만은 말이 되게 둔다. */
+  const NOW = ggNow();
+  return Math.min(REGEN, Math.max(0, REGEN - (NOW - (s.at || NOW))));
 }
 function grantPickaxe(n){
   /* ⚠ [Ver 13.15.2] 순서를 바꿨다. 예전에는 s 를 **먼저** 잡고 tickPickaxeRegen() 을 불렀는데,
@@ -18839,7 +18911,7 @@ function spendPickaxe(n){
   s.n -= n;
   try{ logActivity(`곡괭이 -${n} (남은 ${s.n})`); }catch(e){}   // [Ver 14.9]
   // 가득 찬 상태에서 처음 쓴 순간부터 충전 시계가 다시 돈다
-  if(wasFull) s.at = Date.now();
+  if(wasFull) s.at = ggNow();
   savePickaxe();
   bumpSpendOdo('pickaxe', n);   // [Ver 13.17] 소비 계기판
   return true;
@@ -26233,6 +26305,14 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 14.16', date: '2026-09-11',
+    items: [
+      '⏰ <b>[수정] "다음 곡괭이까지 2914분" 같은 터무니없는 시간이 뜨던 문제.</b> 충전 기준 시각이 <b>미래</b>로 어긋나면 그 시각이 올 때까지 <b>스스로 풀리지 않았습니다.</b> PC 시계가 뒤로 맞춰지거나, 시계가 앞선 기기의 백업을 불러오면 이렇게 됐습니다. 이제 <b>저절로 바로잡힙니다.</b> 갇혀 계셨다면 게임을 켜는 즉시 풀립니다.',
+      '\u{1F6E1}️ <b>[차단] PC 시간을 바꿔서 곡괭이와 일일 보상을 얻는 것을 막았습니다.</b> 여태 충전과 "오늘"을 <b>PC 시계</b>로만 재고 있어서, 시간을 앞으로 돌리면 곡괭이가 즉시 차고 <b>출석·일일 퀘스트·상점 한도</b>가 새 날로 리셋됐습니다. 이제 <b>서버 시각</b>을 기준으로 셉니다.',
+      '\u{1F30F} <b>시간대는 그대로입니다.</b> 날짜는 여전히 <b>계신 지역 기준</b>으로 셉니다 — 바로잡는 것은 시계가 어긋난 정도뿐입니다.',
+    ]
+  },
   {
     version: 'Ver 14.15', date: '2026-09-11',
     items: [
