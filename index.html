@@ -7829,7 +7829,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.7.7</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.7.8</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -14149,6 +14149,7 @@ function loadCardsFromStorage(){
     cards = parsed;
     migrateEvoCardNames(); // [Ver 9.10.1] 옛 EX/Pro 이름을 새 pro 이름으로 갈아끼운다
     migrateRenamedCards();  // [잠수함] UFC → WWE
+    migrateReworkedCards(); // [Ver 14.7.8] 배스킨라빈스 31 → 배스킨라빈스31 (기록만 이전)
     return true;
   }catch(e){ return false; }
 }
@@ -14218,6 +14219,33 @@ function migrateRenamedCards(){
     move(()=> (typeof loadCardMastery === 'function') ? loadCardMastery() : null,
          ()=> { try{ saveCardMastery(); }catch(e){} });
   }catch(e){ console.error('[카드 이름 이주] 실패', e); }
+}
+/* [Ver 14.7.8] **리워크된 카드**의 기록 이전.
+   카드 자체는 REMOVED_CARD_NAMES 가 걷어내고, 여기서는 도감·마스터리 **기록만** 옮긴다.
+   ⚠ CARD_RENAMES 와 달리 cards 배열은 건드리지 않는다 — 건드리면 같은 이름 두 장이 남는다.
+   ⚠ 신 이름에 이미 기록이 있으면 덮어쓰지 않는다. 새로 쌓은 쪽이 우선이다. */
+const CARD_REWORKS = { '배스킨라빈스 31': '배스킨라빈스31' };
+function migrateReworkedCards(){
+  try{
+    const move = (load, save)=>{
+      try{
+        const obj = load(); if(!obj) return;
+        let touched = false;
+        Object.keys(CARD_REWORKS).forEach(oldN=>{
+          const nn = CARD_REWORKS[oldN];
+          if(obj[oldN] === undefined) return;
+          if(obj[nn] === undefined) obj[nn] = obj[oldN];
+          delete obj[oldN];
+          touched = true;
+        });
+        if(touched && save) save();
+      }catch(e){}
+    };
+    move(()=> (typeof loadCardDex === 'function') ? loadCardDex() : null,
+         ()=> { try{ saveCardDex(); }catch(e){} });
+    move(()=> (typeof loadCardMastery === 'function') ? loadCardMastery() : null,
+         ()=> { try{ saveCardMastery(); }catch(e){} });
+  }catch(e){ console.error('[카드 리워크 이주] 실패', e); }
 }
 function migrateEvoCardNames(){
   try{
@@ -15100,7 +15128,12 @@ const REMOVED_CARD_NAMES = ['만수르','체력버그','패러렐유니버스쉬
      효과가 손패·턴·반응창 어디에나 끼어들어 버그가 끊이지 않았다. 카드 하나 때문에
      생기는 예외가 너무 많아 유지 대신 삭제를 택한다.
      (효과 처리 코드는 남겨둔다 — 옛 세이브·전투 기록에 이 카드가 남아 있을 수 있다) */
-  '공유기'];
+  '공유기',
+  /* [Ver 14.7.8] 배스킨라빈스 리워크 — 띄어쓰기만 다른 두 장이 공존했다.
+     구 카드(B·쉴드까지)를 지우고 `배스킨라빈스31`(C) 하나로 통일한다.
+     ⚠ 이름만 바꾸면(CARD_RENAMES) 안 된다 — 병합 키가 grade::name::type 이라
+       type·grade 가 다른 신 카드가 또 들어와 같은 이름 두 장이 남는다. */
+  '배스킨라빈스 31'];
 /* 밸런스 조정(수치 변경)이 있었지만 카드 자체는 안 지워진 경우를 위한 강제 동기화 목록.
    loadSampleCards(true)의 "누락분만 보충" 병합 로직은 이미 존재하는 카드는 안 건드리기 때문에,
    localStorage에 옛 수치로 캐시된 카드(예: COMBO 기본 데미지 10)가 patch 이후에도 계속 옛 수치로 남는 버그가 있었다.
@@ -21046,6 +21079,20 @@ async function fbLookupRemoteCode(code){
    ########################################################################## */
 const BALANCE_PATCHES = [
   {
+    version: 'Ver 14.7.8', date: '2026-09-11',
+    groups: [
+      { title:'배스킨라빈스 — 띄어쓰기 하나 차이로 두 장이 있었습니다', kind:'card',
+        note:'<b>배스킨라빈스 31</b>(B)과 <b>배스킨라빈스31</b>(C)이 <b>띄어쓰기 하나만</b> 다른 채로 함께 굴러다녔습니다. 손패에서는 사실상 구분이 안 되고, 어느 쪽을 집었는지도 알기 어려웠습니다. <b>구 카드를 없애고 신 카드 하나로 통일</b>합니다. 쉴드 310이 빠진 대신 등급이 <b>B → C</b>로 내려가 더 자주 나옵니다. <span style="opacity:.7">(도감·마스터리 기록은 신 카드 쪽으로 그대로 옮겨집니다)</span>',
+        rows:[
+          { name:'배스킨라빈스31', icon:'\u{1F368}', rows:[
+            { label:'등급',   from:'B',     to:'C',     dir:'neutral' },
+            { label:'MaxHP',  from:'+310',  to:'+310',  dir:'neutral' },
+            { label:'HP',     from:'+310',  to:'+310',  dir:'neutral' },
+            { label:'쉴드',   from:'+310',  to:'없음',  dir:'down' }]},
+        ]},
+    ]
+  },
+  {
     version: 'Ver 14.7', date: '2026-09-11',
     groups: [
       { title:'포식 — 오래 기다리는 한 방에서, 자주 쓰는 축적으로', kind:'power',
@@ -22542,8 +22589,41 @@ let balancePatchIdx = 0;
      그래서 나중에 밸런스를 조정해 desc를 고쳐도 이 탭이 옛 설명을 들고 있는 일이 없다.
      (이름을 바꾸면 여기 이름도 같이 바꿔야 한다 — 못 찾은 카드는 조용히 건너뛴다)
    ▶ 새 버전을 넣을 땐 NEW_CARDS 맨 앞에 { version, date, note, names:[...] } 를 추가한다.
+   ⚠ **카드를 넣을 때마다 여기도 같이 적는다.** 안 적어도 게임은 멀쩡히 돌아가므로
+     아무도 알려주지 않는다 — 14.7·14.7.4 의 25장이 그렇게 빠져 13.4 에 멈춰 있었다.
+     (카드 정의부 samples 배열 앞에도 같은 경고를 박아뒀다)
    ########################################################################## */
 const NEW_CARDS = [
+  {
+    version: 'Ver 14.7.4', date: '2026-09-11',
+    note: '<b>15종</b>이 들어왔습니다. 이번에는 <b>“켜두면 알아서 굴러가는” 카드</b>에 무게를 뒀습니다 — ' +
+          '수퍼비 · 예고장 · Lo285 · GPT 는 낸 뒤 자신의 턴마다 저 혼자 일을 합니다. ' +
+          '반대로 총공장 · 머리박치기는 <b>한 번에 다 쏟아붓고 자기도 무너지는</b> 쪽입니다.',
+    names: [
+      /* 낸 뒤 매 턴 저절로 도는 것 */
+      '수퍼비','예고장','Lo285','GPT',
+      /* 조건이 붙는 것 */
+      '독촉 전화','분노','이거 방탄유리야','모노스크린','화장실용 태블릿모니터',
+      /* 시세를 흔드는 것 */
+      '자라투스트라 says','싸이먼 says 쌀먹해',
+      /* 한 방에 쏟아붓는 것 */
+      '총공장','머리박치기','사과톡톡톡 트로피카나','배스킨라빈스31'
+    ]
+  },
+  {
+    version: 'Ver 14.7', date: '2026-09-11',
+    note: '<b>10종</b>이 들어왔습니다. <b>카드가 다른 카드로 변하는</b> 흐름을 처음 넣었습니다 — ' +
+          '섬멸자 우빈은 두 번 쓰면 섬멸이 되고, 우빈찌개 정식은 네 번 비우면 무쇠 그릇만 남습니다. ' +
+          '우 빈 씨앗도 자신의 턴마다 우 빈을 하나씩 열어 손패를 채웁니다.',
+    names: [
+      /* 다른 카드로 변하는 것 */
+      '섬멸자 우빈','섬멸','우빈찌개 정식','무쇠 그릇',
+      /* 낸 뒤 매 턴 도는 것 */
+      '김하온','우 빈 씨앗','우 빈','우빈교',
+      /* 한 장으로 판을 뒤집는 것 */
+      '이그니션','번쩍번쩍 번개따라 찌리찌리찌리찌리찌리찌리찌리'
+    ]
+  },
   {
     version: 'Ver 13.4', date: '2026-08-31',
     note: '유저 아이디어를 그대로 받아 <b>4종</b>을 넣었습니다. 넷 다 <b>대가가 있는 카드</b>입니다 — ' +
@@ -22562,7 +22642,9 @@ const NEW_CARDS = [
       /* 판을 비트는 것 */
       '리베로','문이 열리네 요','AURA FARMING','우빈결혼식','힐러',
       /* 단순하고 센 것 */
-      '쉴드 강타','박격포','배스킨라빈스 31'
+      /* [Ver 14.7.8] 배스킨라빈스 31 은 리워크로 삭제됐다 — 빼두지 않으면
+         이름을 못 찾아 조용히 건너뛰고, 탭에 14장만 뜬다. */
+      '쉴드 강타','박격포'
     ]
   },
   {
@@ -24648,6 +24730,13 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 14.7.8', date: '2026-09-11',
+    items: [
+      '\u{1F0CF} <b>[수정] 인게임 「신규 카드」 탭이 13.4에서 멈춰 있던 문제.</b> 14.7에서 10장, 14.7.4에서 15장을 넣었는데 <b>탭에는 아무것도 안 적혀</b> 있었습니다. 카드는 게임에 멀쩡히 들어갔지만 “이번에 뭐가 생겼는지” 훑어볼 곳이 비어 있었습니다. <b>25장을 두 묶음으로</b> 채웠습니다.',
+      '\u{1F368} <b>[리워크] 배스킨라빈스.</b> <b>배스킨라빈스 31</b>(B)과 <b>배스킨라빈스31</b>(C)이 <b>띄어쓰기 하나만</b> 다른 채로 둘 다 있었습니다. 손패에서 구분이 안 돼, <b>구 카드를 없애고 하나로 통일</b>했습니다. 쉴드 310이 빠진 대신 등급이 <b>B → C</b>로 내려가 더 자주 나옵니다. 도감·마스터리 기록은 그대로 옮겨집니다.',
+    ]
+  },
   {
     version: 'Ver 14.7.7', date: '2026-09-11',
     items: [
@@ -33161,6 +33250,28 @@ function Jro(word){
   return w + ((!info.has || info.rieul) ? '로' : '으로');
 }
 
+/* ############################################################################
+   ##                                                                        ##
+   ##        카드를 넣거나 수치를 고쳤으면 ▶ 아래 세 곳도 같이 갱신한다        ##
+   ##                                                                        ##
+   ############################################################################
+
+     ① NEW_CARDS        — 인게임 **신규 카드** 탭.  { version, date, note, names:[...] }
+     ② BALANCE_PATCHES  — 인게임 **밸런스 패치** 탭. 수치를 바꿨을 때만
+     ③ CHANGELOG        — 패치노트
+
+   ⚠ 이걸 빠뜨려도 **게임은 멀쩡히 돌아가고 문법 검사도 통과한다.** 아무도 알려주지 않는다.
+     실제로 14.7 에서 10장, 14.7.4 에서 15장을 넣고도 신규 카드 탭이 **13.4 에 멈춰 있었다.**
+     플레이어는 "이번에 뭐가 생겼는지" 볼 곳이 없었다.
+
+   ⚠ NEW_CARDS 는 **이름으로만** 카드를 찾는다. 한 글자·띄어쓰기 하나만 달라도
+     그 줄을 **조용히 건너뛴다.** 넣은 뒤 탭을 직접 열어 장수를 세어 볼 것.
+
+   ⚠ 이름이 이미 있는 것과 겹치지 않는지도 본다.
+     실제로 `배스킨라빈스 31`(B·쉴드까지) 과 `배스킨라빈스31`(C) 가 **띄어쓰기 하나 차이로**
+     둘 다 들어간 적이 있다. 손패에서는 사실상 구분이 안 됐다.
+     → 14.7.8 에서 구 카드를 지우고 하나로 합쳤다(리워크). 넣기 전에 grep 으로 한 번 찾아볼 것.
+   ############################################################################ */
 /* ---------- sample cards ---------- */
 /* [Ver 5.3.5] 카드 목록에 새 버전 카드가 안 보일 때를 위한 수동 동기화 — 누락된 샘플 카드만 병합(중복 없음)하고 저장한다. */
 function syncNewCards(){
@@ -34201,8 +34312,10 @@ function loadSampleCards(mergeMissing=false){
      desc:'(패시브) 소지 시, 자신의 공격은 상대의 <b>받는 피해량 증감</b>을 전부 무시하고 적힌 값 그대로 들어간다. (감소도 증가도 무시한다)', flavor:'수비만 하는 사람'},
     {grade:'S', name:'유능제강', type:'RETURN_LAST_DAMAGE_X2', power:0, mult:2, pierce:'NONE',
      desc:'가장 최근에 자신에게 피해를 입힌 상대에게, 그 피해의 <b>2배</b>를 그대로 돌려준다.', flavor:'柔能制剛 — 부드러움이 굳셈을 이긴다'},
-    {grade:'B', name:'배스킨라빈스 31', type:'SELF_STAT_BUNDLE', power:0, maxHpAdd:310, hpAdd:310, shieldAdd:310, pierce:'NONE',
-     desc:'MaxHP +310, HP +310, 쉴드 +310', flavor:'정상에 올라오고 남은건 dirty one'},
+    /* [Ver 14.7.8] `배스킨라빈스 31`(B · MaxHP+310 · HP+310 · 쉴드+310) 삭제 —
+       `배스킨라빈스31`(C) 로 리워크했다. 띄어쓰기 하나 차이로 두 장이 공존해
+       손패에서 구분이 안 됐다.
+       ⚠ 효과 처리(SELF_STAT_BUNDLE)는 다른 카드 16장이 함께 쓰므로 **지우지 않는다.** */
     {grade:'S', name:'디아블로', color:'red', type:'DIABLO_PASSIVE', power:0, unplayable:true, pierce:'NONE',
      desc:'(패시브) 소지 시, 자신의 체력이 낮을수록 공격력이 실시간으로 오른다. (HP 2,000 이상이면 0% · HP 1에서 최대 <b>+250%</b>)', flavor:'my card like a pistol'},
     {grade:'S', name:'광전사', color:'red', type:'BERSERK_ON_HIT', power:0, atkPct:30, pierce:'NONE',
