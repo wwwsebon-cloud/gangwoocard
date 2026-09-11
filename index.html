@@ -7836,7 +7836,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.11</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.12</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -9867,18 +9867,30 @@ function cardAudioSeek(el, from){
   const go = ()=>{ try{ if(el.duration && from < el.duration) el.currentTime = from; }catch(e){} };
   if(el.readyState >= 1) go(); else el.addEventListener('loadedmetadata', go, { once:true });
 }
-/* 이 카드에 적용할 반응 시간(ms). 카드에 reactionMs가 있으면 그 값을 쓴다. */
-/* [Ver 14.7] caster 를 주면 만유인력(권능)을 함께 본다.
-   ⚠ 안 주면 예전과 똑같이 카드의 reactionMs 만 본다 — 옛 호출부가 그대로 살아 있게. */
+/* 이 카드에 적용할 반응 시간(ms). 0 이면 "정해진 값 없음"이라 기본값(4초/핫시트 15초)을 쓴다.
+   [Ver 14.7] caster 를 주면 만유인력을, [Ver 14.12] 시간 왜곡까지 함께 본다.
+   ⚠ 안 주면 예전과 똑같이 카드의 reactionMs 만 본다 — 옛 호출부가 그대로 살아 있게.
+
+   ★ 우선순위 (헷갈리기 쉬우니 여기 한 곳에 못 박는다)
+       ① 카드 고유 reactionMs  — 무엇보다 먼저다. 음원 드랍에 맞춰 박아둔 값이라
+          권능이 덮으면 연출이 어긋난다. 두 권능의 설명도 줄곧 "제외"라고 적고 있었다.
+          ⚠ 14.11 까지 만유인력이 이걸 **덮어쓰고 있었다.** 설명과 코드가 어긋나 있었다.
+       ② 만유인력·시간 왜곡 — 둘 다 걸리면 **짧은 쪽**이 남는다.
+       ③ 아무것도 없으면 0.
+   ⚠ 시간 왜곡은 **낸 사람 기준**이다(내가 내는 카드만). 만유인력은 **판 전체**다. */
 function cardReactionMs(card, caster){
+  const v = card && card.reactionMs;
+  if(typeof v === 'number' && v > 0) return v;          // ① 고유값이 최우선
+  let fixed = 0;
   try{
-    if(caster && typeof pwNewtonZone !== 'undefined' && pwNewtonZone
-       && turnCount < pwNewtonZone.until && caster.id !== pwNewtonZone.by){
-      return PW_NEWTON_MS;                       // 남이 낸 카드는 0.8초 만에 지나간다
+    if(typeof pwNewtonZone !== 'undefined' && pwNewtonZone && turnCount < pwNewtonZone.until){
+      fixed = PW_NEWTON_MS;                             // 만유인력 — 모두 1초
+    }
+    if(caster && caster.pwWarp && turnCount < caster.pwWarp.dueRound){
+      fixed = fixed ? Math.min(fixed, PW_WARP_MS) : PW_WARP_MS;   // ② 짧은 쪽이 남는다
     }
   }catch(e){}
-  const v = card && card.reactionMs;
-  return (typeof v==='number' && v>0) ? v : 0;
+  return fixed;
 }
 
 /* 재생 중인 카드 BGM 목록 — { key, ownerId, el } */
@@ -16237,10 +16249,12 @@ const POWER_DEFS = [
       /* 특성 · 굶주림 — +250 으로 크게 오르는 대신 2바퀴짜리다.
          ⚠ 되돌릴 양을 따로 기억해 둔다. permaAtkFlat 은 다른 카드도 쓰는 통이라
            만료 때 그냥 0으로 밀면 남의 것까지 지워진다. */
+      /* [Ver 14.12 밸런스] 2바퀴 → 1바퀴. 쿨타임도 2배가 됐다(특성표의 cd:2.0).
+         +250 을 두 바퀴나 들고 있으면서 쿨도 짧은 것이 너무 셌다. */
       if(pwIs('hunger')){
         me.permaAtkFlat = (me.permaAtkFlat||0) + 250;
-        me.pwHunger = { amt:250, dueRound: turnCount + 2 };
-        pwLog(`🍖 <b>굶주림</b> — 카드 ${eaten.length}장을 삼켜 공격력이 <b>+250</b>. <small>2바퀴 뒤 사라집니다.</small>`);
+        me.pwHunger = { amt:250, dueRound: turnCount + 1 };
+        pwLog(`🍖 <b>굶주림</b> — 카드 ${eaten.length}장을 삼켜 공격력이 <b>+250</b>. <small>1바퀴 뒤 사라집니다.</small>`);
         return;
       }
       me.permaAtkFlat = (me.permaAtkFlat||0) + v;
@@ -16386,11 +16400,13 @@ const POWER_DEFS = [
       me.atkMultiplier = (me.atkMultiplier||0) - v;
       pwLog(`🔀 <b>리코셰</b> — ${J(me.name,'의','의')} 공격력이 <b>${v}%</b> 떨어지고, <b>다음 공격 한 번</b>이 전체로 튕깁니다.`); } },
 
+  /* [Ver 14.12 리워크] 시전자만 쏙 빠지던 것을 없앴다. 이제 **자기도 같이** 1초다.
+     남만 조이는 권능이라 쓰는 쪽이 아무 대가도 치르지 않았다. */
   { key:'newton', rarity:'epic', icon:'🍎', name:'만유인력', target:'none', cd:110, amt:3, up:{k:'cd',per:1},
-    desc:v=>`<b>${v}바퀴</b> 동안 <b>자신이 아닌 사람이 낸 카드</b>의 반응 시간이 <b>0.8초</b>로 줄어듭니다. 아무도 손쓸 틈이 없습니다.`,
+    desc:v=>`<b>${v}바퀴</b> 동안 <b>모두가</b> 내는 카드의 반응 시간이 <b>1초로 고정</b>됩니다. <b>자신도 포함</b>됩니다. <span style="opacity:.7">(고유 반응시간이 정해진 카드는 제외)</span>`,
     run:(me,t,v)=>{
       pwNewtonZone = { by: me.id, until: turnCount + v };
-      pwLog(`🍎 <b>만유인력</b> — <b>${v}바퀴</b> 동안 ${J(me.name,'을','를')} 뺀 모두의 카드가 <b>0.8초</b> 만에 지나갑니다.`); } },
+      pwLog(`🍎 <b>만유인력</b> — <b>${v}바퀴</b> 동안 <b>모두의</b> 카드가 <b>1초</b> 만에 지나갑니다. <small>(자신도 포함)</small>`); } },
 
   { key:'wraith', rarity:'epic', icon:'👻', name:'망령', target:'none', cd:144, amt:4.4, up:{k:'amt',per:0.4},
     desc:v=>`<b>3바퀴</b> 동안 자신의 공격에 맞은 사람이 <b>${v}%</b> 확률로 <b>즉사</b>합니다.`,
@@ -16435,11 +16451,15 @@ const POWER_DEFS = [
   { key:'assassin', rarity:'legend', icon:'🔪', name:'암살', target:'enemy', cd:28, amt:0, up:{k:'cd',per:0.5},
     desc:v=>{ const tr = pwTraitOf('assassin');
       if(tr === 'elite')  return `지목 대상의 카드 한 장을 <b>없애버립니다.</b> <small>(특성 · ELITE — 쿨타임 2배)</small>`;
-      if(tr === 'hire')   return `내 손패에서 카드를 고르면, 상대의 <b>같은 자리</b> 카드가 한 단계 아래로 떨어집니다. <small>(특성 · 청부)</small>`;
+      if(tr === 'hire')   return `지목한 상대의 손패가 <b>등급만</b> 보입니다. 그중 한 장을 골라 <b>한 단계 아래</b>로 떨어뜨립니다. <small>(특성 · 청부)</small>`;
       return `지목 대상의 카드 한 장을 <b>한 단계 아래</b> 카드로 변이시킵니다.`; },
     run:(me,t,v)=>{
-      /* 특성 · 청부 — 내가 고른 자리와 **같은 번호**의 카드를 노린다.
-         사람은 usePower 에서 미리 고르고(__pwHireIdx), 봇·원격은 무작위다. */
+      /* [Ver 14.12 리워크] 특성 · 청부 — **상대 손패에서 직접** 고른다.
+         예전에는 내 손패에서 자리 번호를 고르고 상대의 같은 번호를 때렸다. 상대 손패를
+         볼 수 없으니 사실상 무작위였고, 자리가 비면 그냥 무작위로 새어나갔다.
+         이제 지목한 뒤 상대 손패가 **등급만** 보이는 목록으로 뜨고, 그중에서 고른다.
+         (이름·설명은 가린다 — 다 보이면 손패 전체를 훔쳐보는 정찰 권능이 돼버린다)
+         ⚠ 사람은 pwHirePick 이 지목 뒤에 고르게 한다. 봇·원격은 무작위다. */
       let i;
       if(pwIs('hire')){
         const want = (typeof me.__pwHireIdx === 'number') ? me.__pwHireIdx : -1;
@@ -16447,7 +16467,6 @@ const POWER_DEFS = [
         if(!t.hand || !t.hand.length){ pwLog(`🔪 상대 손패가 비어 있습니다.`); return; }
         i = (want >= 0 && want < t.hand.length) ? want : pwHandIdxRandom(t);
         if(i < 0) return;
-        if(want >= 0 && want >= t.hand.length) pwLog(`🔪 <b>청부</b> — ${want+1}번 자리가 비어 무작위로 대신 노립니다.`);
       } else {
         i = pwHandIdxRandom(t); if(i<0) return;
       }
@@ -16571,7 +16590,8 @@ const POWER_DEFS = [
   /* [Ver 13.10 너프] 13.6에서 5→7초로 올렸더니 반사 창이 너무 넓었다. 2.5초로 좁히고 쿨도 올린다.
      ⚠ 강화량(per:1)은 그대로다 — 기본이 7일 땐 +14%였지만 2.5가 되면서 **+40%**가 됐다.
        강화가 유독 세게 먹히는 권능이 되었으니, 세다 싶으면 per 를 먼저 볼 것. */
-  { key:'nou', rarity:'legend', icon:'🪞', name:'NO U', target:'self', cd:125, amt:2.5, up:{k:'amt',per:1},
+  /* [Ver 14.12 밸런스] 기본 지속 2.5 → 4초. */
+  { key:'nou', rarity:'legend', icon:'🪞', name:'NO U', target:'self', cd:125, amt:4, up:{k:'amt',per:1},
     desc:v=>`<b>${v}초</b> 동안 자신이 받는 피해를 <b>시전자에게 반사</b>합니다.`,
     run:(me,t,v)=>{ me.pwReflectUntil = Date.now() + v*1000; pwLog(`🪞 ${J(me.name,'이','가')} ${v}초간 모든 것을 되돌려보냅니다.`); } },
   /* [Ver 13.10 리워크] 예전엔 "들어갔다 나오는 토글"이었다. 한 번 들어가면 나올 때까지
@@ -16589,10 +16609,15 @@ const POWER_DEFS = [
       me.pwMatrixDmg = v;
       pwLog(`🟩 ${J(me.name,'이','가')} ${J(t.name,'을','를')} 노려본 채 매트릭스로 가라앉았습니다. (${PW_MATRIX_DIVE_MS/1000}초)`);
       try{ renderBoard(); }catch(e){} } },
-  { key:'timewarp', rarity:'legend', icon:'⏳', name:'시간 왜곡', target:'self', cd:80, amt:1.5, up:{k:'amt',per:0.1},
-    desc:v=>`<b>3바퀴</b>간 자신이 내는 카드의 반응시간이 <b>${v}초 감소</b>하고, 상대가 자신에게 쓰는 카드의 반응시간은 <b>1초 증가</b>합니다. <span style="opacity:.7">(고유 반응시간이 정해진 카드는 제외)</span>`,
-    run:(me,t,v)=>{ me.pwWarp = { cut: Math.round(v*1000), add: 1000, dueRound: turnCount + 3 };
-      pwLog(`⏳ ${J(me.name,'의','의')} 주변 시간이 뒤틀립니다. (3바퀴)`); } },
+  /* [Ver 14.12 리워크] "몇 초 깎기"에서 **2초 고정**으로 바뀌었다.
+     ⚠ 강화가 amt(깎는 양)에 붙어 있었는데, 고정값이 되면서 amt 가 아무 일도 안 하게 됐다.
+       그래서 강화를 **쿨타임 감소**로 옮긴다. 안 옮기면 강화해도 변하는 게 없다.
+     ⚠ pwWarp 는 모양만 남기고 cut/add 는 더 이상 읽지 않는다(cardReactionMs 참고).
+       dueRound 만 쓴다 — 옛 세이브에 남아 있어도 탈이 없다. */
+  { key:'timewarp', rarity:'legend', icon:'⏳', name:'시간 왜곡', target:'self', cd:110, amt:3, up:{k:'cd',per:3},
+    desc:v=>`<b>3바퀴</b>간 <b>자신이</b> 내는 카드의 반응시간이 <b>2초로 고정</b>됩니다. <span style="opacity:.7">(고유 반응시간이 정해진 카드는 제외)</span>`,
+    run:(me,t,v)=>{ me.pwWarp = { dueRound: turnCount + 3 };
+      pwLog(`⏳ ${J(me.name,'의','의')} 주변 시간이 뒤틀립니다. — <b>3바퀴</b>간 자신의 카드가 <b>2초</b>로 고정됩니다.`); } },
   { key:'nightmare', rarity:'legend', icon:'😱', name:'악몽', target:'enemy', cd:130, amt:66, up:{k:'cd',per:5},
     desc:v=>`<b>1바퀴</b>간 지목 대상의 <b>최대 체력과 현재 체력이 66%</b>가 됩니다. 끝나면 원래대로 돌아옵니다.`,
     run:(me,t,v)=>{
@@ -16661,7 +16686,7 @@ const PW_TRAITS = {
   filch:   [{ key:'reseller',  name:'리셀러',            desc:'훔친 카드를 손패에 넣지 않고 <b>즉시 구매가의 1.2배</b>로 팔아 골드를 챙깁니다.' },
             { key:'badhand',   name:'나쁜손',    cd:2.0, desc:'한 번에 <b>2장</b>을 훔칩니다. 대신 쿨타임이 <b>2배</b>가 됩니다.' }],
   bolt:    [{ key:'rod',       name:'피뢰침',            desc:'기본 피해가 <b>+100</b>. 연쇄될 때 피해가 +30이 아니라 <b>1.5배</b>로 불어납니다. 다만 <b>자신도 맞을 수 있습니다.</b>' }],
-  devour:  [{ key:'hunger',    name:'굶주림',            desc:'공격력이 <b>+250</b>으로 크게 오릅니다. 대신 <b>2바퀴</b>만 지속됩니다.' }],
+  devour:  [{ key:'hunger',    name:'굶주림',    cd:2.0, desc:'공격력이 <b>+250</b>으로 크게 오릅니다. 대신 <b>1바퀴</b>만 지속되고 쿨타임이 <b>2배</b>입니다.' }],
   emp:     [{ key:'ddos',      name:'디도스',            desc:'지속이 <b>2바퀴</b>로 짧아집니다. 대신 공격력이 0이 되는 대신 그 <b>공격이 자신에게 돌아갑니다.</b>' }],
   barrier: [{ key:'autoshield',name:'자동화',            desc:'직접 쓸 수 없습니다. 대신 <b>1000 이상의 피해를 맞기 직전</b> 자동으로 발동합니다.' }],
   nuke:    [{ key:'mini',      name:'소형화',            desc:'발동 확률이 <b>3배</b>가 됩니다. 대신 피해량이 <b>1000</b>으로 줄어듭니다.' }],
@@ -16671,7 +16696,7 @@ const PW_TRAITS = {
   hack:    [{ key:'malware',   name:'말웨어',            desc:'대상의 <b>공격 카드 전부</b>를 해킹합니다. 다만 <b>1바퀴 뒤</b> 원래대로 돌아옵니다.' }],
   blizzard:[{ key:'polar',     name:'극지방',            desc:'<b>5바퀴</b> 동안 빙결지대를 만듭니다. 카드를 낼 때 <b>25%</b>로 1바퀴 스턴 — <b>자신은 예외</b>입니다.' },
             { key:'coldwave',  name:'한파주의보',        desc:'얼리는 대신 전원에게 <b>[한파]</b>를 <b>1중첩</b> 씌웁니다. 1중첩마다 공격력 <b>-15%</b>, <b>4중첩</b>이 되면 중첩이 전부 풀리면서 <b>2바퀴 스턴</b>됩니다. <b>2바퀴</b> 동안 새로 맞지 않으면 중첩이 <b>전부 사라집니다.</b>' }],
-  assassin:[{ key:'hire',      name:'청부',              desc:'내 손패에서 카드를 고르면, 상대의 <b>같은 자리</b> 카드에 발동합니다.' },
+  assassin:[{ key:'hire',      name:'청부',              desc:'지목한 상대의 손패가 <b>등급만</b> 보입니다. 그중 한 장을 직접 골라 발동합니다.' },
             { key:'elite',     name:'ELITE',     cd:2.0, desc:'등급을 떨어뜨리는 대신 그 카드를 <b>없애버립니다.</b> 쿨타임은 <b>2배</b>입니다.' }],
   snipe:   [{ key:'sniper',    name:'스나이퍼',  cd:0.5, desc:'쿨타임이 <b>절반</b>. <b>3바퀴 뒤</b> 대상에게 <b>1500 쉴드관통</b> 피해. 대상이 <b>E등급</b>을 내면 풀립니다.' }],
   silence: [{ key:'period',    name:'기간제',    cd:0.25,desc:'쿨타임이 <b>4분의 1</b>. 대신 침묵이 영구가 아니라 <b>30초</b>만 갑니다.' }],
@@ -16775,7 +16800,8 @@ let pwFrostZone = null;   // 눈보라·극지방 { by, until } — 시전자 �
 /* [Ver 14.7] 만유인력 { by, until } — 시전자가 아닌 사람이 낸 카드의 반응 시간이 0.8초가 된다.
    ⚠ **전역**이라 랜서버 스냅샷에 직접 실어야 한다. 플레이어 객체와 달리 저절로 동기화되지 않는다. */
 let pwNewtonZone = null;
-const PW_NEWTON_MS = 800;
+const PW_NEWTON_MS = 1000;   // [Ver 14.12] 0.8 → 1초 고정
+const PW_WARP_MS   = 2000;   // [Ver 14.12] 시간 왜곡 — 자신이 내는 카드 2초 고정
 
 /* ══════════════════════════════════════════════════════════════════
    [Ver 14.7] 눈보라 · 한파주의보 — [한파] 중첩
@@ -17923,8 +17949,8 @@ function usePower(slot){
       + '<span style="font-size:12px;color:var(--fg-dim);">1000 이상의 피해를 맞기 직전에 <b>스스로</b> 펼쳐집니다.</span>',
       [{label:'확인', solid:true}]); return;
   }
-  /* [Ver 14.5] 암살 · 청부 — 대상을 고르기 전에 **내 손패에서 자리**를 먼저 고른다. */
-  if(def.key === 'assassin' && s.trait === 'hire'){ pwHirePick(slot, def); return; }
+  /* [Ver 14.12] 청부는 **지목이 먼저**다. 고르는 대상이 상대 손패로 바뀌었기 때문이다.
+     (예전에는 내 손패에서 자리를 먼저 골랐다 — pwHirePick 참고) */
   if(def.target === 'enemy'){ pwBeginTargeting(slot, def); return; }
   pwSend(slot, null);
 }
@@ -17943,34 +17969,34 @@ function pwSend(slot, targetId){
    ⚠ .p-card 의 onclick 은 카드 지목(highlightSelectableTargets)이 통째로 덮어쓴다.
      그래서 권능 타겟팅은 **끝나면 반드시 clearSelectableTargets()로 원상복구**한다.
    ========================================================================== */
-/* [Ver 14.5] 암살 · 청부 — 내 손패에서 "몇 번째 자리"를 고른 뒤 대상을 지목한다.
-   상대의 같은 번호 카드가 맞는다. 모노리스의 2단 선택(pwMonolithPick)이 선례다.
+/* [Ver 14.12 리워크] 암살 · 청부 — **지목한 상대의 손패**에서 한 장을 고른다.
+   ⚠ 보여주는 것은 **등급뿐**이다. 이름을 같이 보여주면 손패를 통째로 훔쳐보는
+     정찰 권능이 되어, 등급을 깎는 것보다 그 정보가 훨씬 세진다.
    ⚠ 봇·랜서버 원격은 이 창을 띄우지 않는다 — run 안에서 무작위 자리로 대신 처리한다. */
-function pwHirePick(slot, def){
-  const me = viewer();
-  if(!me || !Array.isArray(me.hand) || !me.hand.length){
-    showModal('🔪 청부', '내 손패가 비어 있어 자리를 고를 수 없습니다.', [{label:'확인', solid:true}]);
+function pwHirePick(slot, targetId){
+  const t = (Array.isArray(players) ? players.find(x=> x && x.id === targetId) : null);
+  if(!t || !Array.isArray(t.hand) || !t.hand.length){
+    showModal('🔪 청부', '상대의 손패가 비어 있습니다.', [{label:'확인', solid:true}]);
     return;
   }
-  const rows = me.hand.map((c,i)=>
-    `<button class="pw-hire-b" onclick="pwHireChoose(${slot}, ${i})">
+  const rows = t.hand.map((c,i)=>
+    `<button class="pw-hire-b" onclick="pwHireChoose(${slot}, ${i}, '${escapeHtml(String(targetId))}')">
        <span class="pw-hire-n">${i+1}</span>
-       <span class="pw-hire-nm">${escapeHtml(c.name)}</span>
-       <span class="pw-hire-g">${escapeHtml(c.grade)}</span>
+       <span class="pw-hire-nm" style="opacity:.45;">??????</span>
+       <span class="pw-hire-g" style="font-size:12px;color:var(--fg);">${escapeHtml(c.grade)}</span>
      </button>`).join('');
-  showModal('🔪 청부 — 자리 고르기', `<div style="line-height:1.7;">
+  showModal('🔪 청부 — 카드 고르기', `<div style="line-height:1.7;">
       <div style="font-size:12.5px;color:var(--fg-dim);margin-bottom:9px;">
-        고른 <b>자리 번호</b>와 같은 번호의 <b>상대 카드</b>가 강등됩니다.<br>
-        상대의 손패가 짧으면 무작위 자리로 대신 들어갑니다.</div>
+        <b>${escapeHtml(t.name)}</b>의 손패입니다. <b>등급만</b> 보입니다.<br>
+        고른 카드가 <b>한 단계 아래</b>로 떨어집니다.</div>
       <div class="pw-hire-list">${rows}</div>
     </div>`, [{label:'취소'}]);
 }
-function pwHireChoose(slot, idx){
+function pwHireChoose(slot, idx, targetId){
   const me = viewer();
   if(me) me.__pwHireIdx = idx;
   try{ closeModal(); }catch(e){}
-  const def = powerDefOf('assassin');
-  pwBeginTargeting(slot, def);
+  pwSend(slot, targetId);
 }
 
 let __pwTargeting = null;
@@ -18002,7 +18028,10 @@ function pwBeginTargeting(slot, def){
 function pwPickTarget(pid){
   if(!__pwTargeting) return;
   const slot = __pwTargeting.slot;
+  const key  = __pwTargeting.key;
   pwEndTargeting();
+  /* [Ver 14.12] 청부 — 지목이 끝나면 그 사람의 손패에서 한 장을 더 고른다. */
+  if(key === 'assassin' && pwTraitOf('assassin') === 'hire'){ pwHirePick(slot, pid); return; }
   pwSend(slot, pid);
 }
 function pwCancelTargeting(){ pwEndTargeting(); }
@@ -21292,6 +21321,41 @@ async function fbLookupRemoteCode(code){
    새 패치를 넣을 땐 BALANCE_PATCHES 맨 앞에 한 덩어리를 추가하면 된다.
    ########################################################################## */
 const BALANCE_PATCHES = [
+  {
+    version: 'Ver 14.12', date: '2026-09-11',
+    groups: [
+      { title:'반응시간을 건드리는 권능 둘 — 깎기에서 고정으로', kind:'power',
+        note:'<b>시간 왜곡</b>은 "몇 초 깎기"라 강화할수록 조금씩 빨라질 뿐이었고, <b>만유인력</b>은 <b>쓰는 사람만 쏙 빠져서</b> 아무 대가 없이 남들만 조였습니다. 둘 다 <b>고정값</b>으로 바꿨습니다. 이제 숫자가 분명하고, 만유인력은 <b>자기도 같이</b> 1초를 받습니다.<br>⚠ 둘 다 걸리면 <b>짧은 쪽</b>이 남습니다. 그리고 둘 다 <b>카드 고유 반응시간은 건드리지 못합니다.</b>',
+        rows:[
+          { name:'시간 왜곡', icon:'\u{23F3}', rows:[
+            { label:'효과',   from:'내 카드 −1.5초 · 나를 노리는 카드 +1초', to:'내 카드 <b>2초 고정</b>', dir:'neutral' },
+            { label:'지속',   from:'3바퀴', to:'3바퀴',   dir:'neutral' },
+            { label:'쿨타임', from:'80초',  to:'110초',   dir:'down' },
+            { label:'강화',   from:'감소량 +0.1초', to:'쿨타임 −3초', dir:'neutral' }]},
+          { name:'만유인력', icon:'\u{1F34E}', rows:[
+            { label:'대상',   from:'자신을 뺀 모두', to:'<b>자신을 포함한</b> 모두', dir:'down' },
+            { label:'반응시간', from:'0.8초', to:'1초 고정', dir:'neutral' },
+            { label:'지속',   from:'3바퀴', to:'3바퀴', dir:'neutral' },
+            { label:'쿨타임', from:'110초', to:'110초', dir:'neutral' }]},
+        ]},
+      { title:'포식 · 굶주림 — 오래 들고 있기엔 너무 컸다', kind:'power',
+        note:'+250 은 다른 어떤 공격력 상승보다 큰 값입니다. 그걸 <b>두 바퀴나</b> 들고 있으면서 쿨타임까지 짧으니, 특성을 안 끼는 쪽이 손해였습니다. 지속을 반으로 줄이고 쿨타임을 두 배로 올렸습니다.',
+        rows:[
+          { name:'굶주림', icon:'\u{1F356}', rows:[
+            { label:'공격력', from:'+250', to:'+250',  dir:'neutral' },
+            { label:'지속',   from:'2바퀴', to:'1바퀴', dir:'down' },
+            { label:'쿨타임', from:'18초',  to:'36초',  dir:'down' }]},
+        ]},
+      { title:'그 밖에', kind:'power',
+        rows:[
+          { name:'NO U', icon:'\u{1FA9E}', rows:[
+            { label:'지속', from:'2.5초', to:'4초', dir:'up' }]},
+          { name:'암살 · 청부', icon:'\u{1F52A}', rows:[
+            { label:'고르는 곳', from:'내 손패의 자리 번호', to:'<b>상대 손패에서 직접</b>', dir:'up' },
+            { label:'보이는 것', from:'없음 (사실상 운)', to:'<b>등급만</b> 보입니다', dir:'up' }]},
+        ]},
+    ]
+  },
   {
     version: 'Ver 14.8', date: '2026-09-11',
     groups: [
@@ -25962,6 +26026,14 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 14.12', date: '2026-09-11',
+    items: [
+      '⚖️ <b>[밸런스] 권능 5종을 손봤습니다.</b> <b>시간 왜곡</b>과 <b>만유인력</b>은 아예 다시 만들었습니다 — 이제 반응시간을 <b>깎는</b> 것이 아니라 <b>고정</b>합니다. 자세한 내용은 <b>밸런스 패치</b> 탭을 봐주세요.',
+      '\u{1F52A} <b>[리워크] 암살 · 청부.</b> 예전에는 <b>내 손패</b>에서 자리 번호를 고르고 상대의 같은 번호를 때렸습니다. 상대 손패가 안 보이니 사실상 운이었습니다. 이제 <b>지목한 상대의 손패가 등급만 보이는 목록</b>으로 뜨고, 그중에서 직접 고릅니다. <span style="opacity:.75">(이름과 설명은 가립니다 — 다 보이면 등급을 깎는 것보다 손패를 훔쳐보는 쪽이 훨씬 세지기 때문입니다)</span>',
+      '\u{1F41B} <b>[수정] 만유인력이 카드 고유 반응시간을 덮어쓰던 문제.</b> 설명에는 줄곧 "고유 반응시간이 정해진 카드는 제외"라고 적혀 있었는데 실제로는 덮어쓰고 있었습니다. 러시안룰렛(37.5초)처럼 음원에 맞춰둔 카드의 연출이 어긋나던 원인입니다.',
+    ]
+  },
   {
     version: 'Ver 14.11', date: '2026-09-11',
     items: [
@@ -47597,22 +47669,16 @@ function openReactionWindow(caster, card, targetId, onResolve){
   /* [Ver 9.13.1] 기습공격!!!+ — 진화하면 반응 시간이 1초 줄어든다.
      카드에 reactionMs를 박지 않고 여기서 깎는 이유는, 핫시트(15초)에서도 "1초 단축"이 되게 하기 위해서다. */
   const __evoQuickCut = isEvoOf(card, '기습공격!!!') ? 1000 : 0;
-  /* [Ver 13.3] 권능 '시간 왜곡' — 반응시간을 늘리고 줄인다.
-     ⚠ 카드가 **고유 반응시간**(reactionMs)을 들고 있으면 손대지 않는다. 그 값들은 음원 드랍
-       타이밍에 맞춰 박아둔 것이라(러시안룰렛 37.5초 등) 건드리면 연출이 어긋난다. */
-  let __pwWarp = 0;
-  if(!__cardMs){
-    try{
-      if(caster && caster.pwWarp && turnCount < caster.pwWarp.dueRound) __pwWarp -= (caster.pwWarp.cut || 0);
-      const __wt = Array.isArray(players) ? players.find(x=> x && x.id === targetId) : null;
-      if(__wt && caster && __wt.id !== caster.id && __wt.pwWarp && turnCount < __wt.pwWarp.dueRound){
-        __pwWarp += (__wt.pwWarp.add || 0);
-      }
-    }catch(e){}
-  }
+  /* [Ver 14.12] 시간 왜곡·만유인력은 이제 **고정값**이라 cardReactionMs 가 통째로 정한다.
+     (13.3~14.11 에는 여기서 -1.5초 / +1초 를 더하고 빼는 보정이 따로 있었다)
+     ⚠ 고정값이 정해졌으면 기습공격!!!+ 의 -1초도 **얹지 않는다.**
+       "고정"이라고 해놓고 깎이면 그 말이 거짓이 된다. */
+  const __fixedMs = __cardMs;
   const REACT_MS = hasOverride
     ? window.__reactionMsOverride
-    : Math.max(1000, (__cardMs || __casterFast || (hotseatMode ? 15000 : 4000)) - __evoQuickCut + __pwWarp); // [Ver 5.3.4] 핫시트는 15초, 단일플레이는 4초 / [Ver 8.2] "느려" 소지자는 1.5초
+    : (__fixedMs
+        ? __fixedMs
+        : Math.max(1000, (__casterFast || (hotseatMode ? 15000 : 4000)) - __evoQuickCut)); // [Ver 5.3.4] 핫시트는 15초, 단일플레이는 4초 / [Ver 8.2] "느려" 소지자는 1.5초
   // [Ver 8.1.18] 표시용 타이머 = 실제 반응시간(REACT_MS).
   // · 카드에 reactionMs가 있으면(딱지남 러시안룰렛 37.5초, 메카드 6초, 12초 구간 등) 그 숫자부터 카운트다운한다.
   // · hasOverride(튜토리얼 등)만 예외적으로 표시는 기본 4/15초처럼 보이게 하고 슬로우모션 처리.
