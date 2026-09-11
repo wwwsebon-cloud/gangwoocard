@@ -7829,7 +7829,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.7.9</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.7.10</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -24748,6 +24748,12 @@ function exitPlaygroundBar(){
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
   {
+    version: 'Ver 14.7.10', date: '2026-09-11',
+    items: [
+      '\u{1F41B} <b>[버그수정] 로그에 &lt;b&gt; · &lt;small&gt; 같은 태그가 글자로 찍히던 문제.</b> 로그 본문은 닉네임·카드 이름으로 나쁜 짓을 못 하게 <b>통째로 무해화</b>하는데, 그 과정에서 게임이 스스로 넣은 <b>굵게·작게·줄바꿈</b>까지 함께 막혀 있었습니다. 세어보니 로그에 쓰인 굵게가 <b>1,494곳</b>이라 사실상 어디서나 새고 있었습니다. 이제 <b>해가 없는 서식만 골라</b> 되살립니다 — 무해화 자체는 그대로라 닉네임으로 장난치는 건 여전히 막힙니다.',
+    ]
+  },
+  {
     version: 'Ver 14.7.9', date: '2026-09-11',
     items: [
       '\u{1F3B5} <b>[버그수정] 메뉴 BGM이 다른 화면을 갔다 오면 다시는 안 나오던 문제.</b> 14.7에서 넣은 “이어재생”의 부작용이었습니다. 곡마다 재생기를 쟁여두고 재사용하는데, 그 재생기의 재생이 <b>한 번이라도 거부당하면</b> 멈춘 채로 남으면서도 “이 곡이 흐르는 중”으로 기록돼, 그 뒤로는 <b>아예 다시 틀려는 시도조차 하지 않았습니다.</b> 이제 실제로 흐르고 있는지까지 확인하고, 실패하면 재생기를 새로 만들어 한 번 더 시도합니다.',
@@ -38593,6 +38599,27 @@ function getPlayerColorClass(pid){
   return Number.isFinite(n) ? cycle[n % cycle.length] : 'player-blue';
 }
 function escapeRegExp(s){ return (s||'').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+/* ══════════════════════════════════════════════════════════════════
+   [Ver 14.7.10] 로그 서식 태그 되살리기
+   --------------------------------------------------------------------------
+   로그 본문은 통째로 escapeHtml 한다 — 닉네임·카드 이름이 사용자 입력이라
+   <img onerror=...> 같은 것이 들어올 수 있기 때문이다. 그 판단은 그대로 둔다.
+   다만 게임이 스스로 넣은 <b>·<small>·<br> 까지 함께 막혀 글자로 찍히고 있었다.
+   그래서 **해가 없는 것만 골라** 되돌린다.
+   ⚠ 속성 없는 서식 태그가 기본이다. style 은 색·투명도 형태만 좁게 허용한다.
+     속성을 자유롭게 허용하면 주입 구멍이 다시 열린다 — 넓히지 말 것.
+   ══════════════════════════════════════════════════════════════════ */
+const LOG_SAFE_TAG_RE   = /&lt;(\/?)(b|i|em|strong|small|u|s)&gt;/gi;
+const LOG_SAFE_BR_RE    = /&lt;br\s*\/?&gt;/gi;
+const LOG_SAFE_STYLE_RE = /&lt;(b|span)\s+style="((?:\s*(?:color:\s*#[0-9a-fA-F]{3,8}|opacity:\s*(?:0?\.\d+|[01]))\s*;?)+)"&gt;/gi;
+const LOG_SAFE_CLOSE_RE = /&lt;\/(span)&gt;/gi;
+function restoreSafeLogTags(html){
+  return String(html)
+    .replace(LOG_SAFE_TAG_RE,   '<$1$2>')
+    .replace(LOG_SAFE_BR_RE,    '<br>')
+    .replace(LOG_SAFE_STYLE_RE, '<$1 style="$2">')
+    .replace(LOG_SAFE_CLOSE_RE, '</$1>');
+}
 function formatLogMessageWithPlayerColors(msg){
   let raw = String(msg ?? '');
   const tokens = [];
@@ -38623,7 +38650,7 @@ function formatLogMessageWithPlayerColors(msg){
       tokens.push({ token, name:p.name, pid:p.id });
     }
   });
-  let html = escapeHtml(raw);
+  let html = restoreSafeLogTags(escapeHtml(raw));
   tokens.forEach(t=>{
     const span = `<span class="log-player-name ${getPlayerColorClass(t.pid)}">${escapeHtml(t.name)}</span>`;
     html = html.split(t.token).join(span);
