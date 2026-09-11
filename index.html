@@ -7836,7 +7836,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.13</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.14</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -23773,7 +23773,89 @@ function hgChallenge(){
 }
 
 /* 판이 끝날 때마다 부른다. 의심스러울 때만 확인창을 띄운다. */
-function hgMaybeChallenge(){
+/* ##########################################################################
+   [Ver 14.14] 채굴 리듬 — 곡괭이 매크로가 남기는 흔적
+   --------------------------------------------------------------------------
+   ⚠ 클릭 지문(__hgClicks)과 달리 **저장소에 남긴다.** 매크로가 몇 시간짜리라
+     중간에 새로고침이 끼면 메모리 기록은 통째로 날아가기 때문이다.
+   ⚠ 담는 것은 **시각뿐**이다. 무엇을 캤는지도, 누구인지도 담지 않는다.
+   ########################################################################## */
+const HG_MINE_KEY   = 'gang_card_mine_rhythm_v1';
+/* ⚠ 200 인 이유 — '안 잠' 신호는 **24시간**을 봐야 한다. 10분 간격이면 하루에 144번이라
+     80개로는 13시간밖에 못 덮어 그 신호가 영영 뜨지 않는다(실제로 그랬다). */
+const HG_MINE_KEEP  = 200;                 // 최근 이만큼의 채굴 시각
+const HG_BURST_MS   = 60 * 1000;           // 이 안에 이어 캔 것은 한 번으로 묶는다
+const HG_DAY_MS     = 24 * 3600 * 1000;
+const HG_SLEEP_MS   = 2.5 * 3600 * 1000;   // 하루에 이만큼도 안 쉬면 사람이 아니다
+
+function hgMineLoad(){
+  try{
+    const a = JSON.parse(localStorage.getItem(HG_MINE_KEY) || '[]');
+    return Array.isArray(a) ? a.filter(t=> typeof t === 'number') : [];
+  }catch(e){ return []; }
+}
+function hgMineMark(){
+  try{
+    const a = hgMineLoad();
+    a.push(Date.now());
+    localStorage.setItem(HG_MINE_KEY, JSON.stringify(a.slice(-HG_MINE_KEEP)));
+  }catch(e){}
+}
+/* 몰아 캔 것은 한 번으로 묶는다 — 사람이 5개를 연달아 캐는 건 정상이다. */
+function hgMineSessions(){
+  const a = hgMineLoad().slice().sort((x,y)=> x-y);
+  const out = [];
+  a.forEach(t=>{ if(!out.length || t - out[out.length-1] > HG_BURST_MS) out.push(t); });
+  return out;
+}
+/* S1 — 간격이 자로 잰 듯 일정한가. 사람 손으로는 나올 수 없는 모양이다.
+   ⚠ 처음에는 "중앙값 ±8% 안에 몇 개나 들어오나"로 셌다가, 간격을 **±5% 만 흔든
+     매크로에 그대로 뚫렸다.** 하나라도 선 밖으로 나가면 안 세는 방식이라 흔들기에 약하다.
+   ▶ 그래서 **변동계수**(표준편차 ÷ 평균)로 바꿨다. 흩어진 정도를 숫자 하나로 보는 것이라
+     조금 흔들어도 값이 크게 움직이지 않는다.
+         매크로(정확) 0.00 · 매크로(흔들기) 0.06 · 사람(강박적) 0.21 · 사람(보통) 0.5+
+     0.13 에 선을 그으면 흔드는 매크로까지 잡고 사람은 건드리지 않는다. */
+const HG_CV_LIMIT = 0.13;
+function hgMineMetronome(){
+  const s = hgMineSessions();
+  if(s.length < 14) return false;
+  const gaps = [];
+  for(let i=1; i<s.length; i++) gaps.push(s[i] - s[i-1]);
+  if(gaps.length < 13) return false;
+  const mean = gaps.reduce((a,b)=> a+b, 0) / gaps.length;
+  if(mean < 60000) return false;                      // 너무 촘촘하면 몰아 캔 것이다
+  let v = 0;
+  gaps.forEach(g=>{ v += (g - mean) * (g - mean); });
+  const cv = Math.sqrt(v / gaps.length) / mean;
+  return cv < HG_CV_LIMIT;
+}
+/* S2 — 하루를 통째로 채웠는가. 사람은 반드시 몇 시간을 비운다. */
+function hgMineNoSleep(){
+  const now = Date.now();
+  const s = hgMineSessions().filter(t=> now - t < HG_DAY_MS);
+  if(s.length < 20) return false;                     // 표본이 적으면 판단하지 않는다
+  if(now - s[0] < HG_DAY_MS * 0.9) return false;      // 24시간을 덮지 못하면 아직 모른다
+  let longest = 0;
+  for(let i=1; i<s.length; i++) longest = Math.max(longest, s[i] - s[i-1]);
+  longest = Math.max(longest, now - s[s.length-1]);
+  return longest < HG_SLEEP_MS;                       // 2.5시간도 안 쉬었다
+}
+
+/* 채굴·강화를 누를 때 부른다. 잠겨 있으면 **막고**, 의심스러우면 확인창을 띄운다.
+   ⚠ 막는 것까지 여기서 한다 — 14.8.2 는 잠금이 게임 시작만 막아서,
+     걸려도 채굴은 그대로 됐다. 잃는 게 없으면 잠금이 아니다. */
+function hgMineGate(){
+  try{
+    if(typeof devAnyMode === 'function' && devAnyMode()) return true;
+    if(window.__GG_TEST) return true;
+    if(hgLocked()){ hgShowLock(); return false; }
+    hgMineMark();
+    hgMaybeChallenge('mine');
+  }catch(e){}
+  return true;
+}
+
+function hgMaybeChallenge(where){
   try{
     if(typeof devAnyMode === 'function' && devAnyMode()) return;   // 개발자 면제
     if(window.__GG_TEST) return;                                   // 자동 테스트 면제
@@ -23781,7 +23863,11 @@ function hgMaybeChallenge(){
     const now = Date.now();
     if(g.until > now) return;                       // 이미 잠겨 있다
     if(now - (g.askedAt || 0) < HG_COOLDOWN_MS) return;
-    if(hgSuspicion() < 2) return;                   // 신호 3개 중 2개부터
+    /* [Ver 14.14] 채굴 신호는 **하나만 잡혀도** 충분하다.
+       클릭 지문(3개 중 2개)보다 기준이 낮은 이유 — 이 둘은 사람이 흉내낼 수 없다.
+       몇 시간을 자로 잰 듯한 간격으로, 혹은 하루 종일 쉬지 않고 캐는 사람은 없다. */
+    const mineHit = (where === 'mine') && (hgMineMetronome() || hgMineNoSleep());
+    if(!mineHit && hgSuspicion() < 2) return;
     __hgClicks = [];                                // 확인창 클릭이 다음 판정에 섞이지 않게
     setTimeout(()=>{ try{ hgChallenge(); }catch(e){} }, 900);   // 결과 연출이 끝난 뒤에
   }catch(e){}
@@ -24481,6 +24567,7 @@ function doMine(count){
       <span style="font-size:12px;color:var(--fg-dim);">곡괭이는 10분에 1개씩 차오릅니다. 게임에서 1등·2등을 하면 30% 확률로 1개를 더 받습니다.</span>`, [{label:'확인', solid:true}]);
     return;
   }
+  if(!hgMineGate()) return;   // [Ver 14.14] 매크로 잠금 · 사람 확인
   if(!spendPickaxe(count)) return;
   /* [Ver 13.15.2] 퀘스트 진행도는 **실제로 캔 뒤에** 올린다. 예전에는 함수 맨 위에 있어서
      mineBusy 에 막힌 클릭·곡괭이가 모자란 클릭까지 전부 진행도로 잡혔다. */
@@ -24506,6 +24593,7 @@ function doGoldMine(count){
       <span style="font-size:12px;color:var(--fg-dim);">곡괭이 강화(성공 ${Math.round(goldPickaxeUpChance()*100)}%)로 만들거나, 우빈이의 수상한 상자에서 얻을 수 있습니다.</span>`, [{label:'확인', solid:true}]);
     return;
   }
+  if(!hgMineGate()) return;   // [Ver 14.14] 매크로 잠금 · 사람 확인
   if(!spendGoldPickaxe(count)) return;
   mineBusy = true;
   const keys = [];
@@ -24629,6 +24717,9 @@ function puConfirm(){
 function runPickaxeUpgrade(n){
   if(mineBusy) return;
   n = Math.max(1, Math.min(pickaxeCount(), n|0 || 1));
+  /* ⚠ [Ver 14.14] 여기가 **모아둔 곡괭이를 한꺼번에 바꾸는** 자리다.
+     제보된 수법의 마지막 단계라 반드시 막아야 한다. */
+  if(!hgMineGate()) return;
   if(!spendPickaxe(n)) return;
   mineBusy = true;
   let ok = 0;
@@ -26110,6 +26201,14 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 14.14', date: '2026-09-11',
+    items: [
+      '⛏️ <b>[차단] 광산을 자동으로 파는 매크로를 막았습니다.</b> 14.8.2의 사람 확인은 <b>판이 끝날 때만</b> 작동해서, 게임은 안 하고 <b>광산만 파는</b> 방식에는 아무 소용이 없었습니다. 이제 <b>채굴과 강화를 누를 때도</b> 확인합니다.',
+      '\u{1F512} <b>잠긴 동안에는 채굴과 곡괭이 강화도 할 수 없습니다.</b> 예전에는 잠겨도 광산은 그대로 팔 수 있어서, 걸려도 잃는 것이 없었습니다.',
+      '\u{1F9D1} <b>정상적으로 하시는 분도 아주 가끔 "사람인지 확인" 창을 보실 수 있습니다.</b> 버튼 한 번 누르면 끝이고, <b>불이익은 전혀 없습니다.</b> 자동 입력 프로그램은 이 버튼을 누르지 못합니다. <span style="opacity:.75">(창이 떠도 그 채굴은 정상으로 처리됩니다)</span>',
+    ]
+  },
   {
     version: 'Ver 14.13', date: '2026-09-11',
     items: [
