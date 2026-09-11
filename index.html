@@ -7829,7 +7829,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.8</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.9</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -8086,6 +8086,10 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
         </button>
         <button class="nm-drawer-item nm-drawer-dev" id="devBanInfoBtn" style="display:none;" onclick="closeMenuDrawer(); openDevBanInfo();">
           <span class="ic">🚫</span><span class="tx"><b>내 신원 · 밴 정보</b><small>개발자 전용 · admin 문서 ID 확인</small></span>
+        </button>
+        <!-- [Ver 14.9] 콘솔에서 하던 제재·재화 회수를 게임 안에서 -->
+        <button class="nm-drawer-item nm-drawer-dev" id="devBoardBtn" style="display:none;" onclick="closeMenuDrawer(); openDevBoard();">
+          <span class="ic">🧰</span><span class="tx"><b>단순화 보드</b><small>개발자 전용 · 제재 · 재화 회수 · 활동 조회</small></span>
         </button>
         <!-- [Ver 13.5] 상태칩 아이콘 모드 미리보기 — 그림이 없는 칩도 정사각형으로 그려본다 -->
         <button class="nm-drawer-item nm-drawer-dev" id="devChipIconBtn" style="display:none;" onclick="closeMenuDrawer(); toggleChipIconPreview();">
@@ -11972,6 +11976,7 @@ const STORAGE_KEYS = {
   spendOdo: 'gang_card_spend_odo_v1',
   /* [Ver 13.17] 백업·복원 연타 제한 { ts:[최근 시각들], until:잠금 해제 시각 } */
   syncGuard: 'gang_card_sync_guard_v1',
+  humanGuard: 'gang_card_human_guard_v1',   // [Ver 14.8.2] 매크로 확인 기록·잠금
   attend:   'gang_card_attend_v1',      // [Ver 13.0] 출석체크 { last, streak, total, devClaimed }
   newUserPrompted: 'gang_card_new_user_prompted_v1', // [편의] 신규 유저 튜토리얼 안내를 이미 보여줬는지 여부
   profile: 'gang_card_profile_v1', // [Ver 8.0] 닉네임
@@ -12521,7 +12526,9 @@ function grantArcadeCoins(n){
 function spendArcadeCoins(n){
   const A = loadArcade();
   if((A.coin || 0) < n) return false;
-  A.coin -= n; saveArcade(); return true;
+  A.coin -= n; saveArcade();
+  try{ logActivity(`랩터코인 -${n} (남은 ${A.coin})`); }catch(e){}   // [Ver 14.9]
+  return true;
 }
 /* 판이 끝나면 등수만큼 코인을 준다. 아케이드 모드에서만 부른다. */
 function awardArcadeCoinsForPlacement(placement){
@@ -12757,6 +12764,14 @@ const PFP_DEFS = [
   { key:'teamkill',  name:'인성파탄자',          how:'히든 업적 · 인성파탄자' },
   { key:'weekly7',   name:'주간 플래너',         how:'업적 · 주간 플래너' },
   { key:'nevergive', name:'중꺾마',              how:'스페셜 업적 · 중꺾마' },
+  /* ===== [Ver 14.8.1] 신규 업적 7종 ===== */
+  { key:'whatru',         name:'뭐함?',                how:'히든 업적 · 뭐함?' },
+  { key:'badplace',       name:'좋지 않은 곳',          how:'스페셜 업적 · 좋지 않은 곳' },
+  { key:'senpai',         name:'선배님 마라탕 사주세요', how:'스페셜 업적 · 선배님 마라탕 사주세요' },
+  { key:'raptorlover',    name:'랩터 러버',             how:'업적 · 랩터 러버' },
+  { key:'blackcow',       name:'흑우',                 how:'업적 · 흑우' },
+  { key:'somethingwrong', name:'뭔가 잘못됐어',         how:'히든 업적 · 뭔가 잘못됐어' },
+  { key:'bugfound',       name:'버그 발견',             how:'히든 업적 · 버그 발견' },
 ];
 function pfpDefOf(key){ return PFP_DEFS.find(f=> f.key === key) || PFP_DEFS[0]; }
 function pfpSrc(key){ return 'pfp/' + pfpDefOf(key).key + '.jpg'; }
@@ -13232,6 +13247,9 @@ function spendUbinite(n){
   ubinite -= n; saveUbinite();
   try{ renderUbiniteBadge(); }catch(e){}
   try{ questBump('ubinite', n); }catch(e){}   // [Ver 13.0] 일일 퀘스트 '우비나이트 소비'
+  /* [Ver 14.8.1] 누적 소비 — 업적 '흑우'. 여기가 우비나이트가 나가는 **유일한 관문**이다. */
+  try{ STATS.ubiniteSpent = (STATS.ubiniteSpent || 0) + n; saveStats(); }catch(e){}
+  try{ logActivity(`우비나이트 -${n} (남은 ${ubinite})`); }catch(e){}   // [Ver 14.9] 활동 기록
   return true;
 }
 /* [Ver 9.10.1 개편] 1등만 5~10개를 주던 방식에서, 등수별 차등 지급으로 바꿨다.
@@ -13958,6 +13976,11 @@ function settleTierForHuman(placement, cause){
   try{ awardPickaxeForPlacement(placement); }catch(e){}  // [Ver 9.11] 1~2등 30% 확률로 곡괭이
   try{ awardGoldPickaxeOnWin(placement); }catch(e){}     // [Ver 13.1] 유물 '객기' — 1등 확률 보상
   try{ awardBoxKeysForPlacement(placement); }catch(e){}  // [Ver 10.5.3] 1등 8개 · 2등 4개 상자 열쇠
+  /* [Ver 14.8.2] 매크로 확인 — 개쩌는 곡괭이가 무제한으로 나오는 길이 전부 여기서
+     시작하므로, 묻는 자리도 여기 하나면 된다. 의심스러울 때만 창이 뜬다. */
+  try{ hgMaybeChallenge(); }catch(e){}
+  /* [Ver 14.9] 활동 기록 — 판이 끝났다. 여기서 모아둔 줄을 한꺼번에 올린다. */
+  try{ logActivity(`게임 종료 ${placement}등`); actFlush(true); }catch(e){}
   /* [Ver 10.0.2] 판이 끝났으니 진행도를 클라우드에 조용히 올려둔다.
      여기가 "한 판 분량의 진행도가 확정되는" 유일한 지점이라 백업 시점으로 가장 알맞다. */
   try{ autoBackupAfterGame(); }catch(e){}
@@ -18758,6 +18781,7 @@ function spendPickaxe(n){
   if(s.n < n) return false;
   const wasFull = s.n >= pickaxeCap();
   s.n -= n;
+  try{ logActivity(`곡괭이 -${n} (남은 ${s.n})`); }catch(e){}   // [Ver 14.9]
   // 가득 찬 상태에서 처음 쓴 순간부터 충전 시계가 다시 돈다
   if(wasFull) s.at = Date.now();
   savePickaxe();
@@ -18803,6 +18827,7 @@ function spendGoldPickaxe(n){
   if(goldPickaxe < n) return false;
   goldPickaxe -= n; saveGoldPickaxe();
   bumpSpendOdo('goldPickaxe', n);   // [Ver 13.17] 소비 계기판
+  try{ logActivity(`개쩌는곡괭이 -${n} (남은 ${goldPickaxe})`); }catch(e){}   // [Ver 14.9]
   return true;
 }
 
@@ -18822,6 +18847,7 @@ function spendBoxKeys(n){
   walletSyncFromStorage();   // [Ver 13.15.2] 복사 방지 — spendGoldPickaxe 주석 참고
   if(boxKeys < n) return false;
   boxKeys -= n; saveBoxKeys();
+  try{ logActivity(`상자열쇠 -${n} (남은 ${boxKeys})`); }catch(e){}   // [Ver 14.9]
   return true;
 }
 /* 이 플레이어가 그 펫을 장착하고 있는가 — 모든 펫 효과 훅이 이 한 줄로 분기한다. */
@@ -19235,6 +19261,7 @@ function spendTeeth(n){
   if(raptorTeeth < n) return false;
   raptorTeeth -= n; saveTeeth();
   bumpSpendOdo('teeth', n);   // [Ver 13.17] 소비 계기판
+  try{ logActivity(`랩터이빨 -${n} (남은 ${raptorTeeth})`); }catch(e){}   // [Ver 14.9]
   /* [Ver 13.1] 이빨을 쓰는 순간이 곧 **되돌릴 수 없는 진행도 변화**다(재단 뽑기).
      여기서 백업해 두지 않으면, 뽑고 나서 브라우저 데이터가 날아갔을 때
      "이빨도 없고 권능도 없는" 상태가 된다. 판이 끝날 때까지 기다리지 않는다. */
@@ -19521,6 +19548,8 @@ function updateDevMenuButtons(){
   if(ps) ps.style.display = devMode ? '' : 'none';
   const bi = document.getElementById('devBanInfoBtn');  // [Ver 13.16] 내 신원 · 밴 정보
   if(bi) bi.style.display = devMode ? '' : 'none';
+  const bd = document.getElementById('devBoardBtn');    // [Ver 14.9] 단순화 보드
+  if(bd) bd.style.display = devMode ? '' : 'none';
   const ci = document.getElementById('devChipIconBtn'); // [Ver 13.5] 상태칩 아이콘 모드
   if(ci){
     ci.style.display = devMode ? '' : 'none';
@@ -22607,6 +22636,575 @@ function renderOnlineSync(){
     </div>`;
 }
 /* ##########################################################################
+   [Ver 14.9] 개발자 — 단순화 보드
+   --------------------------------------------------------------------------
+   ▶ 여태 어땠나
+     제재도 재화 회수도 **Firebase 콘솔에서 손으로 문서를 쓰는** 일이었다.
+     admin/{유저코드} 에 ban/banUntil/cmds 를 직접 타이핑했다. 오타 한 번이면
+     엉뚱한 사람이 영구 정지된다. 받는 쪽(applyAdminDoc)은 이미 완성돼 있었으니,
+     **쓰는 쪽 화면**만 만들면 끝나는 일이었다.
+
+   ▶ 세 칸
+       제재 — 코드 조회 → 기간 고르고 제재 / 해제
+       재화 — 지급·회수(음수) · 초기화 · 안내 편지
+       활동 — 그 사람이 최근에 무슨 재화를 쓰고 뭘 뽑았는지
+
+   ⚠ ★ 보안 규칙을 다시 게시해야 동작한다. ★
+     지금 규칙은 admin 이 `allow write: if false` 다. 아래 두 가지를 올려야 한다.
+         match /admins/{uid} { allow get: if request.auth.uid == uid; allow write: if false; }
+         match /admin/{code} { allow write: if isAdmin(); }   // isAdmin = admins/{uid} 존재
+     그리고 **콘솔에서 admins/<내 uid> 문서를 한 번 만들어야** 내가 운영자가 된다.
+     내 uid 는 이 보드 맨 아래에 그대로 찍어둔다.
+     ⚠ 절대 `allow write: if signedIn()` 으로 열지 말 것 — 그 순간 아무나
+       자기 밴을 풀고 남을 밴하고 재화를 무한히 찍는다.
+   ⚠ 이 보드는 **명령을 적어둘 뿐**이다. 실제 적용은 그 사람 기기가 다음에 접속할 때
+     스스로 한다(원래 구조가 그렇다). 재화 회수는 저장소를 지우면 빠져나갈 수 있고,
+     그걸 완전히 막으려면 Cloud Functions 가 필요하다 — 13.16 주석에 적힌 한계 그대로다.
+   ########################################################################## */
+let __dbTab  = 'ban';      // ban | give | act
+let __dbCode = '';         // 지금 보고 있는 유저 코드
+let __dbInfo = null;       // 조회 결과 (admin 문서)
+let __dbAct  = null;       // 조회 결과 (활동 기록)
+let __dbMsg  = '';         // 화면 아래 한 줄 안내
+
+/* 내가 운영자로 등록돼 있나 — admins/{내 uid} 문서의 존재로 판정한다.
+   ⚠ 이 판정은 **편의**일 뿐이다. 진짜 자물쇠는 보안 규칙이다. 여기를 뚫어도
+     규칙이 막으므로 쓰기는 실패한다. */
+async function dbIsAdmin(){
+  try{
+    if(!fbAvailable()) return false;
+    await fbInit();
+    const { doc, getDoc } = FB.mod;
+    const s = await getDoc(doc(FB.db, 'admins', FB.uid));
+    return s.exists();
+  }catch(e){ return false; }
+}
+
+const DB_DUR = [
+  { label:'2시간',  ms: 2*3600000 },
+  { label:'6시간',  ms: 6*3600000 },
+  { label:'1일',    ms: 24*3600000 },
+  { label:'3일',    ms: 3*24*3600000 },
+  { label:'7일',    ms: 7*24*3600000 },
+  { label:'30일',   ms: 30*24*3600000 },
+  { label:'영구',   ms: 0 },
+];
+const DB_KINDS = [
+  { key:'ubinite', label:'우비나이트' },
+  { key:'claws',   label:'진화발톱'   },
+  { key:'tickets', label:'뽑기권'     },
+  { key:'pickaxe', label:'곡괭이'     },
+];
+const DB_RESETS = [
+  { type:'resetArtifacts', label:'유물 초기화'       },
+  { type:'resetEvolved',   label:'진화 해금 초기화'  },
+  { type:'resetStones',    label:'진화석 초기화'     },
+  { type:'wipeAll',        label:'진행도 전체 초기화' },
+];
+
+function dbCodeInput(){
+  const el = document.getElementById('dbCode');
+  return String((el && el.value) || '').trim().toUpperCase();
+}
+function dbSwitch(tab){ __dbTab = tab; dbRender(); }
+function dbSay(msg){ __dbMsg = msg; const el = document.getElementById('dbMsg'); if(el) el.innerHTML = msg; }
+
+/* ---- 조회 ---- */
+async function dbLookup(){
+  const code = dbCodeInput();
+  if(code.length < 4){ dbSay('<span style="color:#d64545;">유저 코드를 입력하세요.</span>'); return; }
+  __dbCode = code; __dbInfo = null; __dbAct = null;
+  dbSay('조회 중…');
+  try{
+    await fbInit();
+    const { doc, getDoc, collection, query, where, limit, getDocs } = FB.mod;
+    const s = await getDoc(doc(FB.db, 'admin', code));
+    __dbInfo = s.exists() ? s.data() : {};
+    /* 활동 기록은 uid 로 저장된다 — 코드로 찾아야 하므로 code 필드로 뒤진다. */
+    try{
+      const q = query(collection(FB.db, 'activity'), where('code','==', code), limit(5));
+      const snap = await getDocs(q);
+      let best = null;
+      snap.forEach(d=>{ const x = { id:d.id, ...d.data() };
+        if(!best || (x.at||0) > (best.at||0)) best = x; });
+      __dbAct = best;
+    }catch(e){ __dbAct = { err: String(e && e.message || e) }; }
+    dbSay(`<b>${escapeHtml(code)}</b> 조회 완료.`);
+  }catch(e){
+    dbSay('<span style="color:#d64545;">조회 실패 — ' + escapeHtml(String(e && e.message || e)) + '</span>');
+  }
+  dbRender();
+}
+
+/* ---- 제재 ---- */
+async function dbBan(ms){
+  const code = dbCodeInput();
+  if(code.length < 4){ dbSay('<span style="color:#d64545;">유저 코드를 먼저 입력하세요.</span>'); return; }
+  const reasonEl = document.getElementById('dbReason');
+  const reason = String((reasonEl && reasonEl.value) || '').trim().slice(0, 60);
+  const until = ms > 0 ? Date.now() + ms : 0;
+  const label = ms > 0 ? new Date(until).toLocaleString('ko-KR') : '영구';
+  showModal('제재하시겠습니까?', `<div style="line-height:1.9;">
+      <b>${escapeHtml(code)}</b> 계정을 제재합니다.<br><br>
+      기간 — <b>${escapeHtml(label)}</b><br>
+      사유 — <b>${escapeHtml(reason || '(없음)')}</b><br><br>
+      <span style="font-size:12px;color:var(--fg-dim);">이 사람이 다음에 접속할 때 적용됩니다.</span>
+    </div>`, [
+    { label:'취소' },
+    { label:'제재한다', solid:true, action: async ()=>{
+        try{
+          await fbInit();
+          const { doc, setDoc } = FB.mod;
+          await setDoc(doc(FB.db, 'admin', code), { ban:true, banReason:reason, banUntil:until }, { merge:true });
+          dbSay(`<span style="color:#3aa76d;">제재 완료 — ${escapeHtml(code)} · ${escapeHtml(label)}</span>`);
+          dbLookup();
+        }catch(e){ dbSay(dbWriteErr(e)); }
+      }}
+  ]);
+}
+async function dbUnban(){
+  const code = dbCodeInput();
+  if(code.length < 4) return;
+  try{
+    await fbInit();
+    const { doc, setDoc } = FB.mod;
+    await setDoc(doc(FB.db, 'admin', code), { ban:false, banReason:'', banUntil:0 }, { merge:true });
+    dbSay(`<span style="color:#3aa76d;">제재 해제 — ${escapeHtml(code)}</span>`);
+    dbLookup();
+  }catch(e){ dbSay(dbWriteErr(e)); }
+}
+
+/* 쓰기 실패는 십중팔구 "규칙을 아직 안 올렸다" 이다. 그걸 그대로 말해준다. */
+function dbWriteErr(e){
+  const m = String(e && e.message || e);
+  const denied = m.indexOf('permission') >= 0 || m.indexOf('insufficient') >= 0;
+  return '<span style="color:#d64545;">쓰기 실패 — ' + escapeHtml(m) + '</span>'
+    + (denied ? '<br><span style="font-size:11px;color:var(--fg-dim);">보안 규칙에 admin 쓰기 허용을 올렸는지, 콘솔에 <b>admins/&lt;내 uid&gt;</b> 문서를 만들었는지 확인하세요.</span>' : '');
+}
+
+/* ---- 명령 큐에 한 줄 밀어넣기 ---- */
+async function dbPushCmd(cmd, desc){
+  const code = dbCodeInput();
+  if(code.length < 4){ dbSay('<span style="color:#d64545;">유저 코드를 먼저 입력하세요.</span>'); return; }
+  /* ⚠ id 는 명령마다 달라야 한다. 같으면 그 사람 기기가 "이미 적용함"으로 건너뛴다. */
+  cmd.id = 'b' + Date.now().toString(36) + Math.floor(Math.random()*1296).toString(36);
+  try{
+    await fbInit();
+    const { doc, getDoc, setDoc } = FB.mod;
+    const s = await getDoc(doc(FB.db, 'admin', code));
+    const cur = s.exists() ? (s.data() || {}) : {};
+    const cmds = Array.isArray(cur.cmds) ? cur.cmds.slice(-30) : [];   // 무한히 쌓이지 않게
+    cmds.push(cmd);
+    await setDoc(doc(FB.db, 'admin', code), { cmds }, { merge:true });
+    dbSay(`<span style="color:#3aa76d;">전달 완료 — ${escapeHtml(desc)}</span>`);
+    dbLookup();
+  }catch(e){ dbSay(dbWriteErr(e)); }
+}
+function dbGive(sign){
+  const kind = String((document.getElementById('dbKind')||{}).value || 'ubinite');
+  const n = Math.abs(parseInt((document.getElementById('dbAmt')||{}).value, 10) || 0);
+  if(!n){ dbSay('<span style="color:#d64545;">수량을 입력하세요.</span>'); return; }
+  const label = (DB_KINDS.find(k=>k.key===kind)||{}).label || kind;
+  dbPushCmd({ type:kind, amount: sign * n }, `${label} ${sign>0?'+':'-'}${n.toLocaleString()}`);
+}
+function dbReset(type, label){
+  showModal('되돌릴 수 없습니다', `<div style="line-height:1.9;">
+      <b>${escapeHtml(dbCodeInput())}</b> 계정에 <b>${escapeHtml(label)}</b>를 실행합니다.<br><br>
+      <b style="color:#d64545;">이 조치는 되돌릴 수 없습니다.</b>
+    </div>`, [{ label:'취소' }, { label:'실행', solid:true, action:()=> dbPushCmd({ type }, label) }]);
+}
+function dbNotice(){
+  const t = String((document.getElementById('dbNoticeText')||{}).value || '').trim().slice(0, 300);
+  if(!t){ dbSay('<span style="color:#d64545;">보낼 내용을 적으세요.</span>'); return; }
+  dbPushCmd({ type:'notice', title:'운영자 안내', text:t }, '안내 편지');
+}
+
+/* ---- 그리기 ---- */
+function dbBanTab(){
+  const d = __dbInfo;
+  if(!d) return '<div style="font-size:12px;color:var(--fg-dim);text-align:center;padding:18px 0;">유저 코드를 넣고 <b>조회</b>를 누르세요.</div>';
+  const until = Number(d.banUntil || 0);
+  const on = !!d.ban && !(until > 0 && Date.now() > until);
+  const state = on
+    ? `<b style="color:#d64545;">제재 중</b> · ${until > 0 ? escapeHtml(new Date(until).toLocaleString('ko-KR')) + ' 해제' : '영구'}`
+    : '<b style="color:#3aa76d;">정상</b>';
+  return `
+    <div style="background:var(--bg-2);border-radius:8px;padding:9px 11px;font-size:12px;line-height:1.8;margin-bottom:10px;">
+      지금 상태 — ${state}${d.banReason ? `<br>사유 — ${escapeHtml(String(d.banReason))}` : ''}
+    </div>
+    <input id="dbReason" class="input" placeholder="사유 (선택)" maxlength="60" style="margin-bottom:8px;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px;">
+      ${DB_DUR.map(x=>`<button class="btn btn-sm" onclick="dbBan(${x.ms})">${x.label}</button>`).join('')}
+    </div>
+    <button class="btn btn-sm btn-solid" style="width:100%;" onclick="dbUnban()">제재 해제</button>`;
+}
+function dbGiveTab(){
+  return `
+    <div style="display:flex;gap:6px;margin-bottom:8px;">
+      <select id="dbKind" class="input" style="flex:1;min-width:0;">
+        ${DB_KINDS.map(k=>`<option value="${k.key}">${k.label}</option>`).join('')}
+      </select>
+      <input id="dbAmt" class="input" type="number" min="1" step="1" value="1000" style="width:104px;">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:12px;">
+      <button class="btn btn-sm" onclick="dbGive(1)">지급 (+)</button>
+      <button class="btn btn-sm" onclick="dbGive(-1)">회수 (−)</button>
+    </div>
+    <div style="font-size:11px;color:var(--fg-faint);margin-bottom:5px;">초기화 — 되돌릴 수 없습니다</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:12px;">
+      ${DB_RESETS.map(r=>`<button class="btn btn-sm" onclick="dbReset('${r.type}','${r.label}')">${r.label}</button>`).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--fg-faint);margin-bottom:5px;">우편함으로 안내 보내기</div>
+    <div style="display:flex;gap:6px;">
+      <input id="dbNoticeText" class="input" placeholder="보낼 내용" maxlength="300" style="flex:1;min-width:0;">
+      <button class="btn btn-sm" onclick="dbNotice()">보내기</button>
+    </div>
+    <div style="font-size:10.5px;color:var(--fg-faint);line-height:1.7;margin-top:10px;">
+      회수는 0 밑으로 내려가지 않습니다. 명령은 그 사람이 <b>다음에 접속할 때</b> 적용됩니다.
+    </div>`;
+}
+function dbActTab(){
+  const a = __dbAct;
+  if(!a) return '<div style="font-size:12px;color:var(--fg-dim);text-align:center;padding:18px 0;">유저 코드를 넣고 <b>조회</b>를 누르세요.</div>';
+  if(a.err) return '<div style="font-size:12px;color:#d64545;text-align:center;padding:18px 0;">조회 실패 — ' + escapeHtml(a.err) + '</div>';
+  const lines = String(a.events || '').split('\n').filter(Boolean).reverse();
+  if(!lines.length) return '<div style="font-size:12px;color:var(--fg-dim);text-align:center;padding:18px 0;">남은 활동 기록이 없습니다.<br><span style="font-size:11px;">(이 버전 이후로 접속한 적이 있어야 합니다)</span></div>';
+  return `
+    <div style="font-size:11px;color:var(--fg-faint);margin-bottom:6px;">
+      ${escapeHtml(String(a.nick||''))} · 마지막 갱신 ${escapeHtml(new Date(Number(a.at)||0).toLocaleString('ko-KR'))}
+    </div>
+    <div style="max-height:46vh;overflow:auto;background:var(--bg-2);border-radius:8px;padding:8px 10px;">
+      ${lines.map(L=>{
+        const i = L.indexOf('|');
+        const t = Number(L.slice(0, i)) || 0;
+        const s = L.slice(i + 1);
+        const hh = new Date(t);
+        const when = `${hh.getMonth()+1}/${hh.getDate()} ${String(hh.getHours()).padStart(2,'0')}:${String(hh.getMinutes()).padStart(2,'0')}`;
+        return `<div style="display:flex;gap:8px;font-size:11.5px;line-height:1.9;">
+          <span style="color:var(--fg-faint);font-family:var(--font-mono);flex:0 0 74px;">${escapeHtml(when)}</span>
+          <span style="flex:1;min-width:0;">${escapeHtml(s)}</span></div>`;
+      }).join('')}
+    </div>`;
+}
+function dbRender(){
+  const body = document.getElementById('modalBody');
+  if(!body) return;
+  const tab = (k, label)=> `<button class="btn btn-sm${__dbTab===k?' btn-solid':''}" onclick="dbSwitch('${k}')">${label}</button>`;
+  const uid = (typeof FB !== 'undefined' && FB && FB.uid) ? FB.uid : '(온라인 연결 전)';
+  body.innerHTML = `<div style="display:flex;flex-direction:column;gap:9px;">
+      <div style="display:flex;gap:6px;">
+        <input id="dbCode" class="input" maxlength="8" placeholder="유저 코드 5자리" value="${escapeHtml(__dbCode)}"
+               style="flex:1;min-width:0;text-transform:uppercase;"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();dbLookup();}">
+        <button class="btn btn-sm btn-solid" onclick="dbLookup()">조회</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;">
+        ${tab('ban','제재')}${tab('give','재화')}${tab('act','활동')}
+      </div>
+      <div>${__dbTab==='ban' ? dbBanTab() : __dbTab==='give' ? dbGiveTab() : dbActTab()}</div>
+      <div id="dbMsg" style="font-size:11.5px;line-height:1.7;min-height:16px;">${__dbMsg}</div>
+      <div style="font-size:10px;color:var(--fg-faint);line-height:1.7;border-top:1px solid var(--line);padding-top:7px;">
+        내 uid — <span style="font-family:var(--font-mono);user-select:all;">${escapeHtml(uid)}</span><br>
+        운영자로 쓰려면 콘솔에서 <b>admins/&lt;이 uid&gt;</b> 문서를 하나 만들어 두세요.
+      </div>
+    </div>`;
+}
+function openDevBoard(){
+  if(!devMode){ showModal('개발자 전용', '개발자 모드에서만 쓸 수 있습니다.', [{label:'확인', solid:true}]); return; }
+  __dbInfo = null; __dbAct = null; __dbMsg = '';
+  showModal('🧰 단순화 보드', '<div id="dbLoading" style="text-align:center;padding:20px 0;color:var(--fg-dim);">여는 중…</div>', [{label:'닫기', solid:true}]);
+  dbRender();
+  /* 운영자 등록 여부를 알려준다 — 안 돼 있으면 쓰기가 전부 실패하므로 미리 말한다. */
+  dbIsAdmin().then(ok=>{
+    if(!ok) dbSay('<span style="color:#d9822b;">이 기기는 아직 <b>운영자로 등록되지 않았습니다.</b> 조회는 되지만 쓰기는 실패합니다.</span>');
+  });
+}
+
+/* ##########################################################################
+   [Ver 14.9] 활동 기록 — 운영자가 유저 코드로 들여다보는 최근 행적
+   --------------------------------------------------------------------------
+   ▶ 왜 필요한가
+     "이 사람이 재화를 어떻게 얻고 썼는지" 를 볼 방법이 없었다. 제보가 들어와도
+     확인할 길이 없어 심증만으로 제재해야 했다. 그게 제일 위험하다.
+
+   ▶ 어디에 거나 — **재화가 나가는 관문**과 **결과가 정해지는 자리**에만 건다.
+     관문에 걸어두면 나중에 상점이 늘든 뽑기가 늘든 저절로 따라 붙는다.
+       · spendUbinite / spendPickaxe / spendGoldPickaxe
+       · spendBoxKeys / spendArcadeCoins / spendTeeth
+       · 채굴·강화·상자·판 종료
+
+   ⚠ Firestore 쓰기는 **모아서 한 번**이다. 한 줄마다 쓰면 한 판에 수십 번이 나가
+     요금이 감당이 안 된다. 메모리에 쌓아두고 2분에 한 번, 그리고 판이 끝날 때 올린다.
+   ⚠ 문서는 activity/{내 uid} 하나뿐이고 **덮어쓴다.** 줄이 쌓이는 게 아니라
+     최근 ACT_KEEP 줄만 남는다. 문서 수가 늘지 않으니 비용이 예측 가능하다.
+   ⚠ 줄은 **한 덩어리 문자열**로 보낸다. 보안 규칙에서 배열 안 객체를 검사하는 건
+     사실상 불가능한데, 문자열이면 길이 하나로 끝난다.
+   ⚠ 개인정보는 담지 않는다 — 무엇을 얼마나 썼는지와 시각뿐이다.
+   ########################################################################## */
+const ACT_KEEP       = 60;              // 최근 이만큼만 남긴다
+const ACT_FLUSH_MS   = 2 * 60 * 1000;   // 이보다 자주는 올리지 않는다
+const ACT_MAX_CHARS  = 8000;            // 보안 규칙의 상한과 같은 숫자여야 한다
+let __actLines = [];
+let __actLastFlush = 0;
+let __actDirty = false;
+
+function actLoadLocal(){
+  try{
+    const raw = localStorage.getItem('gang_card_activity_v1');
+    const a = raw ? JSON.parse(raw) : null;
+    if(Array.isArray(a)) __actLines = a.slice(-ACT_KEEP);
+  }catch(e){}
+}
+function actSaveLocal(){
+  try{ localStorage.setItem('gang_card_activity_v1', JSON.stringify(__actLines.slice(-ACT_KEEP))); }catch(e){}
+}
+/* 한 줄 남긴다. 어디서 불러도 절대 예외를 던지지 않아야 한다 —
+   기록 때문에 게임이 멈추면 본말전도다. */
+function logActivity(text){
+  try{
+    const s = String(text || '').slice(0, 90);
+    if(!s) return;
+    __actLines.push(Date.now() + '|' + s);
+    if(__actLines.length > ACT_KEEP) __actLines = __actLines.slice(-ACT_KEEP);
+    __actDirty = true;
+    actSaveLocal();
+  }catch(e){}
+}
+/* 모아둔 줄을 한 번에 올린다. force 면 시간 제한을 무시한다. */
+function actFlush(force){
+  try{
+    if(!__actDirty) return;
+    if(!fbAvailable()) return;
+    const now = Date.now();
+    if(!force && now - __actLastFlush < ACT_FLUSH_MS) return;
+    __actLastFlush = now;
+    __actDirty = false;
+    let body = __actLines.slice(-ACT_KEEP).join('\n');
+    while(body.length > ACT_MAX_CHARS){          // 넘치면 앞줄부터 버린다
+      const i = body.indexOf('\n');
+      if(i < 0){ body = body.slice(0, ACT_MAX_CHARS); break; }
+      body = body.slice(i + 1);
+    }
+    fbInit().then(()=>{
+      const { doc, setDoc } = FB.mod;
+      return setDoc(doc(FB.db, 'activity', FB.uid), {
+        code: String(getUserCode() || ''),
+        nick: String(getPlayerNickname() || '').slice(0, 16),
+        at:   Date.now(),
+        events: body
+      });
+    }).catch(()=>{ __actDirty = true; });   // 실패하면 다음에 다시 시도한다
+  }catch(e){ __actDirty = true; }
+}
+try{ actLoadLocal(); }catch(e){}
+/* 창을 닫을 때도 한 번 — 마지막 몇 줄이 통째로 사라지지 않게. */
+try{ window.addEventListener('pagehide', ()=>{ try{ actFlush(true); }catch(e){} }); }catch(e){}
+
+/* ##########################################################################
+   [Ver 14.8.2] 매크로(타이니태스크) 차단
+   --------------------------------------------------------------------------
+   ▶ 무엇이 새고 있었나
+     개쩌는 곡괭이가 **무제한으로** 나오는 길은 셋이고, 셋 다 뿌리가 하나다.
+         · 유물 '우빈이의 객기'  — 1등이면 확률로 1개
+         · 곡괭이 강화(도박)     — 재료 곡괭이가 1·2등 30%로 나온다
+         · 우빈이의 수상한 상자  — 열쇠가 1등 8개로 나온다
+     전부 **판을 끝내면** 나온다. 그런데 settleTierForHuman 은 튜토리얼·놀이터만
+     거르고, 판이 얼마나 걸렸는지도 카드를 몇 장 냈는지도 보지 않는다.
+     그래서 "봇전을 무한히 돌리는 매크로"가 그대로 수도꼭지가 됐다.
+     (곡괭이 자연 충전은 10분에 1개로 묶여 있는데, 판 보상만 상한이 없었다)
+
+   ▶ 왜 확률·상한을 건드리지 않았나
+     판수 점감이나 하루 상한은 매크로보다 **많이 노는 사람**을 먼저 때린다.
+     그래서 수치는 그대로 두고, **사람인지만** 묻기로 했다.
+
+   ▶ 타이니태스크의 약점
+     녹화한 클릭을 **같은 좌표 · 같은 간격**으로 되풀이할 뿐이다. 그래서
+         · 같은 픽셀이 몇십 번 반복되고
+         · 클릭 간격이 사람이라면 나올 수 없을 만큼 고르고
+         · 클릭 사이에 마우스가 거의 움직이지 않는다
+     이 셋 중 둘이 잡히면 확인창을 띄운다. 확인창의 버튼은 **뜰 때마다 위치가 바뀐다** —
+     고정 좌표 재생은 이걸 절대 누를 수 없다.
+
+   ⚠ 확인창에 닫기 버튼을 두지 않는다. 두면 매크로의 아무 클릭이 그걸 눌러 빠져나간다.
+   ⚠ 시간이 지나는 것만으로는 잠그지 않는다. 자리를 비웠을 뿐인 사람을 잠그게 된다.
+     잠그는 것은 **버튼 아닌 곳을 세 번 누른 경우**뿐이다 — 고정 좌표 재생은 몇 초 만에
+     세 번을 채우고, 사람은 버튼이 보이는데 세 번을 빗맞히기 어렵다.
+   ⚠ 터치 기기는 지문을 아예 모으지 않는다. 마우스 이동이라는 신호가 없어
+     사람이 억울하게 걸린다. (타이니태스크는 PC 프로그램이라 잃는 것도 없다)
+   ⚠ 개발자 모드는 면제한다 — 테스트하다 스스로 잠기지 않게.
+   ⚠ 잠겨도 진행도는 그대로다. 자동 백업도 막지 않는다(13.17 선례와 같은 원칙).
+   ########################################################################## */
+const HG_LOCK_MS     = 2 * 60 * 60 * 1000;   // 걸리면 2시간
+const HG_COOLDOWN_MS = 30 * 60 * 1000;       // 한 번 물어봤으면 30분은 안 묻는다
+const HG_SAMPLE      = 30;                   // 최근 클릭 이만큼을 본다
+const HG_MISS_LIMIT  = 3;                    // 버튼 아닌 곳 이만큼 누르면 실패
+const HG_TIMEOUT_MS  = 90 * 1000;            // 이만큼 답이 없으면 잠그지 않고 그냥 닫는다
+
+/* 지문 — 메모리에만 둔다. 저장하면 창을 새로 열 때마다 억울한 누적이 생긴다. */
+let __hgClicks = [];     // { x, y, t, moves }
+let __hgMoves  = 0;      // 직전 클릭 이후 마우스가 움직인 횟수
+let __hgTouch  = false;  // 터치가 한 번이라도 잡히면 이 기기는 지문을 안 본다
+try{
+  window.addEventListener('mousemove', ()=>{ if(__hgMoves < 999) __hgMoves++; }, { passive:true, capture:true });
+  window.addEventListener('pointerdown', (e)=>{
+    if(e && e.pointerType && e.pointerType !== 'mouse'){ __hgTouch = true; return; }
+    __hgClicks.push({ x:e.clientX|0, y:e.clientY|0, t:Date.now(), moves:__hgMoves });
+    __hgMoves = 0;
+    if(__hgClicks.length > HG_SAMPLE * 2) __hgClicks = __hgClicks.slice(-HG_SAMPLE);
+  }, { passive:true, capture:true });
+}catch(e){}
+
+function loadHumanGuard(){
+  try{
+    const o = JSON.parse(localStorage.getItem(STORAGE_KEYS.humanGuard) || 'null');
+    if(o) return { until:Number(o.until||0), askedAt:Number(o.askedAt||0) };
+  }catch(e){}
+  return { until:0, askedAt:0 };
+}
+function saveHumanGuard(g){ try{ localStorage.setItem(STORAGE_KEYS.humanGuard, JSON.stringify(g)); }catch(e){} }
+function hgLocked(){ return loadHumanGuard().until > Date.now(); }
+
+/* 의심 점수 — 신호 3개 중 몇 개가 잡혔나. */
+function hgSuspicion(){
+  if(__hgTouch) return 0;
+  const c = __hgClicks.slice(-HG_SAMPLE);
+  if(c.length < HG_SAMPLE) return 0;
+  let score = 0;
+
+  /* ① 같은 픽셀 반복 — 사람 손은 같은 좌표를 몇십 번 짚지 못한다. (±2px 까지 같은 것으로) */
+  let best = 0;
+  for(let i=0; i<c.length; i++){
+    let n = 0;
+    for(let j=0; j<c.length; j++) if(Math.abs(c[i].x-c[j].x) <= 2 && Math.abs(c[i].y-c[j].y) <= 2) n++;
+    if(n > best) best = n;
+  }
+  if(best >= 12) score++;
+
+  /* ③ 클릭 사이에 마우스가 안 움직인다 — 사람은 커서를 옮겨서 누른다. */
+  let still = 0;
+  for(let i=0; i<c.length; i++) if(c[i].moves <= 2) still++;
+  if(still >= Math.floor(c.length * 0.66)) score++;
+
+  /* ② **주기성** — 이게 핵심이고, 없으면 나머지가 몇 개든 매크로로 보지 않는다.
+     --------------------------------------------------------------------
+     ⚠ 처음에는 "간격이 서로 비슷한 게 많은가"로 봤다가 **연타하는 사람이 걸렸다.**
+       같은 버튼을 빠르게 누르면 좌표는 당연히 같고, 간격도 90~350ms 로 짧아
+       ±25ms 안에서 우연히 잘 겹쳤다. 연타는 정당한 플레이다.
+     ▶ 녹화 재생만이 내는 모양은 따로 있다 — **좌표도 간격도 P개마다 되풀이된다.**
+       사람은 좌표를 되풀이할 수는 있어도 간격까지 같은 주기로 맞추지는 못한다.
+     ▶ 오차는 절대값이 아니라 **상대값(3%)** 으로 본다. 간격이 짧을수록 엄격해져
+       연타가 우연히 걸리는 일이 없다. */
+  const gaps = [];
+  for(let i=1; i<c.length; i++) gaps.push(c[i].t - c[i-1].t);
+  let periodic = false;
+  for(let P=2; P<=8 && !periodic; P++){
+    const n = gaps.length - P;
+    if(n < 8) continue;                       // 견줄 쌍이 너무 적으면 우연이 끼어든다
+    let hit = 0;
+    for(let i=0; i<n; i++){
+      const a = gaps[i], b = gaps[i+P];
+      if(Math.abs(a-b) <= Math.max(12, a * 0.03)) hit++;   // 간격이 주기로 되풀이
+    }
+    if(hit >= Math.ceil(n * 0.8)) periodic = true;
+  }
+  if(!periodic) return 0;                     // ⚠ 주기성이 없으면 사람으로 본다
+  score++;
+
+  return score;
+}
+
+/* 잠금 안내 — 남은 시간을 보여준다. 진행도는 멀쩡하다는 말을 반드시 같이 적는다. */
+function hgShowLock(){
+  const left = Math.max(0, loadHumanGuard().until - Date.now());
+  const txt = (typeof banRemainText === 'function') ? banRemainText(left) : (Math.ceil(left/60000) + '분');
+  showModal('\u{23F3} 2시간 동안 잠겼습니다', `<div style="line-height:1.9;">
+      <b>사람 확인</b>에 실패했습니다. <b>2시간 동안</b> 게임을 시작할 수 없습니다.<br><br>
+      남은 시간 — <b>${escapeHtml(txt)}</b><br><br>
+      <span style="font-size:12px;color:var(--fg-dim);">
+        자동 입력 프로그램으로 판을 되풀이하면 이 확인이 뜹니다.<br>
+        <b>진행도는 그대로입니다</b> — 재화도 기록도 사라지지 않습니다.</span>
+    </div>`, [{label:'확인', solid:true}]);
+}
+
+/* 사람 확인 — 버튼이 **뜰 때마다 다른 자리**에 놓인다. */
+function hgChallenge(){
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg show';
+  bg.style.zIndex = 99999;
+  const W = 260, H = 190, BW = 96, BH = 40;   // 판 크기 · 버튼 크기
+  bg.innerHTML = `<div class="modal-box" style="max-width:330px;">
+      <div class="mtitle">\u{1F9D1} 사람인지 확인합니다</div>
+      <div class="mbody">
+        <div style="line-height:1.75;font-size:13px;margin-bottom:10px;">
+          아래 칸 안의 <b>버튼</b>을 눌러주세요.<br>
+          <span style="font-size:11px;color:var(--fg-dim);">버튼은 누를 때마다 자리가 바뀝니다. 다른 곳을 ${HG_MISS_LIMIT}번 누르면 잠깁니다.</span>
+        </div>
+        <div id="hgBox" style="position:relative;width:${W}px;height:${H}px;margin:0 auto;
+             background:var(--bg-2);border:1px solid var(--line);border-radius:10px;overflow:hidden;">
+          <button id="hgBtn" class="btn btn-solid" style="position:absolute;width:${BW}px;height:${BH}px;padding:0;"></button>
+        </div>
+        <div id="hgMsg" style="text-align:center;font-size:12px;color:var(--fg-dim);margin-top:10px;"></div>
+      </div>
+    </div>`;
+  document.body.appendChild(bg);
+
+  const btn = bg.querySelector('#hgBtn');
+  const box = bg.querySelector('#hgBox');
+  const msg = bg.querySelector('#hgMsg');
+  let miss = 0, done = false;
+
+  const place = ()=>{
+    btn.style.left = Math.floor(Math.random() * (W - BW)) + 'px';
+    btn.style.top  = Math.floor(Math.random() * (H - BH)) + 'px';
+    btn.textContent = ['눌러주세요','여기','확인','클릭'][Math.floor(Math.random()*4)];
+  };
+  const close = ()=>{ done = true; try{ clearTimeout(tmr); }catch(e){} try{ bg.remove(); }catch(e){} };
+
+  /* 통과 — 30분간 다시 묻지 않는다. */
+  btn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    if(done) return;
+    close();
+    const g = loadHumanGuard(); g.askedAt = Date.now(); saveHumanGuard(g);
+  });
+
+  /* 빗맞힘 — 창 아무 데나(버튼 제외). 세 번이면 잠근다. */
+  bg.addEventListener('click', ()=>{
+    if(done) return;
+    miss++;
+    if(miss >= HG_MISS_LIMIT){
+      close();
+      saveHumanGuard({ until: Date.now() + HG_LOCK_MS, askedAt: Date.now() });
+      __hgClicks = [];
+      hgShowLock();
+      return;
+    }
+    place();
+    msg.textContent = `버튼을 눌러주세요. (${miss}/${HG_MISS_LIMIT})`;
+  });
+
+  /* 시간 초과 — 잠그지 않는다. 자리를 비웠을 뿐일 수 있다. 다음 판에 다시 묻는다. */
+  const tmr = setTimeout(()=>{ if(!done) close(); }, HG_TIMEOUT_MS);
+
+  place();
+}
+
+/* 판이 끝날 때마다 부른다. 의심스러울 때만 확인창을 띄운다. */
+function hgMaybeChallenge(){
+  try{
+    if(typeof devAnyMode === 'function' && devAnyMode()) return;   // 개발자 면제
+    if(window.__GG_TEST) return;                                   // 자동 테스트 면제
+    const g = loadHumanGuard();
+    const now = Date.now();
+    if(g.until > now) return;                       // 이미 잠겨 있다
+    if(now - (g.askedAt || 0) < HG_COOLDOWN_MS) return;
+    if(hgSuspicion() < 2) return;                   // 신호 3개 중 2개부터
+    __hgClicks = [];                                // 확인창 클릭이 다음 판정에 섞이지 않게
+    setTimeout(()=>{ try{ hgChallenge(); }catch(e){} }, 900);   // 결과 연출이 끝난 뒤에
+  }catch(e){}
+}
+
+/* ##########################################################################
    [Ver 13.17] 백업·복원 연타 제한
    --------------------------------------------------------------------------
    ▶ 왜 — 세이브 롤백은 "백업 → 잃음 → 복원"을 **빠르게 반복**해야 이득이 난다.
@@ -23333,6 +23931,7 @@ function doGoldMine(count){
     const got = keys.map(k=> ({ key:k, res: grantArtifact(k) }));
     mineBusy = false;
     renderMineScreen();
+    try{ logActivity(`개쩌는채굴 ${count}회 → ${keys.join(',')}`); }catch(e){}   // [Ver 14.9]
     showMineResult(got, true);
     /* [Ver 11.3.1] 개쩌는 곡괭이 채굴 직후 자동 백업 — 일반 채굴과 동일한 훅. */
     try{ autoBackupAfterGame(); }catch(e){}
@@ -23455,6 +24054,7 @@ function runPickaxeUpgrade(n){
     if(ok > 0) grantGoldPickaxe(ok);
     mineBusy = false;
     renderMineScreen();
+    try{ logActivity(`곡괭이강화 ${n}개 걸어 성공 ${ok} (개쩌는 보유 ${goldPickaxeCount()})`); }catch(e){}   // [Ver 14.9]
     const fail = n - ok;
     showModal(ok > 0 ? '✨ 강화 결과' : '💥 강화 실패', `<div class="pu-res">
         <div class="pu-res-ic">${ok > 0 ? '🪙' : '💥'}</div>
@@ -23589,6 +24189,11 @@ function boxRollOnce(){
 }
 /* 굴린 결과를 실제로 지급한다. */
 function boxGrantResult(r){
+  /* [Ver 14.9] 활동 기록 — 상자에서 특별 보상이 나왔을 때만 남긴다(평범한 결과는 소음이다) */
+  try{
+    const sp = (r.specials || []).map(s=> s.key).join(',');
+    if(sp) logActivity(`상자 특별보상 → ${sp}`);
+  }catch(e){}
   if(r.pickaxe > 0) grantPickaxe(r.pickaxe);
   if(r.ubinite > 0) grantUbinite(r.ubinite);
   r.specials.forEach(s=>{
@@ -24210,6 +24815,7 @@ document.addEventListener('keydown', (e)=>{
 
 function openGameModePicker(){
   if(isBanned()){ showBanScreen(); return; }   // [Ver 9.14] 제재 계정은 게임을 시작할 수 없다
+  if(hgLocked()){ hgShowLock(); return; }      // [Ver 14.8.2] 사람 확인에 실패해 잠긴 동안
   closeMenuDrawer();
   const bg = document.getElementById('gameModeBg');
   if(!bg){ startGame(false); return; }   // 안전장치: UI가 없으면 기존 동작으로
@@ -24921,6 +25527,21 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 14.9', date: '2026-09-11',
+    items: [
+      '\u{1F6E1}️ <b>[차단] 자동 입력 프로그램(매크로)으로 판을 되풀이하는 것을 막았습니다.</b> 봇전을 무한히 돌려 <b>곡괭이·상자 열쇠·개쩌는 곡괭이</b>를 긁어모으는 방법이 있었습니다. 확률이나 획득량은 <b>하나도 건드리지 않았습니다</b> — 많이 하는 분이 손해를 보면 안 되기 때문입니다. 대신 클릭이 <b>기계적으로 반복될 때만</b> "사람인지 확인" 창이 뜹니다. 버튼은 뜰 때마다 자리가 바뀌고, <b>다른 곳을 3번</b> 누르면 <b>2시간 동안</b> 게임을 시작할 수 없습니다. (시간이 지나기만 한 경우에는 잠기지 않습니다. 진행도는 어떤 경우에도 그대로입니다)',
+      '\u{1F4DD} <b>[알림] 최근 활동 기록이 남습니다.</b> 문의·제보를 확인할 방법이 없어 심증만으로 처리하던 것을 고치기 위해, <b>재화를 쓴 내역과 뽑기 결과 최근 60줄</b>이 계정에 저장됩니다. 담기는 것은 <b>무엇을 얼마나 썼는지와 그 시각</b>뿐입니다 — 채팅·닉네임 외 개인정보, 카드 구성, 위치 같은 것은 담지 않습니다.',
+      '\u{1F9F0} <b>[운영] 제재·재화 조정을 게임 안에서 처리합니다.</b> 여태 개발자가 콘솔에서 손으로 문서를 쓰던 일이라 오타 한 번에 엉뚱한 분이 정지될 수 있었습니다. 이제 <b>기간을 골라 제재하고 바로 해제</b>할 수 있습니다. (개발자 전용 화면입니다)',
+    ]
+  },
+  {
+    version: 'Ver 14.8.1', date: '2026-09-11',
+    items: [
+      '\u{1F3C6} <b>[신규] 업적 7종.</b> 달성하면 전용 <b>프로필 사진</b>을 드립니다.<br>· <b>일반</b> — <b>랩터 러버</b>(3일 연속 출석) · <b>흑우</b>(우비나이트 누적 50,000개 소비)<br>· <b>히든</b> — <b>뭐함?</b>(자신이 낸 E등급 카드 때문에 사망) · <b>뭔가 잘못됐어</b>(한 게임에서 상태 효과 10개 이상) · <b>버그 발견</b>(봇의 차례가 오류로 저절로 넘어가는 것을 목격)<br>· <b>스페셜</b> — 2종이 더 있습니다.',
+      '\u{1F5BC}️ 업적 프로필 사진 <b>7장</b>이 함께 들어갔습니다. 이로써 업적은 <b>31종</b>, 프로필 사진은 <b>33종</b>이 되었습니다.',
+    ]
+  },
   {
     version: 'Ver 14.8', date: '2026-09-11',
     items: [
@@ -29583,6 +30204,7 @@ const DEFAULT_STATS = {
   cardsPlayed: 0, cardsDrawn: 0, cardsBought: 0, cardsSold: 0,
   goldEarned: 0, goldSpent: 0, gambles: 0, gambleDeaths: 0,
   kills: 0, deaths: 0, arcadeGames: 0,   // [Ver 14.8] 아케이드 판수 — 업적 '게임중독'
+  ubiniteSpent: 0,                       // [Ver 14.8.1] 누적 우비나이트 소비 — 업적 '흑우'
   longestGameTurns: 0, totalTurns: 0,
   blackMarketVisits: 0, sabotages: 0, packagesOpened: 0,
   reactionsUsed: 0, nullified: 0, reflected: 0,
@@ -30398,6 +31020,8 @@ function tickNewCardsOwnTurn(p){
       p.maxHp = 1; p.hp = Math.min(p.hp, 1); p.shield = 0;
       try{ cardAudioTriggerKey('sfx', 'goja', p.id); }catch(e){}
       log('highlight', `🐕 개쉐끼 랩터 — ${J(p.name,'이','가')} 중성화수술을 당했습니다! (MaxHP 1)`);
+      /* [Ver 14.8.1] 좋지 않은 곳 — 이 분기 자체가 "개쉐끼 랩터에 걸린 채로 중성화" 다. */
+      try{ if(isMyPlayer(p)) markGameAch('madDogGoja'); }catch(e){}
     }
   }
   // 💹 경기 회복 — 지난 바퀴에 쓴 골드의 일부 환급
@@ -31382,6 +32006,22 @@ const ACHIEVEMENTS = [
   { id:'deathnote', kind:'special', name:'데스노트', desc:'???', hint:'어떤 카드가 이름값을 할 때.',
     real:'데스노트로 상대를 1명 처치', pfp:'deathnote', check:c=>!!c.game.deathnoteKill },
 
+  /* ===== [Ver 14.8.1] 신규 7종 ===== */
+  { id:'raptorlover', kind:'normal', name:'랩터 러버', desc:'3일 연속으로 출석하기',
+    pfp:'raptorlover', check:c=>(c.attendStreak||0) >= 3 },
+  { id:'blackcow',    kind:'normal', name:'흑우',      desc:'우비나이트를 누적 50,000개 소비하기',
+    pfp:'blackcow',    check:c=>(c.stats.ubiniteSpent||0) >= 50000 },
+  { id:'whatru',      kind:'hidden', name:'뭐함?',     desc:'자신이 낸 E등급 카드 때문에 사망하기',
+    pfp:'whatru',      check:c=>!!c.game.diedByOwnEcard },
+  { id:'somethingwrong', kind:'hidden', name:'뭔가 잘못됐어', desc:'한 게임에서 상태 효과를 한 번에 10개 이상 받기',
+    pfp:'somethingwrong', check:c=>(c.game.maxChips||0) >= 10 },
+  { id:'bugfound',    kind:'hidden', name:'버그 발견',  desc:'봇전에서 봇의 차례가 오류로 저절로 넘어가는 것을 보기',
+    pfp:'bugfound',    check:c=>!!c.game.botBugSkip },
+  { id:'badplace',    kind:'special', name:'좋지 않은 곳', desc:'???', hint:'개가 물고 간 자리.',
+    real:'개쉐끼 랩터에 걸린 채로 중성화당하기', pfp:'badplace', check:c=>!!c.game.madDogGoja },
+  { id:'senpai',      kind:'special', name:'선배님 마라탕 사주세요', desc:'???', hint:'스스로 훈발롬이 되는 카드.',
+    real:'"내가 선배님이니까." 를 1회 사용', pfp:'senpai', check:c=>!!c.game.senpaiUsed },
+
   /* ===== [Ver 14.8] 신규 스페셜 5종 ===== */
   { id:'grind100', kind:'special', name:'노가다왕', desc:'???', hint:'어떤 권능을 지겹도록 눌러야 합니다.',
     real:'한 판에서 권능 "노가다"를 100번 사용', pfp:'grind100', check:c=>(c.game.grindUses||0) >= 100 },
@@ -31486,7 +32126,12 @@ function resetGameAchFlags(){
     luckyGambleAllUp:false,// 도박 권능으로 손패 **전부**의 등급이 올랐다
     beastKill:false,       // 할퀴기·베기 권능으로 상대를 처치했다
     teamKill:false,        // 아군을 처치했다
-    lowHpMendUsed:false    // HP 200 미만에서 회복 권능을 썼다 (승리와 함께 판정)
+    lowHpMendUsed:false,   // HP 200 미만에서 회복 권능을 썼다 (승리와 함께 판정)
+    /* ===== [Ver 14.8.1] ===== */
+    diedByOwnEcard:false,  // 내가 낸 E등급 카드 때문에 죽었다
+    madDogGoja:false,      // 개쉐끼 랩터가 걸린 채로 중성화당했다
+    senpaiUsed:false,      // "내가 선배님이니까." 를 냈다
+    botBugSkip:false       // 봇 차례가 오류로 넘어갔다 (봇전에서만)
   };
 }
 /* 편의 헬퍼: 특정 게임 내 플래그를 세운다(존재하지 않으면 무시). */
@@ -31508,6 +32153,8 @@ function buildAchContext(won){
     questStreak:   (function(){ try{ return questAllDoneStreak(); }catch(e){ return 0; } })(),
     creditsWatched:(function(){ try{ return localStorage.getItem(CREDITS_WATCH_KEY) === '1'; }catch(e){ return false; } })(),
     ownsDevPfp:    (function(){ try{ return hasPfp('devpfp'); }catch(e){ return false; } })(),
+    /* [Ver 14.8.1] 출석 연속 일수 — 업적 '랩터 러버' */
+    attendStreak:  (function(){ try{ return loadAttend().streak || 0; }catch(e){ return 0; } })(),
     state: { shopClosedForever: (typeof shopClosedForever!=='undefined' && shopClosedForever) },
     game: gameAchFlags,
     dexCount: dexNames.length,
@@ -39334,6 +39981,7 @@ function runTurnStart(){
     if(!p.alive){ advanceTurn(); return; }
   }
   totalIndividualTurns++;
+  try{ window.__achEcard = false; }catch(e){}   // [Ver 14.8.1] E등급 표식은 그 카드 처리 동안만
   try{ tickMeditationExpire(); }catch(e){ console.error('[14.7] 명상 만료 처리 오류', e); }   // ⚠ **사람 턴** 기준
   try{ roseMarkResolve(); }catch(e){ console.error('[14.7.4] 예고장 처리 오류', e); }          // ⚠ **사람 턴** 기준
   mktTick();   // [Ver 14.0] 시세는 **매 사람의 턴마다** 움직인다
@@ -45255,6 +45903,20 @@ function pwRoundTick(){
 let __ggRealPlays = 0;
 function playCard(playerId, handIdx, targetId, isChainCast, sourceOwnerId){
   try{ __ggRealPlays++; }catch(e){}
+  /* [Ver 14.8.1] 업적 근거 — 내가 내는 카드만 본다.
+     ⚠ E등급 표식은 **이 카드가 처리되는 동안에만** 유효하다. 죽는 시점에 이 표식이
+       켜져 있으면 "내가 낸 E등급 카드 때문에 죽었다"로 친다. 끄는 것은 턴이 넘어갈 때. */
+  try{
+    const __pc = players.find(x=> x && x.id === playerId);
+    if(__pc && isMyPlayer(__pc)){
+      const __src = players.find(x=> x.id === (sourceOwnerId || playerId)) || __pc;
+      const __c = (__src && __src.hand) ? __src.hand[handIdx] : null;
+      if(__c){
+        window.__achEcard = (__c.grade === 'E');
+        if(String(__c.name || '').indexOf('내가 선배님이니까') === 0) markGameAch('senpaiUsed');
+      }
+    }
+  }catch(e){}
   // [Ver 7.1] 원격 클라이언트: 직접 실행하지 않고 호스트에 입력을 전달한다.
   if(typeof lanIsRemoteClient==='function' && lanIsRemoteClient() && !isChainCast){
     lanSend({ t:'to_host', payload:{ action:'play', idx:handIdx, target:targetId||null, src:sourceOwnerId||null } });
@@ -57416,6 +58078,10 @@ function onPlayerDeath(deadPlayer, cause, cardName){
   /* [Ver 9.14] 강아지후 — 팀원이 죽으면 충격으로 고자가 된다 */
   try{ petPuppyOnAllyDeath(deadPlayer); }catch(e){ console.error('[지후펫] 강아지후 사망 처리 오류', e); }
   try{ petContractOnDeath(deadPlayer); }catch(e){ console.error('[지후펫] 용병·성기사 사망 처리 오류', e); }   // [Ver 14.7]
+  /* [Ver 14.8.1] 뭐함? — 내가 낸 E등급 카드가 처리되는 동안 내가 죽었다. */
+  try{
+    if(deadPlayer && isMyPlayer(deadPlayer) && window.__achEcard) markGameAch('diedByOwnEcard');
+  }catch(e){}
   /* [Ver 14.8] 업적 — 야수(할퀴기·베기로 처치) · 인성파탄자(아군 처치).
      ⚠ 모든 사망이 반드시 이 함수를 지나므로 여기 한 곳이면 된다. */
   try{
@@ -60657,6 +61323,9 @@ function botStep(label, fn){
   catch(e){
     console.error('[봇 사슬] ' + label + ' 에서 예외 — 턴을 강제로 넘깁니다.', e);
     try{ log('sys', `⚠ 봇 처리 중 오류가 나 차례를 넘겼습니다. (${escapeHtml(label)})`); }catch(_){}
+    /* [Ver 14.8.1] 버그 발견 — 이걸 **직접 본** 사람에게 준다.
+       ⚠ 봇이 있는 판에서만 의미가 있다. 이 함수는 봇 차례에만 도므로 조건이 이미 성립한다. */
+    try{ markGameAch('botBugSkip'); }catch(_){}
     try{ advanceTurn(); }catch(_){}
   }
 }
