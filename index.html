@@ -7829,7 +7829,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.7.8</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.7.9</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -10132,23 +10132,40 @@ function ambientBgmPlay(key){
     const dk = djActiveTrackKey();
     if(dk && key !== dk) key = dk;
   }catch(e){}
-  if(ambientBgmKey === key && ambientBgmEl) return; // 이미 같은 곡이면 그대로 둔다(끊김 방지)
+  /* ⚠ "같은 곡인가" 만 보면 안 된다. **실제로 흐르고 있는지**까지 봐야 한다.
+     쟁여둔 재생기의 play() 가 거부당해 멈춰 있는데도 키만 남아 있으면,
+     이 가드에 걸려 영영 다시 시도하지 않는다. (14.7 이어재생의 회귀 — 14.7.9 수정) */
+  if(ambientBgmKey === key && ambientBgmEl && !ambientBgmEl.paused) return;
   ambientBgmStop();
   const src = cardAudioSrc(key); if(!src) return;
   try{
-    /* 이 곡의 재생기가 이미 있으면 그대로 쓴다 — 멈춘 자리에서 이어진다. */
-    let el = __ambientPool[key];
-    if(!el){
-      el = new Audio(src);
-      el.loop = true;
-      __ambientPool[key] = el;
-    }
-    let mute = false;
-    try{ mute = !!(typeof rouletteMuting !== 'undefined' && rouletteMuting); }catch(e){}
-    el.volume = mute ? 0 : AMBIENT_BGM_VOL;
-    const p = el.play(); if(p && p.catch) p.catch(()=>{ cardAudioArmUnlock(el); });
-    ambientBgmEl = el;
-    ambientBgmKey = key;
+    /* 이 곡의 재생기가 이미 있으면 그대로 쓴다 — 멈춘 자리에서 이어진다.
+       fresh=true 면 쟁여둔 것을 버리고 새로 만든다(재시도 경로). */
+    const start = (fresh)=>{
+      let el = fresh ? null : __ambientPool[key];
+      if(!el){
+        el = new Audio(src);
+        el.loop = true;
+        __ambientPool[key] = el;
+      }
+      let mute = false;
+      try{ mute = !!(typeof rouletteMuting !== 'undefined' && rouletteMuting); }catch(e){}
+      el.volume = mute ? 0 : AMBIENT_BGM_VOL;
+      const p = el.play();
+      if(p && p.catch) p.catch(()=>{
+        /* ⚠ 쟁여둔 재생기가 거부당했다 — **버리고 새로 만들어 한 번만** 다시 시도한다.
+           안 그러면 그 곡은 다시는 안 나온다. 재시도도 실패하면 그때 첫 클릭 대기열로. */
+        if(!fresh){
+          try{ delete __ambientPool[key]; }catch(e){}
+          try{ start(true); }catch(e){}
+        } else {
+          cardAudioArmUnlock(el);
+        }
+      });
+      ambientBgmEl = el;
+      ambientBgmKey = key;
+    };
+    start(false);
   }catch(e){}
 }
 /* [Ver 8.2] 배경 BGM(로비·야차·저점매수의 Happy Haunts 등)과 카드 고유 BGM이 동시에 울리던 문제.
@@ -24731,6 +24748,14 @@ function exitPlaygroundBar(){
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
   {
+    version: 'Ver 14.7.9', date: '2026-09-11',
+    items: [
+      '\u{1F3B5} <b>[버그수정] 메뉴 BGM이 다른 화면을 갔다 오면 다시는 안 나오던 문제.</b> 14.7에서 넣은 “이어재생”의 부작용이었습니다. 곡마다 재생기를 쟁여두고 재사용하는데, 그 재생기의 재생이 <b>한 번이라도 거부당하면</b> 멈춘 채로 남으면서도 “이 곡이 흐르는 중”으로 기록돼, 그 뒤로는 <b>아예 다시 틀려는 시도조차 하지 않았습니다.</b> 이제 실제로 흐르고 있는지까지 확인하고, 실패하면 재생기를 새로 만들어 한 번 더 시도합니다.',
+      '\u{1F3B4} <b>[조정] 카드 등장 편중.</b> 같은 등급인데도 어떤 카드는 <b>5.4배</b>로 잘 나오고 있었습니다 — 회복(3.0배)과 보여주기(1.8배) 보정이 <b>겹쳐서 곱해졌기</b> 때문입니다. 가장 잘 나오는 카드와 가장 안 나오는 카드의 차이가 <b>14배</b>였습니다. 겹곱에 상한을 걸어 <b>6.5배</b>로 줄였습니다. 회복·공격 카드를 밀어준다는 원래 의도는 그대로입니다.',
+      '\u{1F4CF} <span style="opacity:.75">참고 — “한 번도 못 본 카드가 많다”는 쪽은 확률 문제가 아니라 <b>카드가 878장</b>이기 때문입니다. 한 판에 뽑히는 카드가 40장 안팎이라 10판을 해도 400장이고, 확률을 어떻게 조정해도 그동안 만나는 카드는 300장 언저리에서 거의 움직이지 않습니다. (안 본 카드 우대를 10·20·35%로 넣어 전부 재봤지만 309·307·295장으로 오히려 나빠졌습니다)</span>',
+    ]
+  },
+  {
     version: 'Ver 14.7.8', date: '2026-09-11',
     items: [
       '\u{1F0CF} <b>[수정] 인게임 「신규 카드」 탭이 13.4에서 멈춰 있던 문제.</b> 14.7에서 10장, 14.7.4에서 15장을 넣었는데 <b>탭에는 아무것도 안 적혀</b> 있었습니다. 카드는 게임에 멀쩡히 들어갔지만 “이번에 뭐가 생겼는지” 훑어볼 곳이 비어 있었습니다. <b>25장을 두 묶음으로</b> 채웠습니다.',
@@ -37199,8 +37224,14 @@ function categoryWeightMult(c){
   else if(ATK_LIKE_TYPES.includes(t) || ATK_BONUS_TYPES.includes(t)) m = 1.5;
   // [Ver 8.3.1] 보여주기(반응) 카드가 손패에 더 자주 있도록 등장 확률을 1.8배로 올린다
   if(typeof isRevealCard==='function' && isRevealCard(c)) m *= 1.8;
-  return m;
+  /* [Ver 14.7.9] ⚠ **겹곱에 상한을 둔다.**
+     회복(3.0) × 보여주기(1.8) = 5.4 가 되어, 같은 등급인데도 어떤 카드는 5.4배로 나왔다.
+     실측 최대/최소 배수가 14.1배였고 "늘 보던 카드만 또 나온다"의 주범이었다.
+     상한 2.5 를 걸면 6.5배로 내려간다. 회복·공격을 밀어준다는 원래 의도는 그대로다. */
+  return Math.min(m, CATEGORY_WEIGHT_CAP);
 }
+/* 유형 배수의 상한. 이 값을 올리면 편중이 다시 커진다. */
+const CATEGORY_WEIGHT_CAP = 2.5;
 function cardWeight(c){
   // 운빨좋은날 등: 등급과 무관하게 카드 자체에 지정된 극저확률로 뽑힌다 (SR+ 예산 제한과 별개로 항상 적용)
   if(c.dropWeightOverride != null) return c.dropWeightOverride;
