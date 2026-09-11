@@ -7867,7 +7867,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.0</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.0.1</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -23782,12 +23782,20 @@ try{
 function loadHumanGuard(){
   try{
     const o = JSON.parse(localStorage.getItem(STORAGE_KEYS.humanGuard) || 'null');
-    if(o) return { until:Number(o.until||0), askedAt:Number(o.askedAt||0) };
+    if(o) return { until:Number(o.until||0), askedAt:Number(o.askedAt||0), pending:!!o.pending };
   }catch(e){}
-  return { until:0, askedAt:0 };
+  return { until:0, askedAt:0, pending:false };
 }
 function saveHumanGuard(g){ try{ localStorage.setItem(STORAGE_KEYS.humanGuard, JSON.stringify(g)); }catch(e){} }
 function hgLocked(){ return loadHumanGuard().until > Date.now(); }
+/* [Ver 15.1] '확인창에 아직 답하지 않았다'.
+   ⚠ 저장소에 남긴다 — 메모리에만 두면 새로고침 한 번으로 풀린다. */
+function hgPending(){ return !!loadHumanGuard().pending; }
+function hgSetPending(v){
+  const g = loadHumanGuard();
+  g.pending = !!v;
+  saveHumanGuard(g);
+}
 
 /* 의심 점수 — 신호 3개 중 몇 개가 잡혔나. */
 function hgSuspicion(){
@@ -23861,7 +23869,8 @@ function hgChallenge(){
       <div class="mtitle">\u{1F9D1} 사람인지 확인합니다</div>
       <div class="mbody">
         <div style="line-height:1.75;font-size:13px;margin-bottom:10px;">
-          아래 칸 안의 <b>버튼</b>을 눌러주세요.<br>
+          아래 칸 안의 <b>버튼</b>을 눌러주세요.
+          <span style="color:var(--fg-dim);">누르기 전까지는 채굴할 수 없습니다.</span><br>
           <span style="font-size:11px;color:var(--fg-dim);">버튼은 누를 때마다 자리가 바뀝니다. 다른 곳을 ${HG_MISS_LIMIT}번 누르면 잠깁니다.</span>
         </div>
         <div id="hgBox" style="position:relative;width:${W}px;height:${H}px;margin:0 auto;
@@ -23890,7 +23899,9 @@ function hgChallenge(){
     e.stopPropagation();
     if(done) return;
     close();
-    const g = loadHumanGuard(); g.askedAt = Date.now(); saveHumanGuard(g);
+    /* 사람이 맞혔다 — 대기를 풀고 30분간 다시 묻지 않는다. */
+    const g = loadHumanGuard(); g.askedAt = Date.now(); g.pending = false; saveHumanGuard(g);
+    try{ if(typeof renderMineScreen === 'function') renderMineScreen(); }catch(e){}
   });
 
   /* 빗맞힘 — 창 아무 데나(버튼 제외). 세 번이면 잠근다. */
@@ -23899,7 +23910,7 @@ function hgChallenge(){
     miss++;
     if(miss >= HG_MISS_LIMIT){
       close();
-      saveHumanGuard({ until: Date.now() + HG_LOCK_MS, askedAt: Date.now() });
+      saveHumanGuard({ until: Date.now() + HG_LOCK_MS, askedAt: Date.now(), pending:false });
       __hgClicks = [];
       hgShowLock();
       return;
@@ -23908,7 +23919,10 @@ function hgChallenge(){
     msg.textContent = `버튼을 눌러주세요. (${miss}/${HG_MISS_LIMIT})`;
   });
 
-  /* 시간 초과 — 잠그지 않는다. 자리를 비웠을 뿐일 수 있다. 다음 판에 다시 묻는다. */
+  /* 시간 초과 — **잠그지는 않는다.** 자리를 비웠을 뿐일 수 있다.
+     ⚠ 다만 대기 표시는 그대로 둔다 — 돌아와서 버튼을 누르기 전까지 채굴이 안 된다.
+       이게 8분에 한 번 누르는 느린 매크로를 멈추는 핵심이다.
+       (사람은 한 번 누르면 끝나고, 매크로는 영영 못 누른다) */
   const tmr = setTimeout(()=>{ if(!done) close(); }, HG_TIMEOUT_MS);
 
   place();
@@ -23986,13 +24000,24 @@ function hgMineNoSleep(){
 /* 채굴·강화를 누를 때 부른다. 잠겨 있으면 **막고**, 의심스러우면 확인창을 띄운다.
    ⚠ 막는 것까지 여기서 한다 — 14.8.2 는 잠금이 게임 시작만 막아서,
      걸려도 채굴은 그대로 됐다. 잃는 게 없으면 잠금이 아니다. */
+/* ★ [Ver 15.1] 여기가 실제로 **막는** 자리다.
+   ⚠ 14.14 는 확인창을 띄우고 그냥 true 를 돌려줬다. 그래서 창이 떠도 그 채굴은
+     이미 성공했고, 8분에 한 번 누르는 매크로는 '빗맞힘 3회'를 채울 수가 없어
+     (창이 90초면 저절로 닫힌다) **영영 안 잠겼다.** 잡아내고 놓아주고 있었던 셈이다. */
 function hgMineGate(){
   try{
     if(typeof devAnyMode === 'function' && devAnyMode()) return true;
     if(window.__GG_TEST) return true;
     if(hgLocked()){ hgShowLock(); return false; }
+    /* 아직 답하지 않은 확인창이 있으면 **채굴을 막고** 다시 띄운다.
+       시간이 지났다고 잠그지는 않는다 — 자리를 비웠을 뿐일 수 있다.
+       다만 돌아와서 버튼을 누르기 전까지는 캘 수 없다. */
+    if(hgPending()){
+      if(!document.getElementById('hgBtn')){ try{ hgChallenge(); }catch(e){} }
+      return false;
+    }
     hgMineMark();
-    hgMaybeChallenge('mine');
+    if(hgMaybeChallenge('mine')) return false;   // 방금 확인창이 떴다 → 이번 채굴은 막는다
   }catch(e){}
   return true;
 }
@@ -24009,10 +24034,15 @@ function hgMaybeChallenge(where){
        클릭 지문(3개 중 2개)보다 기준이 낮은 이유 — 이 둘은 사람이 흉내낼 수 없다.
        몇 시간을 자로 잰 듯한 간격으로, 혹은 하루 종일 쉬지 않고 캐는 사람은 없다. */
     const mineHit = (where === 'mine') && (hgMineMetronome() || hgMineNoSleep());
-    if(!mineHit && hgSuspicion() < 2) return;
+    if(!mineHit && hgSuspicion() < 2) return false;
     __hgClicks = [];                                // 확인창 클릭이 다음 판정에 섞이지 않게
+    /* [Ver 15.1] '답해야 할 것이 있다'를 먼저 남긴다 — 창을 띄우기 전에 남겨야
+       그 사이에 새로고침해도 풀리지 않는다. */
+    hgSetPending(true);
     setTimeout(()=>{ try{ hgChallenge(); }catch(e){} }, 900);   // 결과 연출이 끝난 뒤에
+    return true;                                    // 띄웠다 — 부르는 쪽이 막는다
   }catch(e){}
+  return false;
 }
 
 /* ##########################################################################
@@ -26350,6 +26380,13 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 15.0.1', date: '2026-09-12',
+    items: [
+      '\u{1F512} <b>[차단] 매크로를 잡아내고도 놓아주고 있었습니다.</b> 사람 확인 창이 <b>아무것도 막지 않고</b> 있었습니다 — 창이 떠도 그 채굴은 이미 성공했고, <b>천천히 도는 매크로</b>는 창이 저절로 닫힐 때까지 기다렸다가 계속 캘 수 있었습니다. 이제 <b>버튼을 누르기 전까지 채굴·강화가 되지 않습니다.</b>',
+      '\u{1F9D1} <b>정상적으로 하시는 분은 버튼 한 번이면 끝입니다.</b> 누르는 즉시 풀리고 <b>30분간 다시 묻지 않습니다.</b> 자리를 비우셨어도 <b>시간이 지났다고 잠기지 않습니다</b> — 돌아오셔서 누르시면 그대로 이어집니다.',
+    ]
+  },
   {
     version: 'Ver 15.0', date: '2026-09-11',
     items: [
