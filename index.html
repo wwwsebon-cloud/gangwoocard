@@ -7836,7 +7836,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.12</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.13</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -13974,6 +13974,10 @@ function grantExp(gained){
 function settleTierForHuman(placement, cause){
   if(tierSettledThisGame) return;
   tierSettledThisGame = true;
+  /* ★ [Ver 14.13] 판이 도는 도중에 밴이 닿았다면 보상은 없다.
+     오버레이는 화면만 덮는다 — 봇들은 계속 두고, 판은 끝까지 가서 정산이 돌았다.
+     리더보드는 서버가 막지만 곡괭이·우비나이트 같은 **기기 안 재화**는 그대로 들어왔다. */
+  if(isBanned()){ showBanScreen(); return; }
   if(typeof TUTORIAL !== 'undefined' && TUTORIAL && TUTORIAL.active){ return; } // 튜토리얼은 보상 제외
   // [Ver 9.10.1] 놀이터는 원하는 카드만 골라 노는 연습판이라 경험치·재화를 주지 않는다
   if(typeof playgroundMode !== 'undefined' && playgroundMode) return;
@@ -21059,6 +21063,12 @@ async function fbFetchBanAll(){
   const keys = banIdentityKeys();
   const hits = [];
   let mine = null;
+  /* ★ [Ver 14.13] "못 찾았다"와 "못 물어봤다"를 구분한다.
+     ⚠ 예전에는 실패를 통째로 삼켜서, 네트워크가 끊기면 4건이 전부 실패해 hits=[] 가 되고
+       applyAdminDoc 이 그걸 **밴 해제**로 읽었다. 인터넷을 끊고 새로고침하면
+       기기에 남은 기록까지 지워지며 밴이 통째로 풀렸다.
+     ▶ 한 건이라도 못 물어봤으면 ok=false 다. 그때는 **절대 풀지 않는다.** */
+  let ok = true;
   for(const k of keys){
     try{
       const snap = await getDoc(doc(FB.db, 'admin', k));
@@ -21069,9 +21079,11 @@ async function fbFetchBanAll(){
       if(d.ban && !(until > 0 && Date.now() > until)){
         hits.push({ by:k, reason:String(d.banReason||''), until });
       }
-    }catch(e){ /* 한 건 실패는 무시 — 나머지로 판정한다 */ }
+    }catch(e){ ok = false; }
   }
-  return { doc:mine, hits };
+  /* 물어볼 신원이 하나도 없었다면 그것도 확답이 아니다 */
+  if(!keys.length) ok = false;
+  return { doc:mine, hits, ok };
 }
 /* 재화를 안전하게 더한다(음수면 회수). 0 밑으로는 내려가지 않는다. */
 function adminAdjust(kind, amount){
@@ -21152,8 +21164,18 @@ function applyAdminCommand(c){
 /* 운영 문서를 통째로 적용한다. (제재 상태 갱신 + 새 명령 실행) */
 /* [Ver 13.16] hits = fbFetchBanAll 이 찾아낸 밴들. 하나라도 있으면 밴이다.
    여러 개면 **가장 무거운 것**(영구 > 늦게 풀리는 것)을 남긴다. */
-function applyAdminDoc(d, hits){
+/* [Ver 14.13] ok = "서버에 **전부 물어보는 데 성공했나**".
+   ⚠ false 면 밴을 **풀지 않는다.** 못 물어본 것을 "없다"로 읽는 순간
+     인터넷만 끊으면 누구나 풀려나는 구멍이 된다(14.12 까지 실제로 그랬다).
+   ⚠ 옛 호출부가 ok 를 안 주면 true 로 본다 — 그쪽은 전부 성공 경로였다. */
+function applyAdminDoc(d, hits, ok){
   const list = Array.isArray(hits) ? hits : [];
+  const conclusive = (ok === undefined) ? true : !!ok;
+  if(!conclusive && !list.length){
+    /* 확답을 못 받았다. 지금 상태를 그대로 둔다 — 걸려 있으면 걸린 채로. */
+    if(isBanned()) showBanScreen();
+    return;
+  }
   if(!d && !list.length){ ADMIN_STATE = { ban:false, reason:'', until:0, by:'' }; saveBanLocal(ADMIN_STATE); hideBanScreen(); return; }
   /* ---- 제재 ---- */
   if(list.length){
@@ -21208,7 +21230,7 @@ function banWatchdogStart(){
 /* 밴은 부팅 때 한 번만 보면 안 된다 — 판을 하는 도중에 걸 수도 있어야 한다. */
 function banRecheck(){
   if(!fbAvailable()) return;
-  fbFetchBanAll().then(r=> applyAdminDoc(r.doc, r.hits)).catch(()=>{});
+  fbFetchBanAll().then(r=> applyAdminDoc(r.doc, r.hits, r.ok)).catch(()=>{});
 }
 /* 제재 안내 화면 — 닫을 수 없다. (온라인 기능은 별도로 fbSubmitScore에서도 막힌다) */
 function showBanScreen(){
@@ -21278,8 +21300,11 @@ function adminCheckOnBoot(){
   /* [Ver 13.16] 보관처 하나만 지운 경우 나머지에서 되살린다. IndexedDB 는 비동기라 뒤에 온다. */
   try{ banHealFromAnywhere(); }catch(e){}
   /* ② 그 다음 서버 확인 — 해제됐다면 여기서 풀린다 */
-  if(!fbAvailable()) return;
-  fbFetchBanAll().then(r=> applyAdminDoc(r.doc, r.hits)).catch(()=>{});
+  if(!fbAvailable()){ __banChecked = true; return; }   // 물어볼 수단 자체가 없으면 기다리게 하지 않는다
+  fbFetchBanAll()
+    .then(r=>{ applyAdminDoc(r.doc, r.hits, r.ok); })
+    .catch(()=>{})
+    .then(()=>{ __banChecked = true; });                // 성공이든 실패든 "확인은 끝났다"
   /* [Ver 13.16] 5분마다 · 탭을 다시 볼 때 다시 확인한다.
      ⚠ 부팅 때 한 번만 보면, 켜 놓은 채 밤새 도는 탭에는 밴이 영영 안 닿는다. */
   try{
@@ -23123,6 +23148,30 @@ async function dbLookup(){
 }
 
 /* ---- 제재 ---- */
+/* [Ver 14.13] 유저 코드 하나로 그 사람의 **다른 신원**을 찾아낸다.
+   players 는 문서 ID 가 곧 uid 이고, 안에 code 와 fp(기기 지문)가 들어 있다.
+   ⚠ 기기를 옮겨 다녔다면 같은 코드로 문서가 여럿일 수 있다 — 전부 모은다. */
+async function dbFindIdentities(code){
+  const out = { uids: [], fps: [] };
+  try{
+    await fbInit();
+    const { collection, query, where, limit, getDocs } = FB.mod;
+    const q = query(collection(FB.db, 'players'), where('code','==', code), limit(20));
+    const snap = await getDocs(q);
+    snap.forEach(d=>{
+      if(d.id && out.uids.indexOf(d.id) === -1) out.uids.push(d.id);
+      const f = (d.data() || {}).fp;
+      if(f && out.fps.indexOf(f) === -1) out.fps.push(String(f));
+    });
+  }catch(e){ out.err = String(e && e.message || e); }
+  return out;
+}
+let __dbBanUid = true;    // uid 까지 함께 건다 (기본 켬)
+let __dbBanFp  = false;   // 기기 지문까지 건다 (기본 끔 — 애먼 사람이 걸릴 수 있다)
+function dbToggleWide(which, v){
+  if(which === 'uid') __dbBanUid = !!v; else __dbBanFp = !!v;
+  dbRender();
+}
 async function dbBan(ms){
   const code = dbCodeInput();
   if(code.length < 4){ dbSay('<span style="color:#d64545;">유저 코드를 먼저 입력하세요.</span>'); return; }
@@ -23130,32 +23179,56 @@ async function dbBan(ms){
   const reason = String((reasonEl && reasonEl.value) || '').trim().slice(0, 60);
   const until = ms > 0 ? Date.now() + ms : 0;
   const label = ms > 0 ? new Date(until).toLocaleString('ko-KR') : '영구';
+  dbSay('신원을 찾는 중…');
+  const ident = await dbFindIdentities(code);
+  /* 실제로 쓸 문서 ID 목록을 만든다. 유저 코드는 언제나 들어간다. */
+  const keys = [code];
+  if(__dbBanUid) ident.uids.forEach(u=> keys.push('uid_' + u));
+  if(__dbBanFp)  ident.fps.forEach(f=> keys.push('fp_' + f));
+  const found = `계정(uid) <b>${ident.uids.length}개</b> · 기기 <b>${ident.fps.length}개</b>`
+    + (ident.err ? ` <span style="color:#d9822b;">(조회 실패: ${escapeHtml(ident.err)})</span>` : '');
   showModal('제재하시겠습니까?', `<div style="line-height:1.9;">
       <b>${escapeHtml(code)}</b> 계정을 제재합니다.<br><br>
       기간 — <b>${escapeHtml(label)}</b><br>
-      사유 — <b>${escapeHtml(reason || '(없음)')}</b><br><br>
-      <span style="font-size:12px;color:var(--fg-dim);">이 사람이 다음에 접속할 때 적용됩니다.</span>
+      사유 — <b>${escapeHtml(reason || '(없음)')}</b><br>
+      찾아낸 신원 — ${found}<br>
+      <b>거는 곳 ${keys.length}군데</b> — <span style="font-family:var(--font-mono);font-size:11px;">${keys.map(k=> escapeHtml(k.length > 22 ? k.slice(0,22)+'…' : k)).join(' · ')}</span><br><br>
+      ${__dbBanFp ? '<b style="color:#d64545;">기기 제재가 켜져 있습니다.</b> 같은 PC를 쓰는 다른 사람도 함께 막힐 수 있습니다.<br><br>' : ''}
+      <span style="font-size:12px;color:var(--fg-dim);">이 사람이 다음에 접속할 때 적용됩니다.
+      ${__dbBanUid ? '계정(uid)까지 걸었으므로 <b>저장소를 지워도 풀리지 않습니다.</b>' : '<b style="color:#d9822b;">유저 코드만 걸면 저장소를 지우는 것으로 빠져나갑니다.</b>'}</span>
     </div>`, [
     { label:'취소' },
     { label:'제재한다', solid:true, action: async ()=>{
         try{
           await fbInit();
           const { doc, setDoc } = FB.mod;
-          await setDoc(doc(FB.db, 'admin', code), { ban:true, banReason:reason, banUntil:until }, { merge:true });
-          dbSay(`<span style="color:#3aa76d;">제재 완료 — ${escapeHtml(code)} · ${escapeHtml(label)}</span>`);
+          const body = { ban:true, banReason:reason, banUntil:until };
+          for(const k of keys) await setDoc(doc(FB.db, 'admin', k), body, { merge:true });
+          dbSay(`<span style="color:#3aa76d;">제재 완료 — ${escapeHtml(code)} · ${escapeHtml(label)} · <b>${keys.length}군데</b>에 걸었습니다.</span>`);
           dbLookup();
         }catch(e){ dbSay(dbWriteErr(e)); }
       }}
   ]);
 }
+/* ⚠ 해제는 **건 곳을 전부** 풀어야 한다. 한 군데라도 남으면 그 사람은 계속 막힌 채로
+     "풀었다는데 왜 안 되냐"가 된다. 그래서 켜고 끈 것과 무관하게 **찾을 수 있는 신원을
+     모두** 훑어서 푼다. */
 async function dbUnban(){
   const code = dbCodeInput();
   if(code.length < 4) return;
+  dbSay('신원을 찾는 중…');
+  const ident = await dbFindIdentities(code);
+  const keys = [code];
+  ident.uids.forEach(u=> keys.push('uid_' + u));
+  ident.fps.forEach(f=> keys.push('fp_' + f));
   try{
     await fbInit();
     const { doc, setDoc } = FB.mod;
-    await setDoc(doc(FB.db, 'admin', code), { ban:false, banReason:'', banUntil:0 }, { merge:true });
-    dbSay(`<span style="color:#3aa76d;">제재 해제 — ${escapeHtml(code)}</span>`);
+    const body = { ban:false, banReason:'', banUntil:0 };
+    let done = 0;
+    for(const k of keys){ try{ await setDoc(doc(FB.db, 'admin', k), body, { merge:true }); done++; }catch(e){} }
+    dbSay(`<span style="color:#3aa76d;">제재 해제 — ${escapeHtml(code)} · <b>${done}/${keys.length}군데</b></span>`
+      + (done < keys.length ? '<br><span style="font-size:11px;color:#d9822b;">일부를 못 풀었습니다. 다시 눌러주세요.</span>' : ''));
     dbLookup();
   }catch(e){ dbSay(dbWriteErr(e)); }
 }
@@ -23230,6 +23303,17 @@ function dbBanTab(){
       지금 상태 — ${state}
     </div>
     <input id="dbReason" class="input" placeholder="사유 (선택)" maxlength="60" style="margin-bottom:8px;">
+    ${/* [Ver 14.13] 어디까지 걸 것인가. 유저 코드만 걸면 저장소를 지우는 것으로 빠져나간다. */''}
+    <div style="display:flex;gap:12px;align-items:center;font-size:11.5px;margin-bottom:8px;flex-wrap:wrap;">
+      <span style="color:var(--fg-faint);">함께 제재</span>
+      <label style="display:flex;align-items:center;gap:4px;">
+        <input type="checkbox" ${__dbBanUid?'checked':''} onchange="dbToggleWide('uid', this.checked)"> 계정(uid)
+      </label>
+      <label style="display:flex;align-items:center;gap:4px;" title="같은 PC를 쓰는 다른 사람도 함께 막힐 수 있습니다">
+        <input type="checkbox" ${__dbBanFp?'checked':''} onchange="dbToggleWide('fp', this.checked)"> 기기
+      </label>
+    </div>
+    ${__dbBanFp ? '<div style="font-size:10.5px;color:#d64545;line-height:1.6;margin-bottom:8px;">⚠ 기기 제재는 <b>같은 PC를 쓰는 다른 사람</b>도 함께 막습니다. 형제가 나눠 쓰는 경우가 있으니 확실할 때만 쓰세요.</div>' : ''}
     <div style="background:var(--bg-2);border-radius:8px;padding:8px 11px;margin-bottom:7px;text-align:center;">
       <div style="font-size:10.5px;color:var(--fg-faint);">제재 기간</div>
       <div id="dbBanSum" style="font-family:var(--font-mono);font-size:17px;font-weight:700;">
@@ -26026,6 +26110,14 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 14.13', date: '2026-09-11',
+    items: [
+      '\u{1F512} <b>[수정] 제재가 제대로 걸리지 않던 문제 여러 건을 고쳤습니다.</b> 제재를 받고도 계속 플레이할 수 있는 경로가 몇 가지 있었습니다. 전부 막았습니다. <span style="opacity:.75">(정상적으로 플레이하시는 분들은 달라지는 것이 없습니다)</span>',
+      '\u{1F6E1}️ <b>제재는 이제 계정 단위로도 함께 걸립니다.</b> 브라우저 데이터를 지우거나 새 창을 여는 것으로는 풀리지 않습니다.',
+      '\u{1F4E1} <b>서버에 물어보지 못했을 때 제재가 풀려버리던 문제를 고쳤습니다.</b> "제재가 없다"와 "확인하지 못했다"를 구분하지 않고 있었습니다. 이제 확인하지 못하면 <b>상태를 그대로 유지</b>합니다.',
+    ]
+  },
   {
     version: 'Ver 14.12', date: '2026-09-11',
     items: [
@@ -37033,7 +37125,13 @@ function pickBotNamesForGame(n){
   return { names, ultraFlags };
 }
 
+/* [Ver 14.13] 부팅 직후 서버 확인이 끝났는가. 끝나기 전에는 밴이 아직 안 닿아 있다. */
+let __banChecked = false;
 function actuallyStartGame(){
+  /* ★ [Ver 14.13] 여기가 **모든 판이 지나는 단 하나의 문**이다.
+     예전에는 openGameModePicker 에만 검사가 있었다. 그 창이 이미 열려 있었거나
+     다시하기·아케이드 같은 다른 경로로 들어오면 그대로 판이 시작됐다. */
+  if(isBanned()){ showBanScreen(); return; }
   bumpStat('games'); STATS.lastPlayedAt = Date.now(); saveStats(); // [Ver 5.6] 통계
   window.__lanDeathmatchAnnounced = false; window.__lanDeathmatchTicks = 0; // [Ver 7.1.8] LAN 데스매치 리셋
   window.__ubiniteAwardedThisGame = false; // [Ver 8.4] 판마다 우비나이트 1회 지급 가드 리셋
