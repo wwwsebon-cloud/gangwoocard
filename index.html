@@ -7867,7 +7867,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.0.1</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.0.2</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -23942,7 +23942,7 @@ const HG_MINE_KEY   = 'gang_card_mine_rhythm_v1';
 const HG_MINE_KEEP  = 200;                 // 최근 이만큼의 채굴 시각
 const HG_BURST_MS   = 60 * 1000;           // 이 안에 이어 캔 것은 한 번으로 묶는다
 const HG_DAY_MS     = 24 * 3600 * 1000;
-const HG_SLEEP_MS   = 2.5 * 3600 * 1000;   // 하루에 이만큼도 안 쉬면 사람이 아니다
+const HG_SLEEP_MS   = 4 * 3600 * 1000;     // [Ver 15.1] 2.5 → 4시간. 사람은 이만큼은 통째로 비운다
 
 function hgMineLoad(){
   try{
@@ -23971,30 +23971,82 @@ function hgMineSessions(){
      조금 흔들어도 값이 크게 움직이지 않는다.
          매크로(정확) 0.00 · 매크로(흔들기) 0.06 · 사람(강박적) 0.21 · 사람(보통) 0.5+
      0.13 에 선을 그으면 흔드는 매크로까지 잡고 사람은 건드리지 않는다. */
-const HG_CV_LIMIT = 0.13;
-function hgMineMetronome(){
+/* [Ver 15.1] 0.13 → 0.35. 거의 3배로 넓혔다.
+   근거 — 쿨타임마다 꼬박꼬박 돌아오는 사람은 사실상 없다. 시계처럼 규칙적인 것
+   자체가 사람이 아니라는 뜻이라, 좁게 잡을 이유가 없다.
+   ⚠ 대신 이 신호 **하나로는 확인창이 뜨지 않는다**(2점부터). 넓힌 만큼 겹쳐 본다. */
+const HG_CV_LIMIT   = 0.35;
+const HG_MIN_SAMPLE = 8;      // [Ver 15.1] 14 → 8. 8분 간격이면 약 1시간이면 판단이 선다.
+function hgMineGaps(){
   const s = hgMineSessions();
-  if(s.length < 14) return false;
+  if(s.length < HG_MIN_SAMPLE) return null;
   const gaps = [];
   for(let i=1; i<s.length; i++) gaps.push(s[i] - s[i-1]);
-  if(gaps.length < 13) return false;
+  return gaps.length >= (HG_MIN_SAMPLE - 1) ? gaps : null;
+}
+function hgMineMetronome(){
+  const gaps = hgMineGaps();
+  if(!gaps) return false;
   const mean = gaps.reduce((a,b)=> a+b, 0) / gaps.length;
   if(mean < 60000) return false;                      // 너무 촘촘하면 몰아 캔 것이다
   let v = 0;
   gaps.forEach(g=>{ v += (g - mean) * (g - mean); });
-  const cv = Math.sqrt(v / gaps.length) / mean;
-  return cv < HG_CV_LIMIT;
+  return Math.sqrt(v / gaps.length) / mean < HG_CV_LIMIT;
+}
+
+/* ★ [Ver 15.1] 쿨타임 추종 — 이번에 새로 넣은, 가장 사람답지 않은 신호.
+   곡괭이는 10분에 하나씩 찬다. **차오르자마자 오는 것**이 매크로의 본질이다.
+   간격의 중앙값이 충전 주기의 배수(1배~상한배)에 들어맞으면 잡는다.
+   ⚠ 사람은 쌓인 걸 몰아서 캔다 — 간격이 주기와 무관하게 흩어진다. */
+function hgMineFollowsCooldown(){
+  const gaps = hgMineGaps();
+  if(!gaps) return false;
+  let REGEN = 600000;
+  try{ REGEN = pickaxeRegenMs() || 600000; }catch(e){}
+  let CAP = 5;
+  try{ CAP = Math.max(1, pickaxeCap()); }catch(e){}
+  const sorted = gaps.slice().sort((a,b)=> a-b);
+  const med = sorted[Math.floor(sorted.length/2)];
+  if(med < REGEN * 0.6) return false;                 // 주기보다 훨씬 촘촘하면 몰아 캔 것
+  for(let k=1; k<=CAP + 1; k++){
+    const want = REGEN * k;
+    if(Math.abs(med - want) <= want * 0.25) return true;  // ±25% 안이면 주기를 따라온 것
+  }
+  return false;
+}
+/* [Ver 15.1] 물량 — 하루에 이만큼 캐려면 거의 붙어 있어야 한다. */
+function hgMineTooMany(){
+  const now = Date.now();
+  return hgMineSessions().filter(t=> now - t < HG_DAY_MS).length >= 40;
+}
+/* [Ver 15.1] 상주 — 하루 중 첫 채굴과 끝 채굴이 14시간 넘게 벌어져 있으면서 자주 캔다. */
+function hgMineAllDay(){
+  const now = Date.now();
+  const s = hgMineSessions().filter(t=> now - t < HG_DAY_MS);
+  if(s.length < 25) return false;
+  return (s[s.length-1] - s[0]) >= 14 * 3600000;
+}
+/* 채굴 신호 점수 — 2점부터 확인창을 띄운다.
+   ⚠ 넓은 그물 여러 겹이다. 하나만 걸리는 것은 사람도 있을 수 있으니 흘려보낸다. */
+function hgMineScore(){
+  let n = 0;
+  try{ if(hgMineMetronome())       n++; }catch(e){}
+  try{ if(hgMineNoSleep())         n++; }catch(e){}
+  try{ if(hgMineFollowsCooldown()) n++; }catch(e){}
+  try{ if(hgMineTooMany())         n++; }catch(e){}
+  try{ if(hgMineAllDay())          n++; }catch(e){}
+  return n;
 }
 /* S2 — 하루를 통째로 채웠는가. 사람은 반드시 몇 시간을 비운다. */
 function hgMineNoSleep(){
   const now = Date.now();
   const s = hgMineSessions().filter(t=> now - t < HG_DAY_MS);
-  if(s.length < 20) return false;                     // 표본이 적으면 판단하지 않는다
-  if(now - s[0] < HG_DAY_MS * 0.9) return false;      // 24시간을 덮지 못하면 아직 모른다
+  if(s.length < 15) return false;                     // [Ver 15.1] 20 → 15
+  if(now - s[0] < HG_DAY_MS * 0.8) return false;      // [Ver 15.1] 0.9 → 0.8 (약 19시간이면 본다)
   let longest = 0;
   for(let i=1; i<s.length; i++) longest = Math.max(longest, s[i] - s[i-1]);
   longest = Math.max(longest, now - s[s.length-1]);
-  return longest < HG_SLEEP_MS;                       // 2.5시간도 안 쉬었다
+  return longest < HG_SLEEP_MS;
 }
 
 /* 채굴·강화를 누를 때 부른다. 잠겨 있으면 **막고**, 의심스러우면 확인창을 띄운다.
@@ -24033,7 +24085,8 @@ function hgMaybeChallenge(where){
     /* [Ver 14.14] 채굴 신호는 **하나만 잡혀도** 충분하다.
        클릭 지문(3개 중 2개)보다 기준이 낮은 이유 — 이 둘은 사람이 흉내낼 수 없다.
        몇 시간을 자로 잰 듯한 간격으로, 혹은 하루 종일 쉬지 않고 캐는 사람은 없다. */
-    const mineHit = (where === 'mine') && (hgMineMetronome() || hgMineNoSleep());
+    /* [Ver 15.1] 신호 다섯 중 **2점**부터. 문턱을 낮춘 대신 겹쳐 본다. */
+    const mineHit = (where === 'mine') && (hgMineScore() >= 2);
     if(!mineHit && hgSuspicion() < 2) return false;
     __hgClicks = [];                                // 확인창 클릭이 다음 판정에 섞이지 않게
     /* [Ver 15.1] '답해야 할 것이 있다'를 먼저 남긴다 — 창을 띄우기 전에 남겨야
@@ -26380,6 +26433,13 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 15.0.2', date: '2026-09-12',
+    items: [
+      '\u{1F50D} <b>[강화] 매크로를 훨씬 넓게 잡습니다.</b> 판정 기준을 <b>5가지</b>로 늘리고 문턱을 크게 낮췄습니다. 간격을 <b>불규칙하게 흔드는</b> 매크로도, <b>몇 시간만</b> 돌리는 매크로도 이제 걸립니다. 판단이 서는 데 걸리는 시간도 <b>2시간 → 1시간</b>으로 줄었습니다.',
+      '\u{1F9D1} <b>정상적으로 하시는 분은 그대로입니다.</b> 들를 때마다 쌓인 걸 몰아서 캐는 <b>보통의 방식</b>은 걸리지 않습니다. 혹시 창이 뜨더라도 <b>버튼 한 번</b>이면 끝이고 불이익은 없습니다.',
+    ]
+  },
   {
     version: 'Ver 15.0.1', date: '2026-09-12',
     items: [
