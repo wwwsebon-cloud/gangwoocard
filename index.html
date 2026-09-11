@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0A0A0A">
+<!-- [Ver 14.10] 파비콘 — 선언이 없어서 브라우저가 /favicon.ico 를 찔러보고 404 를 냈다.
+     별도 파일로 두면 업로드를 잊게 되므로 data URI 로 심어 둔다. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0A'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='%23E8C97A' font-family='system-ui,sans-serif' font-weight='700'%3E%EA%B0%B1%3C/text%3E%3C/svg%3E">
 <title>갱갱갱 우빈랩터 카드게임 JavaScript Edition</title>
 <style>
 /* [Ver 13.18] Archivo — 레거시 UI(v3.1 스킨) 전용. 평소에는 쓰이지 않는다. */
@@ -7829,7 +7832,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.9</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.10</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -21098,8 +21101,12 @@ function applyAdminCommand(c){
       }catch(e){}
       return '진행도 전체 초기화';
     case 'notice':
-      try{ addMail(c.title || '운영자 안내', String(c.text || ''), null, { noExpire:true }); }catch(e){}
-      return '운영자 안내 전달';
+      /* [Ver 14.10] 보상을 함께 보낼 수 있다. 없으면 예전처럼 글만 가는 편지다.
+         ⚠ 보상 모양은 mailRewardText / claimMail 이 읽는 것과 **같아야** 한다
+           (ubinite·claws·tickets·pickaxe·teeth·goldPickaxe·boxKeys·cream·power·evoPick).
+           여기서 임의로 새 이름을 만들면 편지에는 뜨는데 수령이 안 되는 칸이 생긴다. */
+      try{ addMail(c.title || '운영자 안내', String(c.text || ''), c.reward || null, { noExpire:true }); }catch(e){}
+      return c.reward ? '운영자 선물 전달' : '운영자 안내 전달';
     default:
       return '';
   }
@@ -22661,7 +22668,11 @@ function renderOnlineSync(){
      스스로 한다(원래 구조가 그렇다). 재화 회수는 저장소를 지우면 빠져나갈 수 있고,
      그걸 완전히 막으려면 Cloud Functions 가 필요하다 — 13.16 주석에 적힌 한계 그대로다.
    ########################################################################## */
-let __dbTab  = 'ban';      // ban | give | act
+let __dbTab  = 'ban';      // ban | give | coupon | mail | act
+let __dbCpOnly = false;    // 쿠폰이 유저 전용인가
+/* [Ver 14.10] 탭을 옮겨도 적던 게 날아가지 않게 들고 있는 값.
+   ⚠ dbRender 가 modalBody 를 통째로 새로 그리기 때문에 필요하다. */
+let __dbDraft = {};
 let __dbCode = '';         // 지금 보고 있는 유저 코드
 let __dbInfo = null;       // 조회 결과 (admin 문서)
 let __dbAct  = null;       // 조회 결과 (활동 기록)
@@ -22680,15 +22691,42 @@ async function dbIsAdmin(){
   }catch(e){ return false; }
 }
 
+/* [Ver 14.10] 눌러서 **더해 가는** 단위. 고정 기간 7개로는 "3일 4시간"을 못 만들었다. */
 const DB_DUR = [
-  { label:'2시간',  ms: 2*3600000 },
-  { label:'6시간',  ms: 6*3600000 },
-  { label:'1일',    ms: 24*3600000 },
-  { label:'3일',    ms: 3*24*3600000 },
-  { label:'7일',    ms: 7*24*3600000 },
-  { label:'30일',   ms: 30*24*3600000 },
-  { label:'영구',   ms: 0 },
+  { label:'+1초',   ms: 1000 },
+  { label:'+1분',   ms: 60000 },
+  { label:'+10분',  ms: 600000 },
+  { label:'+1시간', ms: 3600000 },
+  { label:'+1일',   ms: 24*3600000 },
+  { label:'+30일',  ms: 30*24*3600000 },
 ];
+let __dbBanMs = 0;   // 지금까지 쌓은 제재 기간(ms). 0 이면 영구다.
+/* ms 를 사람이 읽는 말로. 0 은 영구다 — banUntil 0 이 영구라는 기존 약속과 같다. */
+function dbBanFmt(ms){
+  if(!ms) return '영구';
+  const u = [['일',86400000],['시간',3600000],['분',60000],['초',1000]];
+  let left = ms, out = [];
+  u.forEach(([name, size])=>{
+    const n = Math.floor(left / size);
+    if(n > 0){ out.push(n + name); left -= n * size; }
+  });
+  return out.join(' ') || '0초';
+}
+/* ⚠ 합계 칸의 **글자만** 바꾼다. dbRender 를 부르면 적어둔 사유가 날아간다. */
+function dbBanAdd(ms){
+  __dbBanMs = Math.max(0, __dbBanMs + ms);
+  const el = document.getElementById('dbBanSum');
+  if(el) el.textContent = __dbBanMs ? dbBanFmt(__dbBanMs) : '(아직 없음 · 누르면 쌓입니다)';
+  const go = document.getElementById('dbBanGo');
+  if(go) go.textContent = __dbBanMs ? `${dbBanFmt(__dbBanMs)} 제재` : '기간을 먼저 쌓으세요';
+}
+function dbBanClear(){ __dbBanMs = 0; dbBanAdd(0); }
+/* 쌓아둔 기간으로 제재한다. 하나도 안 쌓았으면 실수일 가능성이 크므로 막는다
+   (영구 제재는 전용 버튼이 따로 있다). */
+function dbBanGo(){
+  if(!__dbBanMs){ dbSay('<span style="color:#d64545;">기간을 먼저 쌓으세요. 영구 제재는 아래 버튼입니다.</span>'); return; }
+  dbBan(__dbBanMs);
+}
 const DB_KINDS = [
   { key:'ubinite', label:'우비나이트' },
   { key:'claws',   label:'진화발톱'   },
@@ -22706,8 +22744,177 @@ function dbCodeInput(){
   const el = document.getElementById('dbCode');
   return String((el && el.value) || '').trim().toUpperCase();
 }
-function dbSwitch(tab){ __dbTab = tab; dbRender(); }
-function dbSay(msg){ __dbMsg = msg; const el = document.getElementById('dbMsg'); if(el) el.innerHTML = msg; }
+
+/* ---- 보상 고르는 칸 — 쿠폰과 우편함이 **같은 것**을 쓴다 ----------------
+   ⚠ key 는 claimMail 이 실제로 읽는 이름이어야 한다. 여기서 새 이름을 지어내면
+     편지에는 보이는데 눌러도 안 들어오는 칸이 생긴다. */
+const DB_REWARDS = [
+  { key:'ubinite',     label:'💎 우비나이트' },
+  { key:'claws',       label:'🦴 발톱'       },
+  { key:'tickets',     label:'🎟️ 뽑기권'    },
+  { key:'pickaxe',     label:'⛏️ 곡괭이'     },
+  { key:'goldPickaxe', label:'🪙 개쩌는곡괭이' },
+  { key:'boxKeys',     label:'🔑 상자열쇠'   },
+  { key:'teeth',       label:'🦷 이빨'       },
+  { key:'cream',       label:'☀️ 썬크림'     },
+];
+function dbRewardGrid(pre){
+  return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+    ${DB_REWARDS.map(r=>`<label style="display:flex;align-items:center;gap:5px;font-size:11px;">
+        <span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.label}</span>
+        <input id="${pre}${r.key}" class="input" type="number" min="0" step="1" placeholder="0"
+               style="width:72px;padding:4px 6px;font-size:11px;">
+      </label>`).join('')}
+  </div>`;
+}
+function dbReadReward(pre){
+  const out = {};
+  DB_REWARDS.forEach(r=>{
+    const el = document.getElementById(pre + r.key);
+    const n = Math.max(0, parseInt((el && el.value), 10) || 0);
+    if(n > 0) out[r.key] = n;
+  });
+  return out;
+}
+
+/* ---- 쿠폰 ------------------------------------------------------------
+   remoteCodes/{코드문자열} 에 문서를 하나 쓰면 그게 곧 쿠폰이다.
+   ⚠ **문서 ID 가 코드 그 자체**이고, 보안 규칙이 list 를 막아 둔 것이 보안의 전부다.
+     그래서 코드를 어렵게 지을수록 안전하다 — 특히 유저 전용 쿠폰이 그렇다.
+   ⚠ onlyCode 는 자물쇠가 아니라 **문턱**이다(13.17 주석 참고). 게임 파일을 고치는
+     사람은 통과한다. 그래서 유저 전용은 onlyCode 와 **어려운 코드 이름**을 함께 쓴다. */
+const DB_CODE_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   // 헷갈리는 I·O·0·1 은 뺀다
+function dbGenCode(n){
+  let s = '';
+  for(let i=0; i<(n||8); i++) s += DB_CODE_ABC[Math.floor(Math.random()*DB_CODE_ABC.length)];
+  return s;
+}
+function dbRollCode(){
+  const el = document.getElementById('dbCpCode');
+  if(el) el.value = dbGenCode(__dbCpOnly ? 12 : 8);   // 유저 전용은 더 길게 — 추측을 막는다
+}
+function dbCpToggleOnly(v){
+  __dbCpOnly = !!v;
+  const el = document.getElementById('dbCpOnlyNote');
+  if(el) el.innerHTML = __dbCpOnly
+    ? '위 칸의 유저 코드 <b>한 사람만</b> 쓸 수 있습니다.'
+    : '코드를 아는 <b>누구나</b> 쓸 수 있습니다.';
+}
+async function dbCouponSend(){
+  const code  = String((document.getElementById('dbCpCode')||{}).value || '').trim();
+  const title = String((document.getElementById('dbCpTitle')||{}).value || '').trim().slice(0,40) || '보상';
+  const desc  = String((document.getElementById('dbCpDesc')||{}).value  || '').trim().slice(0,200);
+  const days  = Math.max(0, parseInt((document.getElementById('dbCpDays')||{}).value, 10) || 0);
+  const once  = !!(document.getElementById('dbCpOnce')||{}).checked;
+  const reward = dbReadReward('dbCpR_');
+  if(code.length < 4){ dbSay('<span style="color:#d64545;">쿠폰 코드를 4자 이상으로 적으세요.</span>'); return; }
+  if(!Object.keys(reward).length){ dbSay('<span style="color:#d64545;">보상을 하나 이상 넣으세요.</span>'); return; }
+  const only = __dbCpOnly ? dbCodeInput() : '';
+  if(__dbCpOnly && only.length < 4){ dbSay('<span style="color:#d64545;">유저 전용이면 위 칸에 유저 코드를 넣으세요.</span>'); return; }
+  const body = { title, desc, active:true, once, noExpire:true, reward };
+  if(days > 0) body.expiresAt = Date.now() + days*24*3600000;
+  if(only) body.onlyCode = only;
+  showModal('쿠폰을 배포합니까?', `<div style="line-height:1.9;">
+      코드 — <b style="font-family:var(--font-mono);">${escapeHtml(code)}</b><br>
+      대상 — <b>${only ? escapeHtml(only) + ' 전용' : '공용'}</b>${once ? ' · 계정당 1회' : ' · 횟수 제한 없음'}<br>
+      기한 — <b>${days > 0 ? days + '일' : '무기한'}</b><br>
+      보상 — <b>${escapeHtml(mailRewardText(reward))}</b><br><br>
+      <span style="font-size:12px;color:var(--fg-dim);">같은 코드가 이미 있으면 <b>덮어씁니다.</b></span>
+    </div>`, [
+    { label:'취소' },
+    { label:'배포한다', solid:true, action: async ()=>{
+        try{
+          await fbInit();
+          const { doc, setDoc } = FB.mod;
+          await setDoc(doc(FB.db, 'remoteCodes', code), body);
+          dbSay(`<span style="color:#3aa76d;">배포 완료 — <b style="font-family:var(--font-mono);">${escapeHtml(code)}</b> · ${escapeHtml(mailRewardText(reward))}</span>`);
+        }catch(e){ dbSay(dbWriteErr(e)); }
+      }}
+  ]);
+}
+/* 배포한 쿠폰을 멈춘다. 지우지 않는 이유 — 이미 쓴 사람의 기록과 헷갈리지 않게,
+   그리고 같은 코드를 누가 다시 선점하지 못하게 문서는 남겨둔다. */
+async function dbCouponStop(){
+  const code = String((document.getElementById('dbCpCode')||{}).value || '').trim();
+  if(code.length < 4){ dbSay('<span style="color:#d64545;">멈출 코드를 적으세요.</span>'); return; }
+  try{
+    await fbInit();
+    const { doc, setDoc } = FB.mod;
+    await setDoc(doc(FB.db, 'remoteCodes', code), { active:false }, { merge:true });
+    dbSay(`<span style="color:#3aa76d;">중단 완료 — ${escapeHtml(code)} (이제 아무도 쓸 수 없습니다)</span>`);
+  }catch(e){ dbSay(dbWriteErr(e)); }
+}
+/* 지금 쓰는 코드가 이미 있는지 본다 — 덮어쓰기 사고를 막는 확인용. */
+async function dbCouponCheck(){
+  const code = String((document.getElementById('dbCpCode')||{}).value || '').trim();
+  if(code.length < 4){ dbSay('<span style="color:#d64545;">확인할 코드를 적으세요.</span>'); return; }
+  try{
+    await fbInit();
+    const { doc, getDoc } = FB.mod;
+    const s = await getDoc(doc(FB.db, 'remoteCodes', code));
+    if(!s.exists()){ dbSay('<span style="color:var(--fg-dim);">아직 없는 코드입니다 — 새로 만들 수 있습니다.</span>'); return; }
+    const d = s.data() || {};
+    const live = d.active !== false && !(d.expiresAt && Date.now() > d.expiresAt);
+    dbSay(`<b>${escapeHtml(code)}</b> — ${live ? '<span style="color:#3aa76d;">살아 있음</span>' : '<span style="color:#d64545;">멈춤/만료</span>'}
+      · ${escapeHtml(String(d.title||''))} · ${escapeHtml(mailRewardText(d.reward))}
+      ${d.onlyCode ? ' · <b>' + escapeHtml(String(d.onlyCode)) + ' 전용</b>' : ' · 공용'}`);
+  }catch(e){ dbSay(dbWriteErr(e)); }
+}
+
+/* ---- 우편함으로 바로 보내기 ------------------------------------------
+   쿠폰과 달리 **그 사람이 코드를 입력할 필요가 없다.** 다음에 접속하면 편지가 와 있다.
+   (원리는 재화 회수와 같다 — admin/{코드} 의 cmds 에 한 줄 적어두는 것뿐이다) */
+function dbMailSend(){
+  const title  = String((document.getElementById('dbMlTitle')||{}).value || '').trim().slice(0,40) || '운영자 선물';
+  const text   = String((document.getElementById('dbMlText')||{}).value  || '').trim().slice(0,300);
+  const reward = dbReadReward('dbMlR_');
+  const code   = dbCodeInput();
+  if(code.length < 4){ dbSay('<span style="color:#d64545;">위 칸에 받을 사람의 유저 코드를 넣으세요.</span>'); return; }
+  if(!Object.keys(reward).length && !text){ dbSay('<span style="color:#d64545;">보상이나 내용 중 하나는 있어야 합니다.</span>'); return; }
+  showModal('우편함으로 보냅니까?', `<div style="line-height:1.9;">
+      받는 사람 — <b>${escapeHtml(code)}</b><br>
+      제목 — <b>${escapeHtml(title)}</b><br>
+      보상 — <b>${escapeHtml(Object.keys(reward).length ? mailRewardText(reward) : '없음 (글만)')}</b><br><br>
+      <span style="font-size:12px;color:var(--fg-dim);">그 사람이 <b>다음에 접속할 때</b> 우편함에 들어갑니다.</span>
+    </div>`, [
+    { label:'취소' },
+    { label:'보낸다', solid:true, action:()=> dbPushCmd(
+        { type:'notice', title, text, reward: Object.keys(reward).length ? reward : null },
+        '우편함 — ' + (Object.keys(reward).length ? mailRewardText(reward) : '안내'),
+        code) }   /* ⚠ 확인창이 보드를 덮어쓰므로 코드를 들고 들어간다 */
+  ]);
+}
+/* 지금 화면에 적힌 것을 통째로 담아둔다 (탭을 옮기기 직전에 부른다) */
+function dbKeepDraft(){
+  try{
+    const ids = ['dbCpCode','dbCpTitle','dbCpDesc','dbCpDays','dbMlTitle','dbMlText'];
+    ids.forEach(id=>{ const el = document.getElementById(id); if(el) __dbDraft[id] = el.value; });
+    const on = document.getElementById('dbCpOnce'); if(on) __dbDraft.dbCpOnce = on.checked;
+    DB_REWARDS.forEach(r=>{
+      ['dbCpR_','dbMlR_'].forEach(p=>{ const el = document.getElementById(p + r.key); if(el) __dbDraft[p + r.key] = el.value; });
+    });
+  }catch(e){}
+}
+/* 담아둔 것을 화면에 되돌린다 (다시 그린 직후) */
+function dbRestoreDraft(){
+  try{
+    Object.keys(__dbDraft).forEach(id=>{
+      const el = document.getElementById(id);
+      if(!el) return;
+      if(el.type === 'checkbox') el.checked = !!__dbDraft[id];
+      else el.value = __dbDraft[id];
+    });
+  }catch(e){}
+}
+function dbSwitch(tab){ dbKeepDraft(); __dbTab = tab; dbRender(); }
+/* ⚠ 확인창이 보드를 덮어쓴 뒤라면 #dbMsg 가 없다. 그때는 보드를 다시 그려서
+     안내가 허공에 사라지지 않게 한다. (예전에는 조용히 묻혀 "눌러도 아무 일이 없다"로 보였다) */
+function dbSay(msg){
+  __dbMsg = msg;
+  const el = document.getElementById('dbMsg');
+  if(el){ el.innerHTML = msg; return; }
+  try{ if(document.getElementById('modalBody')) dbRender(); }catch(e){}
+}
 
 /* ---- 조회 ---- */
 async function dbLookup(){
@@ -22783,8 +22990,10 @@ function dbWriteErr(e){
 }
 
 /* ---- 명령 큐에 한 줄 밀어넣기 ---- */
-async function dbPushCmd(cmd, desc){
-  const code = dbCodeInput();
+/* ⚠ code 를 반드시 넘길 것 — 확인창이 보드를 덮어쓴 뒤에는 dbCodeInput() 이 빈 값이다.
+     (안 넘기면 확인창을 안 거치는 호출부라는 뜻이므로 그때만 지금 화면에서 읽는다) */
+async function dbPushCmd(cmd, desc, code){
+  code = String(code || dbCodeInput() || '').trim().toUpperCase();
   if(code.length < 4){ dbSay('<span style="color:#d64545;">유저 코드를 먼저 입력하세요.</span>'); return; }
   /* ⚠ id 는 명령마다 달라야 한다. 같으면 그 사람 기기가 "이미 적용함"으로 건너뛴다. */
   cmd.id = 'b' + Date.now().toString(36) + Math.floor(Math.random()*1296).toString(36);
@@ -22808,10 +23017,12 @@ function dbGive(sign){
   dbPushCmd({ type:kind, amount: sign * n }, `${label} ${sign>0?'+':'-'}${n.toLocaleString()}`);
 }
 function dbReset(type, label){
+  const code = dbCodeInput();   // ⚠ 확인창이 뜨면 이 칸은 사라진다. 지금 읽어둔다.
+  if(code.length < 4){ dbSay('<span style="color:#d64545;">유저 코드를 먼저 입력하세요.</span>'); return; }
   showModal('되돌릴 수 없습니다', `<div style="line-height:1.9;">
-      <b>${escapeHtml(dbCodeInput())}</b> 계정에 <b>${escapeHtml(label)}</b>를 실행합니다.<br><br>
+      <b>${escapeHtml(code)}</b> 계정에 <b>${escapeHtml(label)}</b>를 실행합니다.<br><br>
       <b style="color:#d64545;">이 조치는 되돌릴 수 없습니다.</b>
-    </div>`, [{ label:'취소' }, { label:'실행', solid:true, action:()=> dbPushCmd({ type }, label) }]);
+    </div>`, [{ label:'취소' }, { label:'실행', solid:true, action:()=> dbPushCmd({ type }, label, code) }]);
 }
 function dbNotice(){
   const t = String((document.getElementById('dbNoticeText')||{}).value || '').trim().slice(0, 300);
@@ -22822,21 +23033,41 @@ function dbNotice(){
 /* ---- 그리기 ---- */
 function dbBanTab(){
   const d = __dbInfo;
-  if(!d) return '<div style="font-size:12px;color:var(--fg-dim);text-align:center;padding:18px 0;">유저 코드를 넣고 <b>조회</b>를 누르세요.</div>';
-  const until = Number(d.banUntil || 0);
-  const on = !!d.ban && !(until > 0 && Date.now() > until);
-  const state = on
-    ? `<b style="color:#d64545;">제재 중</b> · ${until > 0 ? escapeHtml(new Date(until).toLocaleString('ko-KR')) + ' 해제' : '영구'}`
-    : '<b style="color:#3aa76d;">정상</b>';
+  /* ⚠ 조작부는 **늘** 그린다. 예전에는 조회하기 전까지 기간 버튼조차 없어서,
+       코드를 아는데도 조회부터 해야 제재할 수 있었다. */
+  let state;
+  if(!d){
+    state = '<span style="color:var(--fg-dim);">조회를 누르면 지금 상태가 보입니다.</span>';
+  } else {
+    const until = Number(d.banUntil || 0);
+    const on = !!d.ban && !(until > 0 && Date.now() > until);
+    state = (on
+      ? `<b style="color:#d64545;">제재 중</b> · ${until > 0 ? escapeHtml(new Date(until).toLocaleString('ko-KR')) + ' 해제' : '영구'}`
+      : '<b style="color:#3aa76d;">정상</b>')
+      + (d.banReason ? `<br>사유 — ${escapeHtml(String(d.banReason))}` : '');
+  }
   return `
     <div style="background:var(--bg-2);border-radius:8px;padding:9px 11px;font-size:12px;line-height:1.8;margin-bottom:10px;">
-      지금 상태 — ${state}${d.banReason ? `<br>사유 — ${escapeHtml(String(d.banReason))}` : ''}
+      지금 상태 — ${state}
     </div>
     <input id="dbReason" class="input" placeholder="사유 (선택)" maxlength="60" style="margin-bottom:8px;">
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px;">
-      ${DB_DUR.map(x=>`<button class="btn btn-sm" onclick="dbBan(${x.ms})">${x.label}</button>`).join('')}
+    <div style="background:var(--bg-2);border-radius:8px;padding:8px 11px;margin-bottom:7px;text-align:center;">
+      <div style="font-size:10.5px;color:var(--fg-faint);">제재 기간</div>
+      <div id="dbBanSum" style="font-family:var(--font-mono);font-size:17px;font-weight:700;">
+        ${__dbBanMs ? dbBanFmt(__dbBanMs) : '(아직 없음 · 누르면 쌓입니다)'}</div>
     </div>
-    <button class="btn btn-sm btn-solid" style="width:100%;" onclick="dbUnban()">제재 해제</button>`;
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:5px;">
+      ${DB_DUR.map(x=>`<button class="btn btn-sm" onclick="dbBanAdd(${x.ms})">${x.label}</button>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:5px;margin-bottom:9px;">
+      <button class="btn btn-sm btn-solid" id="dbBanGo" onclick="dbBanGo()">
+        ${__dbBanMs ? escapeHtml(dbBanFmt(__dbBanMs)) + ' 제재' : '기간을 먼저 쌓으세요'}</button>
+      <button class="btn btn-sm" onclick="dbBanClear()">비우기</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+      <button class="btn btn-sm" onclick="dbBan(0)">영구 제재</button>
+      <button class="btn btn-sm btn-solid" onclick="dbUnban()">제재 해제</button>
+    </div>`;
 }
 function dbGiveTab(){
   return `
@@ -22861,6 +23092,55 @@ function dbGiveTab(){
     </div>
     <div style="font-size:10.5px;color:var(--fg-faint);line-height:1.7;margin-top:10px;">
       회수는 0 밑으로 내려가지 않습니다. 명령은 그 사람이 <b>다음에 접속할 때</b> 적용됩니다.
+    </div>`;
+}
+function dbCouponTab(){
+  return `
+    <div style="display:flex;gap:6px;margin-bottom:7px;">
+      <input id="dbCpCode" class="input" placeholder="쿠폰 코드 (대소문자 구분)" maxlength="24" style="flex:1;min-width:0;font-family:var(--font-mono);">
+      <button class="btn btn-sm" onclick="dbRollCode()">🎲</button>
+      <button class="btn btn-sm" onclick="dbCouponCheck()">확인</button>
+    </div>
+    <input id="dbCpTitle" class="input" placeholder="제목 (우편함에 뜹니다)" maxlength="40" style="margin-bottom:6px;">
+    <input id="dbCpDesc" class="input" placeholder="설명 (선택)" maxlength="200" style="margin-bottom:7px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:7px;">
+      <button class="btn btn-sm${__dbCpOnly?'':' btn-solid'}" onclick="dbCpToggleOnly(false); dbSwitch('coupon')">공용</button>
+      <button class="btn btn-sm${__dbCpOnly?' btn-solid':''}" onclick="dbCpToggleOnly(true); dbSwitch('coupon')">유저 전용</button>
+    </div>
+    <div id="dbCpOnlyNote" style="font-size:11px;color:var(--fg-dim);margin-bottom:8px;">
+      ${__dbCpOnly ? '위 칸의 유저 코드 <b>한 사람만</b> 쓸 수 있습니다.' : '코드를 아는 <b>누구나</b> 쓸 수 있습니다.'}
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;font-size:11.5px;margin-bottom:8px;">
+      <label style="display:flex;align-items:center;gap:5px;">
+        <input id="dbCpOnce" type="checkbox" checked> 계정당 1회
+      </label>
+      <label style="display:flex;align-items:center;gap:5px;flex:1;min-width:0;">
+        기한
+        <input id="dbCpDays" class="input" type="number" min="0" step="1" placeholder="0" style="width:66px;padding:4px 6px;font-size:11px;">
+        일 <span style="color:var(--fg-faint);">(0=무기한)</span>
+      </label>
+    </div>
+    <div style="font-size:11px;color:var(--fg-faint);margin-bottom:5px;">보상</div>
+    ${dbRewardGrid('dbCpR_')}
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:5px;margin-top:9px;">
+      <button class="btn btn-sm btn-solid" onclick="dbCouponSend()">쿠폰 배포</button>
+      <button class="btn btn-sm" onclick="dbCouponStop()">중단</button>
+    </div>
+    <div style="font-size:10.5px;color:var(--fg-faint);line-height:1.7;margin-top:9px;">
+      코드는 <b>대소문자와 띄어쓰기를 구분</b>합니다. 보상은 받는 분의 <b>우편함</b>으로 들어갑니다.<br>
+      유저 전용은 코드를 아는 사람이 대신 쓰는 것을 막지만, <b>완벽한 자물쇠는 아닙니다</b> — 🎲로 어려운 코드를 뽑아 쓰세요.
+    </div>`;
+}
+function dbMailTab(){
+  return `
+    <input id="dbMlTitle" class="input" placeholder="제목" maxlength="40" style="margin-bottom:6px;">
+    <input id="dbMlText" class="input" placeholder="내용 (선택)" maxlength="300" style="margin-bottom:9px;">
+    <div style="font-size:11px;color:var(--fg-faint);margin-bottom:5px;">보상</div>
+    ${dbRewardGrid('dbMlR_')}
+    <button class="btn btn-sm btn-solid" style="width:100%;margin-top:9px;" onclick="dbMailSend()">이 유저에게 보내기</button>
+    <div style="font-size:10.5px;color:var(--fg-faint);line-height:1.7;margin-top:9px;">
+      맨 위 칸의 <b>유저 코드</b>로 갑니다. 쿠폰과 달리 그분이 코드를 입력할 필요가 없고,
+      <b>다음에 접속할 때</b> 우편함에 들어가 있습니다.
     </div>`;
 }
 function dbActTab(){
@@ -22895,23 +23175,63 @@ function dbRender(){
       <div style="display:flex;gap:6px;">
         <input id="dbCode" class="input" maxlength="8" placeholder="유저 코드 5자리" value="${escapeHtml(__dbCode)}"
                style="flex:1;min-width:0;text-transform:uppercase;"
+               oninput="__dbCode=this.value.trim().toUpperCase();"
                onkeydown="if(event.key==='Enter'){event.preventDefault();dbLookup();}">
         <button class="btn btn-sm btn-solid" onclick="dbLookup()">조회</button>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;">
-        ${tab('ban','제재')}${tab('give','재화')}${tab('act','활동')}
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;">
+        ${tab('ban','제재')}${tab('give','재화')}${tab('coupon','쿠폰')}${tab('mail','우편')}${tab('act','활동')}
       </div>
-      <div>${__dbTab==='ban' ? dbBanTab() : __dbTab==='give' ? dbGiveTab() : dbActTab()}</div>
+      ${/* [Ver 14.10] 탭 내용만 스크롤한다 — 세로가 짧은 화면에서 배포 버튼이 잘렸다.
+            ⚠ 모달 전체에 주면 유저 코드 칸과 탭 줄까지 같이 밀려 올라가 되레 불편하다. */''}
+      <div style="max-height:52vh;overflow-y:auto;overflow-x:hidden;padding-right:2px;">
+        ${__dbTab==='ban'  ? dbBanTab()
+        : __dbTab==='give' ? dbGiveTab()
+        : __dbTab==='coupon' ? dbCouponTab()
+        : __dbTab==='mail' ? dbMailTab()
+        : dbActTab()}
+      </div>
       <div id="dbMsg" style="font-size:11.5px;line-height:1.7;min-height:16px;">${__dbMsg}</div>
+      ${/* ⚠ 운영자 등록에 쓰는 것은 **uid** 다. 유저 코드(5자리)가 아니다 —
+            유저 코드는 클라이언트가 보내는 값이라 위조할 수 있어 권한 기준이 못 된다.
+            uid 는 서버가 정하므로 위조할 수 없고, 그래서 보안 규칙이 이것만 믿는다. */''}
       <div style="font-size:10px;color:var(--fg-faint);line-height:1.7;border-top:1px solid var(--line);padding-top:7px;">
-        내 uid — <span style="font-family:var(--font-mono);user-select:all;">${escapeHtml(uid)}</span><br>
-        운영자로 쓰려면 콘솔에서 <b>admins/&lt;이 uid&gt;</b> 문서를 하나 만들어 두세요.
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span style="flex:1;min-width:0;">내 uid — <span id="dbUid" style="font-family:var(--font-mono);user-select:all;word-break:break-all;">${escapeHtml(uid)}</span></span>
+          <button class="btn btn-sm" style="padding:3px 8px;font-size:10px;" onclick="dbCopyUid()">복사</button>
+        </div>
+        Firebase 콘솔 → Firestore → <b>admins</b> 컬렉션에 문서를 만들고,
+        <b>문서 ID 에 이 uid 를 그대로</b> 넣으세요. (내용은 비워도 됩니다)<br>
+        <b style="color:#d9822b;">유저 코드 5자리가 아닙니다</b> — 그건 권한 기준이 될 수 없습니다.
       </div>
     </div>`;
+  dbRestoreDraft();   // [Ver 14.10] 적다 만 쿠폰·편지를 되돌려 놓는다
+}
+/* uid 는 손으로 옮겨 적다 틀리기 딱 좋은 길이다. 클립보드가 막힌 환경에서는
+   글자를 선택해 주는 것으로 갈음한다. */
+function dbCopyUid(){
+  const el = document.getElementById('dbUid');
+  const t = el ? el.textContent : '';
+  if(!t){ return; }
+  try{
+    navigator.clipboard.writeText(t)
+      .then(()=> dbSay('<span style="color:#3aa76d;">uid 를 복사했습니다. 콘솔의 <b>admins</b> 컬렉션에 이 값을 문서 ID 로 넣으세요.</span>'))
+      .catch(()=> dbSelectUid());
+  }catch(e){ dbSelectUid(); }
+}
+function dbSelectUid(){
+  try{
+    const el = document.getElementById('dbUid');
+    const r = document.createRange(); r.selectNodeContents(el);
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    dbSay('<span style="color:#d9822b;">자동 복사가 막혀 있어 글자만 선택했습니다 — Ctrl+C 로 복사하세요.</span>');
+  }catch(e){}
 }
 function openDevBoard(){
   if(!devMode){ showModal('개발자 전용', '개발자 모드에서만 쓸 수 있습니다.', [{label:'확인', solid:true}]); return; }
-  __dbInfo = null; __dbAct = null; __dbMsg = '';
+  __dbInfo = null; __dbAct = null; __dbMsg = ''; __dbDraft = {};
+  __dbTab = 'ban'; __dbCpOnly = false;   // [Ver 14.10] 지난번 '유저 전용'이 남아 실수로 뿌리지 않게
+  __dbBanMs = 0;                         // 쌓아둔 제재 기간도 비운다
   showModal('🧰 단순화 보드', '<div id="dbLoading" style="text-align:center;padding:20px 0;color:var(--fg-dim);">여는 중…</div>', [{label:'닫기', solid:true}]);
   dbRender();
   /* 운영자 등록 여부를 알려준다 — 안 돼 있으면 쓰기가 전부 실패하므로 미리 말한다. */
@@ -25527,6 +25847,14 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 14.10', date: '2026-09-11',
+    items: [
+      '\u{1F39F}️ <b>[신규] 쿠폰.</b> 이제 게임을 새로 배포하지 않아도 <b>보상 쿠폰</b>을 뿌릴 수 있습니다. <b>공용</b> 쿠폰은 코드를 아는 누구나, <b>유저 전용</b> 쿠폰은 지정된 한 분만 쓸 수 있습니다. 보상은 <b>우편함</b>으로 들어갑니다.',
+      '\u{1F4EC} <b>[신규] 우편함으로 바로 선물.</b> 버그를 제보해주시거나 문제가 생겼을 때, 코드를 입력하실 필요 없이 <b>우편함에 바로</b> 보상을 보내드릴 수 있게 됐습니다.',
+      '\u{1F41B} <b>[수정] 콘솔에 뜨던 빨간 오류 두 줄.</b> 예전에 쓰던 <b>분석 스크립트가 파일에 눌어붙어</b> 있어, 갈 곳 없는 주소로 계속 요청을 보내고 있었습니다(<code>cdn-cgi/rum</code> 405). 지웠습니다. 아이콘 선언이 없어 나던 <code>favicon.ico</code> 404도 함께 고쳤습니다. <b>게임 동작에는 영향이 없던 오류</b>입니다.',
+    ]
+  },
   {
     version: 'Ver 14.9', date: '2026-09-11',
     items: [
@@ -71595,8 +71923,6 @@ try{ renderTopResources(); }catch(e){} // [Ver 11.0] 부팅 시점에도 상단 
   });
 })();
 </script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 
 <!-- [Ver 9.11] 지후펫 공식 일러스트 — 192x192 WebP로 압축해 담았다.
      펫 정의(PET_DEFS)는 위 스크립트에 있고, 그림만 여기로 뺐다. petImgOf()가 key로 찾아 쓴다. -->
