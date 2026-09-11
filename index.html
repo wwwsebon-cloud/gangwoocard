@@ -7836,7 +7836,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.14</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.15</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -8078,6 +8078,12 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
           <span class="ic">📱</span><span class="tx"><b>모바일 모드</b><small>세로화면 UI로 전환</small></span>
           <span class="nm-drawer-sw"></span>
         </label>
+        <!-- [Ver 14.15 버그수정] 크레딧에 들어갈 방법이 아예 없었다.
+             goToCredits() 도 화면도 전용 BGM 도 다 있는데 **부르는 버튼이 없었다.**
+             그 바람에 업적 '뭘봐'(크레딧 30초 보기)도 획득 불가능이었다. -->
+        <button class="nm-drawer-item" onclick="closeMenuDrawer(); goToCredits();">
+          <span class="ic">🎬</span><span class="tx"><b>크레딧</b><small>만든 사람들 · 고마운 분들</small></span>
+        </button>
         <div class="nm-drawer-sep"></div>
         <!-- [Ver 14.11] PC 앱으로 설치 — 브라우저가 설치 가능하다고 알려줄 때만 보인다 -->
         <button class="nm-drawer-item" id="ggInstallBtn" style="display:none;" onclick="ggInstallApp();">
@@ -15865,8 +15871,8 @@ const PET_DEFS = [
   /* ══════════ [Ver 14.7] 신규 2종 ══════════ */
   { key:'mercenary', price:8000, name:'용병 지후',  emoji:'🗡️', img:null,
     short:'선금은 받았습니다',
-    desc:'판이 시작될 때 무작위 상대 하나가 <b>[의뢰자]</b>가 됩니다. (의뢰자 본인도 자신이 의뢰자임을 압니다) 그 <b>의뢰자가 사망하면</b> 계약이 완료되어 공격력이 <b>영구히 +300%</b> 됩니다. 다만 계약자는 건드릴 수 없어, <b>의뢰자에게는 카드를 쓸 수 없습니다.</b>',
-    fx:[{k:'good',t:'의뢰자 사망 시 공격력 영구 +300%'}, {k:'bad',t:'의뢰자에게 카드 사용 불가'}, {k:'neutral',t:'의뢰자는 무작위 · 본인도 안다'}],
+    desc:'판이 시작될 때 무작위 상대 하나가 <b>[의뢰자]</b>가 됩니다. (의뢰자 본인도 자신이 의뢰자임을 압니다) 그 <b>의뢰자가 사망하면</b> 계약이 완료되어 공격력이 <b>영구히 +110%</b> 됩니다. 다만 계약자는 건드릴 수 없어, <b>의뢰자에게는 카드를 쓸 수 없습니다.</b>',
+    fx:[{k:'good',t:'의뢰자 사망 시 공격력 영구 +110%'}, {k:'bad',t:'의뢰자에게 카드 사용 불가'}, {k:'neutral',t:'의뢰자는 무작위 · 본인도 안다'}],
     detail:[{h:'발동 시점',b:'판이 시작될 때 한 번 지정되고, 그 사람이 죽는 순간 보상이 들어옵니다.'},
             {h:'의뢰자',b:'생존자 중 <b>무작위 1명</b>. 상태칩으로 <b>양쪽 모두에게</b> 보입니다 — 숨길 수 없습니다.'},
             {h:'보상',b:'의뢰자가 <b>누구 손에 죽든</b> 상관없습니다. 죽는 순간 공격력 <b>+300%</b>가 영구히 붙습니다.'},
@@ -16245,7 +16251,10 @@ const POWER_DEFS = [
      ⚠ cleanseAllEffects(모든 효과 초기화)로는 지워진다. 사디스트가 쌓은 것과 같은 취급이다. */
   /* [Ver 14.7] 쿨타임 45 → 18초, 강화 효과가 공격력에서 **쿨타임 감소**로 바뀌었다.
      ⚠ 특성 '굶주림'을 끼면 pwCd 가 배수를 따로 얹는다 — 여기 값은 **특성이 없을 때** 기준이다. */
-  { key:'devour', rarity:'epic', icon:'🍖', name:'포식', target:'self', cd:18, amt:50, up:{k:'cd',per:0.5},
+  /* [Ver 14.15 밸런스] 강화가 **둘 다** 오른다. 14.7 에서 공격력 +5 를 쿨타임 -0.5초로
+     바꿨었는데, 되돌리는 게 아니라 **둘을 같이** 준다(운기조식과 같은 모양). */
+  { key:'devour', rarity:'epic', icon:'🍖', name:'포식', target:'self', cd:18, amt:50,
+    up:{k:'cd',per:0.5}, up2:{k:'amt',per:5},
     desc:v=>`자신의 카드 <b>3장</b>을 먹어치우고 공격력이 <b>${v}</b> 증가합니다. <span style="opacity:.7">(고정 수치 · 영구)</span>`,
     run:(me,t,v)=>{ const eaten = [];
       for(let k=0;k<3;k++){ const i = pwHandIdxRandom(me); if(i<0) break; eaten.push(me.hand.splice(i,1)[0].name); }
@@ -16991,7 +17000,10 @@ function powerIconHtml(def, cls, traitOn){
 }
 function pwAmt(def, lv){
   if(!def) return 0;
-  const per = (def.up && def.up.k === 'amt') ? def.up.per : 0;
+  /* [Ver 14.15] pwCd 와 짝을 맞춘다 — 14.8 에서 pwCd 만 up2 를 읽게 넓히고
+     여기를 빼먹어서, up2 에 amt 를 걸어도 수치가 꿈쩍도 하지 않았다. */
+  let per = (def.up && def.up.k === 'amt') ? def.up.per : 0;
+  if(def.up2 && def.up2.k === 'amt') per += def.up2.per;
   return Math.round(((def.amt || 0) + per * (Math.max(1, lv||1) - 1)) * 100) / 100;
 }
 /* [Ver 14.5] traitOverride 를 주면 그 특성 기준으로 계산한다(랜서버 슬롯용).
@@ -21346,6 +21358,26 @@ async function fbLookupRemoteCode(code){
    새 패치를 넣을 땐 BALANCE_PATCHES 맨 앞에 한 덩어리를 추가하면 된다.
    ########################################################################## */
 const BALANCE_PATCHES = [
+  {
+    version: 'Ver 14.15', date: '2026-09-11',
+    groups: [
+      { title:'용병 지후 — 계약 하나로 판이 끝나면 안 된다', kind:'pet',
+        note:'+300%는 다른 어떤 공격력 상승보다도 압도적이었습니다. 계약이 완료되는 순간 그 사람이 사실상 이기는 구조라, <b>의뢰자가 누구로 정해지느냐</b>가 승패를 결정했습니다. 운으로 정해지는 것이 판을 끝내면 안 됩니다. 그래도 <b>강아지후(+100%)보다는 높게</b> 남겨, 계약을 완료할 값어치는 그대로 둡니다.',
+        rows:[
+          { name:'용병 지후', icon:'\u{1F5E1}️', rows:[
+            { label:'계약 완료 보상', from:'공격력 영구 +300%', to:'공격력 영구 <b>+110%</b>', dir:'down' },
+            { label:'의뢰자 지정',   from:'무작위 1명',        to:'무작위 1명', dir:'neutral' },
+            { label:'제약',         from:'의뢰자에게 카드 사용 불가', to:'그대로', dir:'neutral' }]},
+        ]},
+      { title:'포식 — 강화가 둘 다 오른다', kind:'power',
+        note:'14.7에서 강화 방향을 <b>공격력에서 쿨타임으로 바꿨습니다.</b> 그런데 바꾸고 보니 강화해도 <b>한 방이 세지지 않아</b> 쌓는 맛이 사라졌습니다. 되돌리는 대신 <b>둘을 같이</b> 줍니다 — 운기조식과 같은 모양입니다.',
+        rows:[
+          { name:'포식', icon:'\u{1F356}', rows:[
+            { label:'강화 효과', from:'쿨타임 −0.5초', to:'쿨타임 −0.5초 <b>+ 공격력 +5</b>', dir:'up' },
+            { label:'Lv10 기준', from:'+50 · 13.5초',  to:'<b>+95</b> · 13.5초', dir:'up' }]},
+        ]},
+    ]
+  },
   {
     version: 'Ver 14.12', date: '2026-09-11',
     groups: [
@@ -26201,6 +26233,16 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 14.15', date: '2026-09-11',
+    items: [
+      '\u{1F576}️ <b>[변경] 히든 업적의 조건을 이제 볼 수 없습니다.</b> 갈래만 \'히든\'이었지 조건이 그대로 보여서 일반 업적과 다를 게 없었습니다. 이제 <b>???</b> 로 가립니다. <b>이름은 보입니다</b>(스페셜은 이름까지 가립니다). <b>깨고 나면 무엇이었는지 알려드립니다.</b>',
+      '\u{1F5BC}️ <b>[수정] 감춘 업적의 정답이 오른쪽에 그대로 적혀 있었습니다.</b> 보상 프로필 사진의 이름이 업적 이름과 같아서, 왼쪽에 ??? 를 띄워놓고 오른쪽에 답을 적어두는 꼴이었습니다. 보상 이름 표시를 없앴습니다 — 무엇을 주는지는 <b>왼쪽 그림</b>이 보여줍니다.',
+      '\u{1F3AC} <b>[수정] 크레딧 화면에 들어갈 방법이 아예 없었습니다.</b> 화면도 전용 BGM도 다 만들어져 있었는데 <b>들어가는 버튼이 어디에도 없었습니다.</b> 메뉴 <b>☰ → 크레딧</b>으로 들어갑니다. <span style="opacity:.75">(그 바람에 업적 <b>뭘봐</b>도 달성이 불가능했습니다 — 이제 가능합니다)</span>',
+      '⚖️ <b>[밸런스] 포식</b> — 강화하면 <b>공격력과 쿨타임이 함께</b> 좋아집니다. 14.7에서 공격력 강화를 쿨타임 감소로 <b>바꿨었는데</b>, 이제 <b>둘 다</b> 드립니다.',
+      '⚖️ <b>[너프] 용병 지후</b> — 계약 완료 보상이 <b>+300% → +110%</b>. 한 번 완료되면 판이 통째로 뒤집혀서, 의뢰자가 누구냐로 승패가 정해지다시피 했습니다.',
+    ]
+  },
   {
     version: 'Ver 14.14', date: '2026-09-11',
     items: [
@@ -33835,13 +33877,19 @@ function buildAchievementsPanelHtml(){
   const pct = ACHIEVEMENTS.length ? Math.round((unlockedCount / ACHIEVEMENTS.length) * 100) : 0;
 
   /* 업적 한 줄 = 보상 프로필 사진 + 이름(+갈래칩) + 조건 + 달성 배지 + 보상 이름.
-     스페셜은 깨기 전까지 이름을 ??? 로 감추고 힌트만 준다. */
+     [Ver 14.15] 감추는 단계가 둘이다.
+       히든  — **조건만** 감춘다. 이름은 보인다.
+       스페셜 — **이름까지** 감춘다. 한 단계 더 깊다.
+     ⚠ 깨고 나면 둘 다 조건을 보여준다. 가린 채로 두면 뭘 해서 깼는지 영영 모른다. */
   const rowHtml = (a)=>{
     const unlocked = !!ACH_UNLOCKED[a.id];
     const kind = a.kind || 'normal';
-    const secret = (kind === 'special') && !unlocked;
+    const secret = (kind === 'special') && !unlocked;   // 이름까지 감춘다
+    const hideCond = !unlocked && (kind === 'special' || kind === 'hidden');
     const name = secret ? '???' : a.name;
-    const cond = secret ? (a.hint || '조건을 알 수 없습니다.') : (unlocked ? (a.real || a.desc) : a.desc);
+    const cond = hideCond
+      ? (secret ? (a.hint || '조건을 알 수 없습니다.') : '???')
+      : (unlocked ? (a.real || a.desc) : a.desc);
     const pic  = a.pfp ? `<img class="ach-pfp" src="${pfpSrc(a.pfp)}" alt="">` : '<div class="ach-pfp"></div>';
     const tag  = (kind === 'normal') ? ''
                : `<span class="ach-tag t-${kind}">${KIND_TAG[kind] || kind}</span>`;
@@ -33853,7 +33901,9 @@ function buildAchievementsPanelHtml(){
       </div>
       <div class="ach-side">
         <span class="ach-state">${unlocked?'\u2714 달성':'미달성'}</span>
-        ${a.pfp?`<span class="ach-reward">\u{1F5BC}\uFE0F ${escapeHtml(pfpDefOf(a.pfp).name)}</span>`:''}
+        ${/* [Ver 14.15] 보상 프사 **이름**은 뺀다 — 프사 이름이 업적 이름과 같아서,
+              왼쪽에 ??? 를 띄워놓고 오른쪽에 정답을 적어두는 꼴이었다.
+              무엇을 주는지는 왼쪽 그림이 이미 보여준다. */''}
       </div>
     </div>`;
   };
@@ -33874,7 +33924,7 @@ function buildAchievementsPanelHtml(){
     </div>
     <div class="ach-bar"><i style="width:${pct}%"></i></div>
     ${section('일반', '', byKind('normal'))}
-    ${section('히든', '조건은 보이지만 달성이 까다롭습니다', byKind('hidden'))}
+    ${section('히든', '조건을 알 수 없습니다 · 깨면 무엇이었는지 알려드립니다', byKind('hidden'))}
     ${section('스페셜', '조건을 알 수 없습니다 \u00B7 특정 카드와 관련되어 있습니다', byKind('special'))}`;
 }
 
@@ -38277,8 +38327,10 @@ function petContractOnDeath(dead){
     if(hasPet(p,'mercenary') && p.mercClientId === dead.id){
       p.mercClientId = null;
       p.mercDone = true;
-      p.atkMultiplier = (p.atkMultiplier||0) + 300;   // 가산식 %누적치 — 강아지후(+100)와 같은 통
-      log('highlight', `🗡️ <b>용병 지후</b> — 계약 완료. ${J(p.name,'의','의')} 공격력이 <b>영구히 +300%</b> 되었습니다.`);
+      /* [Ver 14.15 너프] +300% → +110%. 한 번 완료되면 판이 통째로 뒤집혀서,
+         의뢰자가 누구냐로 승패가 결정되다시피 했다. */
+      p.atkMultiplier = (p.atkMultiplier||0) + 110;   // 가산식 %누적치 — 강아지후(+100)와 같은 통
+      log('highlight', `🗡️ <b>용병 지후</b> — 계약 완료. ${J(p.name,'의','의')} 공격력이 <b>영구히 +110%</b> 되었습니다.`);
     }
 
     /* 🛡️ 성기사 — 수호하던 사람이 죽었다. 쉴드를 다시 채우고 새 사람을 맡는다. */
