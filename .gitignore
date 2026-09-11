@@ -1,0 +1,12 @@
+# 옛 스냅샷 — 배포본이 아니다 (7MB). 참고용으로 로컬에만 둔다.
+index.txt
+
+# 도구가 만드는 것
+.claude/
+__pycache__/
+*.pyc
+
+# 윈도우·맥이 흘리는 것
+Thumbs.db
+desktop.ini
+.DS_Store
