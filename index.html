@@ -1211,6 +1211,37 @@ body.ink.force-dark .nm-stage-art{ filter:invert(1); }   /* 강제 다크는 언
 .pw-slot.pw-slot-just{ animation:pwSlotJust 1.3s ease-out 2; }
 @media (prefers-reduced-motion: reduce){ .pw-slot.pw-slot-just{ animation:none; } }
 
+/* ---------- [Ver 15.0] 메인 퀘스트 ---------- */
+.mq-ch{ margin-top:16px; }
+.mq-ch-h{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:2px; }
+.mq-ch-t{ font-size:13px; font-weight:800; }
+.mq-ch-n{ font-size:11px; color:var(--fg-faint); font-family:var(--font-mono); }
+.mq-ch-note{ font-size:11px; color:var(--fg-dim); margin-bottom:8px; }
+.mq-row{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px; margin-bottom:6px; border-radius:var(--r-sm);
+  background:var(--bg-1); box-shadow:inset 0 0 0 1px var(--line-soft);
+}
+.mq-row.open{ background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--line); }
+.mq-row.locked{ opacity:.45; }
+.mq-ic{ flex:0 0 auto; font-size:19px; width:26px; text-align:center; }
+.mq-body{ flex:1 1 auto; min-width:0; }
+.mq-nm{ font-size:13px; font-weight:700; overflow-wrap:anywhere; }
+.mq-sub{ font-size:11px; color:var(--fg-dim); margin-top:1px; }
+.mq-state{ flex:0 0 auto; font-size:11px; color:var(--fg-faint); white-space:nowrap; }
+.mq-bar{ height:4px; border-radius:var(--r-pill); background:var(--bg-3); overflow:hidden; margin-top:6px; }
+.mq-bar > i{ display:block; height:100%; background:var(--fg-dim); transition:width var(--t) var(--ease); }
+.mq-tipbtn{
+  margin-top:7px; padding:3px 9px; border-radius:var(--r-pill);
+  background:var(--bg-3); color:var(--fg-dim); font-size:10.5px; cursor:pointer;
+}
+.mq-tipbtn:hover{ color:var(--fg); }
+.mq-tip{
+  margin-top:6px; padding:8px 10px; border-radius:var(--r-xs);
+  background:var(--bg-3); font-size:11.5px; line-height:1.75; color:var(--fg-dim);
+}
+@media (max-width:520px){ .mq-state{ display:none; } }
+
 /* [Ver 14.5] 암살 · 청부 — 손패에서 자리를 고르는 목록 */
 .pw-hire-list{ display:flex; flex-direction:column; gap:5px; max-height:46vh; overflow-y:auto; }
 .pw-hire-b{
@@ -7836,7 +7867,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.16</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.0</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -12006,6 +12037,8 @@ const STORAGE_KEYS = {
   /* [Ver 13.17] 백업·복원 연타 제한 { ts:[최근 시각들], until:잠금 해제 시각 } */
   syncGuard: 'gang_card_sync_guard_v1',
   humanGuard: 'gang_card_human_guard_v1',   // [Ver 14.8.2] 매크로 확인 기록·잠금
+  newbie:     'gang_card_newbie_v1',        // [Ver 15.0] 신규 유저 출석부
+  mainQuest:  'gang_card_mainq_v1',         // [Ver 15.0] 메인 퀘스트
   attend:   'gang_card_attend_v1',      // [Ver 13.0] 출석체크 { last, streak, total, devClaimed }
   newUserPrompted: 'gang_card_new_user_prompted_v1', // [편의] 신규 유저 튜토리얼 안내를 이미 보여줬는지 여부
   profile: 'gang_card_profile_v1', // [Ver 8.0] 닉네임
@@ -17131,6 +17164,9 @@ function offerToAltar(teeth){
     const res = grantPower(d.key);
     return { key:d.key, rarity:d.rarity, isNew:res.isNew, lv:res.lv, dup:res.dup };
   });
+  /* [Ver 15.0] 메인 퀘스트 — **나온 권능 개수만큼** 센다.
+     ⚠ 이빨을 몇 개 바쳤는지가 아니라 몇 개가 나왔는지다. '권능 5개 뽑기'가 그 뜻이다. */
+  try{ if(results.length) mqBump('power', results.length); }catch(e){}
   try{ renderTopResources(); }catch(e){}
   return { ok:true, results };
 }
@@ -19139,6 +19175,7 @@ function buyPet(key){
     return;
   }
   loadPets()[key] = true; savePets();
+  try{ mqBump('pet', 1); }catch(e){}         // [Ver 15.0] 메인 퀘스트
   setEquippedPet(key);                       // 사면 바로 장착해준다
   try{ renderUbiniteBadge(); }catch(e){}
   showModal('🐾 지후펫 구매', `<div style="text-align:center;line-height:1.9;">
@@ -19427,6 +19464,7 @@ function buyTeeth(n){
   }
   spendUbinite(cost);
   grantTeeth(n);
+  try{ mqBump('teeth', n); }catch(e){}   // [Ver 15.0] 메인 퀘스트
   try{ renderUbiniteBadge(); renderTopResources(); }catch(e){}
   raptorMartSwitch('resource');
   UISfx.buy && UISfx.buy();
@@ -24676,6 +24714,7 @@ function doMine(count){
   /* [Ver 13.15.2] 퀘스트 진행도는 **실제로 캔 뒤에** 올린다. 예전에는 함수 맨 위에 있어서
      mineBusy 에 막힌 클릭·곡괭이가 모자란 클릭까지 전부 진행도로 잡혔다. */
   try{ questBump('mine', 1); }catch(e){}   // [Ver 13.0] 일일 퀘스트 '유물 뽑기'
+  try{ mqBump('mine', 1); }catch(e){}      // [Ver 15.0] 메인 퀘스트
   mineBusy = true;
   const keys = [];
   for(let i=0;i<count;i++) keys.push(mineRollOnce());
@@ -24832,6 +24871,8 @@ function runPickaxeUpgrade(n){
     if(ok > 0) grantGoldPickaxe(ok);
     mineBusy = false;
     renderMineScreen();
+    /* [Ver 15.0] 메인 퀘스트 — **성공했을 때만** 센다. 실패는 합성이 아니다. */
+    try{ if(ok > 0) mqBump('goldup', ok); }catch(e){}
     try{ logActivity(`곡괭이강화 ${n}개 걸어 성공 ${ok} (개쩌는 보유 ${goldPickaxeCount()})`); }catch(e){}   // [Ver 14.9]
     const fail = n - ok;
     showModal(ok > 0 ? '✨ 강화 결과' : '💥 강화 실패', `<div class="pu-res">
@@ -24967,6 +25008,7 @@ function boxRollOnce(){
 }
 /* 굴린 결과를 실제로 지급한다. */
 function boxGrantResult(r){
+  try{ mqBump('box', 1); }catch(e){}   // [Ver 15.0] 메인 퀘스트 — 상자를 열었다
   /* [Ver 14.9] 활동 기록 — 상자에서 특별 보상이 나왔을 때만 남긴다(평범한 결과는 소음이다) */
   try{
     const sp = (r.specials || []).map(s=> s.key).join(',');
@@ -25252,6 +25294,9 @@ function doGacha(count, payWith){
     }
   }
   gachaBusy = true;
+  /* [Ver 15.0] 메인 퀘스트 — 값을 치른 뒤라 여기서 센다.
+     ⚠ 위쪽 '부족합니다' 경로는 return 으로 빠지므로 여기까지 오지 않는다. */
+  try{ mqBump('gacha', 1); }catch(e){}
   const results = [];
   for(let i=0;i<count;i++) results.push(gachaRollOnce());
 
@@ -26305,6 +26350,15 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 15.0', date: '2026-09-11',
+    items: [
+      '\u{1F389} <b>[신규] 신규 유저 출석부.</b> 계정당 <b>한 번</b>, <b>7일</b>짜리 출석부가 생겼습니다. 기존 출석부와 달리 <b>연속으로 오지 않아도 됩니다</b> — 며칠 쉬었다 오셔도 이어서 받습니다. 하루에 한 칸씩 열립니다.<br>1일 <b>랩터의 이빨 5개</b> · 2일 <b>우비나이트 1,000</b> · 3일 <b>곡괭이 10개</b> · 4일 <b>10+1 뽑기권 5장</b> · 5일 <b>랜덤 전설 권능 확정</b> · 6일 <b>권능석 1개</b> · 7일 <b>우비나이트 3,000 + Ephemeral 확정권</b>',
+      '\u{1F4DC} <b>[신규] 메인 퀘스트.</b> 퀘스트 화면에 <b>메인</b> 칸이 생겼습니다. 일일 퀘스트와 달리 <b>리셋되지 않고</b>, 한 번에 <b>하나씩</b> 열립니다. 깨고 <b>보상을 받아야</b> 다음이 열립니다. 무엇을 하면 되는지 순서대로 알려드리는 길잡이입니다.',
+      '\u{1F4A1} <b>메인 퀘스트에는 도움말이 붙습니다.</b> 막히셨을 때 <b>도움말</b>을 누르면 어디로 가면 되는지 알려드립니다.',
+      '\u{1F5FA}️ 지금은 <b>챕터 3까지 11개</b>가 들어갔습니다. 챕터 3은 이제 시작이라 앞으로 계속 늘어납니다.',
+    ]
+  },
   {
     version: 'Ver 14.16', date: '2026-09-11',
     items: [
@@ -31091,6 +31145,11 @@ function bumpStat(key, amount){
   STATS[key] += (amount||1);
   const qid = QUEST_STAT_MAP[key];
   if(qid){ try{ questBump(qid, amount||1); }catch(e){} }
+  /* [Ver 15.0] 메인 퀘스트도 같은 창구를 탄다 — 게임·승리·처치 셋이 여기를 지난다. */
+  try{
+    const mev = { games:'game', wins:'win', kills:'kill' }[key];
+    if(mev) mqBump(mev, amount||1);
+  }catch(e){}
 }
 /* [Ver 5.7.1] 통계 보강 — 반응(보여주기)/무효화/반사는 지금까지 화면에만 표시되고 집계는 전혀
    되지 않아 항상 0회로 남아 있었다. 반응 카드는 발동 지점이 여러 곳이라, p0(플레이어) 여부만 확인해
@@ -33715,6 +33774,199 @@ function devGiftClaim(day){
    업적을 별도 화면에서 여기로 흡수했다. "해야 할 일"이 한 곳에 모이는 편이 자연스럽다.
    (goToAchievements()는 그대로 살아 있다 — 옛 진입점을 끊지 않는다)
    ========================================================================== */
+/* ##########################################################################
+   [Ver 15.0] 메인 퀘스트
+   --------------------------------------------------------------------------
+   ▶ 한 번에 **하나만** 열린다. 깨고 **보상을 받아야** 다음이 열린다. 리셋 없음.
+   ▶ 진행도는 mqBump(ev, n) 하나로 센다 — 지금 열린 퀘스트의 ev 와 맞을 때만 올라간다.
+     ⚠ 이게 핵심이다. 퀘스트마다 훅을 심으면 게임 곳곳이 너덜너덜해지고,
+       퀘스트를 하나 끼워넣을 때마다 훅을 또 심어야 한다.
+       이렇게 두면 **아래 표에 한 줄 적는 것만으로** 새 퀘스트가 생긴다.
+   ▶ ev 종류와 심은 자리
+       game     게임을 한 판 마쳤다      bumpStat('games')
+       win      이겼다                  bumpStat('wins')
+       kill     상대를 처치했다          bumpStat('kills')
+       mine     유물을 캤다             doMine
+       gacha    카드를 뽑았다           doGacha
+       goldup   개쩌는 곡괭이 합성 성공   runPickaxeUpgrade (성공했을 때만)
+       box      상자를 열었다           doOpenBox
+       pet      지후펫을 샀다           buyPet
+       power    권능을 뽑았다           offerToAltar (나온 개수만큼)
+       teeth    랩터마트에서 이빨을 샀다  buyTeeth
+   ########################################################################## */
+const MAIN_QUESTS = [
+  { ch:1, title:'첫걸음', note:'게임이 어떻게 굴러가는지 한 바퀴 돌아봅니다.', list:[
+    { id:'c1q1', ev:'game',   goal:1, icon:'🎮', name:'게임 플레이 하기',
+      tip:'메인 화면의 <b>일반 모드</b>를 누르면 봇과 한 판 할 수 있습니다. 이기지 않아도 됩니다 — 끝까지 하시면 됩니다.',
+      rw:'⛏️ 곡괭이 1개', give:()=>{ grantPickaxe(1); } },
+    { id:'c1q2', ev:'mine',   goal:1, icon:'⛏️', name:'유물 채굴하기',
+      tip:'메인 화면 <b>유물</b> → <b>1회 채굴</b>. 곡괭이는 <b>10분에 1개씩</b> 저절로 찹니다.',
+      rw:'💎 우비나이트 300', give:()=>{ grantUbinite(300); } },
+    { id:'c1q3', ev:'gacha',  goal:1, icon:'🎴', name:'카드 뽑기',
+      tip:'메인 화면 <b>카드 진화석 뽑기</b>. 우비나이트가 모자라면 게임을 한 판 더 하시면 등수에 따라 들어옵니다.',
+      rw:'⛏️ 곡괭이 5개', give:()=>{ grantPickaxe(5); } },
+    { id:'c1q4', ev:'goldup', goal:1, icon:'🪙', name:'개쩌는 곡괭이 합성 성공하기',
+      tip:'<b>유물</b> 화면의 <b>곡괭이 강화</b>입니다. 곡괭이 1개를 걸고 <b>25%</b>로 성공합니다 — 실패해도 다시 하면 됩니다. 곡괭이가 찰 때까지 기다렸다가 여러 개를 걸면 확률이 올라갑니다.',
+      rw:'🔑 상자 열쇠 10개', give:()=>{ grantBoxKeys(10); } },
+    { id:'c1q5', ev:'box',    goal:1, icon:'🎁', name:'상자 열기',
+      tip:'메인 화면 <b>상자</b>. 열쇠는 게임에서 <b>1등이면 8개</b>, 2등이면 4개를 받습니다. 방금 받은 10개로 바로 여실 수 있습니다.',
+      rw:'💎 우비나이트 500', give:()=>{ grantUbinite(500); } },
+  ]},
+  { ch:2, title:'자리 잡기', note:'펫과 권능까지, 판을 유리하게 만드는 것들을 갖춥니다.', list:[
+    { id:'c2q1', ev:'pet',    goal:1, icon:'🐣', name:'지후펫 아무거나 구매하기',
+      tip:'<b>랩터마트24</b> → <b>지후펫</b>. 싼 것부터 있으니 우비나이트에 맞춰 고르시면 됩니다. 사면 바로 장착됩니다.',
+      rw:'⛏️ 곡괭이 1개', give:()=>{ grantPickaxe(1); } },
+    { id:'c2q2', ev:'win',    goal:3, icon:'🏆', name:'게임 3회 승리',
+      tip:'봇전도 승리로 셉니다. 급하지 않으니 <b>일반 모드</b>에서 천천히 채우세요.',
+      rw:'🦷 랩터의 이빨 1개', give:()=>{ grantTeeth(1); } },
+    { id:'c2q3', ev:'power',  goal:1, icon:'👑', name:'권능 뽑기',
+      tip:'<b>랩터의 권능</b> → <b>재단</b>에서 <b>랩터의 이빨</b>을 바치면 뽑힙니다. 방금 받은 이빨 1개로 한 번 뽑을 수 있습니다.',
+      rw:'🦴 우빈랩터의 발톱 69개', give:()=>{ grantEvoClaws(69); } },
+    { id:'c2q4', ev:'kill',   goal:5, icon:'💀', name:'적 5명 처치하기',
+      tip:'판에서 상대의 체력을 0으로 만들면 1명입니다. 한 판에 여러 명도 됩니다 — 여러 판에 나눠 채우셔도 괜찮습니다.',
+      rw:'🪙 개쩌는 곡괭이 1개', give:()=>{ grantGoldPickaxe(1); } },
+    { id:'c2q5', ev:'power',  goal:5, icon:'🔮', name:'권능 5개 뽑기',
+      tip:'재단에서 <b>이빨을 한 번에 여러 개</b> 바치면 권능이 여러 개 나옵니다. 이빨은 일일 퀘스트와 출석부로도 들어옵니다.',
+      rw:'🔷 권능석 1개', give:()=>{ grantPwStones(1); } },
+  ]},
+  { ch:3, title:'깊이 들어가기', note:'아직 준비 중입니다. 앞으로 계속 늘어납니다.', list:[
+    { id:'c3q1', ev:'teeth',  goal:1, icon:'🦷', name:'랩터마트에서 이빨 구매하기',
+      tip:'<b>랩터마트24</b> → <b>재화</b> 칸에서 우비나이트로 이빨을 살 수 있습니다.',
+      rw:'💎 우비나이트 200', give:()=>{ grantUbinite(200); } },
+  ]},
+];
+/* 표를 한 줄로 편다 — 순서가 곧 진행 순서다 */
+function mqAll(){
+  const out = [];
+  MAIN_QUESTS.forEach(c=> c.list.forEach(q=> out.push(Object.assign({ ch:c.ch }, q))));
+  return out;
+}
+let MAINQ = null;
+function loadMainQ(){
+  if(!MAINQ){
+    try{ MAINQ = JSON.parse(localStorage.getItem(STORAGE_KEYS.mainQuest) || 'null'); }catch(e){ MAINQ = null; }
+  }
+  if(!MAINQ || typeof MAINQ !== 'object') MAINQ = { prog:{}, done:[] };
+  if(!MAINQ.prog || typeof MAINQ.prog !== 'object') MAINQ.prog = {};
+  if(!Array.isArray(MAINQ.done)) MAINQ.done = [];
+  return MAINQ;
+}
+function saveMainQ(){
+  try{ if(!MAINQ) loadMainQ(); localStorage.setItem(STORAGE_KEYS.mainQuest, JSON.stringify(MAINQ || {})); }catch(e){}
+}
+/* 지금 열려 있는 퀘스트 — 보상을 아직 안 받은 **첫 번째** 것. 전부 받았으면 null. */
+function mqCurrent(){
+  const m = loadMainQ();
+  return mqAll().find(q=> m.done.indexOf(q.id) === -1) || null;
+}
+function mqProg(id){ return Math.max(0, loadMainQ().prog[id] || 0); }
+function mqIsReady(q){ return !!q && mqProg(q.id) >= q.goal; }
+/* 받을 수 있는 보상이 있나 — 메뉴의 빨간 점이 이걸 본다 */
+function mqClaimable(){ const q = mqCurrent(); return (q && mqIsReady(q)) ? 1 : 0; }
+
+/* ★ 진행도를 올리는 **유일한 창구**. 지금 열린 퀘스트와 ev 가 맞을 때만 오른다. */
+function mqBump(ev, n){
+  try{
+    const q = mqCurrent();
+    if(!q || q.ev !== ev) return;
+    const inc = (n == null) ? 1 : n;
+    if(!(inc > 0)) return;
+    const m = loadMainQ();
+    const before = mqProg(q.id);
+    if(before >= q.goal) return;
+    const after = Math.min(q.goal, before + inc);
+    if(after === before) return;
+    m.prog[q.id] = after;
+    saveMainQ();
+    if(after >= q.goal){
+      try{ if(typeof showQuestToast === 'function') showQuestToast({ icon:q.icon, name:'메인 퀘스트 — ' + q.name }); }catch(e){}
+    }
+    try{ renderTodoDot(); }catch(e){}
+    try{ if(typeof questTab !== 'undefined' && questTab === 'main') renderQuestScreen(); }catch(e){}
+  }catch(e){}
+}
+/* 보상 받기 — 이걸 눌러야 다음 퀘스트가 열린다 */
+function mqClaim(id){
+  const q = mqCurrent();
+  if(!q || q.id !== id || !mqIsReady(q)) return;
+  const m = loadMainQ();
+  if(m.done.indexOf(id) !== -1) return;
+  try{ q.give(); }catch(e){}
+  m.done.push(id);
+  saveMainQ();
+  const next = mqCurrent();
+  showModal('📜 메인 퀘스트 완료', `<div style="text-align:center;line-height:1.9;">
+      <div style="font-size:34px;">${q.icon}</div>
+      <div style="font-size:14px;font-weight:700;">${escapeHtml(q.name)}</div>
+      <div style="font-size:15px;font-weight:700;margin:6px 0;color:var(--fg);">${escapeHtml(q.rw)}</div>
+      <div style="font-size:12px;color:var(--fg-dim);">
+        ${next ? `다음 — <b>${escapeHtml(next.name)}</b>` : '지금까지 나온 메인 퀘스트를 <b>전부</b> 깨셨습니다!'}</div>
+    </div>`, [{label:'확인', solid:true}]);
+  try{ renderQuestScreen(); }catch(e){}
+  try{ renderTodoDot(); renderTopResources(); renderUbiniteBadge(); }catch(e){}
+}
+function mqToggleTip(id){
+  const el = document.getElementById('mqTip_' + id);
+  if(el) el.hidden = !el.hidden;
+}
+/* 화면 — 챕터별로 묶고, 열린 퀘스트 하나만 펼쳐 보여준다. */
+function buildMainQuestHtml(){
+  const m = loadMainQ();
+  const cur = mqCurrent();
+  const total = mqAll().length;
+  const doneN = m.done.length;
+  const chapters = MAIN_QUESTS.map(c=>{
+    const rows = c.list.map(q=>{
+      const done = m.done.indexOf(q.id) !== -1;
+      const open = !!cur && cur.id === q.id;
+      const prog = mqProg(q.id);
+      const ready = open && prog >= q.goal;
+      /* 아직 안 열린 것은 이름도 감춘다 — 길잡이라 앞을 다 보여주면 재미가 없다 */
+      if(!done && !open){
+        return `<div class="mq-row locked">
+            <span class="mq-ic">🔒</span>
+            <div class="mq-body"><div class="mq-nm">???</div>
+              <div class="mq-sub">앞의 퀘스트를 먼저 끝내세요</div></div>
+          </div>`;
+      }
+      return `<div class="mq-row ${done?'done':'open'}">
+          <span class="mq-ic">${done?'✔':q.icon}</span>
+          <div class="mq-body">
+            <div class="mq-nm">${escapeHtml(q.name)}</div>
+            <div class="mq-sub">보상 — ${escapeHtml(q.rw)}${
+              open ? ` · <b>${prog} / ${q.goal}</b>` : ''}</div>
+            ${open ? `<div class="mq-bar"><i style="width:${Math.round(prog/q.goal*100)}%"></i></div>` : ''}
+            ${open && q.tip ? `<button class="mq-tipbtn" onclick="mqToggleTip('${q.id}')">💡 도움말</button>
+              <div class="mq-tip" id="mqTip_${q.id}" hidden>${q.tip}</div>` : ''}
+          </div>
+          ${done ? '<span class="mq-state">완료</span>'
+                 : (ready ? `<button class="btn btn-sm btn-solid" onclick="mqClaim('${q.id}')">보상 받기</button>`
+                          : '<span class="mq-state">진행 중</span>')}
+        </div>`;
+    }).join('');
+    const chDone = c.list.every(q=> m.done.indexOf(q.id) !== -1);
+    return `<div class="mq-ch">
+        <div class="mq-ch-h">
+          <span class="mq-ch-t">챕터 ${c.ch} · ${escapeHtml(c.title)}</span>
+          <span class="mq-ch-n">${c.list.filter(q=> m.done.indexOf(q.id)!==-1).length} / ${c.list.length}${chDone?' ✔':''}</span>
+        </div>
+        <div class="mq-ch-note">${escapeHtml(c.note)}</div>
+        ${rows}
+        ${c.ch === 3 ? '<div class="mq-row locked"><span class="mq-ic">…</span><div class="mq-body"><div class="mq-nm">추가 예정</div><div class="mq-sub">다음 업데이트에서 이어집니다</div></div></div>' : ''}
+      </div>`;
+  }).join('');
+  return `
+    <div class="ach-head">
+      <div class="ach-head-l">
+        <div class="ach-head-t">메인 퀘스트</div>
+        <div class="ach-head-note">한 번에 하나씩 열립니다 · <b>보상을 받아야</b> 다음이 열립니다</div>
+      </div>
+      <div class="ach-count"><b>${doneN}</b> / ${total}</div>
+    </div>
+    <div class="ach-bar"><i style="width:${total?Math.round(doneN/total*100):0}%"></i></div>
+    ${chapters}`;
+}
+
 let questTab = 'daily';
 function openQuestScreen(tab){
   if(tab) questTab = tab;
@@ -33730,8 +33982,10 @@ function renderQuestScreen(){
     const n = questClaimableCount();
     tabs.innerHTML = `
       <button class="qs-tab${questTab==='daily'?' on':''}" onclick="setQuestTab('daily')">📋 일일 퀘스트${n>0?`<i>${n}</i>`:''}</button>
+      <button class="qs-tab${questTab==='main'?' on':''}" onclick="setQuestTab('main')">📜 메인${mqClaimable()>0?'<i>1</i>':''}</button>
       <button class="qs-tab${questTab==='ach'?' on':''}" onclick="setQuestTab('ach')">🏆 업적</button>`;
   }
+  if(questTab === 'main'){ wrap.innerHTML = buildMainQuestHtml(); return; }
   if(questTab === 'ach'){ wrap.innerHTML = buildAchievementsPanelHtml(); return; }
 
   loadQuest();
@@ -33784,6 +34038,116 @@ function openAttendScreen(){
   showScreen('screen-attend');
   renderAttendScreen();
 }
+/* ##########################################################################
+   [Ver 15.0] 신규 유저 출석부
+   --------------------------------------------------------------------------
+   ▶ 기존 출석부와 규칙이 정반대다.
+       기존 : 매일 돌아가고, 건너뛰면 1일차로 되돌아간다.
+       신규 : **계정당 한 바퀴**. 끊겨도 되돌아가지 않는다 —
+              3일 쉬었다 와도 4일차부터 이어서 받는다.
+   ▶ 하루에 한 칸. 안 그러면 7단계가 한자리에서 끝나 아무 의미가 없다.
+   ▶ 다 받으면 화면에서 사라진다.
+   ⚠ 날짜 기준은 questDayKey() — 기존 출석부와 **같은 것**을 써야 한다.
+     (14.16 에서 서버 시각으로 바뀐 그 기준이다. 시계를 돌려도 안 열린다)
+   ########################################################################## */
+const NEWBIE_REWARDS = [
+  { d:1, icon:'🦷', label:'우빈랩터의 이빨 5개',   give:()=>{ grantTeeth(5); } },
+  { d:2, icon:'💎', label:'우비나이트 1,000개',    give:()=>{ grantUbinite(1000); } },
+  { d:3, icon:'⛏️', label:'곡괭이 10개',           give:()=>{ grantPickaxe(10); } },
+  { d:4, icon:'🎟️', label:'카드 10+1 뽑기권 5장',  give:()=>{ grantGachaTickets(5); } },
+  /* 전설 권능 하나를 확정으로. 재단에서 이빨을 한참 부어야 나오는 등급이라
+     신규 유저에게는 이게 가장 크게 와닿는다. */
+  { d:5, icon:'👑', label:'랜덤 전설 권능 확정',    give:()=>{
+      try{
+        const d = pickPowerOfRarity('legend');
+        if(d){ grantPower(d.key); return d; }
+      }catch(e){}
+      try{ grantTeeth(15); }catch(e){}   // 있을 수 없지만, 빈손으로 보내지는 않는다
+      return null;
+    } },
+  { d:6, icon:'🔷', label:'권능석 1개',            give:()=>{ grantPwStones(1); } },
+  { d:7, icon:'🎁', label:'우비나이트 3,000개 + Ephemeral 확정권',
+    give:()=>{ grantUbinite(3000); grantEvoPick('Ephemeral', 1); } },
+];
+
+let NEWBIE = null;
+function loadNewbie(){
+  if(!NEWBIE){
+    try{ NEWBIE = JSON.parse(localStorage.getItem(STORAGE_KEYS.newbie) || 'null'); }catch(e){ NEWBIE = null; }
+  }
+  if(!NEWBIE || typeof NEWBIE !== 'object') NEWBIE = { got:0, last:'' };
+  if(typeof NEWBIE.got !== 'number') NEWBIE.got = 0;
+  return NEWBIE;
+}
+function saveNewbie(){
+  try{ if(!NEWBIE) loadNewbie(); localStorage.setItem(STORAGE_KEYS.newbie, JSON.stringify(NEWBIE || {})); }catch(e){}
+}
+function newbieDone(){ return loadNewbie().got >= NEWBIE_REWARDS.length; }
+function newbieCanClaim(){
+  const n = loadNewbie();
+  if(n.got >= NEWBIE_REWARDS.length) return false;
+  return n.last !== questDayKey();
+}
+function newbieClaim(){
+  if(!newbieCanClaim()) return;
+  const n = loadNewbie();
+  const rw = NEWBIE_REWARDS[n.got];
+  if(!rw) return;
+  let extra = null;
+  try{ extra = rw.give(); }catch(e){}
+  n.got += 1;
+  n.last = questDayKey();
+  saveNewbie();
+  /* 전설 권능은 **무엇이 나왔는지** 보여준다 — 안 알려주면 받은 줄도 모른다 */
+  let what = escapeHtml(rw.label);
+  if(extra && extra.name){
+    let ic = extra.icon || '👑';
+    try{ if(typeof powerIconHtml === 'function') ic = powerIconHtml(extra); }catch(e){}
+    what = `${ic} <b>${escapeHtml(extra.name)}</b> <small>(전설 권능)</small>`;
+  }
+  showModal('🎉 신규 유저 보상', `<div style="text-align:center;line-height:1.9;">
+      <div style="font-size:34px;">${rw.icon}</div>
+      <div style="font-size:15px;font-weight:700;margin:4px 0;">${what}</div>
+      <div style="font-size:12px;color:var(--fg-dim);">
+        ${n.got >= NEWBIE_REWARDS.length
+          ? '신규 유저 출석부를 <b>전부</b> 받으셨습니다. 고맙습니다!'
+          : `<b>${n.got}</b> / ${NEWBIE_REWARDS.length}일차 · 다음 보상은 <b>내일</b>`}</div>
+    </div>`, [{label:'확인', solid:true}]);
+  try{ renderAttendScreen(); }catch(e){}
+  try{ renderTodoDot(); }catch(e){}
+  try{ renderTopResources(); renderUbiniteBadge(); }catch(e){}
+}
+/* 출석부 화면 맨 위에 붙는 칸. 다 받았으면 빈 문자열이라 통째로 사라진다.
+   ⚠ 클래스는 기존 출석부 것을 그대로 쓴다 — 새로 만들면 CSS 를 또 손봐야 한다. */
+function newbiePanelHtml(){
+  if(newbieDone()) return '';
+  const n = loadNewbie();
+  const can = newbieCanClaim();
+  const days = NEWBIE_REWARDS.map((r,i)=>{
+    const got = i < n.got;
+    const isNext = !got && i === n.got;
+    const cls = got ? 'done' : ((isNext && can) ? 'today' : 'locked');
+    return `<div class="at-day ${cls}">
+        <span class="at-d">${r.d}일차</span>
+        <span class="at-ic">${r.icon}</span>
+        <span class="at-lb">${escapeHtml(r.label)}</span>
+        ${got ? '<span class="at-chk">✔</span>' : ''}
+      </div>`;
+  }).join('');
+  return `
+    <div class="at-head">
+      <div class="at-head-l">
+        <div class="at-head-t">🎉 신규 유저 출석부 <b>${n.got}</b> / ${NEWBIE_REWARDS.length}</div>
+        <div class="at-head-note"><b>연속으로 오지 않아도 됩니다.</b> 며칠 쉬었다 오셔도 이어서 받습니다 · 하루에 한 칸 · 계정당 한 번</div>
+      </div>
+      <button class="at-btn${can?'':' done'}" ${can?'onclick="newbieClaim()"':'disabled'}>
+        ${can ? `${n.got+1}일차 받기` : '✔ 오늘은 받으셨습니다'}
+      </button>
+    </div>
+    <div class="at-days">${days}</div>
+    <div style="height:1px;background:var(--line);margin:16px 0 14px;"></div>`;
+}
+
 function renderAttendScreen(){
   const wrap = document.getElementById('attendWrap');
   if(!wrap) return;
@@ -33818,6 +34182,8 @@ function renderAttendScreen(){
   }
 
   wrap.innerHTML = `
+    ${/* [Ver 15.0] 신규 유저 출석부 — 다 받으면 빈 문자열이라 저절로 사라진다 */''}
+    ${newbiePanelHtml()}
     <div class="at-head">
       <div class="at-head-l">
         <div class="at-head-t">연속 출석 <b>${streak}</b>일차</div>
