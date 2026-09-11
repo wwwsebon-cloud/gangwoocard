@@ -6,6 +6,10 @@
 <meta name="theme-color" content="#0A0A0A">
 <!-- [Ver 14.10] 파비콘 — 선언이 없어서 브라우저가 /favicon.ico 를 찔러보고 404 를 냈다.
      별도 파일로 두면 업로드를 잊게 되므로 data URI 로 심어 둔다. -->
+<!-- [Ver 14.11] PWA — 크롬/엣지 주소창의 '설치'로 PC 앱이 된다.
+     ⚠ 경로는 전부 상대경로다. 루트가 아니라 하위 폴더로 배포해도 그대로 돌아간다. -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A0A0A'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='%23E8C97A' font-family='system-ui,sans-serif' font-weight='700'%3E%EA%B0%B1%3C/text%3E%3C/svg%3E">
 <title>갱갱갱 우빈랩터 카드게임 JavaScript Edition</title>
 <style>
@@ -7832,7 +7836,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.10</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.11</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -8075,6 +8079,10 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
           <span class="nm-drawer-sw"></span>
         </label>
         <div class="nm-drawer-sep"></div>
+        <!-- [Ver 14.11] PC 앱으로 설치 — 브라우저가 설치 가능하다고 알려줄 때만 보인다 -->
+        <button class="nm-drawer-item" id="ggInstallBtn" style="display:none;" onclick="ggInstallApp();">
+          <span class="ic">💻</span><span class="tx"><b>PC에 앱으로 설치</b><small>주소창 없는 전용 창 · 오프라인 실행</small></span>
+        </button>
         <!-- [Ver 13.9] '코드 확인' 창을 없앴다 — 코드가 해시로만 들어 있어 보여줄 수 없다.
              원본 코드 목록은 Desktop\갱우카_코드표.md 에 있다. -->
         <button class="nm-drawer-item nm-drawer-dev" id="devEventBtn" style="display:none;" onclick="openDevEventForce();">
@@ -19553,6 +19561,7 @@ function updateDevMenuButtons(){
   if(bi) bi.style.display = devMode ? '' : 'none';
   const bd = document.getElementById('devBoardBtn');    // [Ver 14.9] 단순화 보드
   if(bd) bd.style.display = devMode ? '' : 'none';
+  try{ ggUpdateInstallBtn(); }catch(e){}                // [Ver 14.11] 설치 버튼
   const ci = document.getElementById('devChipIconBtn'); // [Ver 13.5] 상태칩 아이콘 모드
   if(ci){
     ci.style.display = devMode ? '' : 'none';
@@ -22642,6 +22651,112 @@ function renderOnlineSync(){
       <div class="ol-msg" id="olRestoreMsg"></div>
     </div>`;
 }
+/* ##########################################################################
+   [Ver 14.11] PC 앱으로 설치하기 (PWA)
+   --------------------------------------------------------------------------
+   ▶ 무엇이 되나 — 크롬·엣지 주소창의 '설치'를 누르면 시작 메뉴와 바탕화면에 아이콘이
+     생기고, 주소창 없는 전용 창으로 뜬다. 오프라인에서도 켜진다.
+   ▶ 진행도는 그대로다. 설치해도 **같은 주소, 같은 저장소**를 쓴다 —
+     브라우저에서 놀던 계정이 그대로 앱에서 열린다. (유저 코드도 uid 도 같다)
+
+   ⚠ ★ 업데이트가 제일 신경 쓰이는 부분이다. ★
+     게임 본체가 8MB 라 서비스 워커는 **캐시를 먼저 보여준다.** 그래서 새 버전을 올려도
+     그 순간에는 옛 화면이 뜬다. 그걸 모르면 "업데이트가 왜 안 되냐"가 된다.
+     → 뒤에서 확인해 새것이 있으면 **화면 아래에 띠를 띄워** 직접 새로고침하게 한다.
+     ⚠ 저절로 새로고침시키지 않는다. 게임 도중에 화면이 날아가면 그게 더 큰 사고다.
+
+   ⚠ 서비스 워커는 https 나 localhost 에서만 동작한다. 파일을 더블클릭해 여는
+     file:// 에서는 조용히 아무 일도 일어나지 않는다(그래도 게임은 그대로 돌아간다).
+   ########################################################################## */
+let __ggDeferredInstall = null;   // 브라우저가 건네주는 '설치' 손잡이
+
+function ggSwRegister(){
+  if(!('serviceWorker' in navigator)) return;
+  if(location.protocol !== 'https:' && location.hostname !== 'localhost') return;
+  try{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    /* 새 버전이 올라왔다고 워커가 알려주면 띠를 띄운다 */
+    navigator.serviceWorker.addEventListener('message', (e)=>{
+      if(e.data && e.data.type === 'GG_UPDATE_READY') ggShowUpdateBar();
+    });
+  }catch(e){}
+}
+/* 화면 아래 띠 — 한 번 띄우면 새로고침하거나 닫을 때까지 남는다. */
+function ggShowUpdateBar(){
+  if(document.getElementById('ggUpdateBar')) return;
+  const bar = document.createElement('div');
+  bar.id = 'ggUpdateBar';
+  bar.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:99998;'
+    + 'display:flex;gap:10px;align-items:center;background:var(--bg-2,#16161a);color:var(--fg,#eee);'
+    + 'border:1px solid var(--line,#333);border-radius:12px;padding:10px 14px;font-size:12.5px;'
+    + 'box-shadow:0 8px 28px rgba(0,0,0,.5);max-width:92vw;';
+  bar.innerHTML = '<span>✨ <b>새 버전</b>이 나왔습니다.</span>'
+    + '<button class="btn btn-sm btn-solid" id="ggUpdateGo">새로고침</button>'
+    + '<button class="btn btn-sm" id="ggUpdateNo">나중에</button>';
+  document.body.appendChild(bar);
+  const go = document.getElementById('ggUpdateGo');
+  const no = document.getElementById('ggUpdateNo');
+  /* ⚠ 게임 도중이면 한 번 더 묻는다. 판을 날려먹으면 업데이트가 원수가 된다. */
+  if(go) go.onclick = ()=>{
+    if(typeof gameActive !== 'undefined' && gameActive){
+      showModal('지금 새로고침할까요?', '<div style="line-height:1.9;">게임이 진행 중입니다.<br>'
+        + '지금 새로고침하면 <b>이 판은 사라집니다.</b><br><br>'
+        + '<span style="font-size:12px;color:var(--fg-dim);">판이 끝난 뒤에 해도 됩니다. '
+        + '그동안은 지금 버전으로 계속 노셔도 괜찮습니다.</span></div>',
+        [{label:'취소'}, {label:'새로고침', solid:true, action:()=> location.reload()}]);
+      return;
+    }
+    location.reload();
+  };
+  if(no) no.onclick = ()=>{ try{ bar.remove(); }catch(e){} };
+}
+/* 설치 손잡이를 받아둔다. 이게 와야 '설치' 버튼을 보여줄 수 있다 —
+   이미 설치했거나 조건이 안 되면 브라우저가 아예 주지 않는다. */
+try{
+  window.addEventListener('beforeinstallprompt', (e)=>{
+    e.preventDefault();
+    __ggDeferredInstall = e;
+    try{ ggUpdateInstallBtn(); }catch(err){}
+  });
+  window.addEventListener('appinstalled', ()=>{
+    __ggDeferredInstall = null;
+    try{ ggUpdateInstallBtn(); }catch(err){}
+  });
+}catch(e){}
+
+function ggIsStandalone(){
+  try{
+    return window.matchMedia('(display-mode: standalone)').matches
+        || window.matchMedia('(display-mode: window-controls-overlay)').matches
+        || navigator.standalone === true;
+  }catch(e){ return false; }
+}
+/* 설치 버튼은 **설치할 수 있을 때만** 보인다. 눌러도 안 되는 버튼을 두면 안 된다. */
+function ggUpdateInstallBtn(){
+  const b = document.getElementById('ggInstallBtn');
+  if(!b) return;
+  b.style.display = (__ggDeferredInstall && !ggIsStandalone()) ? '' : 'none';
+}
+function ggInstallApp(){
+  if(!__ggDeferredInstall){
+    showModal('\u{1F4BB} PC에 설치하기', `<div style="line-height:1.9;">
+        ${ggIsStandalone() ? '이미 <b>앱으로 실행 중</b>입니다.' : `
+        이 브라우저에서는 설치 버튼을 띄울 수 없습니다.<br><br>
+        <b>크롬 · 엣지</b>에서 주소창 오른쪽의 <b>설치 아이콘</b>(⊕ 모양)을 누르거나,<br>
+        <b>⋮ 메뉴 → 캐스트·저장·공유 → 페이지를 앱으로 설치</b>를 골라주세요.<br><br>
+        <span style="font-size:12px;color:var(--fg-dim);">사파리·파이어폭스는 이 기능을 지원하지 않습니다.</span>`}
+      </div>`, [{label:'확인', solid:true}]);
+    return;
+  }
+  const p = __ggDeferredInstall;
+  __ggDeferredInstall = null;
+  try{ closeMenuDrawer(); }catch(e){}
+  p.prompt();
+  /* 취소하면 손잡이를 돌려받을 수 없다 — 브라우저가 다시 줄 때까지 버튼을 숨긴다. */
+  try{ p.userChoice.then(()=>{ ggUpdateInstallBtn(); }); }catch(e){ ggUpdateInstallBtn(); }
+}
+try{ ggSwRegister(); }catch(e){}
+
 /* ##########################################################################
    [Ver 14.9] 개발자 — 단순화 보드
    --------------------------------------------------------------------------
@@ -25847,6 +25962,14 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 14.11', date: '2026-09-11',
+    items: [
+      '\u{1F4BB} <b>[신규] PC에 앱으로 설치할 수 있습니다.</b> <b>크롬·엣지</b> 주소창 오른쪽의 <b>설치 아이콘</b>을 누르시면(메뉴 안 <b>PC에 앱으로 설치</b>도 같습니다) 시작 메뉴와 바탕화면에 아이콘이 생기고, <b>주소창 없는 전용 창</b>으로 뜹니다. <b>인터넷이 끊겨도 켜집니다.</b>',
+      '\u{1F4BE} <b>진행도는 그대로 이어집니다.</b> 설치해도 같은 계정·같은 저장소를 씁니다 — 브라우저에서 놀던 그대로 앱에서 열립니다. 따로 옮기실 것이 없습니다.',
+      '\u2728 <b>새 버전이 나오면 화면 아래에 알려드립니다.</b> 앱은 빨리 켜지도록 저장해둔 것을 먼저 보여주기 때문에, 업데이트가 올라오면 <b>새로고침</b> 버튼이 뜹니다. <b>게임 중에는 한 번 더 여쭤봅니다</b> — 판이 날아가면 안 되니까요.',
+    ]
+  },
   {
     version: 'Ver 14.10', date: '2026-09-11',
     items: [
