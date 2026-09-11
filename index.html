@@ -7829,7 +7829,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.7.10</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 14.8</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -12527,6 +12527,9 @@ function spendArcadeCoins(n){
 function awardArcadeCoinsForPlacement(placement){
   if(window.__arcadeCoinAwarded) return 0;
   window.__arcadeCoinAwarded = true;
+  /* [Ver 14.8] 게임중독 — 아케이드 판수. 코인 상한과 무관하게 **판이 끝나면** 센다.
+     ⚠ 이 함수는 판당 한 번만 도므로(위 가드) 중복으로 세지 않는다. */
+  try{ STATS.arcadeGames = (STATS.arcadeGames || 0) + 1; saveStats(); }catch(e){}
   const n = ARCADE_COIN_REWARD[placement] || 0;
   if(!n) return 0;
   const r = grantArcadeCoins(n);
@@ -12741,6 +12744,19 @@ const PFP_DEFS = [
   { key:'deathnote',name:'데스노트',     how:'스페셜 업적 · 데스노트' },
   { key:'num20',    name:'클래스 20',   how:'업적 · 클래스 20' },
   { key:'sun',      name:'태양',        how:'시즌 패스 Pro 50레벨' },
+  /* ===== [Ver 14.8] 신규 업적 12종의 보상 ===== */
+  { key:'devpfp',    name:'개발자',              how:'히든 업적 · 개발자' },
+  { key:'arcade50',  name:'게임중독',            how:'업적 · 게임중독' },
+  { key:'grind100',  name:'노가다왕',            how:'스페셜 업적 · 노가다왕' },
+  { key:'grind300',  name:'노가다신',            how:'스페셜 업적 · 노가다신' },
+  { key:'luckyguy',  name:'럭키가이',            how:'스페셜 업적 · 럭키가이' },
+  { key:'credits30', name:'뭘봐',                how:'히든 업적 · 뭘봐' },
+  { key:'rampage3',  name:'미쳐 날뛰고 있습니다', how:'업적 · 미쳐 날뛰고 있습니다' },
+  { key:'beastkill', name:'야수',                how:'스페셜 업적 · 야수' },
+  { key:'dailyall',  name:'오늘부터 1일',        how:'업적 · 오늘부터 1일' },
+  { key:'teamkill',  name:'인성파탄자',          how:'히든 업적 · 인성파탄자' },
+  { key:'weekly7',   name:'주간 플래너',         how:'업적 · 주간 플래너' },
+  { key:'nevergive', name:'중꺾마',              how:'스페셜 업적 · 중꺾마' },
 ];
 function pfpDefOf(key){ return PFP_DEFS.find(f=> f.key === key) || PFP_DEFS[0]; }
 function pfpSrc(key){ return 'pfp/' + pfpDefOf(key).key + '.jpg'; }
@@ -15995,7 +16011,11 @@ const POWER_DEFS = [
         if(nc){ me.hand[i] = nc; done++; }
       });
       pwLog(up ? `🎲 도박 성공 — 카드 <b>${done}</b>장의 등급이 올랐습니다!`
-               : `🎲 도박 실패 — 카드 <b>${done}</b>장의 등급이 내려갔습니다.`); } },
+               : `🎲 도박 실패 — 카드 <b>${done}</b>장의 등급이 내려갔습니다.`);
+      /* [Ver 14.8] 럭키가이 — 올랐고, 그게 **손패 전부**일 때만. */
+      try{
+        if(up && done >= n0 && isMyPlayer(me)) markGameAch('luckyGambleAllUp');
+      }catch(e){} } },
 
   /* ---------------- 영웅 ---------------- */
   { key:'diablo', rarity:'epic', icon:'👹', name:'디아블로', target:'none', cd:121, amt:0, up:{k:'cd',per:5},
@@ -16307,6 +16327,21 @@ const POWER_DEFS = [
       const pick = atkIdx[Math.floor(Math.random()*atkIdx.length)];
       pick.c.pwHacked = true;
       pwLog(`💻 ${J(t.name,'의','의')} "${escapeHtml(pick.c.name)}"이(가) 해킹당했습니다.`); } },
+  /* ══════════ [Ver 14.8] 신규 2종 ══════════ */
+  { key:'qigong', rarity:'legend', icon:'🩵', name:'운기조식', target:'none', cd:150, amt:30,
+    up:{k:'amt',per:2}, up2:{k:'cd',per:3},
+    desc:v=>`<b>초당 ${v}</b> 씩 <b>계속</b> 회복합니다. 다만 <b>공격을 받는 순간 끝납니다.</b>`,
+    run:(me,t,v)=>{
+      me.qigongRate = v;
+      me.qigongAt   = Date.now();
+      pwLog(`🩵 <b>운기조식</b> — ${J(me.name,'이','가')} 숨을 고릅니다. <b>초당 ${v}</b> 씩 회복하지만, <b>맞으면 그 자리에서 끝납니다.</b>`); } },
+
+  { key:'growth', rarity:'legend', icon:'🌱', name:'성장', target:'none', cd:150, amt:1, up:{k:'cd',per:3},
+    desc:v=>`<b>1바퀴 뒤</b> 손패의 <b>모든 카드</b>의 등급이 <b>1 상승</b>합니다. 다만 그 사이에 <b>공격을 받으면 실패</b>합니다.`,
+    run:(me,t,v)=>{
+      me.growthDueRound = turnCount + 1;
+      pwLog(`🌱 <b>성장</b> — ${J(me.name,'이','가')} 씨를 뿌렸습니다. <b>1바퀴 뒤</b> 손패 전체의 등급이 오릅니다 — <b>그때까지 맞지 않아야</b> 합니다.`); } },
+
   /* ══════════ [Ver 14.7] 신규 5종 ══════════ */
   { key:'ricochet', rarity:'rare', icon:'🔀', name:'리코셰', target:'none', cd:70, amt:30, up:{k:'cd',per:1},
     desc:v=>`자신의 공격력이 <b>${v}%</b> 떨어지는 대신, <b>다음 공격 한 번</b>이 <b>전체 공격</b>이 됩니다. 튕기고 나면 효과는 사라집니다.`,
@@ -16743,6 +16778,58 @@ function coldWaveTick(p){
   log('sys', `🌨️ ${J(p.name,'의','의')} [한파]가 모두 녹았습니다.`);
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   [Ver 14.8] 운기조식 — **초당** 회복. 바퀴·턴이 아니라 실시간이다.
+   250ms 마다 불리므로, 지난 정산 이후 흐른 시간만큼 비례해서 준다.
+   ⚠ p.hp 를 직접 더하지 않는다 — pwHeal 이 맹독·회복감소·연회장 집계를 함께 탄다.
+   ══════════════════════════════════════════════════════════════════ */
+function pwQigongTick(now){
+  if(!Array.isArray(players)) return;
+  let painted = false;
+  players.forEach(p=>{
+    if(!p || !p.alive || !(p.qigongRate > 0)) return;
+    if(p.hp >= p.maxHp){ p.qigongAt = now; return; }   // 가득 차 있으면 시계만 맞춰둔다
+    const dt = Math.max(0, now - (p.qigongAt || now));
+    if(dt < 250) return;
+    const amt = Math.floor(p.qigongRate * dt / 1000);
+    if(amt <= 0) return;
+    p.qigongAt = now;
+    try{ pwHeal(p, amt); }catch(e){}
+    painted = true;
+  });
+  if(painted){ try{ renderBoard(); }catch(e){} }
+}
+/* 공격을 받으면 끝난다 — 운기조식·성장 둘 다. applyDamageToPlayer 에서 부른다. */
+function pwBreakOnHit(p){
+  if(!p) return;
+  if(p.qigongRate > 0){
+    p.qigongRate = 0; p.qigongAt = 0;
+    log('sys', `🩵 ${J(p.name,'의','의')} <b>운기조식</b>이 공격을 받아 끊겼습니다.`);
+  }
+  if(p.growthDueRound > 0){
+    p.growthDueRound = 0;
+    log('sys', `🌱 ${J(p.name,'의','의')} <b>성장</b>이 공격을 받아 실패했습니다.`);
+  }
+}
+/* 성장 — 기한이 된 바퀴에 손패 전체의 등급을 올린다. 바퀴 틱에서 부른다. */
+function pwGrowthTick(){
+  if(!Array.isArray(players)) return;
+  players.forEach(p=>{
+    if(!p || !p.alive || !(p.growthDueRound > 0) || turnCount < p.growthDueRound) return;
+    p.growthDueRound = 0;
+    const hand = Array.isArray(p.hand) ? p.hand : [];
+    let n = 0;
+    hand.forEach(c=>{
+      if(!c) return;
+      const up = pwGradeShift(c.grade, 1);
+      if(up && up !== c.grade){ c.grade = up; n++; }
+    });
+    if(n) log('highlight', `🌱 <b>성장</b> — ${J(p.name,'의','의')} 손패 <b>${n}장</b>의 등급이 한 단계씩 올랐습니다!`);
+    else  log('sys', `🌱 ${J(p.name,'의','의')} 성장이 여물었지만 올릴 카드가 없었습니다.`);
+  });
+  try{ renderHand(); renderBoard(); }catch(e){}
+}
+
 /* [Ver 14.7] 요새 — 이 사람에게 들어오는 권능을 전부 무효로 만드는 중인가.
    ⚠ 실시간 초 단위다(NO U 와 같은 방식). 바퀴·턴이 아니다. */
 function pwFortressOn(p){
@@ -16819,6 +16906,7 @@ const POWER_ICON_KEYS = new Set([
   'warp','silence','magic','nocool','purify','gravity','nou','matrix','echo',
   'bolt','timewarp','nightmare','monolith','neuter','wildcard',   // [Ver 13.3] 신규 6종
   'ricochet','newton','wraith','fortress','trace',                // [Ver 14.7] 신규 5종
+  'qigong','growth',                                              // [Ver 14.8] 신규 2종
 ]);
 /* [Ver 14.5] 특성이 켜져 있으면 왼쪽 위에 작은 노란 육각형을 얹는다.
    ⚠ 아이콘을 그리는 곳이 넷(카드·장착칸·인게임 Q·W·E·뽑기 결과)인데, 전부 이 함수를 지난다.
@@ -16846,7 +16934,10 @@ function pwAmt(def, lv){
    주지 않으면 **내 계정 설정**을 본다 — 화면 표시가 이 경로다. */
 function pwCd(def, lv, traitOverride){
   if(!def) return 60;
-  const per = (def.up && def.up.k === 'cd') ? def.up.per : 0;
+  /* [Ver 14.8] 업그레이드가 **둘**인 권능(운기조식: 회복량 + 쿨타임)을 위해 up2 도 읽는다.
+     기존 권능은 up2 가 없어 영향이 없다. */
+  let per = (def.up && def.up.k === 'cd') ? def.up.per : 0;
+  if(def.up2 && def.up2.k === 'cd') per += def.up2.per;
   /* [Ver 13.1] 하한 0.5초 — '노가다'는 기본 쿨이 3초라 하한을 3으로 두면 강화가 통째로 무의미해진다 */
   let out = Math.max(0.5, Math.round(((def.cd || 60) - per * (Math.max(1, lv||1) - 1)) * 10) / 10);
   /* [Ver 14.5] 특성 쿨 배수 — **여기 한 곳**에만 얹는다.
@@ -17676,6 +17767,7 @@ function powerCooldownTick(){
     return;
   }
   try{ pwReflectTick(now); }catch(e){}   // [Ver 13.13] 참가자도 봐야 하므로 아래 조기 return 앞에 둔다
+  try{ pwQigongTick(now); }catch(e){}    // [Ver 14.8] 운기조식 — 초당 회복 (실시간)
   /* 랜서버 참가자는 호스트가 굴린 값을 스냅샷으로 받는다 — 여기서 또 깎으면 두 배로 준다 */
   if(typeof lanIsRemoteClient==='function' && lanIsRemoteClient()){ renderPowerBar(); return; }
   /* ⚠ 슬롯 루프보다 **먼저** 부른다. 그 루프에는 "자기 턴에는 자기 시계가 멈춘다"가 있는데,
@@ -17742,9 +17834,20 @@ function pwFire(p, slot, targetId){
   /* [Ver 14.5] 실행 중인 특성을 세워둔다. run 안에서는 pwIs('키') 로 갈라진다.
      ⚠ finally 로 반드시 되돌린다 — 안 그러면 다음 권능이 남의 특성으로 돈다. */
   __pwTraitNow = s.trait || null;
+  /* [Ver 14.8] 업적 근거 — 권능을 쓰는 **유일한 관문**이 여기다. 각 run 에 흩지 않는다.
+     ⚠ 내가 쓴 것만 센다. 봇이 노가다를 눌러댄 것으로 내 업적이 열리면 안 된다. */
+  const __achMine = (function(){ try{ return isMyPlayer(p); }catch(e){ return false; } })();
+  if(__achMine){
+    try{
+      if(def.key === 'grind') markGameAch('grindUses', ((gameAchFlags && gameAchFlags.grindUses) || 0) + 1);
+      if(def.key === 'mend' && p.hp < 200) markGameAch('lowHpMendUsed');
+      if(def.key === 'wager') window.__achWagerHandBefore = (p.hand || []).length;
+    }catch(e){}
+  }
+  window.__pwFiringKey = def.key;          // 처치 판정에서 "무엇으로 죽였나" 를 본다
   try{ def.run(p, tgt, pwAmt(def, s.lv)); }
   catch(e){ console.error('[권능] 실행 오류', def.key, e); }
-  finally{ __pwTraitNow = null; }
+  finally{ __pwTraitNow = null; window.__pwFiringKey = null; }
   p.__pwUsingSlot = null;
   /* [Ver 13.1] '노가다'처럼 쿨이 아주 짧은 권능은 로그를 도배한다.
      def.quiet 가 붙은 권능은 **판마다 처음 한 번만** 알리고 그 뒤로는 조용히 넘어간다. */
@@ -19203,6 +19306,33 @@ function buyIntroSkip(){
     </div>`, [{label:'확인', solid:true}]);
 }
 
+/* [Ver 14.8] 개발자 프로필 사진 — 히든 업적 '개발자'.
+   값은 날짜다(2026-07-10). 개발자 모드가 아니면 살 수 없다. */
+const DEV_PFP_PRICE = 20260710;
+function buyDevPfp(){
+  try{
+    if(typeof devMode === 'undefined' || !devMode){
+      showModal('🛠️ 개발자 전용', '<div style="line-height:1.9;">이 상품은 <b>개발자 모드</b>에서만 구매할 수 있습니다.</div>',
+        [{label:'확인', solid:true}]);
+      return;
+    }
+    if(hasPfp('devpfp')){ raptorMartSwitch('resource'); return; }
+    if(!spendUbinite(DEV_PFP_PRICE)){
+      showModal('우비나이트 부족',
+        `<b>개발자 프로필 사진</b>을 사려면 우비나이트 <b>${DEV_PFP_PRICE.toLocaleString()}</b>개가 필요합니다. (보유 ${ubinite.toLocaleString()}개)`,
+        [{label:'확인', solid:true}]);
+      return;
+    }
+    grantPfp('devpfp');
+    try{ renderUbiniteBadge(); }catch(e){}
+    try{ evaluateAchievements(false); }catch(e){}   // 업적은 보유 여부로 판정한다
+    showModal('🛠️ 개발자', `<div style="text-align:center;line-height:1.9;">
+        <img src="${pfpSrc('devpfp')}" style="width:120px;height:120px;border-radius:12px;">
+        <div style="font-size:16px;font-weight:800;margin-top:8px;">개발자 프로필 사진</div>
+        <div style="font-size:12.5px;color:var(--fg-dim);margin-top:6px;">내 정보 → 프로필 사진에서 바꿀 수 있습니다.</div>
+      </div>`, [{label:'확인', solid:true, action:()=> raptorMartSwitch('resource')}]);
+  }catch(e){ console.error('[개발자 프사] 구매 오류', e); }
+}
 function buildResourceShopHtml(){
   const rows = [1, 5, 15].map(n=>{
     const cost = TEETH_PRICE_UBINITE * n;
@@ -19212,6 +19342,28 @@ function buildResourceShopHtml(){
       <span class="rm-res-cost">💎 ${cost.toLocaleString()}</span>
     </button>`;
   }).join('');
+  /* [Ver 14.8] 특별 상품 — 개발자 프로필 사진.
+     ⚠ 개발자 모드가 꺼져 있으면 **구매 불가로 보이게** 둔다. 숨기지 않는 이유는
+       "이런 게 있다"는 것 자체가 히든 업적의 실마리이기 때문이다. */
+  /* ⚠ OWNED_PFPS 는 **배열**이다 — loadPfps()['devpfp'] 로 읽으면 언제나 false. */
+  const devOwned = (function(){ try{ return hasPfp('devpfp'); }catch(e){ return false; } })();
+  const devOn    = (typeof devMode !== 'undefined') && !!devMode;
+  const devCan   = devOn && ubinite >= DEV_PFP_PRICE;
+  const devRow = `<div class="rm-res-special">
+      <div class="rm-res-sp-ic">🛠️</div>
+      <div class="rm-res-sp-tx">
+        <b>개발자 프로필 사진</b>
+        <small>${devOn
+          ? '개발자만 살 수 있는 프로필 사진입니다.'
+          : '<b>개발자 모드에서만 구매할 수 있습니다.</b>'}</small>
+      </div>
+      ${devOwned
+        ? `<span class="rm-res-sp-own">보유 중</span>`
+        : `<button class="rm-res-buy${devCan?'':' off'}" ${devCan?'':'disabled'} onclick="buyDevPfp()">
+             <span class="rm-res-n">🛠️ ${devOn ? '구매' : '구매불가'}</span>
+             <span class="rm-res-cost">💎 ${DEV_PFP_PRICE.toLocaleString()}</span>
+           </button>`}
+    </div>`;
   /* [잠수함] 특별 상품 — 인트로 건너뛰기 */
   const owned = (typeof biOwnsSkip === 'function') && biOwnsSkip();
   const canBuy = ubinite >= INTRO_SKIP_PRICE;
@@ -19228,7 +19380,7 @@ function buildResourceShopHtml(){
              <span class="rm-res-cost">💎 ${INTRO_SKIP_PRICE.toLocaleString()}</span>
            </button>`}
     </div>`;
-  return skipRow + `<div class="rm-res-wrap">
+  return devRow + skipRow + `<div class="rm-res-wrap">
     <div class="rm-res-head">
       <b>🦷 랩터의 이빨</b>
       <span>보유 <b>${teethCount().toLocaleString()}</b>개</span>
@@ -21095,6 +21247,26 @@ async function fbLookupRemoteCode(code){
    새 패치를 넣을 땐 BALANCE_PATCHES 맨 앞에 한 덩어리를 추가하면 된다.
    ########################################################################## */
 const BALANCE_PATCHES = [
+  {
+    version: 'Ver 14.8', date: '2026-09-11',
+    groups: [
+      { title:'전설 권능 둘 — 때리지 않고 이기는 길', kind:'power',
+        note:'전설 권능은 대부분 <b>한 방</b>이었습니다. 이번 둘은 반대로 <b>가만히 있으면 이득</b>이고 <b>맞으면 무너지는</b> 쪽입니다. 공격을 받는 순간 끝나기 때문에, 쓰는 타이밍과 그 뒤에 몸을 사리는 판단이 전부입니다.',
+        rows:[
+          { name:'운기조식', icon:'\u{1FA75}', rows:[
+            { label:'회복',     from:'—', to:'초당 30',      dir:'up' },
+            { label:'지속',     from:'—', to:'무제한',        dir:'up' },
+            { label:'끊기는 조건', from:'—', to:'공격받으면 즉시', dir:'down' },
+            { label:'쿨타임',   from:'—', to:'150초',        dir:'neutral' },
+            { label:'강화',     from:'—', to:'회복 +2 · 쿨 -3초', dir:'up' }]},
+          { name:'성장', icon:'\u{1F331}', rows:[
+            { label:'효과',     from:'—', to:'손패 전체 등급 +1', dir:'up' },
+            { label:'발동',     from:'—', to:'1바퀴 뒤',       dir:'neutral' },
+            { label:'실패 조건', from:'—', to:'그 전에 공격받으면', dir:'down' },
+            { label:'쿨타임',   from:'—', to:'150초',         dir:'neutral' }]},
+        ]},
+    ]
+  },
   {
     version: 'Ver 14.7.8', date: '2026-09-11',
     groups: [
@@ -24325,6 +24497,8 @@ function showScreen(id){
     // [Ver 11.2] 퀴즈 모드를 벗어나는 모든 경로(뒤로가기 등 qmExit을 거치지 않는 경우 포함)에서
     // 안전하게 전용 BGM을 멈춘다. qmExit()의 qmBgmStop() 호출과 중복되어도 무해하다.
     if(id !== 'screen-quiz'){ try{ if(typeof qmBgmStop==='function') qmBgmStop(); }catch(e){} }
+    /* [Ver 14.8] 크레딧을 벗어나면 '뭘봐' 타이머를 끈다 — 어느 경로로 나가든 여기를 지난다 */
+    if(id !== 'screen-credits'){ try{ if(typeof creditsWatchStop==='function') creditsWatchStop(); }catch(e){} }
   }catch(e){}
 }
 /* ##########################################################################
@@ -24747,6 +24921,14 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 14.8', date: '2026-09-11',
+    items: [
+      '\u{1F451} <b>[신규] 랩터의 권능 2종.</b> <b>운기조식</b>(전설) — <b>초당 30</b>씩 계속 회복합니다. 다만 <b>공격을 받는 순간 끝납니다.</b> 강화하면 회복량이 오르고 쿨타임도 함께 줄어듭니다(둘 다 오르는 첫 권능입니다). / <b>성장</b>(전설) — <b>1바퀴 뒤</b> 손패의 <b>모든 카드</b> 등급이 <b>1 상승</b>합니다. 그 사이에 맞으면 실패합니다.',
+      '\u{1F3C6} <b>[신규] 업적 12종.</b> 달성하면 전용 <b>프로필 사진</b>을 드립니다.<br>· <b>일반</b> — 게임중독(아케이드 50판) · 미쳐 날뛰고 있습니다(한 게임 3처치) · 오늘부터 1일(일일 퀘스트 전부 완료) · 주간 플래너(7일 연속 전부 완료)<br>· <b>히든</b> — 뭘봐 · 인성파탄자 · 개발자<br>· <b>스페셜</b> — 노가다왕 · 노가다신 · 럭키가이 · 야수 · 중꺾마',
+      '\u{1F5BC}️ 업적 프로필 사진 <b>12장</b>이 함께 들어갔습니다. 이로써 프로필 사진은 <b>26종</b>이 되었습니다.',
+    ]
+  },
   {
     version: 'Ver 14.7.10', date: '2026-09-11',
     items: [
@@ -29400,7 +29582,7 @@ const DEFAULT_STATS = {
   damageDealt: 0, damageTaken: 0, healed: 0, shieldGained: 0,
   cardsPlayed: 0, cardsDrawn: 0, cardsBought: 0, cardsSold: 0,
   goldEarned: 0, goldSpent: 0, gambles: 0, gambleDeaths: 0,
-  kills: 0, deaths: 0,
+  kills: 0, deaths: 0, arcadeGames: 0,   // [Ver 14.8] 아케이드 판수 — 업적 '게임중독'
   longestGameTurns: 0, totalTurns: 0,
   blackMarketVisits: 0, sabotages: 0, packagesOpened: 0,
   reactionsUsed: 0, nullified: 0, reflected: 0,
@@ -31178,9 +31360,40 @@ const ACHIEVEMENTS = [
   // ---------- 히든 (조건은 보이지만 매우 까다롭다) ----------
   { id:'spotdev', kind:'hidden', name:'개발자 발견', desc:'개발자와 함께 게임을 끝까지 마치세요',      pfp:'spotdev',  check:c=>!!c.game.metDev },
 
+  /* ===== [Ver 14.8] 신규 일반 4종 ===== */
+  { id:'arcade50', kind:'normal', name:'게임중독',            desc:'아케이드 모드 50판 플레이하기',
+    pfp:'arcade50',  check:c=>(c.stats.arcadeGames||0) >= 50 },
+  { id:'rampage3', kind:'normal', name:'미쳐 날뛰고 있습니다', desc:'한 게임에서 3명 이상 처치하기',
+    pfp:'rampage3',  check:c=>!!(c.me && (c.me.killCount||0) >= 3) },
+  { id:'dailyall', kind:'normal', name:'오늘부터 1일',        desc:'하루의 일일 퀘스트를 전부 완료하기',
+    pfp:'dailyall',  check:c=>!!c.questAllDone },
+  { id:'weekly7',  kind:'normal', name:'주간 플래너',         desc:'일일 퀘스트를 7일 연속으로 전부 완료하기',
+    pfp:'weekly7',   check:c=>(c.questStreak||0) >= 7 },
+
+  /* ===== [Ver 14.8] 신규 히든 3종 ===== */
+  { id:'credits30', kind:'hidden', name:'뭘봐',       desc:'크레딧을 30초 이상 보고 있기',
+    pfp:'credits30', check:c=>!!c.creditsWatched },
+  { id:'teamkill',  kind:'hidden', name:'인성파탄자', desc:'아군을 직접 처치하기',
+    pfp:'teamkill',  check:c=>!!c.game.teamKill },
+  { id:'devpfp',    kind:'hidden', name:'개발자',     desc:'개발자만 아는 방법으로 얻는 프로필 사진을 손에 넣으세요',
+    pfp:'devpfp',    check:c=>!!c.ownsDevPfp },
+
   // ---------- 스페셜 (조건 비공개 · 특정 카드와 관련) ----------
   { id:'deathnote', kind:'special', name:'데스노트', desc:'???', hint:'어떤 카드가 이름값을 할 때.',
     real:'데스노트로 상대를 1명 처치', pfp:'deathnote', check:c=>!!c.game.deathnoteKill },
+
+  /* ===== [Ver 14.8] 신규 스페셜 5종 ===== */
+  { id:'grind100', kind:'special', name:'노가다왕', desc:'???', hint:'어떤 권능을 지겹도록 눌러야 합니다.',
+    real:'한 판에서 권능 "노가다"를 100번 사용', pfp:'grind100', check:c=>(c.game.grindUses||0) >= 100 },
+  { id:'grind300', kind:'special', name:'노가다신', desc:'???', hint:'노가다왕으로도 부족할 때.',
+    real:'한 판에서 권능 "노가다"를 300번 사용', pfp:'grind300', check:c=>(c.game.grindUses||0) >= 300 },
+  { id:'luckyguy', kind:'special', name:'럭키가이', desc:'???', hint:'운에 전부를 맡겼을 때.',
+    real:'권능 "도박"으로 손패의 모든 카드 등급이 상승', pfp:'luckyguy', check:c=>!!c.game.luckyGambleAllUp },
+  { id:'beastkill', kind:'special', name:'야수', desc:'???', hint:'맨 처음 손에 쥐는 권능으로도 사람은 죽습니다.',
+    real:'권능 "할퀴기" 또는 "베기"로 상대를 처치', pfp:'beastkill', check:c=>!!c.game.beastKill },
+  { id:'nevergive', kind:'special', name:'중꺾마', desc:'???', hint:'꺾이지 않는 마음.',
+    real:'HP 200 미만에서 권능 "회복"을 쓰고 그 판을 승리', pfp:'nevergive',
+    check:c=>!!(c.won && c.game.lowHpMendUsed) },
 ];
 
 /* 시즌 정산에서만 판정되는 업적의 플래그.
@@ -31267,7 +31480,13 @@ function resetGameAchFlags(){
     usedShop:false, usedDrawButton:false, judgeKilledFraud:false, maxDmgReduce:0,
     // [Ver 12.6.1] 새 업적용
     deathnoteKill:false,   // 데스노트 계열 카드로 상대를 처치했다
-    metDev:false           // 이 판에 개발자가 함께 있었다
+    metDev:false,          // 이 판에 개발자가 함께 있었다
+    /* ===== [Ver 14.8] 신규 업적 ===== */
+    grindUses:0,           // 노가다 권능을 이 판에 몇 번 썼나
+    luckyGambleAllUp:false,// 도박 권능으로 손패 **전부**의 등급이 올랐다
+    beastKill:false,       // 할퀴기·베기 권능으로 상대를 처치했다
+    teamKill:false,        // 아군을 처치했다
+    lowHpMendUsed:false    // HP 200 미만에서 회복 권능을 썼다 (승리와 함께 판정)
   };
 }
 /* 편의 헬퍼: 특정 게임 내 플래그를 세운다(존재하지 않으면 무시). */
@@ -31284,6 +31503,11 @@ function buildAchContext(won){
   return {
     won, stats: STATS, me,
     season: loadAchSeason(),   // [Ver 12.6.1] 시즌 정산에서 세워둔 플래그
+    /* [Ver 14.8] 게임 밖에서 쌓이는 근거들 — 퀘스트·크레딧·프로필 사진 보유 */
+    questAllDone:  (function(){ try{ return DAILY_QUESTS.every(q=> questIsDone(q.id)); }catch(e){ return false; } })(),
+    questStreak:   (function(){ try{ return questAllDoneStreak(); }catch(e){ return 0; } })(),
+    creditsWatched:(function(){ try{ return localStorage.getItem(CREDITS_WATCH_KEY) === '1'; }catch(e){ return false; } })(),
+    ownsDevPfp:    (function(){ try{ return hasPfp('devpfp'); }catch(e){ return false; } })(),
     state: { shopClosedForever: (typeof shopClosedForever!=='undefined' && shopClosedForever) },
     game: gameAchFlags,
     dexCount: dexNames.length,
@@ -31799,6 +32023,48 @@ function saveQuest(){
   }catch(e){}
 }
 function questDefOf(id){ return DAILY_QUESTS.find(q=> q.id === id) || null; }
+/* ══════════════════════════════════════════════════════════════════
+   [Ver 14.8] 일일 퀘스트 **연속 전부완료** 일수 — 업적 '주간 플래너'
+   하루가 끝났는지는 날짜 문자열로 본다(todayKey). 어제 이어서면 +1, 건너뛰었으면 1 부터.
+   ⚠ 같은 날 여러 번 불려도 하루는 한 번만 센다.
+   ══════════════════════════════════════════════════════════════════ */
+const QUEST_STREAK_KEY = 'gang_card_quest_streak_v1';
+function questAllDoneStreak(){
+  try{ const o = JSON.parse(localStorage.getItem(QUEST_STREAK_KEY) || '{}'); return o.n || 0; }
+  catch(e){ return 0; }
+}
+function noteQuestAllDone(){
+  try{
+    if(!DAILY_QUESTS.every(q=> questIsDone(q.id))) return;
+    const today = todayKey();
+    let o = {};
+    try{ o = JSON.parse(localStorage.getItem(QUEST_STREAK_KEY) || '{}') || {}; }catch(e){ o = {}; }
+    if(o.last === today) return;                       // 오늘은 이미 셌다
+    const y = new Date(); y.setDate(y.getDate() - 1);
+    const yKey = `${y.getFullYear()}-${String(y.getMonth()+1).padStart(2,'0')}-${String(y.getDate()).padStart(2,'0')}`;
+    o.n = (o.last === yKey) ? (o.n || 0) + 1 : 1;      // 어제 이어서면 +1, 아니면 처음부터
+    o.last = today;
+    localStorage.setItem(QUEST_STREAK_KEY, JSON.stringify(o));
+  }catch(e){}
+}
+/* [Ver 14.8] 크레딧을 30초 이상 보면 표시를 남긴다 — 업적 '뭘봐' */
+const CREDITS_WATCH_KEY = 'gang_card_credits_watch_v1';
+let __creditsTimer = null;
+function creditsWatchStart(){
+  try{
+    if(localStorage.getItem(CREDITS_WATCH_KEY) === '1') return;
+    clearTimeout(__creditsTimer);
+    __creditsTimer = setTimeout(()=>{
+      try{
+        /* 30초가 지나는 순간에도 **아직 크레딧 화면이어야** 한다 — 켜두고 나간 것은 치지 않는다. */
+        if(getComputedScreen() !== 'screen-credits') return;
+        localStorage.setItem(CREDITS_WATCH_KEY, '1');
+        try{ evaluateAchievements(false); }catch(e){}
+      }catch(e){}
+    }, 30000);
+  }catch(e){}
+}
+function creditsWatchStop(){ try{ clearTimeout(__creditsTimer); __creditsTimer = null; }catch(e){} }
 function questProgress(id){ const q = loadQuest(); return Math.max(0, q.prog[id] || 0); }
 function questIsDone(id){ const d = questDefOf(id); return !!d && questProgress(id) >= d.goal; }
 /* 진행도를 올린다. 이미 다 찼으면 아무 일도 하지 않는다(저장도 안 한다). */
@@ -31817,6 +32083,8 @@ function questBump(id, n){
     if(after === before) return;
     q.prog[id] = after;
     saveQuest();
+    /* [Ver 14.8] 이 갱신으로 오늘 치가 **전부** 찼는지 본다 — 업적 '오늘부터 1일' · '주간 플래너' */
+    try{ noteQuestAllDone(); }catch(e){}
     if(after >= d.goal){
       try{ showQuestToast(d); }catch(e){}
       try{ renderTodoDot(); }catch(e){}
@@ -32795,6 +33063,7 @@ function creditAvatarHtml(rawName){
 
 function goToCredits(){
   showScreen('screen-credits');
+  try{ creditsWatchStart(); }catch(e){}   // [Ver 14.8] 업적 '뭘봐' — 30초 이상 보고 있기
   ambientBgmPlay && ambientBgmPlay('creditstheme'); // [Ver 9.17] 크레딧 전용 BGM (비의 무곡)
   const wrap = document.getElementById('creditsWrap');
   wrap.innerHTML = `
@@ -37032,6 +37301,9 @@ function mkPlayer(id,name,isBot){
     /* [Ver 14.7] 지후펫 — 용병(의뢰자) · 성기사(수호). 양쪽 다 서로를 가리키는 아이디를 들고 있다. */
     mercClientId:null, mercTargetedBy:null, mercDone:false,
     paladinWardId:null, paladinWardedBy:null,
+    /* [Ver 14.8] 운기조식 — 초당 회복량(0이면 꺼짐) · 마지막으로 정산한 시각(실시간 ms)
+                  성장   — 등급이 오를 바퀴. 그 전에 맞으면 0 으로 풀린다 */
+    qigongRate:0, qigongAt:0, growthDueRound:0,
     ricochetOn:false, ricochetCut:0, wraithPct:0, wraithDueRound:0, fortressUntil:0,
     coldWaveStacks:0, coldWaveLastRound:0,
     /* [Ver 14.7.4] 신규 카드 15종
@@ -44903,6 +45175,7 @@ function pwBeforePlay(p, card){
 function pwRoundTick(){
   if(!powersActive() || !Array.isArray(players)) return;
   /* [Ver 14.5] 빙결지대가 녹는다 */
+  try{ pwGrowthTick(); }catch(e){}   // [Ver 14.8] 성장 — 1바퀴 뒤 손패 등급 상승
   /* [Ver 14.7] 만유인력도 같은 자리에서 만료시킨다. */
   if(pwNewtonZone && turnCount >= pwNewtonZone.until){
     pwNewtonZone = null;
@@ -57143,6 +57416,18 @@ function onPlayerDeath(deadPlayer, cause, cardName){
   /* [Ver 9.14] 강아지후 — 팀원이 죽으면 충격으로 고자가 된다 */
   try{ petPuppyOnAllyDeath(deadPlayer); }catch(e){ console.error('[지후펫] 강아지후 사망 처리 오류', e); }
   try{ petContractOnDeath(deadPlayer); }catch(e){ console.error('[지후펫] 용병·성기사 사망 처리 오류', e); }   // [Ver 14.7]
+  /* [Ver 14.8] 업적 — 야수(할퀴기·베기로 처치) · 인성파탄자(아군 처치).
+     ⚠ 모든 사망이 반드시 이 함수를 지나므로 여기 한 곳이면 된다. */
+  try{
+    const killerId = (currentAttackContext && currentAttackContext.attackerId) || null;
+    const killer = killerId ? players.find(p=> p && p.id === killerId) : null;
+    if(killer && deadPlayer && killer.id !== deadPlayer.id && isMyPlayer(killer)){
+      if(window.__pwFiringKey === 'claw' || window.__pwFiringKey === 'cleave') markGameAch('beastKill');
+      /* 아군 = 같은 팀이거나 연인. 팀이 없는 판에서는 열리지 않는다. */
+      const allied = (killer.team && killer.team === deadPlayer.team) || (killer.loverId === deadPlayer.id);
+      if(allied) markGameAch('teamKill');
+    }
+  }catch(e){}
   const UNKNOWN_CAUSE_FALLBACKS = ['전투 중 사망', '누적된 피해'];
   const resolvedCardName = cardName || currentStatCardName || null;
   // 정말 만에 하나 사인을 특정할 수 없는 극단적인 상황이라면, 그냥 "개쩌는 피지컬"로 퉁친다.
@@ -59497,6 +59782,9 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
       applyPsychoKillHeal(target.id);
     }
   }
+  /* [Ver 14.8] 운기조식·성장은 **맞는 순간** 끝난다.
+     ⚠ 여기(피해가 실제로 적용된 뒤)에 둔다 — 빗나가거나 무효화된 공격으로는 끊기지 않는다. */
+  try{ if(amount > 0) pwBreakOnHit(target); }catch(e){}
   renderBoard();
 
   // 구미호랩터: 자신의 체력이 500 이하이고 생존해있고 이 카드를 소지한 채라면 즉시 발동 (1회 한정).
