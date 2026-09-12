@@ -3778,6 +3778,32 @@ body.mobile-mode .rv-card-nm{ font-size:19px; }
   font-style:normal; font-size:9.5px; opacity:0.6; margin-left:4px;
 }
 
+/* ---------- [Ver 15.2] 드로우 미리보기 — 더미 아래 다음 3장 ---------- */
+.dp-prev{ display:flex; flex-direction:column; gap:3px; margin-top:5px; width:100%; }
+.dp-prev-lb{
+  font-size:8.5px; letter-spacing:1px; color:var(--fg-faint); text-align:center;
+  font-family:var(--font-mono); font-weight:700;
+}
+.dp-prev-row{ display:flex; flex-direction:column; gap:3px; }
+.dp-prev-c{
+  display:flex; align-items:center; gap:4px;
+  padding:3px 5px; border-radius:5px;
+  background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--line);
+  opacity:.9;
+}
+.dp-prev-c .g{
+  flex:0 0 auto; min-width:15px; padding:0 3px; border-radius:3px; text-align:center;
+  background:var(--bg-3); color:var(--fg-dim);
+  font-family:var(--font-mono); font-size:8px; font-weight:800;
+}
+.dp-prev-c .n{
+  flex:1 1 auto; min-width:0; font-size:9px; line-height:1.3; color:var(--fg-dim);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+/* 다음에 바로 나올 한 장은 또렷하게 */
+.dp-prev-c.next{ opacity:1; box-shadow:inset 0 0 0 1px var(--accent); }
+.dp-prev-c.next .n{ color:var(--fg); font-weight:700; }
+
 /* ==========================================================================
    [Ver 15.2] 반응 HUD — 화면 상단 중앙의 검은 각진 판
    ⚠ pointer-events:none. 이 판이 손패 클릭을 먹으면 반응 자체를 못 한다.
@@ -9198,6 +9224,8 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
             <div class="dp-label" id="drawPileCount">∞</div>
             <div class="dp-tap-hint" id="drawPileTapHint">TAP</div>
           </div>
+          <!-- [Ver 15.2] 다음에 나올 카드 3장 — renderDrawPreview()가 채운다 -->
+          <div class="dp-prev" id="drawPreview" style="display:none;"></div>
           <button class="shop-fab solemn-fab" id="solemnBtn" style="display:none;" onclick="cycleSolemnMode()" title="SOLEMN LAMENT 모드 전환">
             <span class="shop-fab-icon" id="solemnFabIcon">🌑</span>
             <span class="shop-fab-label" id="solemnFabLabel">모드</span>
@@ -16739,6 +16767,7 @@ function loadSavedGame(){
   pendingCard = null;
   awaitingReaction = false;
   try{ rxHudHide(); }catch(e){}   // [Ver 15.2] 반응 HUD가 새 판까지 따라오지 않게
+  try{ drawQReset(); }catch(e){}  // [Ver 15.2] 지난 판의 대기열을 물려받지 않게
   pendingDealAnimation = false;
   armedCardIdx = -1;
   armedCardUid = null; // [FIX #18]
@@ -41598,7 +41627,72 @@ function pickRandomGradeCard(grade){
 }
 
 let draftDrawOwner = null; // [Ver 6.9] 지금 카드를 뽑는 주체 — 드래프트 모드의 덱 풀 라우팅에 쓰인다
+/* ##########################################################################
+   [Ver 15.2] 드로우 대기열 — "다음에 나올 카드"를 실제로 존재하게 만든다
+   --------------------------------------------------------------------------
+   ▶ 이 게임에는 덱이 없다. drawCard 는 부를 때마다 즉석에서 추첨한다.
+     그래서 더미 아래에 다음 카드를 보여주려면, 먼저 **미리 굴려 담아두고**
+     뽑을 때 거기서 꺼내야 한다. 안 그러면 보여준 것과 나오는 것이 따로 논다.
+   ⚠ 굴리는 규칙은 상황마다 다르다(파밍 모드 · 드로우의 재단 최소 등급 · 드래프트 풀).
+     담아둔 뒤 규칙이 바뀌면 대기열이 규칙을 어기므로, **서명이 바뀌면 통째로 버린다.**
+   ⚠ 등급 알림(announceRarityDraw)은 **꺼낼 때** 울린다. 담을 때 울리면
+     아직 뽑지도 않은 카드의 등급이 미리 새어 나간다.
+   ⚠ 봇은 이 길을 타지 않는다. 예전처럼 즉석 추첨이다.
+   ########################################################################## */
+const DRAW_PREVIEW_N = 3;
+let __drawQ = {};      // { [playerId]: { sig, list:[] } }
+function drawQSig(p){
+  try{
+    return [
+      (typeof farmingMode !== 'undefined' && farmingMode) ? 'F' : '-',
+      (typeof fdnDrawMinGrade === 'function' ? (fdnDrawMinGrade(p) || '-') : '-'),
+      (p && p.isBot) ? 'B' : '-',
+      (p && p.id) || '?'
+    ].join('|');
+  }catch(e){ return '?'; }
+}
+function drawQFor(p){
+  if(!p || !p.id) return null;
+  const sig = drawQSig(p);
+  let q = __drawQ[p.id];
+  if(!q || q.sig !== sig){ q = { sig, list: [] }; __drawQ[p.id] = q; }
+  return q;
+}
+function drawQFill(p, n){
+  const q = drawQFor(p); if(!q) return null;
+  let guard = 0;
+  while(q.list.length < n && guard++ < 40) q.list.push(drawCardRaw(p, true));
+  return q;
+}
+/* 미리보기용 — 꺼내지 않고 들여다본다 */
+function drawQPeek(p, n){
+  const q = drawQFill(p, n || DRAW_PREVIEW_N);
+  return q ? q.list.slice(0, n || DRAW_PREVIEW_N) : [];
+}
+/* 실제 드로우 — 맨 앞을 꺼내고 그때 등급을 알린다 */
+function drawQTake(p){
+  const q = drawQFill(p, 1); if(!q || !q.list.length) return null;
+  const c = q.list.shift();
+  try{ drawQFill(p, DRAW_PREVIEW_N); }catch(e){}
+  try{ if(c) announceRarityDraw(p.name, c.grade); }catch(e){}
+  return c;
+}
+/* 판이 새로 시작하면 통째로 버린다 */
+function drawQReset(){ __drawQ = {}; }
+
 function drawCard(forPlayer){
+  /* ★ 사람 플레이어는 대기열에서 꺼낸다 — 더미 아래 미리보기와 어긋나지 않게.
+     봇·주인 없는 드로우(카드 효과의 임시 추첨)는 예전 길 그대로다. */
+  try{
+    if(forPlayer && !forPlayer.isBot && typeof isMyPlayer === 'function' && isMyPlayer(forPlayer)){
+      deckDrawCounter++;
+      const c = drawQTake(forPlayer);
+      if(c){ try{ renderDrawPreview(); }catch(e){} return c; }
+    }
+  }catch(e){}
+  return drawCardRaw(forPlayer);
+}
+function drawCardRaw(forPlayer, quiet){
   deckDrawCounter++;
   const __prevOwner = draftDrawOwner;
   if(forPlayer) draftDrawOwner = forPlayer;
@@ -41627,7 +41721,10 @@ function drawCard(forPlayer){
   // so effects like 괴도/절도 can track "this exact copy" even if duplicates of the same card exist.
   const c = { ...def, uid: 'u'+Date.now().toString(36)+Math.random().toString(36).slice(2,8) };
   // v4.34: forPlayer가 주어지면(=실제로 그 사람 손에 들어가는 진짜 드로우라면) S/SR/SSR 등급 알림을 띄운다
-  if(forPlayer) announceRarityDraw(forPlayer.name, c.grade);
+  /* ⚠ [Ver 15.2] quiet 은 "대기열에 담기만 하는 중"이라는 뜻이다.
+     여기서 울리면 아직 뽑지도 않은 카드의 등급이 미리 새어 나간다.
+     꺼낼 때(drawQTake) 울린다. */
+  if(forPlayer && !quiet) announceRarityDraw(forPlayer.name, c.grade);
   return c;
   } finally { draftDrawOwner = __prevOwner; }
 }
@@ -47361,6 +47458,28 @@ function updateDrawPileState(isMyTurn){
   if(!drawPile) return;
   drawPile.classList.toggle('my-turn', !!isMyTurn);
   drawPile.classList.toggle('disabled', !isMyTurn);
+  try{ renderDrawPreview(); }catch(e){}   // [Ver 15.2] 다음 3장
+}
+/* [Ver 15.2] 더미 아래 "다음에 나올 카드" — drawQPeek 이 보여주는 것이 실제로 나온다.
+   ⚠ 판이 안 돌거나 내 차례가 아니면 비워둔다. 미리 굴려두는 것 자체는 해가 없지만,
+     화면에 늘 붙어 있으면 시선만 뺏는다. */
+function renderDrawPreview(){
+  const box = document.getElementById('drawPreview');
+  if(!box) return;
+  let me = null;
+  try{ me = (typeof viewer === 'function') ? viewer() : null; }catch(e){}
+  const live = (typeof gameActive !== 'undefined') && gameActive && me && me.alive;
+  if(!live){ box.style.display = 'none'; box.innerHTML = ''; return; }
+  let list = [];
+  try{ list = drawQPeek(me, DRAW_PREVIEW_N) || []; }catch(e){ list = []; }
+  if(!list.length){ box.style.display = 'none'; box.innerHTML = ''; return; }
+  box.style.display = '';
+  box.innerHTML = `<div class="dp-prev-lb">NEXT</div><div class="dp-prev-row">`
+    + list.map((c, i)=> `<div class="dp-prev-c${i===0?' next':''}">
+        <span class="g">${escapeHtml(typeof displayGrade==='function' ? displayGrade(c) : (c.grade||'?'))}</span>
+        <span class="n">${escapeHtml(c.name || '?')}</span>
+      </div>`).join('')
+    + `</div>`;
 }
 
 /* 등급별 카드 발광 강도/색상을 부여. E는 효과 없음, D~S는 색이 점점 강렬해지고, SR 이상은 매우 화려한 애니메이션 */
