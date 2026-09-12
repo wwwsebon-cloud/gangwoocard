@@ -8564,7 +8564,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.3</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.3.1</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -26921,19 +26921,27 @@ let __mrock = null;
      두 군데에 적으면 반드시 어긋난다.
    ########################################################################## */
 const MROCK_FILL = [
-  { key:'artifact', w:75,  ic:'\u{1F3FA}', name:'유물' },
-  { key:'ubinite',  w:9,   ic:'\u{1F48E}', name:'우비나이트', min:300, max:1200 },
-  { key:'pickaxe',  w:6,   ic:'⛏️', name:'곡괭이', min:1, max:2 },
+  /* [Ver 15.3.1] 꽝 **50%** — 절반은 빈 돌이다. 그만큼 유물에서 뺐다.
+     돌 3개를 캐면 하나라도 비어 있을 확률이 87.5%, 셋 다 빌 확률이 12.5%.
+     곡괭이를 많이 거는 건 이제 확실한 도박이다. */
+  { key:'artifact', w:30,  ic:'\u{1F3FA}', name:'유물' },
+  /* [Ver 15.3.1] 개수 소폭 하향 (300~1200 → 250~900). 확률은 그대로. */
+  { key:'ubinite',  w:9,   ic:'\u{1F48E}', name:'우비나이트', min:250, max:900 },
+  /* [Ver 15.3.1] 곡괭이(⛏️)를 뺐다 — 곡괭이로 캐서 곡괭이가 나오면
+     채굴이 스스로 굴러간다. 그 자리는 우빈랩터의 발톱이 받는다. */
+  { key:'claws',    w:6,   ic:'\u{1F9B4}', name:'우빈랩터의 발톱', min:5, max:20 },
   { key:'teeth',    w:3,   ic:'\u{1F9B7}', name:'랩터의 이빨', min:1, max:3 },
   { key:'gold',     w:1.5, ic:'\u{1FA99}', name:'개쩌는 곡괭이', min:1, max:1 },
   { key:'stone',    w:0.5, ic:'\u{1F537}', name:'권능석', min:1, max:1 },
-  { key:'none',     w:5,   ic:'\u{1F32B}️', name:'아무것도 없음' },
+  { key:'none',     w:50,  ic:'\u{1F32B}️', name:'아무것도 없음' },
 ];
 /* 개쩌는 곡괭이로 캔 돌 — 꽝이 없고 유물이 더 자주 나온다 */
 const MROCK_FILL_GOLD = [
   { key:'artifact', w:90,  ic:'\u{1F3FA}', name:'유물' },
   { key:'teeth',    w:4,   ic:'\u{1F9B7}', name:'랩터의 이빨', min:2, max:5 },
-  { key:'ubinite',  w:2.5, ic:'\u{1F48E}', name:'우비나이트', min:800, max:2500 },
+  /* [Ver 15.3.1] 우비나이트 개수·확률 소폭 하향, 그만큼을 발톱이 받는다 */
+  { key:'ubinite',  w:1.5, ic:'\u{1F48E}', name:'우비나이트', min:600, max:1800 },
+  { key:'claws',    w:1,   ic:'\u{1F9B4}', name:'우빈랩터의 발톱', min:20, max:60 },
   { key:'gold',     w:2,   ic:'\u{1FA99}', name:'개쩌는 곡괭이', min:1, max:1 },
   { key:'stone',    w:1.5, ic:'\u{1F537}', name:'권능석', min:1, max:1 },
 ];
@@ -26968,7 +26976,7 @@ function mrockGive(f){
     switch(f.key){
       case 'artifact': /* 유물은 결과창에서 한꺼번에 준다(중복/신규 표시를 모아 보여주려고) */ break;
       case 'ubinite': grantUbinite(f.n); break;
-      case 'pickaxe': grantPickaxe(f.n); break;
+      case 'claws':   grantEvoClaws(f.n); break;   // [Ver 15.3.1] 우빈랩터의 발톱
       case 'teeth':   grantTeeth(f.n); break;
       case 'gold':    grantGoldPickaxe(f.n); break;
       case 'stone':   grantPwStones(f.n); break;
@@ -28767,11 +28775,19 @@ function exitPlaygroundBar(){
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
   {
+    version: 'Ver 15.3.1', date: '2026-09-13',
+    items: [
+      '\u{26CF}️ <b>[긴급] 돌에서 곡괭이가 나오지 않습니다.</b> 곡괭이로 캐서 곡괭이가 나오면 채굴이 <b>스스로 굴러가 버립니다.</b> 그 자리에는 <b>\u{1F9B4} 우빈랩터의 발톱</b>이 들어갑니다. (일반 돌 <b>5~20개</b> · 단단한 돌 <b>20~60개</b>)',
+      '\u{1F32B}️ <b>[조정] 이제 돌의 절반은 비어 있습니다.</b> 빈 돌 <b>5% → 50%</b>. 유물이 너무 쉽게 나와 <b>베팅이 아니라 그냥 이득</b>이었습니다.<br>돌 3개를 캐면 <b>하나라도 빌 확률 87.5%</b>, <b>셋 다 빌 확률 12.5%</b>입니다. 곡괭이를 많이 걸수록 크게 터지지만, <b>전부 날릴 수도</b> 있습니다 — 그래야 도박입니다.',
+      '\u{1F48E} <b>[조정] 돌에서 나오는 우비나이트가 조금 줄었습니다.</b> 일반 돌 <b>300~1,200 → 250~900</b>, 단단한 돌 <b>800~2,500 → 600~1,800</b>. 나올 확률은 그대로입니다.',
+    ]
+  },
+  {
     version: 'Ver 15.3', date: '2026-09-13',
     items: [
       '\u{1FAA8} <b>[개편] 유물을 이제 직접 캡니다.</b> 여태 채굴은 <b>버튼 한 번이면 끝</b>이었습니다. 이제 광산에 들어가면 <b>돌이 5개</b> 나타나고, 그중 <b>3개</b>를 골라 <b>연타해서 깨야</b> 합니다. 돌 하나에 <b>5~9번</b>(개쩌는 곡괭이는 <b>8~12번</b>).',
       '\u{1F3AF} <b>돌은 매번 다른 자리에 생깁니다.</b> 이게 핵심입니다 — <b>같은 곳을 계속 누르는 매크로</b>는 허공을 때리게 됩니다. 돌에 <b>실제로 닿은 누름만</b> 셉니다.',
-      '\u{1F381} <b>돌 안에는 유물만 있는 게 아닙니다.</b> 넷 중 셋은 <b>유물</b>이지만, <b>우비나이트 · 곡괭이 · 랩터의 이빨</b>이 들어 있기도 하고, 아주 드물게 <b>개쩌는 곡괭이</b>나 <b>권능석</b>이 나옵니다. 그리고 가끔은 <b>아무것도 없습니다.</b>',
+      '\u{1F381} <b>돌 안에는 유물만 있는 게 아닙니다.</b> 넷 중 셋은 <b>유물</b>이지만, <b>우비나이트 · 우빈랩터의 발톱 · 랩터의 이빨</b>이 들어 있기도 하고, 아주 드물게 <b>개쩌는 곡괭이</b>나 <b>권능석</b>이 나옵니다. 그리고 가끔은 <b>아무것도 없습니다.</b>',
       '\u{1F440} <b>다 캐면 고르지 않은 돌 2개도 열어 보여드립니다.</b> 무엇을 놓쳤는지 알 수 있습니다. (물론 주지는 않습니다)',
       '\u{1F3B2} <b>[신규] 곡괭이는 개수가 아니라 배율입니다.</b> 여러 개를 걸어도 판은 <b>한 번</b>입니다. 대신 돌 안의 보상이 <b>건 개수만큼 배</b>가 됩니다.<br><b>곡괭이 10개</b>를 걸고 <b>전설 유물</b>이 든 돌을 캤다면 — <b>랜덤 전설 유물 10개</b>가 쏟아집니다. 대신 <b>빈 돌</b>을 골랐다면 건 곡괭이는 그대로 사라집니다. <b>베팅인 셈입니다.</b>',
       '\u{26CF}️ 하나도 캐지 않고 그만두면 <b>건 곡괭이는 돌려드립니다.</b> 실수로 들어왔다 나가는 경우까지 잃게 하지는 않습니다.',
