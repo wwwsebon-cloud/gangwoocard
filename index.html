@@ -4989,6 +4989,234 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 .mbody b{ color:var(--fg); }
 .mfoot{ flex-shrink:0; display:flex; justify-content:flex-end; gap:var(--sp-2); flex-wrap:wrap; }
 
+/* ---------- [Ver 15.1] 랩터마트24 (전체 페이지) ---------- */
+.mart-shell{
+  width:100%; max-width:1040px; margin:0 auto; height:100%;
+  display:flex; flex-direction:column; padding:var(--sp-4) var(--sp-4) 0;
+}
+.mart-head{
+  flex-shrink:0; display:flex; align-items:center; gap:var(--sp-3);
+  padding-bottom:var(--sp-3); flex-wrap:wrap;
+}
+.mart-sign{ display:flex; align-items:center; gap:10px; }
+.mart-sign-ic{
+  width:46px; height:46px; border-radius:var(--r-sm);
+  display:flex; align-items:center; justify-content:center; font-size:26px;
+  background:linear-gradient(160deg, var(--bg-2), var(--bg-3));
+  box-shadow:inset 0 0 0 1px var(--line);
+}
+.mart-sign-tx b{ display:block; font-size:19px; font-weight:800; letter-spacing:-0.03em; }
+.mart-sign-tx small{ display:block; font-size:10.5px; color:var(--fg-faint); margin-top:1px; }
+.mart-wallet{ flex:1; display:flex; gap:6px; justify-content:flex-end; flex-wrap:wrap; }
+.mart-coin{
+  display:inline-flex; align-items:center; gap:5px;
+  padding:6px 11px; border-radius:var(--r-pill);
+  background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--line-soft);
+  font-size:12px; font-weight:700; white-space:nowrap;
+}
+.mart-coin small{ font-size:10px; color:var(--fg-faint); font-weight:400; }
+.mart-tabs{ flex-shrink:0; display:flex; gap:5px; padding-bottom:var(--sp-3); flex-wrap:wrap; }
+.mart-tab{
+  display:inline-flex; align-items:center; gap:5px;
+  padding:8px 15px; border-radius:var(--r-pill);
+  background:var(--bg-2); color:var(--fg-dim);
+  font-size:12.5px; font-weight:700; cursor:pointer;
+  transition:background var(--t) var(--ease), color var(--t) var(--ease), transform var(--t) var(--ease);
+}
+.mart-tab:hover{ background:var(--bg-3); color:var(--fg); }
+.mart-tab.active{ background:var(--fg); color:var(--bg); }
+.mart-tab.soon{ opacity:.5; }
+.mart-body{
+  flex:1; min-height:60vh; overflow-y:auto;
+  padding-bottom:var(--sp-5);
+}
+@media (max-width:560px){
+  .mart-shell{ padding:var(--sp-3) var(--sp-3) 0; }
+  .mart-sign-tx b{ font-size:16px; }
+  .mart-wallet{ justify-content:flex-start; width:100%; }
+}
+/* 뽑기 탭 */
+.mg-wrap{ display:flex; flex-direction:column; gap:4px; }
+/* 권능 화면에 남는 "뽑기는 마트로" 안내 카드 */
+.pw-gacha-link{
+  display:flex; align-items:center; gap:12px; width:100%;
+  padding:13px 16px; border-radius:var(--r-sm);
+  background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--line-soft);
+  color:var(--fg); text-align:left; cursor:pointer;
+  transition:background var(--t) var(--ease), transform var(--t) var(--ease);
+}
+.pw-gacha-link:hover{ background:var(--bg-3); transform:translateY(-1px); }
+.pw-gacha-ic{ flex:0 0 auto; font-size:24px; }
+.pw-gacha-tx{ flex:1; min-width:0; }
+.pw-gacha-tx b{ display:block; font-size:13px; font-weight:700; }
+.pw-gacha-tx small{ display:block; font-size:11px; color:var(--fg-dim); margin-top:2px; }
+.pw-gacha-go{ flex:0 0 auto; font-size:17px; color:var(--fg-faint); }
+
+/* ---------- [Ver 15.1] 개발자한테 항의하기 ---------- */
+.sup-wrap{ display:flex; flex-direction:column; gap:10px; }
+.sup-log{
+  display:flex; flex-direction:column; gap:9px;
+  min-height:180px; max-height:min(46vh,380px); overflow-y:auto;
+  padding:14px; border:1px solid var(--line); border-radius:13px; background:var(--bg-soft);
+}
+.sup-msg{ display:flex; flex-direction:column; max-width:78%; gap:3px; }
+.sup-msg.me{ align-self:flex-end; align-items:flex-end; }
+.sup-msg.dev{ align-self:flex-start; align-items:flex-start; }
+.sup-bub{
+  padding:9px 13px; border-radius:15px; font-size:13px; line-height:1.75;
+  word-break:break-word; white-space:pre-wrap;
+}
+.sup-msg.me  .sup-bub{ background:linear-gradient(135deg,#4f8ef7,#2f6fe0); color:#fff; border-bottom-right-radius:5px; }
+.sup-msg.dev .sup-bub{ background:var(--bg-card); border:1px solid var(--line); color:var(--fg); border-bottom-left-radius:5px; }
+.sup-when{ font-size:10px; color:var(--fg-faint); font-family:var(--font-mono); }
+.sup-who{ font-size:10.5px; font-weight:800; color:#d9822b; }
+.sup-in{
+  width:100%; min-height:74px; max-height:170px; padding:11px 13px; box-sizing:border-box; resize:vertical;
+  border:1px solid var(--line); border-radius:12px; background:var(--bg-soft);
+  color:var(--fg); font-size:13px; line-height:1.7; font-family:inherit;
+}
+.sup-in:focus{ outline:none; border-color:#4f8ef7; }
+.sup-bar{ display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+.sup-bar .sup-left{ flex:1 1 auto; font-size:11px; color:var(--fg-faint); line-height:1.6; }
+.sup-send{
+  padding:10px 20px; cursor:pointer; border:none; border-radius:11px;
+  background:linear-gradient(135deg,#4f8ef7,#2f6fe0); color:#fff; font-size:13px; font-weight:800;
+}
+.sup-send:hover:not(:disabled){ filter:brightness(1.1); }
+.sup-send:disabled{ background:var(--bg-soft); color:var(--fg-faint); cursor:not-allowed; }
+.sup-note{
+  padding:11px 13px; border-radius:11px; background:var(--bg-soft);
+  font-size:11px; color:var(--fg-dim); line-height:1.8;
+}
+.sup-empty{ padding:30px 16px; text-align:center; color:var(--fg-dim); font-size:12.5px; line-height:1.8; }
+/* 개발자 — 방 목록 */
+.sup-row{
+  display:flex; align-items:center; gap:11px; width:100%; text-align:left; cursor:pointer;
+  padding:12px 14px; margin-bottom:8px;
+  border:1px solid var(--line); border-radius:12px; background:var(--bg-card);
+}
+.sup-row:hover{ border-color:#4f8ef7; }
+.sup-row.unread{ border-color:#e8703a; background:rgba(232,112,58,.07); }
+.sup-row-main{ flex:1 1 auto; min-width:0; }
+.sup-row-nm{ font-size:13px; font-weight:800; color:var(--fg); }
+.sup-row-ls{ font-size:11.5px; color:var(--fg-dim); line-height:1.6;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sup-row-when{ font-size:10px; color:var(--fg-faint); font-family:var(--font-mono); white-space:nowrap; }
+.sup-dot{ width:8px; height:8px; border-radius:50%; background:#e8703a; flex:0 0 auto; }
+.sup-head{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:11px;
+  padding-bottom:10px; border-bottom:1px solid var(--line);
+}
+.sup-head b{ font-size:13.5px; }
+.sup-head small{ font-size:11px; color:var(--fg-dim); font-family:var(--font-mono); }
+.sup-btn{ padding:6px 12px; cursor:pointer; border-radius:9px; border:1px solid var(--line);
+  background:var(--bg-soft); color:var(--fg); font-size:11.5px; font-weight:700; }
+.sup-btn:hover{ border-color:#4f8ef7; }
+.sup-btn.no{ border-color:#d64545; color:#d64545; }
+
+/* ---------- [Ver 15.1] 수동 현질 ---------- */
+.ubi-plus{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:16px; height:16px; margin-left:5px; padding:0;
+  border:none; border-radius:5px; cursor:pointer;
+  background:linear-gradient(135deg,#4f8ef7,#2f6fe0); color:#fff;
+  font-size:12px; font-weight:800; line-height:1;
+  box-shadow:0 1px 3px rgba(0,0,0,.28);
+  transition:transform .12s ease, filter .12s ease;
+}
+.ubi-plus:hover{ transform:scale(1.14); filter:brightness(1.12); }
+.pay-beta{
+  margin-left:6px; padding:1px 6px; border-radius:999px;
+  background:#d9822b; color:#fff; font-size:10px; font-weight:800; letter-spacing:.4px;
+  vertical-align:middle;
+}
+.pay-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:10px; }
+.pay-card{
+  position:relative; display:flex; flex-direction:column; gap:6px;
+  padding:14px 14px 12px; text-align:left; cursor:pointer;
+  border:1px solid var(--line); border-radius:14px; background:var(--bg-card);
+  transition:transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+.pay-card:hover{ transform:translateY(-2px); border-color:#4f8ef7; box-shadow:0 6px 18px rgba(79,142,247,.16); }
+.pay-card.best{ border-color:#d9822b; }
+.pay-c-em{ font-size:24px; line-height:1; }
+.pay-c-nm{ font-size:14px; font-weight:800; color:var(--fg); }
+.pay-c-ds{ font-size:11px; color:var(--fg-dim); line-height:1.6; }
+.pay-c-won{ margin-top:4px; font-family:var(--font-mono); font-size:17px; font-weight:800; color:var(--fg); }
+.pay-c-off{
+  position:absolute; top:10px; right:10px; padding:2px 7px; border-radius:999px;
+  background:#d64545; color:#fff; font-size:10px; font-weight:800;
+}
+.pay-c-once{ align-self:flex-start; padding:2px 7px; border-radius:999px;
+  background:var(--bg-soft); color:var(--fg-dim); font-size:10px; font-weight:700; }
+.pay-note{ margin-top:14px; padding:12px 14px; border-radius:12px;
+  background:var(--bg-soft); font-size:11.5px; color:var(--fg-dim); line-height:1.85; }
+.pay-pend{
+  margin-bottom:12px; padding:13px 15px; border-radius:12px;
+  border:1px solid #d9822b; background:rgba(217,130,43,.08);
+  font-size:12.5px; color:var(--fg); line-height:1.8;
+}
+.pay-empty{ padding:34px 16px; text-align:center; color:var(--fg-dim); font-size:12.5px; line-height:1.8; }
+
+/* 주문(계좌 안내) 창 — 한 창에 전부 담는다 */
+.pay-o-top{ display:flex; align-items:center; gap:11px; margin-bottom:4px; }
+.pay-o-em{ font-size:30px; line-height:1; }
+.pay-o-nm{ font-size:15px; font-weight:800; color:var(--fg); }
+.pay-o-ds{ font-size:11px; color:var(--fg-dim); line-height:1.6; }
+.pay-o-won{ margin:10px 0 12px; font-family:var(--font-mono); font-size:26px; font-weight:800; text-align:center; color:var(--fg); }
+.pay-acc{
+  position:relative; padding:13px 15px; border-radius:12px;
+  border:1px dashed var(--line); background:var(--bg-soft); text-align:center;
+}
+.pay-acc-lb{ font-size:10.5px; color:var(--fg-faint); letter-spacing:.6px; }
+.pay-acc-no{ margin:4px 0 2px; font-family:var(--font-mono); font-size:19px; font-weight:800; color:var(--fg); letter-spacing:.5px; }
+.pay-acc-bk{ font-size:11.5px; color:var(--fg-dim); }
+.pay-copy{
+  position:absolute; top:10px; right:10px; padding:4px 10px; cursor:pointer;
+  border:1px solid var(--line); border-radius:8px; background:var(--bg-card);
+  color:var(--fg-dim); font-size:11px; font-weight:700;
+}
+.pay-copy:hover{ color:var(--fg); border-color:#4f8ef7; }
+.pay-warn{
+  margin:12px 0; padding:11px 13px; border-radius:11px;
+  border:1px solid rgba(214,69,69,.45); background:rgba(214,69,69,.08);
+  font-size:11.5px; color:var(--fg); line-height:1.8;
+}
+.pay-lb{ display:block; margin-bottom:5px; font-size:12px; font-weight:700; color:var(--fg); }
+.pay-lb small{ margin-left:6px; font-weight:500; color:var(--fg-faint); }
+.pay-input{
+  width:100%; padding:10px 12px; box-sizing:border-box;
+  border:1px solid var(--line); border-radius:10px;
+  background:var(--bg-soft); color:var(--fg); font-size:14px;
+}
+.pay-input:focus{ outline:none; border-color:#4f8ef7; }
+.pay-go{
+  width:100%; margin-top:12px; padding:13px; cursor:pointer;
+  border:none; border-radius:11px; background:linear-gradient(135deg,#4f8ef7,#2f6fe0);
+  color:#fff; font-size:14px; font-weight:800;
+  transition:filter .12s ease;
+}
+.pay-go:hover:not(:disabled){ filter:brightness(1.1); }
+.pay-go:disabled{ background:var(--bg-soft); color:var(--fg-faint); cursor:not-allowed; }
+.pay-say{ margin-top:9px; min-height:16px; font-size:11.5px; line-height:1.7; text-align:center; }
+
+/* 승인 대기 목록 (개발자) */
+.pay-row{
+  display:flex; align-items:center; gap:11px; flex-wrap:wrap;
+  padding:12px 14px; margin-bottom:8px;
+  border:1px solid var(--line); border-radius:12px; background:var(--bg-card);
+}
+.pay-row-main{ flex:1 1 200px; min-width:0; }
+.pay-row-nm{ font-size:13px; font-weight:800; color:var(--fg); }
+.pay-row-sub{ font-size:11px; color:var(--fg-dim); line-height:1.7; font-family:var(--font-mono); }
+.pay-row-won{ font-family:var(--font-mono); font-size:15px; font-weight:800; color:var(--fg); }
+.pay-btn{ padding:7px 13px; cursor:pointer; border-radius:9px; border:1px solid var(--line);
+  background:var(--bg-soft); color:var(--fg); font-size:12px; font-weight:700; }
+.pay-btn.ok{ border-color:#3aa76d; color:#3aa76d; }
+.pay-btn.ok:hover{ background:#3aa76d; color:#fff; }
+.pay-btn.no{ border-color:#d64545; color:#d64545; }
+.pay-btn.no:hover{ background:#d64545; color:#fff; }
+
 /* ---------- [Ver 15.1] 재화 획득 연출 ---------- */
 .ggfx{
   position:fixed; z-index:9300; pointer-events:none;
@@ -7956,7 +8184,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.0.2</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.1</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -8181,6 +8409,10 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
         <a class="nm-drawer-item" href="https://discord.gg/WyRyNk4G2Y" target="_blank" rel="noopener" onclick="closeMenuDrawer();">
           <span class="ic">💬</span><span class="tx"><b>디스코드</b><small>공식 커뮤니티</small></span>
         </a>
+        <!-- [Ver 15.1] 개발자한테 항의하기 — 버그·문의를 메신저처럼 주고받는다 -->
+        <button class="nm-drawer-item" onclick="closeMenuDrawer(); openSupportWin();">
+          <span class="ic">📮</span><span class="tx"><b>개발자한테 항의하기</b><small id="supMenuSub">버그 제보 · 문의</small></span>
+        </button>
         <div class="nm-drawer-sep"></div>
         <button class="nm-drawer-item nm-side-acct" onclick="closeMenuDrawer(); openOnlineScreen('sync');">
           <span class="ic">☁️</span><span class="tx"><b>계정 지키기</b><small>기기가 바뀌어도 이 코드로 복구</small></span>
@@ -8261,6 +8493,24 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
       <div class="pw-slots" id="pwSlotsUi"></div>
       <div class="pw-filters" id="pwFilters"></div>
       <div class="pw-list" id="pwList"></div>
+    </div>
+  </div>
+
+  <!-- ============ [Ver 15.1] 랩터마트24 — 모달에서 전체 페이지로 ============
+       ⚠ id="rmBody" 를 **그대로 유지**한다. raptorMartSwitch 와 구매 함수들이
+         이 이름으로 본문을 갈아끼운다. 바꾸면 상점 전체가 조용히 죽는다. -->
+  <div id="screen-mart" class="screen theme-light">
+    <div class="mart-shell">
+      <div class="mart-head">
+        <div class="mart-sign">
+          <span class="mart-sign-ic">🏪</span>
+          <div class="mart-sign-tx"><b>랩터마트24</b><small>24시간 영업 중</small></div>
+        </div>
+        <div class="mart-wallet" id="martWallet"></div>
+        <button class="btn btn-ghost" onclick="goToStart()">뒤로</button>
+      </div>
+      <div class="mart-tabs" id="martTabs"></div>
+      <div class="mart-body rm-body" id="rmBody"></div>
     </div>
   </div>
 
@@ -12148,6 +12398,7 @@ const STORAGE_KEYS = {
   exp: 'gang_card_exp_v1', // [Ver 8.0] 레벨/경험치
   ubinite: 'gang_card_ubinite_v1', // [Ver 8.4] 꾸미기 재화 '우비나이트'
   userCode: 'gang_card_user_code_v1', // [Ver 9.12.1] 기기마다 한 번 발급되는 고유 유저 코드
+  pay: 'gang_card_pay_v1',           // [Ver 15.1] 현질 { pending:{id,...}, starter:true, last:{} }
   bio: 'gang_card_bio_v1', // [Ver 10.5] 상태메시지 — 리더보드 프로필에 함께 표시된다
   friendCode: 'gang_card_friend_code_v1', // [Ver 10.5] 친구 코드 (공개용 · 사용자가 마음대로 바꾼다)
   friends: 'gang_card_friends_v1',        // [Ver 10.5] 친구 목록 (이 기기에만 저장)
@@ -12977,6 +13228,8 @@ function equipPfp(key){
   try{ localStorage.setItem(STORAGE_KEYS.pfpOn, key); }catch(e){}
   try{ renderUserStatBar(); renderMenuNote(); }catch(e){}
   try{ renderBoard(); }catch(e){}
+  /* ★ [Ver 15.1] 리더보드에도 반영한다. 이게 없어서 남들 화면의 얼굴이 안 바뀌었다. */
+  try{ fbPushProfileSoon(); }catch(e){}
   return true;
 }
 /* 업적 외 경로(시즌 패스 50레벨)로 열리는 사진을 확인한다. 여러 번 불려도 안전하다.
@@ -13627,6 +13880,650 @@ function ggGainFx(emoji, targetSel, from, to, n){
   }catch(e){}
 }
 
+/* ##########################################################################
+   [Ver 15.1] 수동 현질 (BETA)
+   --------------------------------------------------------------------------
+   ▶ 계좌이체 + **사람이 눈으로 확인하고 승인**하는 구조다. 자동 검증이 없다.
+     그래서 BETA 를 붙였고, 승인 전에는 아무것도 지급되지 않는다.
+   ⚠ 카드번호·비밀번호 같은 건 **일절 받지 않는다.** 받는 것은 입금자명뿐이다.
+   ⚠ 지급은 새로 만들지 않고 **검증된 admin/{유저코드} cmds 큐**(applyAdminCommand)를
+     그대로 탄다. 승인 → notice(보상) 한 줄 → 그 사람 우편함으로 간다.
+   ########################################################################## */
+/* ##########################################################################
+   [Ver 15.1] 개발자한테 항의하기 — 메신저형 문의함
+   --------------------------------------------------------------------------
+   ▶ tickets/{uid} 하나가 그 사람과의 대화방이다. msgs 배열에 말풍선이 쌓인다.
+     개발자는 '들어온 문의' 탭에서 열린 방을 보고 들어가 답장한다.
+   ⚠ 문서 id 는 **uid**. 유저 코드로 하면 남의 코드로 방을 선점할 수 있다.
+   ⚠ gwinRender 가 본문을 통째로 갈아끼운다 → 쓰다 만 글은 __sup.draft 에 담아 되살린다.
+   ⚠ where 하나 + limit 만 쓴다. orderBy 를 섞으면 복합 색인이 필요해 통째로 실패한다.
+   ########################################################################## */
+const SUP_MAX_LEN  = 1000;   // 한 통
+const SUP_MAX_MSGS = 60;     // 방 하나에 쌓이는 최대 통수
+const SUP_COOLDOWN = 10000;  // 도배 방지
+let __sup = { mine:null, loading:false, err:'', rows:null, rowsErr:'', view:null, draft:'', sending:false, lastSend:0 };
+
+function supTime(t){
+  const d = new Date(t || 0), now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  return sameDay ? d.toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' })
+                 : d.toLocaleDateString('ko-KR', { month:'numeric', day:'numeric' })
+                   + ' ' + d.toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
+}
+function supMsgs(t){ return (t && Array.isArray(t.msgs)) ? t.msgs : []; }
+/* 버전 상수가 따로 없다. 화면의 배지에서 그대로 읽는다. */
+function supGameVer(){
+  try{ return String(document.querySelector('.version-badge')?.textContent || '').trim().slice(0, 20); }
+  catch(e){ return ''; }
+}
+
+/* ---- 창 ---- */
+function openSupportWin(){
+  __sup.view = null; __sup.draft = '';
+  openGWin({ key:'sup', title:'📮 개발자한테 항의하기', tabs: supTabs, render: supWinHtml });
+  supLoadMine();
+  if(devMode) supLoadRows();
+}
+function supTabs(){
+  /* 개발자가 아니면 탭이 하나뿐이라 줄 자체를 감춘다 (빈 배열 → gwinRender 가 숨긴다) */
+  if(!devMode) return [];
+  const n = (__sup.rows || []).filter(r=> r.devUnread).length;
+  return [{ k:'me', label:'💬 내 문의' }, { k:'dev', label:'🛠️ 들어온 문의', badge:n }];
+}
+function supWinHtml(tab){ return (tab === 'dev') ? supDevHtml() : supMineHtml(); }
+/* 다시 그린 뒤 대화 맨 아래로 내린다 */
+function supRender(){
+  if(!gwinIsOpen('sup')) return;
+  gwinRender();
+  setTimeout(()=>{
+    const l = document.getElementById('supLog'); if(l) l.scrollTop = l.scrollHeight;
+    /* ★ 다시 그리면 버튼은 아무 상태도 없는 새 버튼이다. 여기서 반드시 잡아준다 —
+       안 잡으면 빈 글로도 보내기가 눌리고 쿨다운도 안 걸린다. */
+    try{ if(__sup.view) supDevGate(); else supGateUpdate(); }catch(e){}
+  }, 0);
+}
+/* 쿨다운이 도는 동안만 스스로 갱신한다. 끝나면 멈춘다 — 창이 닫혀도 멈춘다. */
+function supCooldownTick(){
+  if(!gwinIsOpen('sup')) return;
+  supGateUpdate();
+  if(Date.now() - __sup.lastSend < SUP_COOLDOWN) setTimeout(supCooldownTick, 500);
+}
+
+/* ---- 유저 쪽 ---- */
+function supMineHtml(){
+  if(__sup.loading) return '<div class="sup-empty">불러오는 중…</div>';
+  if(__sup.err) return `<div class="sup-empty" style="color:#d64545;">불러오지 못했습니다 — ${escapeHtml(__sup.err)}
+    <br><br><button class="sup-btn" onclick="supLoadMine()">다시 시도</button></div>`;
+  const msgs = supMsgs(__sup.mine);
+  const log = msgs.length ? msgs.map(m=>{
+    const me = m.by !== 'dev';
+    return `<div class="sup-msg ${me?'me':'dev'}">
+      ${me ? '' : '<span class="sup-who">개발자</span>'}
+      <div class="sup-bub">${escapeHtml(String(m.text||''))}</div>
+      <span class="sup-when">${escapeHtml(supTime(m.at))}</span>
+    </div>`;
+  }).join('') : `<div class="sup-empty">아직 주고받은 말이 없습니다.<br>버그든 불만이든 편하게 적어주세요.</div>`;
+  const closed = __sup.mine && __sup.mine.open === false;
+  return `<div class="sup-wrap">
+    <div class="sup-log" id="supLog">${log}</div>
+    ${closed ? '<div class="sup-note">이 문의는 <b>해결 처리</b>되었습니다. 새로 적으면 다시 열립니다.</div>' : ''}
+    <textarea id="supText" class="sup-in" maxlength="${SUP_MAX_LEN}"
+      placeholder="무엇이 문제였나요? 어떤 화면에서 무엇을 눌렀을 때 그랬는지 적어주시면 훨씬 빨리 고칩니다."
+      oninput="__sup.draft=this.value; supGateUpdate();">${escapeHtml(__sup.draft || '')}</textarea>
+    <div class="sup-bar">
+      <span class="sup-left" id="supLeft"></span>
+      <button class="sup-btn" onclick="supLoadMine()">새로고침</button>
+      <button class="sup-send" id="supSend" onclick="supSend()">보내기</button>
+    </div>
+    <div class="sup-note">
+      · 답장이 오면 메뉴의 <b>개발자한테 항의하기</b>에 표시됩니다. 알림은 따로 가지 않습니다.<br>
+      · 내 유저 코드 <b>${escapeHtml(getUserCode())}</b> 와 닉네임이 함께 전달됩니다.<br>
+      · 욕설·도배는 제재 사유가 됩니다. 급한 건은 디스코드로 와주세요.
+    </div>
+  </div>`;
+}
+function supGateUpdate(){
+  const b = document.getElementById('supSend');
+  const left = document.getElementById('supLeft');
+  const v = String(__sup.draft || '').trim();
+  const wait = Math.max(0, SUP_COOLDOWN - (Date.now() - __sup.lastSend));
+  if(left) left.textContent = `${v.length} / ${SUP_MAX_LEN}자`
+    + (wait > 0 ? ` · ${Math.ceil(wait/1000)}초 뒤에 보낼 수 있습니다` : '');
+  if(!b) return;
+  if(__sup.sending){ b.disabled = true; b.textContent = '보내는 중…'; return; }
+  b.textContent = '보내기';
+  b.disabled = (v.length < 2) || wait > 0;
+}
+async function supLoadMine(){
+  __sup.loading = true; __sup.err = '';
+  if(gwinIsOpen('sup')) supRender();
+  try{
+    await fbInit();
+    const { doc, getDoc, setDoc } = FB.mod;
+    const s = await getDoc(doc(FB.db, 'tickets', FB.uid));
+    __sup.mine = s.exists() ? (s.data() || null) : null;
+    /* 들어와서 봤으니 안 읽음 표시를 끈다 */
+    if(__sup.mine && __sup.mine.userUnread){
+      try{ await setDoc(doc(FB.db, 'tickets', FB.uid), { userUnread:false }, { merge:true }); }catch(e){}
+      __sup.mine.userUnread = false;
+    }
+    __sup.loading = false;
+  }catch(e){ __sup.loading = false; __sup.err = fbErrText(e); }
+  if(gwinIsOpen('sup')) supRender();
+  supPaintMenu();
+}
+async function supSend(){
+  const text = String(__sup.draft || '').trim().slice(0, SUP_MAX_LEN);
+  if(text.length < 2) return;
+  if(Date.now() - __sup.lastSend < SUP_COOLDOWN) return;
+  __sup.sending = true; supGateUpdate();
+  try{
+    await fbInit();
+    const { doc, getDoc, setDoc } = FB.mod;
+    const ref = doc(FB.db, 'tickets', FB.uid);
+    const s = await getDoc(ref);
+    const cur = s.exists() ? (s.data() || {}) : {};
+    const msgs = supMsgs(cur).slice(-(SUP_MAX_MSGS - 1));
+    const now = Date.now();
+    msgs.push({ by:'user', text, at:now });
+    const body = {
+      uid: FB.uid, code: getUserCode(), nick: String(getPlayerNickname() || '').slice(0, 20),
+      msgs, lastAt: now, lastBy:'user', devUnread:true, userUnread:false, open:true,
+      ver: supGameVer()   /* 어느 버전에서 난 버그인지 — 재현에 제일 중요하다 */
+    };
+    await setDoc(ref, body, { merge:true });
+    __sup.mine = Object.assign({}, cur, body);
+    __sup.draft = ''; __sup.lastSend = now;
+    __sup.sending = false;
+    supRender();
+    supCooldownTick();
+  }catch(e){
+    __sup.sending = false;
+    supGateUpdate();
+    showModal('보내지 못했습니다', `<div style="line-height:1.9;color:#d64545;">${escapeHtml(fbErrText(e))}</div>
+      <div style="font-size:11px;color:var(--fg-dim);margin-top:8px;">인터넷이 끊겼거나, 보안 규칙에 tickets 가 아직 안 올라갔을 수 있습니다.</div>`,
+      [{ label:'확인', solid:true }]);
+  }
+}
+/* 메뉴에 "답장 왔음" 표시 — 창을 안 열어도 보이게 */
+function supPaintMenu(){
+  const el = document.getElementById('supMenuSub');
+  if(!el) return;
+  const un = __sup.mine && __sup.mine.userUnread;
+  el.innerHTML = un ? '<b style="color:#e8703a;">개발자 답장이 도착했습니다</b>' : '버그 제보 · 문의';
+}
+/* 드로어를 열 때 가볍게 확인한다. 창이 떠 있으면 건드리지 않는다. */
+async function supRefreshMine(){
+  if(gwinIsOpen('sup')) return;
+  try{
+    await fbInit();
+    const { doc, getDoc } = FB.mod;
+    const s = await getDoc(doc(FB.db, 'tickets', FB.uid));
+    __sup.mine = s.exists() ? (s.data() || null) : null;
+    supPaintMenu();
+  }catch(e){}
+}
+
+/* ---- 개발자 쪽 ---- */
+function supDevHtml(){
+  if(!devMode) return '<div class="sup-empty">개발자 모드에서만 보입니다.</div>';
+  if(__sup.view) return supThreadHtml();
+  if(__sup.loading) return '<div class="sup-empty">불러오는 중…</div>';
+  if(__sup.rowsErr) return `<div class="sup-empty" style="color:#d64545;">불러오지 못했습니다 — ${escapeHtml(__sup.rowsErr)}
+    <br><br><button class="sup-btn" onclick="supLoadRows()">다시 시도</button></div>`;
+  const rows = (__sup.rows || []).slice().sort((a,b)=>{
+    if(!!b.devUnread !== !!a.devUnread) return b.devUnread ? 1 : -1;   // 안 읽은 것 먼저
+    return (b.lastAt || 0) - (a.lastAt || 0);
+  });
+  const head = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <b style="font-size:13px;">열린 문의 ${rows.length}건</b>
+      <button class="sup-btn" onclick="supLoadRows()">새로고침</button></div>`;
+  if(!rows.length) return head + '<div class="sup-empty">들어온 문의가 없습니다.</div>';
+  return head + rows.map(r=>{
+    const ms = supMsgs(r), last = ms[ms.length-1];
+    return `<button class="sup-row${r.devUnread?' unread':''}" onclick="supOpenThread('${escapeHtml(r.__id)}')">
+      ${r.devUnread ? '<span class="sup-dot"></span>' : ''}
+      <span class="sup-row-main">
+        <span class="sup-row-nm">${escapeHtml(r.nick || '?')} <small style="font-family:var(--font-mono);color:var(--fg-dim);font-weight:600;">${escapeHtml(r.code || '?')}</small></span>
+        <span class="sup-row-ls">${escapeHtml(last ? (last.by==='dev'?'나: ':'') + String(last.text||'') : '(빈 방)')}</span>
+      </span>
+      <span class="sup-row-when">${escapeHtml(supTime(r.lastAt))}</span>
+    </button>`;
+  }).join('');
+}
+async function supLoadRows(){
+  if(!devMode) return;
+  __sup.loading = true; __sup.rowsErr = '';
+  if(gwinIsOpen('sup')) supRender();
+  try{
+    await fbInit();
+    const { collection, query, where, limit, getDocs } = FB.mod;
+    /* ⚠ orderBy 금지 — where 와 섞으면 복합 색인이 필요해 통째로 실패한다 */
+    const snap = await getDocs(query(collection(FB.db, 'tickets'), where('open','==',true), limit(50)));
+    const rows = [];
+    snap.forEach(s=> rows.push(Object.assign({ __id: s.id }, s.data() || {})));
+    __sup.rows = rows; __sup.loading = false;
+  }catch(e){ __sup.loading = false; __sup.rowsErr = fbErrText(e); }
+  if(gwinIsOpen('sup')) supRender();
+}
+function supThreadHtml(){
+  const r = __sup.view;
+  const msgs = supMsgs(r);
+  const log = msgs.length ? msgs.map(m=>{
+    const mine = m.by === 'dev';                 // 개발자 화면에서는 개발자 말이 오른쪽
+    return `<div class="sup-msg ${mine?'me':'dev'}">
+      ${mine ? '' : `<span class="sup-who">${escapeHtml(r.nick || '유저')}</span>`}
+      <div class="sup-bub">${escapeHtml(String(m.text||''))}</div>
+      <span class="sup-when">${escapeHtml(supTime(m.at))}</span>
+    </div>`;
+  }).join('') : '<div class="sup-empty">빈 방입니다.</div>';
+  return `<div class="sup-wrap">
+    <div class="sup-head">
+      <button class="sup-btn" onclick="supCloseThread()">← 목록</button>
+      <b>${escapeHtml(r.nick || '?')}</b>
+      <small>${escapeHtml(r.code || '?')} · ${escapeHtml(r.ver || '버전 모름')}</small>
+      <span style="flex:1 1 auto;"></span>
+      <button class="sup-btn no" onclick="supResolve('${escapeHtml(r.__id)}')">해결 처리</button>
+    </div>
+    <div class="sup-log" id="supLog">${log}</div>
+    <textarea id="supText" class="sup-in" maxlength="${SUP_MAX_LEN}" placeholder="답장을 적으세요."
+      oninput="__sup.draft=this.value; supDevGate();">${escapeHtml(__sup.draft || '')}</textarea>
+    <div class="sup-bar">
+      <span class="sup-left" id="supLeft"></span>
+      <button class="sup-send" id="supSend" onclick="supReply('${escapeHtml(r.__id)}')">답장 보내기</button>
+    </div>
+    <div class="sup-note">보상을 줄 일이면 <b>개발자 보드</b>의 우편 전달을 쓰세요. 여기서는 글만 갑니다.</div>
+  </div>`;
+}
+function supDevGate(){
+  const b = document.getElementById('supSend'), left = document.getElementById('supLeft');
+  const v = String(__sup.draft || '').trim();
+  if(left) left.textContent = `${v.length} / ${SUP_MAX_LEN}자`;
+  if(b){ b.disabled = __sup.sending || v.length < 1; b.textContent = __sup.sending ? '보내는 중…' : '답장 보내기'; }
+}
+async function supOpenThread(id){
+  const r = (__sup.rows || []).find(x=> x.__id === id); if(!r) return;
+  __sup.view = r; __sup.draft = '';
+  supRender();
+  if(r.devUnread){
+    try{
+      await fbInit();
+      const { doc, setDoc } = FB.mod;
+      await setDoc(doc(FB.db, 'tickets', id), { devUnread:false }, { merge:true });
+      r.devUnread = false;
+      supRender();
+    }catch(e){}
+  }
+}
+function supCloseThread(){ __sup.view = null; __sup.draft = ''; supRender(); }
+/* ⚠ id 를 인자로 받는다 — 확인창이 본문을 덮으면 화면에서 읽을 수 없다 */
+async function supReply(id){
+  const text = String(__sup.draft || '').trim().slice(0, SUP_MAX_LEN);
+  if(text.length < 1) return;
+  __sup.sending = true; supDevGate();
+  try{
+    await fbInit();
+    const { doc, getDoc, setDoc } = FB.mod;
+    const ref = doc(FB.db, 'tickets', id);
+    const s = await getDoc(ref);
+    const cur = s.exists() ? (s.data() || {}) : {};
+    const msgs = supMsgs(cur).slice(-(SUP_MAX_MSGS - 1));
+    const now = Date.now();
+    msgs.push({ by:'dev', text, at:now });
+    await setDoc(ref, { msgs, lastAt:now, lastBy:'dev', userUnread:true, devUnread:false, open:true }, { merge:true });
+    if(__sup.view && __sup.view.__id === id){
+      __sup.view.msgs = msgs; __sup.view.lastAt = now; __sup.view.lastBy = 'dev'; __sup.view.devUnread = false;
+    }
+    __sup.draft = ''; __sup.sending = false;
+    supRender();
+  }catch(e){
+    __sup.sending = false; supDevGate();
+    showModal('보내지 못했습니다', `<div style="line-height:1.9;color:#d64545;">${escapeHtml(fbErrText(e))}</div>`, [{label:'확인', solid:true}]);
+  }
+}
+function supResolve(id){
+  showModal('해결 처리할까요?', `<div style="line-height:1.9;">
+    이 문의를 목록에서 내립니다.<br>
+    <span style="font-size:12px;color:var(--fg-dim);">그 사람이 새로 글을 적으면 다시 올라옵니다.</span></div>`, [
+    { label:'취소' },
+    { label:'해결 처리', solid:true, action: ()=> supDoResolve(id) }
+  ]);
+}
+async function supDoResolve(id){
+  try{
+    await fbInit();
+    const { doc, setDoc } = FB.mod;
+    await setDoc(doc(FB.db, 'tickets', id), { open:false, devUnread:false }, { merge:true });
+    __sup.view = null;
+    supLoadRows();
+  }catch(e){
+    showModal('처리 실패', `<div style="line-height:1.9;color:#d64545;">${escapeHtml(fbErrText(e))}</div>`, [{label:'확인', solid:true}]);
+  }
+}
+
+const PAY_ACCOUNT = '1002-3952-5512';
+const PAY_BANK    = '토스뱅크';
+const PAY_PRODUCTS = [
+  { id:'u300',    emoji:'💎', name:'우비나이트 300',    won:300,   ubinite:300 },
+  { id:'u1000',   emoji:'💎', name:'우비나이트 1,000',  won:1000,  ubinite:1000 },
+  { id:'u5000',   emoji:'💠', name:'우비나이트 5,000',  won:4500,  ubinite:5000,  off:10 },
+  { id:'u15000',  emoji:'💠', name:'우비나이트 15,000', won:12000, ubinite:15000, off:20 },
+  { id:'u50000',  emoji:'🔷', name:'우비나이트 50,000', won:32500, ubinite:50000, off:35 },
+  { id:'starter', emoji:'🎁', name:'초보자 패키지',     won:9900,  once:true,
+    reward:{ ubinite:8000, pickaxe:20, teeth:30, pwStone:1 } },
+];
+function payProduct(id){ return PAY_PRODUCTS.find(p=> p.id === id) || null; }
+function payRewardOf(p){ return p && p.reward ? p.reward : { ubinite:(p && p.ubinite) || 0 }; }
+function payRewardText(p){ try{ return mailRewardText(payRewardOf(p)); }catch(e){ return ''; } }
+function payWon(n){ return Number(n||0).toLocaleString() + '원'; }
+
+function payLoadLocal(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEYS.pay) || '{}') || {}; }catch(e){ return {}; }
+}
+function paySaveLocal(o){
+  try{ localStorage.setItem(STORAGE_KEYS.pay, JSON.stringify(o || {})); }catch(e){}
+}
+
+/* ---- 창 ---- */
+function openPayWin(){
+  openGWin({ key:'pay', title:'💳 현질하기<span class="pay-beta">BETA</span>',
+             tabs: payTabs, render: payWinHtml });
+  try{ payPendingRefresh(); }catch(e){}
+  if(devMode){ try{ payAdminLoad(); }catch(e){} }
+}
+/* 개발자 모드일 때만 '승인 대기' 탭이 생긴다 (탭은 함수라 모드가 바뀌면 따라온다) */
+function payTabs(){
+  /* 개발자가 아니면 탭이 하나뿐이라 줄 자체를 감춘다 (gwinRender 가 빈 배열이면 숨긴다) */
+  if(!devMode) return [];
+  return [{ k:'shop', label:'🛒 상품' }, { k:'admin', label:'🛠️ 승인 대기' }];
+}
+function payWinHtml(tab){
+  return (tab === 'admin') ? payAdminHtml() : payShopHtml();
+}
+function payShopHtml(){
+  const L = payLoadLocal();
+  let head = '';
+  if(L.pending){
+    head = `<div class="pay-pend">⏳ <b>확인 대기 중</b> — ${escapeHtml(L.pending.label || '')} · ${escapeHtml(payWon(L.pending.won))}<br>
+      <span style="font-size:11px;color:var(--fg-dim);">입금이 확인되면 <b>우편함</b>으로 보내드립니다.
+      확인은 사람이 직접 합니다 — 최대 하루 정도 걸릴 수 있습니다.</span><br>
+      <button class="pay-btn" style="margin-top:8px;" onclick="payPendingRefresh(1)">지금 확인해보기</button>
+      <button class="pay-btn no" style="margin-top:8px;" onclick="payCancelPending()">신청 취소</button></div>`;
+  } else if(L.last){
+    const ok = L.last.status === 'approved';
+    head = `<div class="pay-pend" style="border-color:${ok?'#3aa76d':'#d64545'};background:${ok?'rgba(58,167,109,.08)':'rgba(214,69,69,.08)'};">
+      ${ok ? '✅ <b>충전이 완료되었습니다</b>' : '❌ <b>신청이 거절되었습니다</b>'} — ${escapeHtml(L.last.label || '')}<br>
+      <span style="font-size:11px;color:var(--fg-dim);">${ok ? '보상은 <b>우편함</b>에 들어 있습니다.' : '입금이 확인되지 않았습니다. 다시 신청해주세요.'}</span><br>
+      <button class="pay-btn" style="margin-top:8px;" onclick="payClearLast()">확인</button></div>`;
+  }
+  const cards = PAY_PRODUCTS.map(p=>{
+    const once = p.once && L.starter;
+    return `<button class="pay-card${p.off>=20?' best':''}" ${once?'disabled style="opacity:.45;cursor:not-allowed;"':`onclick="payPick('${p.id}')"`}>
+      ${p.off ? `<span class="pay-c-off">${p.off}% 할인</span>` : ''}
+      <span class="pay-c-em">${p.emoji}</span>
+      <span class="pay-c-nm">${escapeHtml(p.name)}</span>
+      <span class="pay-c-ds">${escapeHtml(payRewardText(p))}</span>
+      ${p.once ? `<span class="pay-c-once">${once ? '구매 완료' : '계정당 1회'}</span>` : ''}
+      <span class="pay-c-won">${escapeHtml(payWon(p.won))}</span>
+    </button>`;
+  }).join('');
+  return head + `<div class="pay-grid">${cards}</div>
+    <div class="pay-note">
+      <b>💳 이건 이렇게 굴러갑니다</b><br>
+      ① 상품을 고르면 계좌가 나옵니다 → ② 그 계좌로 송금 → ③ 입금자명을 적어 신청<br>
+      ④ 개발자가 통장을 직접 확인하고 승인 → ⑤ <b>우편함</b>으로 지급<br><br>
+      · 자동 결제가 아니라 <b>계좌이체 + 수동 확인</b>입니다. 그래서 BETA 입니다.<br>
+      · 카드번호·비밀번호는 <b>절대 받지 않습니다.</b> 묻는 사람이 있으면 사칭입니다.<br>
+      · 환불·문의는 <b>메뉴 → 개발자한테 항의하기</b> 또는 디스코드로 연락해주세요.
+    </div>`;
+}
+
+/* ---- 주문 ----
+   ⚠ 계좌·경고·입금자명·버튼을 **한 창**에 담는다. showModal 은 #modalBody 하나뿐이라
+     여기서 창을 또 띄우면 입력칸이 통째로 사라진다. */
+function payPick(id){
+  const p = payProduct(id); if(!p) return;
+  const L = payLoadLocal();
+  if(L.pending){
+    showModal('이미 신청이 하나 있습니다', `<div style="line-height:1.9;">
+      <b>${escapeHtml(L.pending.label||'')}</b> 신청이 아직 확인 대기 중입니다.<br>
+      먼저 처리된 뒤에 다시 신청해주세요.</div>`, [{label:'확인', solid:true}]);
+    return;
+  }
+  if(p.once && L.starter){
+    showModal('이미 구매하셨습니다', `<div style="line-height:1.9;">
+      <b>${escapeHtml(p.name)}</b> 는 계정당 한 번만 살 수 있습니다.</div>`, [{label:'확인', solid:true}]);
+    return;
+  }
+  showModal('💳 입금 안내', `<div class="pay-order">
+    <div class="pay-o-top">
+      <span class="pay-o-em">${p.emoji}</span>
+      <div><div class="pay-o-nm">${escapeHtml(p.name)}</div>
+           <div class="pay-o-ds">${escapeHtml(payRewardText(p))}</div></div>
+    </div>
+    <div class="pay-o-won">${escapeHtml(payWon(p.won))}</div>
+    <div class="pay-acc">
+      <button class="pay-copy" onclick="payCopyAccount()">복사</button>
+      <div class="pay-acc-lb">입금 계좌</div>
+      <div class="pay-acc-no">${escapeHtml(PAY_ACCOUNT)}</div>
+      <div class="pay-acc-bk">${escapeHtml(PAY_BANK)}</div>
+    </div>
+    <div class="pay-warn">⚠ <b>송금하지 않고 [송금했습니다]를 누르지 마세요.</b>
+      반복되면 제재될 수 있습니다.<br>
+      확인은 사람이 직접 합니다 — 최대 하루 정도 걸릴 수 있습니다.</div>
+    <label class="pay-lb" for="payName">입금자명<small>통장에 찍히는 이름 그대로</small></label>
+    <input id="payName" class="pay-input" maxlength="20" placeholder="예) 홍길동"
+           oninput="payGateUpdate()" autocomplete="off">
+    <button id="payGo" class="pay-go" disabled onclick="paySubmit('${p.id}')">5초 뒤에 누를 수 있습니다</button>
+    <div id="paySay" class="pay-say"></div>
+  </div>`, [{ label:'취소' }]);
+  payCountdownStart(5);
+}
+function payCopyAccount(){
+  try{ navigator.clipboard.writeText(PAY_ACCOUNT); paySay('계좌번호를 복사했습니다.'); }
+  catch(e){ paySay('복사가 안 됩니다. 직접 적어주세요.', 1); }
+}
+function paySay(msg, bad){
+  const el = document.getElementById('paySay');
+  if(el) el.innerHTML = `<span style="color:${bad?'#d64545':'var(--fg-dim)'};">${msg}</span>`;
+}
+/* 5초 잠금. ⚠ 창이 닫히면 버튼이 사라진다 — 그때 스스로 멈춘다(타이머를 들고 다닐 필요가 없다). */
+let __payLeft = 0;
+function payCountdownStart(sec){
+  __payLeft = Math.max(0, sec || 0);
+  payGateUpdate();
+  const tick = ()=>{
+    if(!document.getElementById('payGo')) return;   // 창이 닫혔다
+    __payLeft = Math.max(0, __payLeft - 1);
+    payGateUpdate();
+    if(__payLeft > 0) setTimeout(tick, 1000);
+  };
+  setTimeout(tick, 1000);
+}
+function payGateUpdate(){
+  const b = document.getElementById('payGo'); if(!b) return;
+  const nm = String((document.getElementById('payName')||{}).value || '').trim();
+  if(__payLeft > 0){ b.disabled = true; b.textContent = `${__payLeft}초 뒤에 누를 수 있습니다`; return; }
+  if(nm.length < 2){ b.disabled = true; b.textContent = '입금자명을 입력하세요'; return; }
+  b.disabled = false; b.textContent = '송금했습니다';
+}
+async function paySubmit(id){
+  const p = payProduct(id); if(!p) return;
+  const nm = String((document.getElementById('payName')||{}).value || '').trim().slice(0, 20);
+  if(nm.length < 2){ paySay('입금자명을 입력하세요.', 1); return; }
+  const b = document.getElementById('payGo');
+  if(b){ b.disabled = true; b.textContent = '보내는 중…'; }
+  paySay('신청을 보내는 중…');
+  try{
+    await fbInit();
+    const { doc, setDoc } = FB.mod;
+    const code = getUserCode();
+    const pid = code + '_' + Date.now().toString(36);
+    const body = {
+      uid: FB.uid, code, nick: String(getPlayerNickname() || '').slice(0, 20),
+      depositor: nm, product: p.id, label: p.name, won: p.won,
+      status: 'pending', at: Date.now()
+    };
+    await setDoc(doc(FB.db, 'payments', pid), body);
+    const L = payLoadLocal();
+    L.pending = { id: pid, product: p.id, label: p.name, won: p.won, at: body.at };
+    L.last = null;
+    paySaveLocal(L);
+    closeModal();
+    showModal('✅ 신청이 접수되었습니다', `<div style="line-height:1.9;">
+      <b>${escapeHtml(p.name)}</b> · ${escapeHtml(payWon(p.won))}<br>
+      입금자명 — <b>${escapeHtml(nm)}</b><br><br>
+      개발자가 통장을 확인한 뒤 <b>우편함</b>으로 보내드립니다.<br>
+      <span style="font-size:12px;color:var(--fg-dim);">아직 송금하지 않으셨다면 지금 보내주세요.
+      확인되지 않으면 신청은 거절됩니다.</span></div>`, [{label:'확인', solid:true}]);
+    try{ gwinRender(); }catch(e){}
+  }catch(e){
+    paySay('신청을 못 보냈습니다 — ' + escapeHtml(fbErrText(e)), 1);
+    if(b){ b.disabled = false; b.textContent = '다시 보내기'; }
+  }
+}
+/* ---- 대기 상태 확인 ---- */
+async function payPendingRefresh(loud){
+  const L = payLoadLocal();
+  if(!L.pending){ if(loud) { /* 볼 게 없다 */ } return; }
+  try{
+    await fbInit();
+    const { doc, getDoc } = FB.mod;
+    const s = await getDoc(doc(FB.db, 'payments', L.pending.id));
+    if(!s.exists()) return;
+    const d = s.data() || {};
+    if(d.status === 'pending'){
+      if(loud && gwinIsOpen('pay')) { /* 그대로 */ }
+      return;
+    }
+    const L2 = payLoadLocal();
+    if(d.status === 'approved' && d.product === 'starter') L2.starter = true;
+    L2.last = { status: d.status, label: d.label || (L2.pending && L2.pending.label) || '' };
+    L2.pending = null;
+    paySaveLocal(L2);
+    if(gwinIsOpen('pay')) gwinRender();
+  }catch(e){}
+}
+function payClearLast(){ const L = payLoadLocal(); L.last = null; paySaveLocal(L); if(gwinIsOpen('pay')) gwinRender(); }
+/* 신청 취소 — 서버 문서는 개발자만 지울 수 있으므로 이 기기 기록만 푼다.
+   ⚠ 그래서 취소해도 개발자 목록에는 남는다. 그건 의도한 것이다(먹튀 신청을 숨기지 못하게). */
+function payCancelPending(){
+  showModal('신청을 취소할까요?', `<div style="line-height:1.9;">
+    이 기기에서 대기 표시만 지웁니다.<br>
+    <b>이미 송금하셨다면 취소하지 마세요.</b> 개발자 쪽 목록에는 신청이 그대로 남아 있어,
+    확인되면 정상적으로 지급됩니다.</div>`, [
+    { label:'그냥 두기' },
+    { label:'취소한다', solid:true, action: ()=>{
+        const L = payLoadLocal(); L.pending = null; paySaveLocal(L);
+        if(gwinIsOpen('pay')) gwinRender();
+      }}
+  ]);
+}
+
+/* ---- 개발자: 승인 대기 ---- */
+let __payAdmin = { loading:false, rows:null, err:'' };
+function payAdminHtml(){
+  if(!devMode) return '<div class="pay-empty">개발자 모드에서만 보입니다.</div>';
+  if(__payAdmin.loading) return '<div class="pay-empty">불러오는 중…</div>';
+  if(__payAdmin.err) return `<div class="pay-empty" style="color:#d64545;">불러오지 못했습니다 — ${escapeHtml(__payAdmin.err)}
+    <br><br><button class="pay-btn" onclick="payAdminLoad()">다시 시도</button></div>`;
+  const rows = (__payAdmin.rows || []).slice().sort((a,b)=> (b.at||0) - (a.at||0));
+  const head = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <b style="font-size:13px;">대기 ${rows.length}건</b>
+      <button class="pay-btn" onclick="payAdminLoad()">새로고침</button></div>`;
+  if(!rows.length) return head + '<div class="pay-empty">대기 중인 신청이 없습니다.</div>';
+  return head + rows.map(r=>{
+    const when = new Date(r.at || 0).toLocaleString('ko-KR');
+    return `<div class="pay-row">
+      <div class="pay-row-main">
+        <div class="pay-row-nm">${escapeHtml(r.label || r.product || '?')} — 입금자 <b>${escapeHtml(r.depositor || '?')}</b></div>
+        <div class="pay-row-sub">${escapeHtml(r.code || '?')} · ${escapeHtml(r.nick || '')} · ${escapeHtml(when)}</div>
+      </div>
+      <div class="pay-row-won">${escapeHtml(payWon(r.won))}</div>
+      <button class="pay-btn ok" onclick="payApprove('${escapeHtml(r.__id)}')">승인</button>
+      <button class="pay-btn no" onclick="payReject('${escapeHtml(r.__id)}')">거절</button>
+    </div>`;
+  }).join('');
+}
+async function payAdminLoad(){
+  if(!devMode) return;
+  __payAdmin = { loading:true, rows:null, err:'' };
+  if(gwinIsOpen('pay')) gwinRender();
+  try{
+    await fbInit();
+    const { collection, query, where, limit, getDocs } = FB.mod;
+    /* ⚠ orderBy 를 붙이면 복합 색인이 필요해 통째로 실패한다. 정렬은 여기서 한다. */
+    const snap = await getDocs(query(collection(FB.db, 'payments'), where('status','==','pending'), limit(50)));
+    const rows = [];
+    snap.forEach(s=> rows.push(Object.assign({ __id: s.id }, s.data() || {})));
+    __payAdmin = { loading:false, rows, err:'' };
+  }catch(e){ __payAdmin = { loading:false, rows:null, err: fbErrText(e) }; }
+  if(gwinIsOpen('pay')) gwinRender();
+}
+/* ⚠ 확인창이 목록을 덮는다 → 문서 id 를 **인자로** 넘긴다 (14.10 dbPushCmd 사고와 같은 자리) */
+function payApprove(pid){
+  const r = (__payAdmin.rows || []).find(x=> x.__id === pid); if(!r) return;
+  const p = payProduct(r.product);
+  showModal('지급하시겠습니까?', `<div style="line-height:1.9;">
+    <b>${escapeHtml(r.code || '?')}</b> 에게 지급합니다.<br><br>
+    상품 — <b>${escapeHtml(r.label || '')}</b> · ${escapeHtml(payWon(r.won))}<br>
+    입금자 — <b>${escapeHtml(r.depositor || '?')}</b><br>
+    보상 — ${escapeHtml(p ? payRewardText(p) : '(알 수 없는 상품)')}<br><br>
+    <b style="color:#d9822b;">통장에 실제로 들어왔는지 먼저 확인하세요.</b><br>
+    <span style="font-size:12px;color:var(--fg-dim);">승인하면 그 사람 <b>우편함</b>으로 갑니다.
+    (다음 접속 때 적용됩니다)</span></div>`, [
+    { label:'취소' },
+    { label:'승인하고 지급', solid:true, action: ()=> payDoApprove(pid) }
+  ]);
+}
+async function payDoApprove(pid){
+  const r = (__payAdmin.rows || []).find(x=> x.__id === pid); if(!r) return;
+  const p = payProduct(r.product);
+  if(!p){ showModal('지급 불가', '<div style="line-height:1.9;">모르는 상품입니다. 거절 후 직접 지급해주세요.</div>', [{label:'확인', solid:true}]); return; }
+  try{
+    await fbInit();
+    const { doc, getDoc, setDoc } = FB.mod;
+    /* 지급은 검증된 admin cmds 큐를 그대로 탄다 */
+    const cmd = { type:'notice', title:'💳 충전이 완료되었습니다',
+      text:`${p.name} 결제가 확인되었습니다. 아래 보상을 받아주세요. 감사합니다!`,
+      reward: payRewardOf(p),
+      id: 'p' + Date.now().toString(36) + Math.floor(Math.random()*1296).toString(36) };
+    const s = await getDoc(doc(FB.db, 'admin', r.code));
+    const cur = s.exists() ? (s.data() || {}) : {};
+    const cmds = Array.isArray(cur.cmds) ? cur.cmds.slice(-30) : [];
+    cmds.push(cmd);
+    await setDoc(doc(FB.db, 'admin', r.code), { cmds }, { merge:true });
+    await setDoc(doc(FB.db, 'payments', pid), { status:'approved', doneAt: Date.now(), by: getUserCode() }, { merge:true });
+    showModal('✅ 지급했습니다', `<div style="line-height:1.9;">
+      <b>${escapeHtml(r.code)}</b> 우편함으로 보냈습니다.<br>
+      ${escapeHtml(payRewardText(p))}</div>`, [{label:'확인', solid:true, action: payAdminLoad}]);
+  }catch(e){
+    showModal('지급 실패', `<div style="line-height:1.9;color:#d64545;">${escapeHtml(fbErrText(e))}</div>
+      <div style="font-size:11px;color:var(--fg-dim);margin-top:8px;">보안 규칙에 payments 쓰기 허용을 올렸는지 확인하세요.</div>`, [{label:'확인', solid:true}]);
+  }
+}
+function payReject(pid){
+  const r = (__payAdmin.rows || []).find(x=> x.__id === pid); if(!r) return;
+  showModal('거절하시겠습니까?', `<div style="line-height:1.9;">
+    <b>${escapeHtml(r.code || '?')}</b> 의 <b>${escapeHtml(r.label || '')}</b> 신청을 거절합니다.<br>
+    입금자 — <b>${escapeHtml(r.depositor || '?')}</b><br><br>
+    <span style="font-size:12px;color:var(--fg-dim);">거절해도 지급은 일어나지 않습니다.
+    나중에 입금이 확인되면 개발자 보드에서 직접 보내주세요.</span></div>`, [
+    { label:'취소' },
+    { label:'거절한다', solid:true, action: ()=> payDoReject(pid) }
+  ]);
+}
+async function payDoReject(pid){
+  try{
+    await fbInit();
+    const { doc, setDoc } = FB.mod;
+    await setDoc(doc(FB.db, 'payments', pid), { status:'rejected', doneAt: Date.now(), by: getUserCode() }, { merge:true });
+    payAdminLoad();
+  }catch(e){
+    showModal('처리 실패', `<div style="line-height:1.9;color:#d64545;">${escapeHtml(fbErrText(e))}</div>`, [{label:'확인', solid:true}]);
+  }
+}
+
 function renderUbiniteBadge(){
   try{
     let el = document.getElementById('ubiniteBadge');
@@ -13661,7 +14558,11 @@ function renderUbiniteBadge(){
       const bar = document.querySelector('.user-stat-bar');
       if(!el.parentNode && bar && bar.parentNode) bar.parentNode.insertBefore(el, bar.nextSibling);
     }
-    el.innerHTML = `<span class="ubi-ic">💎</span><span class="ubi-num">${ubinite.toLocaleString()}</span><span class="ubi-name">우비나이트</span>`;
+    /* [Ver 15.1] + 는 충전 창을 연다. 배지 자체는 계속 그냥 표시용이다.
+       ⚠ 위의 조기 반환 덕분에 이 innerHTML 은 처음 한 번만 돈다 — + 는 지워지지 않는다. */
+    el.innerHTML = `<span class="ubi-ic">💎</span><span class="ubi-num">${ubinite.toLocaleString()}</span>`
+      + `<span class="ubi-name">우비나이트</span>`
+      + `<button class="ubi-plus" title="현질하기" onclick="event.stopPropagation(); openPayWin();">+</button>`;
   }catch(e){}
 }
 const DEFAULT_SETTINGS = {
@@ -13894,6 +14795,7 @@ function setPlayerNickname(newName){
   }catch(e){}
   renderUserStatBar();
   try{ renderBoard(); }catch(e){}
+  try{ fbPushProfileSoon(); }catch(e){}   // [Ver 15.1] 리더보드의 이름도 같이 바꾼다
   return true;
 }
 /* [Ver 8.1] 인게임에 표시할 봇의 레벨을 산정한다(실제 게임 로직/난이도에는 영향 없는 표시용 값).
@@ -14040,6 +14942,7 @@ function setPlayerBio(v){
   /* 줄바꿈은 한 줄 표시를 깨뜨리므로 공백으로 눕힌다. */
   const clean = String(v||'').replace(/[\r\n\t]+/g, ' ').trim().slice(0, BIO_MAX);
   try{ localStorage.setItem(STORAGE_KEYS.bio, clean); }catch(e){ return false; }
+  try{ fbPushProfileSoon(); }catch(e){}   // [Ver 15.1] 리더보드 프로필의 상태메시지도 같이
   return true;
 }
 
@@ -17403,12 +18306,90 @@ function equippedPowerCount(){ return loadEquippedPowers().filter(Boolean).lengt
    ▶ 평균 획득량 : 1개 1.75→**1.53** · 5개 2.60→**2.34** · 15개 2.00→**1.60**
    ▶ 이빨 가격도 150 → 200 우비나이트로 함께 올렸다(TEETH_PRICE_UBINITE).
    ▶ 보너스는 등급마다 **따로** 굴린다(서로 배타적이지 않다). 그래서 한 번에 최대 4개까지 나온다. */
+/* [Ver 15.1] 이름을 등급으로 바꾸고 **울트라프로맥스+** 를 넣었다.
+   ⚠ 울트라는 fixed 가 19개다 — 한 번에 권능 19개가 나온다.
+     offerToAltar 는 fixed 를 그냥 훑으므로 개수 제한은 없지만,
+     revealSequence 가 19장을 받으니 '전부 열기' 버튼이 반드시 살아 있어야 한다.
+   (일러스트 자리는 비워 뒀다 — art 가 생기면 여기 key 로 붙이면 된다) */
 const POWER_ALTAR_OFFERS = [
   { teeth:1,  label:'이빨 1개',  fixed:['normal'],         bonus:[['rare',40],['epic',10],['legend',3]] },
   { teeth:5,  label:'이빨 5개',  fixed:['normal','rare'],  bonus:[['epic',35],['legend',25]] },   // [Ver 13.4] 전설 12→25 · [Ver 13.15] 영웅 22→35
   { teeth:15, label:'이빨 15개', fixed:['legend'],         bonus:[['epic',30],['rare',30]] },
+  /* [Ver 15.1] 울트라프로맥스+ — 전부 확정. 보너스 없음. */
+  { teeth:25, label:'이빨 25개',
+    fixed:[].concat(Array(10).fill('normal'), Array(5).fill('rare'), Array(3).fill('epic'), ['legend']),
+    bonus:[] },
 ];
+/* 뽑기 이름 — 이빨 수로 잇는다 */
+const ALTAR_NAMES = {
+  1:  { name:'하급 권능뽑기',   ic:'🦴' },
+  5:  { name:'중급 권능뽑기',   ic:'🦴' },
+  15: { name:'상급 권능뽑기',   ic:'👑' },
+  25: { name:'울트라프로맥스+', ic:'🌟' },
+};
 function powersOfRarity(r){ return POWER_DEFS.filter(d=> d.rarity === r); }
+/* ##########################################################################
+   [Ver 15.1] 랩터마트24 › 뽑기 탭
+   --------------------------------------------------------------------------
+   권능 화면의 #pwAltar 에 있던 재단·권능석을 그대로 옮겨왔다.
+   ⚠ 뽑고 나면 **지금 있는 화면만** 다시 그린다(refreshAfterDraw).
+     예전에는 renderPowerScreen() 만 불렀는데, 마트에서 뽑으면 그 화면은
+     떠 있지도 않아 아무 일도 일어나지 않는다.
+   ########################################################################## */
+function buildMartGachaHtml(){
+  const teeth = teethCount();
+  const offers = POWER_ALTAR_OFFERS.map(o=>{
+    const nm = ALTAR_NAMES[o.teeth] || { name:o.label, ic:'🦴' };
+    const can = teeth >= o.teeth;
+    /* 확정 구성을 등급별 개수로 묶어 보여준다 — 울트라는 19개라 나열하면 못 읽는다 */
+    const cnt = {};
+    o.fixed.forEach(r=>{ cnt[r] = (cnt[r]||0) + 1; });
+    const fixedTx = Object.keys(cnt).map(r=>{
+      const lb = powerRarityDef(r).label;
+      return cnt[r] > 1 ? `${lb} ${cnt[r]}` : lb;
+    }).join(' · ');
+    const bonusTx = o.bonus.length
+      ? o.bonus.map(([r,p])=> `${powerRarityDef(r).label} ${p}%`).join(' · ')
+      : '없음';
+    return `<button class="pw-offer${can?'':' off'}" ${can?'':'disabled'} onclick="doAltarOffer(${o.teeth})">
+        <span class="pw-offer-n">${nm.ic} ${escapeHtml(nm.name)}</span>
+        <span class="pw-offer-fix">🦷 ${o.teeth} · 확정 — ${escapeHtml(fixedTx)}</span>
+        <span class="pw-offer-bonus">보너스 — ${escapeHtml(bonusTx)}</span>
+      </button>`;
+  }).join('');
+  const stones = pwStoneCount();
+  const canStone = stones >= 1;
+  return `<div class="mg-wrap">
+    <div class="pw-sec-t">🦴 랩터의 재단 <small>이빨을 바쳐 권능을 받습니다</small></div>
+    <div class="pw-altar-row">${offers}</div>
+    <div class="pw-note">이빨이 모자라면 <b><a href="javascript:void(0)" onclick="raptorMartSwitch('resource')" style="color:inherit;text-decoration:underline;">재화 탭</a></b>에서 우비나이트로 살 수 있습니다.</div>
+
+    ${/* [Ver 15.1] 특성 뽑기는 **한 번에 하나만**. */''}
+    <div class="pw-sec-t" style="margin-top:20px;">🔷 권능석 <small>특성을 하나 얻습니다 · 상자에서 나옵니다</small></div>
+    <div class="pw-stone-row">
+      <div class="pw-stone-have">🔷 <b>${stones.toLocaleString()}</b>개 보유
+        <small>특성 ${pwTraitOwnedCount()} / ${PW_TRAIT_ALL.length}종</small></div>
+      <button class="pw-offer${canStone?'':' off'}" ${canStone?'':'disabled'} onclick="doPwStoneRoll(1)">
+        <span class="pw-offer-n">🔷 1</span>
+        <span class="pw-offer-fix">특성 1개</span>
+        <span class="pw-offer-bonus">아직 없는 것만 나옵니다</span>
+      </button>
+    </div>
+    <div class="pw-note">특성은 권능을 <b>더 세게</b> 만드는 게 아니라 <b>다르게</b> 바꿉니다.
+      아직 얻지 못한 권능의 특성도 나올 수 있습니다. 권능석은 <b>우빈이의 수상한 상자</b>에서 나옵니다.</div>
+  </div>`;
+}
+/* 뽑은 뒤 — **지금 떠 있는 화면만** 다시 그린다.
+   ⚠ 예전에는 renderPowerScreen() 만 불렀다. 마트에서 뽑으면 그 화면은 떠 있지도 않아
+     결과가 화면에 반영되지 않았다. */
+function refreshAfterDraw(){
+  try{ renderTopResources(); renderUbiniteBadge(); }catch(e){}
+  let sc = '';
+  try{ sc = getComputedScreen(); }catch(e){}
+  if(sc === 'screen-mart') renderRaptorMart();
+  else if(sc === 'screen-power') renderPowerScreen();
+}
+
 function pickPowerOfRarity(r){
   const pool = powersOfRarity(r);
   return pool.length ? pool[Math.floor(Math.random()*pool.length)] : null;
@@ -17456,40 +18437,21 @@ function renderPowerScreen(){
   if(t) t.textContent = teethCount().toLocaleString();
 
   /* ---- 재단 ---- */
+  /* ★ [Ver 15.1] 재단·권능석은 **랩터마트24 › 뽑기** 탭으로 옮겼다.
+     여기에는 그리로 가는 안내만 남긴다 — 안 남기면 기능이 사라진 줄 안다. */
   const altar = document.getElementById('pwAltar');
   if(altar){
+    let teeth = 0, stones = 0;
+    try{ teeth = teethCount(); stones = pwStoneCount(); }catch(e){}
     altar.innerHTML = `
-      <div class="pw-sec-t">🦴 랩터의 재단 <small>이빨을 바쳐 권능을 받습니다</small></div>
-      <div class="pw-altar-row">${POWER_ALTAR_OFFERS.map(o=>{
-        const can = teethCount() >= o.teeth;
-        const fixedTx = o.fixed.map(r=> powerRarityDef(r).label).join(' · ');
-        const bonusTx = o.bonus.length
-          ? o.bonus.map(([r,p])=> `${powerRarityDef(r).label} ${p}%`).join(' · ')
-          : '없음';
-        return `<button class="pw-offer${can?'':' off'}" ${can?'':'disabled'} onclick="doAltarOffer(${o.teeth})">
-          <span class="pw-offer-n">🦷 ${o.teeth}</span>
-          <span class="pw-offer-fix">확정 — ${escapeHtml(fixedTx)}</span>
-          <span class="pw-offer-bonus">보너스 — ${escapeHtml(bonusTx)}</span>
-        </button>`;
-      }).join('')}</div>
-      <div class="pw-note">이빨은 <b>랩터마트24 › 재화</b> 탭에서 우비나이트로 살 수 있습니다.</div>
-
-      ${/* [Ver 14.5] 권능석 — 특성 뽑기. 재단과 같은 모양으로 나란히 둔다. */''}
-      <div class="pw-sec-t" style="margin-top:18px;">🔷 권능석 <small>특성을 하나 얻습니다 · 상자에서 나옵니다</small></div>
-      <div class="pw-stone-row">
-        <div class="pw-stone-have">🔷 <b>${pwStoneCount().toLocaleString()}</b>개 보유
-          <small>특성 ${pwTraitOwnedCount()} / ${PW_TRAIT_ALL.length}종</small></div>
-        ${[1,5].map(n=>{
-          const can = pwStoneCount() >= n;
-          return `<button class="pw-offer${can?'':' off'}" ${can?'':'disabled'} onclick="doPwStoneRoll(${n})">
-            <span class="pw-offer-n">🔷 ${n}</span>
-            <span class="pw-offer-fix">특성 ${n}개</span>
-            <span class="pw-offer-bonus">아직 없는 것만 나옵니다</span>
-          </button>`;
-        }).join('')}
-      </div>
-      <div class="pw-note">특성은 권능을 <b>더 세게</b> 만드는 게 아니라 <b>다르게</b> 바꿉니다.
-        아직 얻지 못한 권능의 특성도 나올 수 있습니다. 권능석은 <b>우빈이의 수상한 상자</b>에서 나옵니다.</div>`;
+      <button class="pw-gacha-link" onclick="openRaptorMart('gacha')">
+        <span class="pw-gacha-ic">🎰</span>
+        <span class="pw-gacha-tx">
+          <b>권능 뽑기 · 특성 뽑기는 랩터마트24 로 옮겼습니다</b>
+          <small>지금 🦷 ${teeth.toLocaleString()} · 🔷 ${stones.toLocaleString()} 보유 중 — 눌러서 바로 가기</small>
+        </span>
+        <span class="pw-gacha-go">→</span>
+      </button>`;
   }
 
   /* ---- 장착 3슬롯 ---- */
@@ -17628,7 +18590,7 @@ function doPwStoneRoll(n){
   const fullN = got.filter(x=> !x).length;
   if(fullN > 0) grantUbinite(PW_STONE_FULL_UBINITE * fullN);
 
-  renderPowerScreen();
+  refreshAfterDraw();   // [Ver 15.1] 마트에서 뽑을 수도 있다
   const items = got.map(t=>{
     if(!t) return { icon:'💎', name:`우비나이트 ${PW_STONE_FULL_UBINITE.toLocaleString()}개`, rarity:'대체 보상',
                     tier:1, color:RV_TIER_COLOR[1], tag:'ALL', sub:'특성을 전부 모았습니다' };
@@ -17951,7 +18913,7 @@ const RV_TIER_COLOR   = ['#9aa0a6', '#4FC4DC', '#A98BEA', '#E9B949'];
 function doAltarOffer(teeth){
   const res = offerToAltar(teeth);
   if(!res.ok){ showModal('🦴 랩터의 재단', res.reason, [{label:'확인', solid:true}]); return; }
-  renderPowerScreen();
+  refreshAfterDraw();   // [Ver 15.1] 마트에서 뽑을 수도 있다
   const asc = res.results.slice().sort((a,b)=> (PW_RARITY_TIER[a.rarity]||0) - (PW_RARITY_TIER[b.rarity]||0));
   const items = asc.map(r=>{
     const d = powerDefOf(r.key), rd = powerRarityDef(r.rarity);
@@ -19459,7 +20421,9 @@ function buyPet(key){
       <div style="font-size:16px;font-weight:800;margin-top:6px;">${escapeHtml(def.name)}</div>
       <div style="font-size:12.5px;color:var(--fg-dim);margin-top:8px;">${def.desc}</div>
       <div style="font-size:12px;margin-top:10px;">바로 <b>장착</b>했습니다. 다음 판부터 효과가 적용됩니다.</div>
-    </div>`, [{label:'확인', solid:true, action:()=> openRaptorMart('pet')}]);
+    /* ⚠ [Ver 15.1] 마트가 페이지가 됐다. openRaptorMart 로 다시 열면 BGM 이 새로 뽑히고
+       보던 자리에서 튕겨 나온다 — 모달 시절엔 덮여 있어서 필요했던 것이다. */
+    </div>`, [{label:'확인', solid:true, action:()=> raptorMartSwitch('pet')}]);
 }
 function togglePetEquip(key){
   setEquippedPet(getEquippedPet() === key ? null : key);
@@ -19494,10 +20458,14 @@ function showPetInfo(key){
 
 const RAPTOR_MART_TABS = [
   { key:'pet',     icon:'🐾', label:'지후펫',    desc:'장착하면 전투에 효과가 적용되는 펫입니다.' },
-  { key:'kill',    icon:'💥', label:'킬 이펙트', desc:'상대를 처치했을 때 터지는 연출을 바꿉니다.' },
-  { key:'emote',   icon:'😀', label:'이모티콘',  desc:'게임 중 상대에게 보낼 이모티콘입니다.' },
+  /* [Ver 15.1] 권능 화면에 있던 재단·권능석을 여기로 옮겼다 — 뽑는 것은 상점에 모인다. */
+  { key:'gacha',   icon:'🎰', label:'뽑기',      desc:'랩터의 재단 · 권능석 특성.' },
   /* [Ver 13.1] 칭호 탭이 사라진 자리에 재화 탭이 들어왔다 — 랩터의 이빨을 우비나이트로 산다. */
   { key:'resource',icon:'🦷', label:'재화',      desc:'우비나이트로 다른 재화를 삽니다.' },
+  /* ⚠ soon 을 명시한다. 예전에는 "알아볼 수 없는 키 = 준비중" 이라,
+     탭을 추가하고 렌더 분기를 깜빡하면 **말이 되는 듯한 잘못된 화면**이 떴다. */
+  { key:'kill',    icon:'💥', label:'킬 이펙트', desc:'상대를 처치했을 때 터지는 연출을 바꿉니다.', soon:true },
+  { key:'emote',   icon:'😀', label:'이모티콘',  desc:'게임 중 상대에게 보낼 이모티콘입니다.', soon:true },
 ];
 let raptorMartTab = 'pet';
 /* [Ver 9.10.5] 랩터마트24는 들어올 때마다 세 곡 중 하나가 랜덤으로 흐른다.
@@ -19539,19 +20507,28 @@ function restoreScreenBgm(){
     else ambientBgmStop();
   }catch(e){}
 }
+let martBgmKey = RAPTOR_MART_BGMS[0];   // [Ver 15.1] 뒤로 갈 때 되돌릴 기준
 function openRaptorMart(tab){
   raptorMartTab = tab || 'pet';
   petShopDetailKey = null;   // [Ver 14.7] 마트를 새로 열면 언제나 펫 목록부터
-  try{ ambientBgmPlay(RAPTOR_MART_BGMS[Math.floor(Math.random()*RAPTOR_MART_BGMS.length)]); }catch(e){}
-  showModal('🏪 랩터마트24', buildRaptorMartHtml(), [{ label:'닫기', solid:true, action: restoreScreenBgm }]);
+  try{ closeMenuDrawer(); }catch(e){}
+  martBgmKey = RAPTOR_MART_BGMS[Math.floor(Math.random()*RAPTOR_MART_BGMS.length)];
+  try{ ambientBgmPlay(martBgmKey); }catch(e){}
+  showScreen('screen-mart');   // [Ver 15.1] 모달 → 전체 페이지
+  renderRaptorMart();
 }
+/* ★ [Ver 15.1] 마트 **밖에서도** 불린다 — buyTeeth·buyPet·buyDevPfp 등이 부른다.
+   예전에는 #rmBody 가 모달 안에만 있어 없으면 그냥 아무 일도 안 했다.
+   페이지가 되면서 그 div 가 **항상 존재**하므로, 다른 화면에서 물건을 사도
+   마트 본문이 새로 그려지고 탭이 멋대로 바뀐다.
+   → 마트 화면이 아니면 **탭만 기억하고 돌아선다.** 예전과 똑같은 동작이다. */
 function raptorMartSwitch(tab){
   raptorMartTab = tab;
-  const holder = document.getElementById('rmBody');
-  if(holder) holder.innerHTML = buildRaptorMartBodyHtml();
-  document.querySelectorAll('.rm-tab').forEach(el=>{
-    el.classList.toggle('active', el.getAttribute('data-tab') === tab);
-  });
+  let sc = '';
+  try{ sc = getComputedScreen(); }catch(e){}
+  if(sc !== 'screen-mart') return;
+  petShopDetailKey = (tab === 'pet') ? petShopDetailKey : null;
+  renderRaptorMart();
 }
 /* [Ver 9.10.2] 지후펫 상점 — 사면 바로 장착되고, 칩을 다시 누르면 장착/해제를 오간다. */
 /* [Ver 14.7] 지금 상세를 펼쳐 보고 있는 펫. null 이면 목록이다.
@@ -19626,22 +20603,38 @@ function buildPetDetailHtml(def){
     <div class="petd-foot">${btn}</div>
   </div>`;
 }
-function buildRaptorMartHtml(){
-  return `<div class="rm-wrap">
-    <div class="rm-head">
-      <span class="rm-coin">💎 ${ubinite.toLocaleString()}</span>
-      <span class="rm-note">우비나이트로 꾸미기를 구매합니다</span>
-    </div>
-    <div class="rm-tabs">
-      ${RAPTOR_MART_TABS.map(t=>`<button class="rm-tab${raptorMartTab===t.key?' active':''}" data-tab="${t.key}" onclick="raptorMartSwitch('${t.key}')">${t.icon} ${t.label}</button>`).join('')}
-    </div>
-    <div class="rm-body" id="rmBody">${buildRaptorMartBodyHtml()}</div>
-  </div>`;
+/* [Ver 15.1] 마트는 이제 전체 페이지다. 머리·탭은 마크업에 있고 여기서는 채우기만 한다.
+   (옛 buildRaptorMartHtml 은 모달 본문을 통째로 만들던 것이라 사라졌다) */
+function renderMartWallet(){
+  const w = document.getElementById('martWallet');
+  if(!w) return;
+  /* ⚠ 옛 .rm-coin 은 물건을 사도 갱신되지 않았다. 탭을 바꿀 때마다 여기를 다시 그린다. */
+  let stones = 0, teeth = 0;
+  try{ stones = pwStoneCount(); }catch(e){}
+  try{ teeth = teethCount(); }catch(e){}
+  w.innerHTML = `
+    <span class="mart-coin">💎 ${ubinite.toLocaleString()} <small>우비나이트</small></span>
+    <span class="mart-coin">🦷 ${teeth.toLocaleString()} <small>이빨</small></span>
+    <span class="mart-coin">🔷 ${stones.toLocaleString()} <small>권능석</small></span>`;
+}
+function renderMartTabs(){
+  const t = document.getElementById('martTabs');
+  if(!t) return;
+  t.innerHTML = RAPTOR_MART_TABS.map(x=>
+    `<button class="mart-tab${raptorMartTab===x.key?' active':''}${x.soon?' soon':''}" data-tab="${x.key}"
+       onclick="raptorMartSwitch('${x.key}')">${x.icon} ${x.label}</button>`).join('');
+}
+function renderRaptorMart(){
+  renderMartWallet();
+  renderMartTabs();
+  const b = document.getElementById('rmBody');
+  if(b) b.innerHTML = buildRaptorMartBodyHtml();
 }
 function buildRaptorMartBodyHtml(){
   const t = RAPTOR_MART_TABS.find(x=> x.key===raptorMartTab) || RAPTOR_MART_TABS[0];
   // [Ver 9.10.2] 지후펫 탭이 실제 상점이고, [Ver 13.1] 재화 탭이 칭호 탭을 대신한다.
   if(t.key === 'pet') return buildPetShopHtml();
+  if(t.key === 'gacha') return buildMartGachaHtml();   // [Ver 15.1]
   if(t.key === 'resource') return buildResourceShopHtml();
   return `<div class="rm-soon">
     <div class="rm-soon-ic">${t.icon}</div>
@@ -19926,6 +20919,7 @@ function mailRewardText(r){
   }
   if(r.boxKeys) parts.push(`🔑 상자 열쇠 ${r.boxKeys.toLocaleString()}개`);        // [Ver 9.16]
   if(r.cream) parts.push(`☀️ 썬크림 ${r.cream.toLocaleString()}개`);              // [Ver 12.4.4]
+  if(r.pwStone) parts.push(`🔷 권능석 ${r.pwStone.toLocaleString()}개`);           // [Ver 15.1] 초보자 패키지
   // [Ver 9.13.1] 등급 확정 진화석 뽑기권 — { tier:'Ephemeral', n:1 }
   if(r.evoPick && r.evoPick.tier) parts.push(`🎫 ${r.evoPick.tier} 확정 진화석 뽑기권 ${(r.evoPick.n||1).toLocaleString()}장`);
   return parts.length ? parts.join(' · ') : '보상 없음';
@@ -19952,6 +20946,7 @@ function claimMail(id){
     }
     if(m.reward.boxKeys) grantBoxKeys(m.reward.boxKeys);      // [Ver 9.16] 상자 열쇠
     if(m.reward.cream) grantCream(m.reward.cream);            // [Ver 12.4.4] 시즌 패스 썬크림
+    if(m.reward.pwStone) grantPwStones(m.reward.pwStone);     // [Ver 15.1] 권능석 (초보자 패키지)
     if(m.reward.pfp) grantPfp(m.reward.pfp);                  // [Ver 12.6.1] 프로필 사진
     // [Ver 9.13.1] 등급 확정 진화석 뽑기권
     if(m.reward.evoPick && m.reward.evoPick.tier) grantEvoPick(m.reward.evoPick.tier, m.reward.evoPick.n||1);
@@ -20578,6 +21573,43 @@ function fbBuildMyDoc(withExtra){
     updatedAt: Date.now()
   };
 }
+/* ##########################################################################
+   [Ver 15.1 버그수정] 프사를 바꿔도 리더보드에 안 바뀌던 문제
+   --------------------------------------------------------------------------
+   ▶ 무슨 일이 있었나
+     players/{uid} 문서는 **판이 끝났을 때**와 **[내 기록 올리기]** 두 경로로만
+     올라간다. 프사를 바꾸는 equipPfp 는 화면만 다시 그리고 끝이라, 남들이 보는
+     리더보드의 얼굴은 "마지막으로 판을 끝낸 시점"의 것으로 박제돼 있었다.
+     닉네임·상태메시지도 같은 이유로 늦게 반영됐다.
+   ▶ 어떻게
+     프로필에 해당하는 것을 바꾸면 여기로 와서 조용히 한 번 올린다.
+   ⚠ 프사 픽커는 타일을 누를 때마다 equipPfp 를 부른다 → 2.5초 뭉개서
+     **마지막 선택만** 올린다.
+   ⚠ 실패해도 아무 말 하지 않는다. 오프라인이 흔하고, 다음 판이 끝나면
+     어차피 정식 경로로 올라간다.
+   ########################################################################## */
+let __fbProfilePushT = null;
+function fbPushProfileSoon(){
+  try{
+    if(typeof isBanned === 'function' && isBanned()) return;
+    if(typeof fbAvailable === 'function' && !fbAvailable()) return;
+    clearTimeout(__fbProfilePushT);
+    __fbProfilePushT = setTimeout(()=>{
+      try{
+        fbRetryIfHidden(()=> fbSubmitScore())
+          .then(()=>{
+            /* 랭킹 탭을 열어둔 채였다면 바뀐 얼굴로 다시 그린다 */
+            try{
+              const scr = document.getElementById('screen-online');
+              if(scr && scr.classList.contains('active') && onlineTab === 'rank' && !onlineGenesisView) renderOnlineRank();
+            }catch(e){}
+          })
+          .catch(e=>{ console.info('[리더보드] 프로필 갱신 실패 — 다음 판에 다시 올라갑니다.', e); });
+      }catch(e){}
+    }, 2500);
+  }catch(e){}
+}
+
 async function fbSubmitScore(){
   // [Ver 9.14] 제재 계정은 기록을 올릴 수 없다. (보안 규칙에서도 한 번 더 막힌다)
   if(isBanned()) throw new Error('이용이 제한된 계정입니다. 기록을 올릴 수 없습니다.');
@@ -26026,6 +27058,7 @@ function openMenuDrawer(){
   bg.classList.add('show');
   document.getElementById('nmBurger')?.classList.add('on');
   try{ pruneMailbox(); updateMailboxBadge(); }catch(e){} // [Ver 9.10.1] 안 받은 보상 개수 표시
+  try{ supRefreshMine(); }catch(e){}                      // [Ver 15.1] 개발자 답장 왔나
 }
 function closeMenuDrawer(){
   const bg = document.getElementById('nmDrawerBg');
@@ -26773,6 +27806,24 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 15.1', date: '2026-09-13',
+    items: [
+      '\u{1F5BC}️ <b>[개편] 프로필 사진 고르기.</b> 이제 <b>다섯 갈래</b>(기본 · 일반 업적 · 히든 업적 · 스페셜 업적 · 시즌 패스)로 나뉘고, 칸에는 <b>그림만</b> 놓입니다. 아직 없는 것은 <b>흑백에 자물쇠</b>가 걸리고, 눌러보면 <b>어떻게 얻는지</b> 위에 나옵니다. <b>내 정보</b>에서 얼굴을 눌러도 바로 열립니다.',
+      '\u{1F4C5} <b>[개편] 출석부가 세 탭으로 갈렸습니다.</b> <b>신규 유저 · 연속 출석 · 30일 선물</b>이 한 페이지에 쌓여 있어 뭘 받았는지 헷갈렸습니다. 이제 탭마다 <b>받을 게 있으면 숫자</b>가 붙고, 신규 7일을 다 받으면 그 탭은 <b>사라집니다.</b>',
+      '\u{1F381} <b>[개편] 수상한 상자.</b> 본문을 덮고 있던 확률표를 <b>제목 옆 ℹ️</b>로 옮겨 열 때만 보이게 했습니다. 열기 버튼과 지갑이 훨씬 잘 보입니다.',
+      '\u{1F4CB} <b>[편의] 일일 퀘스트 구간 보상을 한꺼번에 받습니다.</b> 여태 <b>150P부터 750P까지</b> 구간을 하나씩 눌러야 했고, 몰아서 누르면 <b>마지막 안내창만</b> 떠서 나머지는 받았는지도 몰랐습니다. 이제 한 번 누르면 <b>그 아래 미수령분이 전부</b> 들어오고 <b>요약 하나</b>로 알려드립니다.',
+      '\u{1F4B0} <b>[연출] 재화가 들어오는 게 눈에 보입니다.</b> 우비나이트 · 곡괭이 · 개쩌는 곡괭이 · 상자 열쇠 · 이빨을 받으면 화면 가운데에서 <b>그 재화가 날아와</b> 숫자가 <b>올라갑니다.</b> 판 정산이나 상자 10개처럼 한꺼번에 들어올 때는 <b>묶어서</b> 조용히 처리합니다.',
+      '\u{1F5C3}️ <b>[편의] 인벤토리 정렬.</b> <b>등급순 · 마스터리순 · 이름순</b>으로 정렬할 수 있습니다. 고른 칸에 <b>불이 들어오지 않던</b> 문제도 함께 고쳤습니다.',
+      '\u{1F3EA} <b>[개편] 랩터마트24가 전체 화면이 됐습니다.</b> 좁은 창 대신 제대로 된 상점이 됐고, 위쪽에 <b>우비나이트 · 이빨 · 권능석</b>이 항상 보입니다. 사고 나면 <b>바로 줄어드는 게 보입니다</b>(예전에는 갱신되지 않았습니다). 탭은 <b>지후펫 · 뽑기 · 재화 · 킬 이펙트 · 이모티콘</b>입니다.',
+      '\u{1F3B0} <b>[신규] 뽑기 탭 — 권능·특성 뽑기가 마트로 옮겨왔습니다.</b> 권능 뽑기가 <b>네 종류</b>가 됐습니다. <b>하급(🦷1) · 중급(🦷5) · 상급(🦷15)</b> 에 더해 <b>울트라프로맥스+(🦷25)</b> 가 새로 생겼습니다 — <b>일반 10 · 희귀 5 · 영웅 3 · 전설 1</b>, 전부 <b>확정</b>으로 <b>19장</b>이 쏟아집니다.',
+      '\u{1F537} 특성 뽑기는 <b>1개씩만</b> 돌립니다. 여러 개를 한 번에 돌리면 뭐가 나왔는지 알아보기 어려웠습니다.',
+      '\u{1F4B3} <b>[신규] 현질하기 (BETA).</b> 우비나이트 배지의 <b>+</b> 를 누르면 열립니다. <b>계좌이체</b>로 받고 <b>개발자가 직접 확인</b>해서 <b>우편함</b>으로 보내드립니다. 많이 살수록 쌉니다 — 5,000개 <b>10% ↓</b> · 15,000개 <b>20% ↓</b> · 50,000개 <b>35% ↓</b>. <b>초보자 패키지(9,900원 · 계정당 1회)</b> 는 권능석 1 · 곡괭이 20 · 이빨 30 · 우비나이트 8,000 입니다.',
+      '\u{26A0}️ <b>자동 결제가 아닙니다.</b> 사람이 통장을 보고 승인하므로 <b>최대 하루</b> 걸릴 수 있습니다. <b>카드번호·비밀번호는 절대 받지 않습니다</b> — 묻는 사람이 있으면 사칭입니다.',
+      '\u{1F4EE} <b>[신규] 개발자한테 항의하기.</b> 메뉴에 생겼습니다. 버그든 불만이든 적어 보내면 <b>개발자가 답장</b>합니다. <b>메신저처럼</b> 계속 주고받을 수 있고, 답장이 오면 메뉴에 <b>표시</b>됩니다.',
+      '\u{1F41B} <b>[수정] 프로필 사진을 바꿔도 리더보드에는 안 바뀌던 문제.</b> 리더보드는 <b>판이 끝났을 때만</b> 갱신돼서, 남들이 보는 얼굴은 <b>마지막 판 시점</b>의 것으로 멈춰 있었습니다. 이제 <b>바꾸는 즉시</b> 반영됩니다. <b>닉네임 · 상태메시지</b>도 마찬가지입니다.',
+    ]
+  },
   {
     version: 'Ver 15.0.2', date: '2026-09-12',
     items: [
