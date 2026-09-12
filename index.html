@@ -3814,6 +3814,136 @@ body.mobile-mode .rv-card-nm{ font-size:19px; }
   font-style:normal; font-size:9.5px; opacity:0.6; margin-left:4px;
 }
 
+/* ==========================================================================
+   [Ver 15.3] 돌 깨기 채굴
+   ⚠ 돌은 매번 **다른 자리**에 생긴다. 이게 좌표 재생 매크로를 막는 핵심이다.
+   ⚠ .mrock-field 는 배경을 눌러도 아무 일이 없어야 한다 — 돌에만 손잡이를 단다.
+   ========================================================================== */
+.mrock-ov{
+  position:fixed; inset:0; z-index:9700;
+  display:none; flex-direction:column;
+  background:radial-gradient(120% 90% at 50% 0%, #1b1712 0%, #0c0a08 55%, #060504 100%);
+  opacity:0; transition:opacity .2s var(--ease);
+}
+.mrock-ov.on{ display:flex; opacity:1; }
+.mrock-hud{
+  flex-shrink:0; display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  padding:14px 18px; border-bottom:1px solid rgba(255,255,255,.07);
+}
+.mrock-count{
+  font-family:var(--font-mono); font-size:15px; font-weight:800; color:#ffd79a;
+  letter-spacing:.5px;
+}
+.mrock-tip{ flex:1 1 auto; font-size:12px; color:#8d8377; line-height:1.6; }
+.mrock-x{
+  padding:7px 13px; cursor:pointer; border:1px solid rgba(255,255,255,.14); border-radius:9px;
+  background:rgba(255,255,255,.05); color:#b9b0a4; font-size:12px; font-weight:700;
+}
+.mrock-x:hover{ background:rgba(255,255,255,.12); color:#fff; }
+/* 돌이 돌아다니는 바닥 */
+.mrock-field{ position:relative; flex:1 1 auto; min-height:0; overflow:hidden; touch-action:manipulation; }
+/* ---- 돌 ---- */
+.mrock{
+  position:absolute; transform:translate(-50%,-50%);
+  display:flex; flex-direction:column; align-items:center; gap:7px;
+  padding:0; border:none; background:none; cursor:pointer;
+  -webkit-tap-highlight-color:transparent; user-select:none;
+  animation:mrockIn .26s var(--ease-spring) both;
+}
+@keyframes mrockIn{ from{ opacity:0; transform:translate(-50%,-50%) scale(.4); } to{ opacity:1; transform:translate(-50%,-50%) scale(1); } }
+.mrock-em{
+  font-size:78px; line-height:1; display:block;
+  filter:drop-shadow(0 8px 18px rgba(0,0,0,.65));
+  transition:transform .05s linear;
+}
+.mrock.gold .mrock-em{ filter:drop-shadow(0 0 18px rgba(255,196,80,.55)) drop-shadow(0 8px 18px rgba(0,0,0,.65)); }
+/* 맞을 때마다 튄다 */
+.mrock.hit .mrock-em{ animation:mrockHit .13s var(--ease) ; }
+@keyframes mrockHit{
+  0%  { transform:scale(1) rotate(0deg); }
+  30% { transform:scale(1.16) rotate(-7deg); }
+  60% { transform:scale(.93) rotate(6deg); }
+  100%{ transform:scale(1) rotate(0deg); }
+}
+/* 금 갈수록 색이 빠진다 */
+.mrock-em{ --mrock-crack:0; }
+.mrock-hp{
+  width:96px; height:7px; border-radius:99px; overflow:hidden;
+  background:rgba(255,255,255,.12); box-shadow:inset 0 0 0 1px rgba(0,0,0,.4);
+}
+.mrock-hp > i{
+  display:block; height:100%; width:100%;
+  background:linear-gradient(90deg,#ffcb6b,#ff8f3d);
+  transition:width .12s var(--ease);
+}
+.mrock.gold .mrock-hp > i{ background:linear-gradient(90deg,#ffe9a8,#ffb020); }
+/* 깨지는 순간 */
+.mrock.broke{ animation:mrockBreak .34s var(--ease) forwards; pointer-events:none; }
+@keyframes mrockBreak{
+  0%  { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  35% { opacity:1; transform:translate(-50%,-50%) scale(1.28); }
+  100%{ opacity:0; transform:translate(-50%,-50%) scale(.3); }
+}
+/* 파편 */
+.mrock-bit{
+  position:absolute; pointer-events:none; font-size:20px; line-height:1;
+  animation:mrockBit 620ms var(--ease) forwards;
+}
+@keyframes mrockBit{
+  from{ opacity:1; transform:translate(-50%,-50%) scale(1); }
+  to  { opacity:0; transform:translate(calc(-50% + var(--bx)), calc(-50% + var(--by))) scale(.5) rotate(var(--br)); }
+}
+/* [Ver 15.3] 채굴 결과 — 유물 말고 나온 것들 · 고르지 않은 돌 */
+.mr-extra{ display:flex; flex-direction:column; gap:5px; margin-top:10px; }
+.mr-extra-r{
+  padding:8px 12px; border-radius:9px; background:var(--bg-2);
+  box-shadow:inset 0 0 0 1px var(--line); font-size:12.5px; font-weight:700; color:var(--fg);
+}
+.mr-extra-r.none{ color:var(--fg-faint); font-weight:600; }
+.mr-miss{
+  margin-top:12px; padding:11px 13px; border-radius:11px;
+  background:var(--bg-soft); box-shadow:inset 0 0 0 1px var(--line);
+}
+.mr-miss-t{ font-size:11px; font-weight:700; color:var(--fg-faint); letter-spacing:.4px; margin-bottom:6px; }
+.mr-miss-r{ font-size:12px; line-height:1.85; color:var(--fg-dim); }
+
+/* 돌을 깬 자리에 무엇이 있었는지 잠깐 띄운다 */
+.mrock-pop{
+  position:absolute; transform:translate(-50%,-50%); pointer-events:none; white-space:nowrap;
+  padding:5px 11px; border-radius:99px; font-size:13px; font-weight:800;
+  background:rgba(12,10,8,.9); color:#ffd79a; box-shadow:0 4px 14px rgba(0,0,0,.5);
+  animation:mrockPop 1.5s var(--ease) forwards;
+}
+@keyframes mrockPop{
+  0%  { opacity:0; transform:translate(-50%,-50%) scale(.7); }
+  18% { opacity:1; transform:translate(-50%,-64%) scale(1.06); }
+  72% { opacity:1; transform:translate(-50%,-78%) scale(1); }
+  100%{ opacity:0; transform:translate(-50%,-96%) scale(.95); }
+}
+/* 고르지 않은 돌 — 보여주기만 한다. 색을 죽여 "못 받은 것"임을 드러낸다. */
+.mrock-pop.miss{
+  background:rgba(12,10,8,.78); color:#8d8377; font-weight:700;
+  animation:mrockPopMiss 2.6s var(--ease) forwards;
+}
+@keyframes mrockPopMiss{
+  0%  { opacity:0; transform:translate(-50%,-50%) scale(.7); }
+  12% { opacity:1; transform:translate(-50%,-64%) scale(1); }
+  82% { opacity:1; transform:translate(-50%,-64%) scale(1); }
+  100%{ opacity:0; transform:translate(-50%,-72%) scale(.96); }
+}
+/* 첫 돌에만 뜨는 안내 */
+.mrock-hint{
+  position:absolute; left:50%; bottom:26px; transform:translateX(-50%);
+  padding:8px 16px; border-radius:99px; background:rgba(0,0,0,.55);
+  color:#cdbfa9; font-size:12.5px; white-space:nowrap; pointer-events:none;
+  animation:mrockHint 1.4s var(--ease-in-out) infinite;
+}
+@keyframes mrockHint{ 0%,100%{ opacity:.55; } 50%{ opacity:1; } }
+@media (max-width:640px){
+  .mrock-em{ font-size:62px; }
+  .mrock-hp{ width:78px; }
+}
+
 /* ---------- [Ver 15.2] 드로우 미리보기 — 더미 아래 다음 3장 ---------- */
 .dp-prev{ display:flex; flex-direction:column; gap:3px; margin-top:5px; width:100%; }
 .dp-prev-lb{
@@ -8434,7 +8564,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.2</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.3</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -19921,7 +20051,7 @@ function pwSceneBusy(){
     if(awaitingReaction) return true;
     if(typeof randomEventState !== 'undefined' && randomEventState && !randomEventState.closed) return true;
     if(typeof __lanPm !== 'undefined' && __lanPm) return true;
-    if(document.querySelector('.modal-bg.show, .shop-bg.show, .re-overlay, .auction-overlay, .roulette-overlay, .cm-overlay, .victory-overlay, .mine-dig-ov')) return true;
+    if(document.querySelector('.modal-bg.show, .shop-bg.show, .re-overlay, .auction-overlay, .roulette-overlay, .cm-overlay, .victory-overlay, .mine-dig-ov, .mrock-ov.on')) return true;
   }catch(e){}
   return false;
 }
@@ -26505,16 +26635,32 @@ function mineRollOnce(rates){
   const use = pool.length ? pool : ARTIFACT_DEFS;
   return use[Math.floor(Math.random()*use.length)].key;
 }
+/* [Ver 15.3] **같은 등급에서 하나 더** 뽑는다.
+   베팅 배율이 붙었을 때 "전설 유물 10개"를 만들기 위한 것이다.
+   ⚠ 같은 유물을 10개 복사하지 않는다 — 그러면 중복만 쌓이고 도감이 안 채워진다. */
+function mineRollSameRarity(key){
+  try{
+    const rarity = artDefOf(key).rarity;
+    const pool = ARTIFACT_DEFS.filter(d=> d.rarity === rarity);
+    if(pool.length) return pool[Math.floor(Math.random()*pool.length)].key;
+  }catch(e){}
+  return key;
+}
 /* 채굴 — 2초짜리 "캐는 중" 안내를 띄운 뒤 결과를 보여준다. (등급별 연출은 없다) */
 /* [Ver 13.15] 채굴 — 보유 곡괭이 전부까지 원하는 만큼 */
 function openMineCountPicker(){
   const have = pickaxeCount();
   if(have < 1){ showModal('⛏️ 곡괭이 부족', '곡괭이가 없습니다.', [{label:'확인', solid:true}]); return; }
   openCountPicker({
-    title:'⛏️ 유물 캐기', hero:'⛏️', unit:'번', go:'캐러 가기',
-    desc:'곡괭이를 <b>원하는 개수만큼</b> 한 번에 씁니다. 결과는 한 장에 모아서 보여줍니다.',
-    max: have, have:`보유 ⛏️ <b>${have}</b>개`,
-    exp:(n)=>`곡괭이 <b>${n}</b>개 사용 · 남는 곡괭이 <b>${have-n}</b>개`,
+    title:'⛏️ 유물 캐기', hero:'⛏️', unit:'개', go:'걸고 캐러 가기',
+    /* [Ver 15.3] 곡괭이는 개수가 아니라 **배율**이다 — 판은 언제나 한 번. */
+    desc:`돌이 <b>${MROCK_SPAWN}개</b> 나타나고 그중 <b>${MROCK_PICKS}개</b>를 캡니다. 판은 <b>한 번</b>입니다.<br>
+      곡괭이를 <b>여러 개 걸면</b> 돌 안의 보상이 <b>건 개수만큼 배</b>가 됩니다.
+      전설 유물이 든 돌을 캤다면 <b>랜덤 전설 유물이 그만큼</b> 쏟아집니다.<br>
+      <span style="font-size:11.5px;color:var(--fg-faint);">대부분 유물이지만 재화가 들어 있기도, <b>비어 있기도</b> 합니다 —
+      빈 돌을 캐면 건 곡괭이는 그대로 사라집니다. 다 캐면 <b>고르지 않은 돌</b>도 보여드립니다.</span>`,
+    max: Math.min(have, 50), have:`보유 ⛏️ <b>${have}</b>개`,
+    exp:(n)=>`곡괭이 <b>${n}</b>개를 겁니다 · 보상 <b>×${n}</b> (남음 ${have-n})`,
     onGo:(n)=> doMine(n)
   });
 }
@@ -26523,10 +26669,14 @@ function openGoldMineCountPicker(){
   const have = goldPickaxeCount();
   if(have < 1){ showModal('🪙 개쩌는 곡괭이 부족', '개쩌는 곡괭이가 없습니다.', [{label:'확인', solid:true}]); return; }
   openCountPicker({
-    title:'🪙 개쩌는 곡괭이로 캐기', hero:'🪙', unit:'번', go:'캐러 가기',
-    desc:'<b>영웅 · 전설만</b> 나옵니다. 원하는 개수만큼 한 번에 씁니다.',
-    max: have, have:`보유 🪙 <b>${have}</b>개`,
-    exp:(n)=>`개쩌는 곡괭이 <b>${n}</b>개 사용 · 남는 것 <b>${have-n}</b>개`,
+    title:'🪙 개쩌는 곡괭이로 캐기', hero:'🪙', unit:'개', go:'걸고 캐러 가기',
+    /* [Ver 15.3] 깊은 돌은 더 단단하고(MROCK_HITS_GOLD) 꽝이 없다. */
+    desc:`<b>단단한 돌</b>이 <b>${MROCK_SPAWN}개</b> 나타나고 그중 <b>${MROCK_PICKS}개</b>를 캡니다. 판은 <b>한 번</b>입니다.<br>
+      유물이 나오면 <b>영웅 · 전설만</b>이고 <b>빈 돌은 없습니다.</b>
+      여러 개 걸면 보상이 <b>건 개수만큼 배</b>가 됩니다.<br>
+      <span style="font-size:11.5px;color:var(--fg-faint);">다 캐면 <b>고르지 않은 돌</b>도 보여드립니다.</span>`,
+    max: Math.min(have, 50), have:`보유 🪙 <b>${have}</b>개`,
+    exp:(n)=>`개쩌는 곡괭이 <b>${n}</b>개를 겁니다 · 보상 <b>×${n}</b> (남음 ${have-n})`,
     onGo:(n)=> doGoldMine(n)
   });
 }
@@ -26552,22 +26702,37 @@ function doMine(count){
     return;
   }
   if(!hgMineGate()) return;   // [Ver 14.14] 매크로 잠금 · 사람 확인
-  if(!spendPickaxe(count)) return;
-  /* [Ver 13.15.2] 퀘스트 진행도는 **실제로 캔 뒤에** 올린다. 예전에는 함수 맨 위에 있어서
-     mineBusy 에 막힌 클릭·곡괭이가 모자란 클릭까지 전부 진행도로 잡혔다. */
-  try{ questBump('mine', 1); }catch(e){}   // [Ver 13.0] 일일 퀘스트 '유물 뽑기'
-  try{ mqBump('mine', 1); }catch(e){}      // [Ver 15.0] 메인 퀘스트
+  /* ★ [Ver 15.3] 베팅 — 곡괭이를 몇 개 걸든 판은 **한 번**이다.
+     돌 5개가 나타나고 그중 3개를 캔다. 돌 안의 보상은 **건 개수만큼 배**가 된다. */
+  if(!spendPickaxe(count)) return;   // 베팅은 시작할 때 전부 건다
   mineBusy = true;
-  const keys = [];
-  for(let i=0;i<count;i++) keys.push(mineRollOnce());
-  showMineDigging(()=>{
-    const got = keys.map(k=> ({ key:k, res: grantArtifact(k) }));
-    mineBusy = false;
-    renderMineScreen();
-    showMineResult(got);
-    /* [Ver 11.3.1] 유물 채굴 직후 자동 백업 — 상자·뽑기와 동일한 훅. */
-    try{ autoBackupAfterGame(); }catch(e){}
+  mineRockRun({
+    gold:false, picks: MROCK_PICKS, mult: count,
+    roll:  ()=> mineRollOnce(),
+    refund: ()=> { try{ grantPickaxe(count); }catch(e){} },   // 하나도 안 캤으면 돌려준다
+    onEnd: (got, missed)=> mineRockDone(got, missed, false)
   });
+}
+/* [Ver 15.3] 돌 채굴 마무리 — 얻은 것 중 **유물만** 여기서 지급한다.
+   ⚠ 재화(우비나이트·곡괭이·이빨·권능석)는 돌이 깨질 때 mrockGive 가 이미 줬다.
+     여기서 또 주면 두 번 들어간다. */
+function mineRockDone(got, missed, gold){
+  mineBusy = false;
+  renderMineScreen();
+  if(!got || !got.length) return;                   // 하나도 못 캐고 그만뒀다
+  /* ⚠ 배율이 붙으면 돌 하나에 유물이 여러 개다(arts). 전부 지급한다. */
+  const keys = [];
+  got.forEach(f=>{ if(f && f.key === 'artifact'){ (f.arts && f.arts.length ? f.arts : (f.art ? [f.art] : [])).forEach(k=> keys.push(k)); } });
+  /* [Ver 13.15.2] 퀘스트 진행도는 **실제로 캔 만큼**만 올린다. */
+  try{ questBump('mine', got.length); }catch(e){}   // [Ver 13.0] 일일 퀘스트 '유물 뽑기'
+  try{ mqBump('mine', got.length); }catch(e){}      // [Ver 15.0] 메인 퀘스트
+  const arts = keys.map(k=> ({ key:k, res: grantArtifact(k) }));
+  try{ renderUbiniteBadge(); renderTopResources(); }catch(e){}
+  renderMineScreen();
+  if(gold){ try{ logActivity(`개쩌는채굴 ${got.length}개 → ${keys.join(',')}`); }catch(e){} }
+  showMineResult(arts, gold, got, missed);
+  /* [Ver 11.3.1] 유물 채굴 직후 자동 백업 — 상자·뽑기와 동일한 훅. */
+  try{ autoBackupAfterGame(); }catch(e){}
 }
 /* [Ver 9.16] 개쩌는 곡괭이로 채굴 — Epic 65% / Legendary 35% 만 나온다. */
 function doGoldMine(count){
@@ -26579,19 +26744,15 @@ function doGoldMine(count){
     return;
   }
   if(!hgMineGate()) return;   // [Ver 14.14] 매크로 잠금 · 사람 확인
-  if(!spendGoldPickaxe(count)) return;
+  /* ★ [Ver 15.3] 베팅 — 깊은 돌은 더 단단하고(MROCK_HITS_GOLD) 꽝이 없다. */
+  if(!spendGoldPickaxe(count)) return;   // 베팅은 시작할 때 전부 건다
   mineBusy = true;
-  const keys = [];
-  for(let i=0;i<count;i++) keys.push(mineRollOnce(GOLD_MINE_RATES));
-  showMineDigging(()=>{
-    const got = keys.map(k=> ({ key:k, res: grantArtifact(k) }));
-    mineBusy = false;
-    renderMineScreen();
-    try{ logActivity(`개쩌는채굴 ${count}회 → ${keys.join(',')}`); }catch(e){}   // [Ver 14.9]
-    showMineResult(got, true);
-    /* [Ver 11.3.1] 개쩌는 곡괭이 채굴 직후 자동 백업 — 일반 채굴과 동일한 훅. */
-    try{ autoBackupAfterGame(); }catch(e){}
-  }, 'gold');
+  mineRockRun({
+    gold:true, picks: MROCK_PICKS, mult: count,
+    roll:  ()=> mineRollOnce(GOLD_MINE_RATES),
+    refund: ()=> { try{ grantGoldPickaxe(count); }catch(e){} },
+    onEnd: (got, missed)=> mineRockDone(got, missed, true)
+  });
 }
 /* [Ver 9.16] 곡괭이 강화 — 곡괭이 1개를 걸고 25%. 실패하면 그대로 소멸한다. */
 /* ==========================================================================
@@ -26732,6 +26893,299 @@ function runPickaxeUpgrade(n){
 }
 /* "유물 캐는 중..." 오버레이
    [Ver 9.16] mode — 없으면 일반 채굴, 'gold'는 개쩌는 곡괭이 채굴, 'up'은 곡괭이 강화 */
+/* ##########################################################################
+   [Ver 15.3] 돌 깨기 채굴
+   --------------------------------------------------------------------------
+   ▶ 여태 채굴은 **버튼 한 번 = 유물 N개**였다. 자리가 고정이라, 좌표를 녹화해
+     되풀이하는 매크로에게는 그냥 "한 점을 계속 누르기"였다.
+   ▶ 이제 곡괭이가 있으면 **아무 자리에나 돌이 생기고**, 그 돌을 연타해야 깨진다.
+     깨지면 다음 돌은 **다른 자리**에 생긴다.
+   ⚠ 매크로가 막히는 진짜 이유는 연타가 아니라 **자리가 매번 다르다**는 것이다.
+     그래서 돌에 **실제로 닿은** 누름만 센다. 배경을 눌러도 아무 일도 없다.
+   ⚠ 곡괭이는 **돌이 깨질 때** 하나씩 쓴다. 그만두면 남은 건 그대로 남는다.
+   ########################################################################## */
+const MROCK_SPAWN     = 5;         // 한 판에 나타나는 돌
+const MROCK_PICKS     = 3;         // 그중 깰 수 있는 돌
+const MROCK_HITS      = [5, 9];    // 일반 곡괭이 — 돌 하나를 깨는 데 필요한 타수
+const MROCK_HITS_GOLD = [8, 12];   // 개쩌는 곡괭이 — 더 깊고 단단하다
+const MROCK_PAD       = 14;        // 가장자리에서 이만큼(%)은 띄운다 — 잘리지 않게
+let __mrock = null;
+
+/* ##########################################################################
+   [Ver 15.3] 돌 안에 든 것
+   --------------------------------------------------------------------------
+   ▶ 넷 중 셋은 유물이다. 나머지는 재화이거나, 가끔은 아무것도 없다.
+   ⚠ 내용물은 **돌이 생길 때 미리 정한다.** 깬 뒤에 정하면, 끝나고 보여주는
+     "안 깬 돌 둘"이 거짓말이 된다(그때 급조한 것이 되므로).
+   ⚠ 확률은 여기 한 곳에만 적는다. 안내 문구도 이 표를 읽어서 쓴다 —
+     두 군데에 적으면 반드시 어긋난다.
+   ########################################################################## */
+const MROCK_FILL = [
+  { key:'artifact', w:75,  ic:'\u{1F3FA}', name:'유물' },
+  { key:'ubinite',  w:9,   ic:'\u{1F48E}', name:'우비나이트', min:300, max:1200 },
+  { key:'pickaxe',  w:6,   ic:'⛏️', name:'곡괭이', min:1, max:2 },
+  { key:'teeth',    w:3,   ic:'\u{1F9B7}', name:'랩터의 이빨', min:1, max:3 },
+  { key:'gold',     w:1.5, ic:'\u{1FA99}', name:'개쩌는 곡괭이', min:1, max:1 },
+  { key:'stone',    w:0.5, ic:'\u{1F537}', name:'권능석', min:1, max:1 },
+  { key:'none',     w:5,   ic:'\u{1F32B}️', name:'아무것도 없음' },
+];
+/* 개쩌는 곡괭이로 캔 돌 — 꽝이 없고 유물이 더 자주 나온다 */
+const MROCK_FILL_GOLD = [
+  { key:'artifact', w:90,  ic:'\u{1F3FA}', name:'유물' },
+  { key:'teeth',    w:4,   ic:'\u{1F9B7}', name:'랩터의 이빨', min:2, max:5 },
+  { key:'ubinite',  w:2.5, ic:'\u{1F48E}', name:'우비나이트', min:800, max:2500 },
+  { key:'gold',     w:2,   ic:'\u{1FA99}', name:'개쩌는 곡괭이', min:1, max:1 },
+  { key:'stone',    w:1.5, ic:'\u{1F537}', name:'권능석', min:1, max:1 },
+];
+function mrockRand(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+function mrockRollFill(gold){
+  const T = gold ? MROCK_FILL_GOLD : MROCK_FILL;
+  let sum = 0; T.forEach(t=> sum += t.w);
+  let r = Math.random() * sum;
+  for(const t of T){ r -= t.w; if(r <= 0) return t; }
+  return T[0];
+}
+/* 돌 하나의 내용물을 **미리** 정해 둔다. 아직 주지는 않는다. */
+function mrockMakeFill(gold, rollArtifact, mult){
+  mult = Math.max(1, mult | 0);
+  const t = mrockRollFill(gold);
+  const o = { key:t.key, ic:t.ic, name:t.name, n:0, art:null, arts:[], mult };
+  if(t.key === 'artifact'){
+    try{
+      o.art = rollArtifact();
+      /* ★ 배율만큼 **같은 등급에서 다시 뽑는다.** 같은 것을 복사하지 않는다. */
+      o.arts = [o.art];
+      for(let i = 1; i < mult; i++) o.arts.push(mineRollSameRarity(o.art));
+    }catch(e){ o.art = null; o.arts = []; }
+  }
+  else if(t.min != null){ o.n = mrockRand(t.min, t.max) * mult; }
+  return o;
+}
+/* 실제 지급. ⚠ 깬 돌에만 부른다 — 안 깬 돌은 보여주기만 하고 주지 않는다. */
+function mrockGive(f){
+  if(!f) return;
+  try{
+    switch(f.key){
+      case 'artifact': /* 유물은 결과창에서 한꺼번에 준다(중복/신규 표시를 모아 보여주려고) */ break;
+      case 'ubinite': grantUbinite(f.n); break;
+      case 'pickaxe': grantPickaxe(f.n); break;
+      case 'teeth':   grantTeeth(f.n); break;
+      case 'gold':    grantGoldPickaxe(f.n); break;
+      case 'stone':   grantPwStones(f.n); break;
+      default: break;   // 'none' — 아무것도 없다
+    }
+  }catch(e){ console.error('[채굴] 지급 실패', e); }
+}
+function mrockFillText(f){
+  if(!f) return '';
+  if(f.key === 'artifact'){
+    const n = (f.arts && f.arts.length) || 1;
+    let rt = '';
+    try{ rt = artRarityDef(artDefOf(f.art).rarity).label; }catch(e){}
+    return `${f.ic} ${rt ? rt + ' ' : ''}유물 ${n.toLocaleString()}개`;
+  }
+  if(f.key === 'none')     return `${f.ic} 아무것도 없음`;
+  return `${f.ic} ${f.name} ${f.n.toLocaleString()}개`;
+}
+
+/* 돌이 설 자리. ⚠ 서로 겹치지 않게, 그리고 가장자리에 붙지 않게 고른다. */
+function mrockPlaceAll(n){
+  const out = [];
+  for(let k = 0; k < n; k++){
+    let best = null;
+    for(let i = 0; i < 60; i++){
+      const x = mrockRand(MROCK_PAD, 100 - MROCK_PAD);
+      const y = mrockRand(MROCK_PAD + 4, 100 - MROCK_PAD);
+      let ok = true;
+      for(const p of out){
+        const dx = x - p.x, dy = y - p.y;
+        if(Math.sqrt(dx*dx + dy*dy) < 24){ ok = false; break; }
+      }
+      if(ok){ best = { x, y }; break; }
+      if(!best) best = { x, y };
+    }
+    out.push(best);
+  }
+  return out;
+}
+
+/* o = { gold, picks, mult, spend(), roll(), onEnd(res) } */
+function mineRockRun(o){
+  let ov = document.getElementById('mineRockOv');
+  if(!ov){
+    ov = document.createElement('div');
+    ov.id = 'mineRockOv';
+    ov.className = 'mrock-ov';
+    document.body.appendChild(ov);
+  }
+  const picks = Math.max(1, Math.min(MROCK_PICKS, o.picks | 0));
+  ov.innerHTML = `
+    <div class="mrock-hud">
+      <span class="mrock-count" id="mrockCount"></span>
+      <span class="mrock-tip">돌 <b>${MROCK_SPAWN}개</b> 중 <b>${picks}개</b>만 캘 수 있습니다 · 돌을 <b>연타</b>해서 깨세요${
+        (o.mult|0) > 1 ? ` · <b style="color:#ffd35c;">보상 ×${o.mult|0}</b>` : ''}</span>
+      <button class="mrock-x" onclick="mineRockQuit()">그만두기</button>
+    </div>
+    <div class="mrock-field" id="mrockField"></div>`;
+  const pos = mrockPlaceAll(MROCK_SPAWN);
+  /* ★ 내용물을 지금 전부 정해 둔다 — 끝나고 보여줄 "안 깬 돌"이 거짓이 되지 않게 */
+  __mrock = {
+    opts: o, picks, mult: Math.max(1, o.mult | 0), done: 0, got: [], quit: false, revealing: false,
+    rocks: pos.map((p, i)=> ({
+      i, x:p.x, y:p.y, fill: mrockMakeFill(o.gold, o.roll, Math.max(1, o.mult | 0)),
+      need: mrockRand.apply(null, o.gold ? MROCK_HITS_GOLD : MROCK_HITS),
+      hit: 0, broken: false, busy: false, el: null
+    }))
+  };
+  ov.classList.add('on');
+  try{ scheduleOverlayCheck(); }catch(e){}
+  mrockPaint();
+}
+function mrockHud(){
+  const el = document.getElementById('mrockCount');
+  if(el && __mrock) el.textContent = `${__mrock.done} / ${__mrock.picks}개 캠`;
+}
+function mrockPaint(){
+  const m = __mrock; if(!m) return;
+  const field = document.getElementById('mrockField'); if(!field) return;
+  field.innerHTML = '';
+  mrockHud();
+  m.rocks.forEach(rk=>{
+    if(rk.broken) return;
+    const b = document.createElement('button');
+    b.className = 'mrock' + (m.opts.gold ? ' gold' : '');
+    b.style.left = rk.x + '%';
+    b.style.top  = rk.y + '%';
+    b.style.animationDelay = (rk.i * 0.06) + 's';
+    b.innerHTML = `<span class="mrock-em">${m.opts.gold ? '\u{1F5FF}' : '\u{1FAA8}'}</span>
+                   <span class="mrock-hp"><i style="width:${Math.max(0, 100 - (rk.hit / rk.need) * 100).toFixed(1)}%"></i></span>`;
+    /* ⚠ 돌 자체에만 손잡이를 단다. 배경을 눌러도 아무 일이 없어야
+       좌표를 되풀이하는 매크로가 허공을 때린다. */
+    b.addEventListener('pointerdown', (e)=>{ e.preventDefault(); mrockTap(rk.i); });
+    field.appendChild(b);
+    rk.el = b;
+  });
+  if(!m.hinted){
+    m.hinted = true;
+    const h = document.createElement('div');
+    h.className = 'mrock-hint';
+    h.textContent = `${MROCK_SPAWN}개 중 ${m.picks}개만 고를 수 있습니다 — 신중하게`;
+    field.appendChild(h);
+    setTimeout(()=>{ try{ h.remove(); }catch(e){} }, 3600);
+  }
+}
+function mrockTap(i){
+  const m = __mrock; if(!m || m.revealing) return;
+  const rk = m.rocks[i];
+  if(!rk || rk.broken || rk.busy || !rk.el) return;
+  rk.hit++;
+  const el = rk.el;
+  el.classList.remove('hit');
+  void el.offsetWidth;            // 애니메이션을 다시 태우려면 한 번 끊어야 한다
+  el.classList.add('hit');
+  const bar = el.querySelector('.mrock-hp > i');
+  if(bar) bar.style.width = Math.max(0, 100 - (rk.hit / rk.need) * 100).toFixed(1) + '%';
+  try{ if(typeof UISfx !== 'undefined' && UISfx.tap) UISfx.tap(); }catch(e){}
+  if(rk.hit >= rk.need) mrockBreak(i);
+}
+function mrockBreak(i){
+  const m = __mrock; if(!m) return;
+  const rk = m.rocks[i];
+  if(!rk || rk.broken || rk.busy) return;
+  rk.busy = true;
+  /* ⚠ [Ver 15.3] 곡괭이는 **판이 시작될 때 이미 전부 걸었다**(베팅).
+     여기서는 더 쓰지 않는다. */
+  rk.broken = true;
+  m.done++;
+  mrockGive(rk.fill);
+  m.got.push(rk.fill);
+  mrockBits(rk, m.opts.gold);
+  if(rk.el){
+    const el = rk.el;
+    el.classList.add('broke');
+    /* 깨진 자리에 무엇이 있었는지 잠깐 띄운다 */
+    mrockPop(rk, mrockFillText(rk.fill), 'got');
+    setTimeout(()=>{ try{ el.remove(); }catch(e){} }, 360);
+    rk.el = null;
+  }
+  mrockHud();
+  if(m.done >= m.picks){ setTimeout(mineRockReveal, 620); return; }
+}
+function mrockBits(rk, gold){
+  try{
+    const field = document.getElementById('mrockField'); if(!field) return;
+    for(let i = 0; i < 7; i++){
+      const bit = document.createElement('div');
+      bit.className = 'mrock-bit';
+      bit.textContent = gold ? '✨' : '\u{1FAA8}';
+      bit.style.left = rk.x + '%';
+      bit.style.top  = rk.y + '%';
+      bit.style.setProperty('--bx', (Math.random()*180 - 90) + 'px');
+      bit.style.setProperty('--by', (Math.random()*140 - 90) + 'px');
+      bit.style.setProperty('--br', (Math.random()*540 - 270) + 'deg');
+      field.appendChild(bit);
+      setTimeout(()=>{ try{ bit.remove(); }catch(e){} }, 700);
+    }
+  }catch(e){}
+}
+function mrockPop(rk, text, cls){
+  try{
+    const field = document.getElementById('mrockField'); if(!field) return;
+    const p = document.createElement('div');
+    p.className = 'mrock-pop ' + (cls || '');
+    p.textContent = text;
+    p.style.left = rk.x + '%';
+    p.style.top  = rk.y + '%';
+    field.appendChild(p);
+    setTimeout(()=>{ try{ p.remove(); }catch(e){} }, cls === 'miss' ? 2600 : 1500);
+  }catch(e){}
+}
+/* 다 캤다 — 고르지 않은 돌에 무엇이 들어 있었는지 보여준다.
+   ⚠ 보여주기만 한다. 주지 않는다. */
+function mineRockReveal(){
+  const m = __mrock;
+  if(!m || m.revealing){ mineRockFinish(); return; }
+  m.revealing = true;
+  const left = m.rocks.filter(r=> !r.broken);
+  if(!left.length){ mineRockFinish(); return; }
+  const tip = document.querySelector('.mrock-tip');
+  if(tip) tip.innerHTML = '<b>고르지 않은 돌</b>에는 이것들이 들어 있었습니다';
+  left.forEach((rk, k)=>{
+    setTimeout(()=>{
+      try{
+        if(rk.el){ rk.el.classList.add('broke'); setTimeout(()=>{ try{ rk.el.remove(); }catch(e){} }, 360); }
+        mrockBits(rk, m.opts.gold);
+        mrockPop(rk, mrockFillText(rk.fill), 'miss');
+      }catch(e){}
+    }, k * 260);
+  });
+  setTimeout(mineRockFinish, left.length * 260 + 2100);
+}
+/* 그만두기
+   ⚠ 건 곡괭이는 시작할 때 이미 나갔다. 하나라도 캤으면 돌려주지 않는다(베팅이므로).
+     **하나도 안 캤으면 돌려준다** — 실수로 들어왔다가 나가는 사람까지 잃게 할 이유는 없다. */
+function mineRockQuit(){
+  const m = __mrock;
+  if(m && !m.revealing && m.done > 0){ mineRockReveal(); return; }   // 캔 게 있으면 나머지는 보여주고 끝낸다
+  if(m && m.done === 0 && typeof m.opts.refund === 'function'){
+    try{ m.opts.refund(); }catch(e){}
+  }
+  mineRockFinish();
+}
+function mineRockFinish(){
+  const m = __mrock;
+  __mrock = null;
+  const ov = document.getElementById('mineRockOv');
+  if(ov){
+    ov.classList.remove('on');
+    setTimeout(()=>{ try{ ov.innerHTML = ''; }catch(e){} }, 240);
+  }
+  try{ scheduleOverlayCheck(); }catch(e){}
+  if(m && m.opts && typeof m.opts.onEnd === 'function'){
+    try{ m.opts.onEnd(m.got || [], (m.rocks || []).filter(r=> !r.broken).map(r=> r.fill)); }
+    catch(e){ console.error('[채굴] 마무리 실패', e); }
+  }
+}
 function showMineDigging(onDone, mode){
   let ov = document.getElementById('mineDigOv');
   if(!ov){
@@ -26755,7 +27209,10 @@ function showMineDigging(onDone, mode){
   }, MINE_DIG_MS);
 }
 /* [Ver 13.4] 채굴 결과도 한 장씩 연다. 목록은 다 연 뒤에 요약으로 남긴다. */
-function showMineResult(got, isGold){
+function showMineResult(got, isGold, rocks, missed){
+  /* ⚠ 캔 돌이 전부 재화·꽝이면 유물이 0개다. 뒤집을 카드가 없으므로
+     연출을 건너뛰고 목록만 바로 보여준다(안 그러면 결과창이 아예 안 뜬다). */
+  if(!got || !got.length){ showMineResultList([], isGold, rocks, missed); return; }
   const asc = got.slice().sort((a,b)=>
     (ART_RARITY_TIER[artDefOf(a.key).rarity]||0) - (ART_RARITY_TIER[artDefOf(b.key).rarity]||0));
   const items = asc.map(g=>{
@@ -26768,10 +27225,10 @@ function showMineResult(got, isGold){
                   (g.res.lv >= ARTIFACT_MAX_LV ? `이미 MAX 레벨입니다`
                    : `Lv${g.res.lv} · 다음 레벨까지 ${Math.max(0, need - g.res.dup)}개`) };
   });
-  revealSequence(items, { onDone: ()=> showMineResultList(got, isGold) });
+  revealSequence(items, { onDone: ()=> showMineResultList(got, isGold, rocks, missed) });
 }
-function showMineResultList(got, isGold){
-  const rows = got.map(g=>{
+function showMineResultList(got, isGold, rocks, missed){
+  const rows = (got || []).map(g=>{
     const d = artDefOf(g.key);
     const rd = artRarityDef(d.rarity);
     const tag = g.res.isNew ? '<span class="art-new">NEW</span>' : `<span class="art-dup">중복 +1</span>`;
@@ -26782,10 +27239,23 @@ function showMineResultList(got, isGold){
       <span class="gr-tag">${tag}</span>
     </div>`;
   }).join('');
-  const news = got.filter(g=> g.res.isNew).length;
+  const news = (got || []).filter(g=> g.res.isNew).length;
+  /* [Ver 15.3] 유물 말고 **재화**가 든 돌도 있었다. 그것들을 따로 적어준다.
+     ⚠ 지급은 이미 돌이 깨질 때 끝났다(mrockGive). 여기서는 적기만 한다. */
+  const extras = (rocks || []).filter(f=> f && f.key !== 'artifact');
+  const extraRows = extras.length ? `<div class="mr-extra">
+      ${extras.map(f=> `<div class="mr-extra-r${f.key==='none'?' none':''}">${escapeHtml(mrockFillText(f))}</div>`).join('')}
+    </div>` : '';
+  /* ⚠ 고르지 않은 돌은 **보여주기만** 한다. 여기서 지급하면 "5개 중 3개"가 무너진다. */
+  const missRows = (missed && missed.length) ? `<div class="mr-miss">
+      <div class="mr-miss-t">고르지 않은 돌 ${missed.length}개에는…</div>
+      ${missed.map(f=> `<div class="mr-miss-r">${escapeHtml(mrockFillText(f))}</div>`).join('')}
+    </div>` : '';
   showModal(isGold ? '🪙 개쩌는 채굴 결과' : '⛏️ 채굴 결과', `<div class="gr-wrap">
-      <div class="gr-sum">유물 <b>${got.length}</b>개 · 새 유물 <b>${news}</b>개</div>
+      <div class="gr-sum">유물 <b>${(got||[]).length}</b>개 · 새 유물 <b>${news}</b>개</div>
       <div class="gr-list">${rows}</div>
+      ${extraRows}
+      ${missRows}
     </div>`, [{ label:'확인', solid:true }]);
 }
 
@@ -28296,6 +28766,17 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 15.3', date: '2026-09-13',
+    items: [
+      '\u{1FAA8} <b>[개편] 유물을 이제 직접 캡니다.</b> 여태 채굴은 <b>버튼 한 번이면 끝</b>이었습니다. 이제 광산에 들어가면 <b>돌이 5개</b> 나타나고, 그중 <b>3개</b>를 골라 <b>연타해서 깨야</b> 합니다. 돌 하나에 <b>5~9번</b>(개쩌는 곡괭이는 <b>8~12번</b>).',
+      '\u{1F3AF} <b>돌은 매번 다른 자리에 생깁니다.</b> 이게 핵심입니다 — <b>같은 곳을 계속 누르는 매크로</b>는 허공을 때리게 됩니다. 돌에 <b>실제로 닿은 누름만</b> 셉니다.',
+      '\u{1F381} <b>돌 안에는 유물만 있는 게 아닙니다.</b> 넷 중 셋은 <b>유물</b>이지만, <b>우비나이트 · 곡괭이 · 랩터의 이빨</b>이 들어 있기도 하고, 아주 드물게 <b>개쩌는 곡괭이</b>나 <b>권능석</b>이 나옵니다. 그리고 가끔은 <b>아무것도 없습니다.</b>',
+      '\u{1F440} <b>다 캐면 고르지 않은 돌 2개도 열어 보여드립니다.</b> 무엇을 놓쳤는지 알 수 있습니다. (물론 주지는 않습니다)',
+      '\u{1F3B2} <b>[신규] 곡괭이는 개수가 아니라 배율입니다.</b> 여러 개를 걸어도 판은 <b>한 번</b>입니다. 대신 돌 안의 보상이 <b>건 개수만큼 배</b>가 됩니다.<br><b>곡괭이 10개</b>를 걸고 <b>전설 유물</b>이 든 돌을 캤다면 — <b>랜덤 전설 유물 10개</b>가 쏟아집니다. 대신 <b>빈 돌</b>을 골랐다면 건 곡괭이는 그대로 사라집니다. <b>베팅인 셈입니다.</b>',
+      '\u{26CF}️ 하나도 캐지 않고 그만두면 <b>건 곡괭이는 돌려드립니다.</b> 실수로 들어왔다 나가는 경우까지 잃게 하지는 않습니다.',
+    ]
+  },
   {
     version: 'Ver 15.2', date: '2026-09-13',
     items: [
@@ -75692,7 +76173,7 @@ var OVERLAY_SEL = '.modal-bg.show, .gwin-bg.show, .shop-bg.show, .gm-bg.show, .l
                 + '.devauth-bg.show, .nm-drawer-bg.show, .fdn-bg.show,'
                 + '.match-intro.show, .qm-intro.show,'
                 + '.auction-overlay, .cm-overlay, .clsup-ov, .re-overlay,'
-                + '.roulette-overlay, .victory-overlay, .blackmarket-alert-overlay, .mine-dig-ov';
+                + '.roulette-overlay, .victory-overlay, .blackmarket-alert-overlay, .mine-dig-ov, .mrock-ov.on';
 var ovTimer = null;
 function scheduleOverlayCheck(){
   if(ovTimer) return;
