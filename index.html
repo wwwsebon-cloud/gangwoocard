@@ -1762,18 +1762,54 @@ body.pw-targeting .p-card.pw-pick{
 .arc-item-name{ font-size:11.5px; font-weight:700; text-align:center; }
 .arc-item-cost{ font-family:var(--font-mono); font-size:11px; color:var(--tone-yellow); font-weight:600; }
 .arc-item-lim{ font-size:9.5px; color:var(--fg-faint); }
+.arc-shop-btn{ flex-shrink:0; font-weight:700; }
+/* [Ver 15.2] 상점이 비운 자리 — 아케이드 안내 */
+.arc-intro{
+  flex-shrink:0; display:flex; align-items:stretch; gap:var(--sp-3); flex-wrap:wrap;
+  padding:14px 16px; border-radius:var(--r);
+  background:var(--bg-panel); box-shadow:var(--sh-ring);
+}
+.arc-intro-main{ flex:1 1 260px; min-width:0; }
+.arc-intro-t{ font-size:13.5px; font-weight:700; margin-bottom:4px; }
+.arc-intro-d{ font-size:11.5px; line-height:1.75; color:var(--fg-dim); }
+.arc-intro-stats{ display:flex; gap:var(--sp-3); align-items:center; flex-wrap:wrap; }
+.arc-stat{
+  display:flex; flex-direction:column; gap:2px; align-items:center;
+  padding:8px 14px; border-radius:var(--r-sm); background:var(--bg-2); min-width:78px;
+}
+.arc-stat b{ font-family:var(--font-mono); font-size:16px; font-weight:700; }
+.arc-stat small{ font-size:9.5px; color:var(--fg-faint); letter-spacing:.4px; }
+
 .arc-modes{ flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:var(--sp-2); }
-.arc-mode-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:var(--sp-3); }
+/* [Ver 15.2] 모드를 꽉 채운다 — 칸을 키우고 그림 자리를 비워둔다 */
+.arc-mode-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(216px,1fr)); gap:var(--sp-3); }
 .arc-mode{
-  display:flex; flex-direction:column; align-items:flex-start; gap:3px;
-  padding:16px; border-radius:var(--r);
+  display:flex; flex-direction:column; align-items:stretch; gap:0;
+  padding:0; overflow:hidden; border-radius:var(--r);
   background:var(--bg-panel); box-shadow:var(--sh-ring);
   color:var(--fg); text-align:left; cursor:pointer;
   transition:transform var(--t) var(--ease), background var(--t) var(--ease), box-shadow var(--t) var(--ease);
 }
 .arc-mode:hover{ transform:translateY(-3px); background:var(--bg-2); box-shadow:var(--sh-ring), var(--sh-2); }
-.arc-mode-ic{ font-size:22px; line-height:1.3; }
-.arc-mode b{ font-size:13px; font-weight:700; }
+/* ★ 일러스트 자리. 그림이 나오면 background-image 만 얹으면 된다. */
+.arc-mode-art{
+  position:relative; height:96px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(140deg, var(--bg-2), var(--bg-3));
+  background-size:cover; background-position:center;
+}
+.arc-mode-art::after{
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(to top, var(--bg-panel) 0%, transparent 55%);
+  opacity:.55; pointer-events:none;
+}
+.arc-mode:hover .arc-mode-art{ filter:brightness(1.06); }
+.arc-mode-body{ display:flex; flex-direction:column; gap:3px; padding:12px 14px 14px; }
+/* 아직 안 열린 모드 — 자리는 지키되 눌리지 않는다 */
+.arc-mode.soon{ opacity:.42; filter:grayscale(.85); cursor:not-allowed; pointer-events:none; }
+.arc-soon{ font-size:10px; color:var(--fg-faint); font-weight:700; letter-spacing:.4px; }
+.arc-mode-ic{ font-size:40px; line-height:1; filter:drop-shadow(0 3px 8px rgba(0,0,0,.28)); }
+.arc-mode b{ font-size:13.5px; font-weight:700; }
 .arc-mode small{ font-size:11px; color:var(--fg-faint); line-height:1.55; }
 .arc-noreward{ font-size:10px; color:var(--tone-yellow); font-weight:600; }
 
@@ -3784,25 +3820,38 @@ body.mobile-mode .rv-card-nm{ font-size:19px; }
   font-size:8.5px; letter-spacing:1px; color:var(--fg-faint); text-align:center;
   font-family:var(--font-mono); font-weight:700;
 }
-.dp-prev-row{ display:flex; flex-direction:column; gap:3px; }
-.dp-prev-c{
-  display:flex; align-items:center; gap:4px;
-  padding:3px 5px; border-radius:5px;
-  background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--line);
-  opacity:.9;
+/* [Ver 15.2] 등급 셋 — 하나만 진짜다. 어느 것인지는 알 수 없다. */
+.dp-prev-row{ display:flex; gap:3px; justify-content:center; }
+.dp-bluff{
+  flex:1 1 0; min-width:0; padding:3px 0; text-align:center; border-radius:4px;
+  background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--line); color:var(--fg-dim);
+  font-family:var(--font-mono); font-size:9.5px; font-weight:800; letter-spacing:.3px;
 }
-.dp-prev-c .g{
-  flex:0 0 auto; min-width:15px; padding:0 3px; border-radius:3px; text-align:center;
-  background:var(--bg-3); color:var(--fg-dim);
-  font-family:var(--font-mono); font-size:8px; font-weight:800;
+.dp-prev-hint{ font-size:8px; color:var(--fg-faint); text-align:center; letter-spacing:.3px; }
+/* 뽑고 나면 새 후보가 위에서 넘어온다 */
+@keyframes dpSwap{
+  0%  { transform:translateY(-9px) rotateX(-75deg); opacity:0; }
+  55% { transform:translateY(2px) rotateX(10deg); opacity:1; }
+  100%{ transform:none; opacity:1; }
 }
-.dp-prev-c .n{
-  flex:1 1 auto; min-width:0; font-size:9px; line-height:1.3; color:var(--fg-dim);
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-/* 다음에 바로 나올 한 장은 또렷하게 */
-.dp-prev-c.next{ opacity:1; box-shadow:inset 0 0 0 1px var(--accent); }
-.dp-prev-c.next .n{ color:var(--fg); font-weight:700; }
+.dp-prev-row{ perspective:220px; }
+.dp-prev-row.dp-swap .dp-bluff{ animation:dpSwap .40s var(--ease-spring) both; }
+.dp-prev-row.dp-swap .dp-bluff:nth-child(2){ animation-delay:.07s; }
+.dp-prev-row.dp-swap .dp-bluff:nth-child(3){ animation-delay:.14s; }
+/* 등급 색 — 카드에 쓰는 --cfx 와 같은 색을 그대로 가져왔다(index.html:4935~).
+   ⚠ .grade-glow-* 클래스를 직접 쓰면 box-shadow !important 까지 딸려와
+     작은 칩에 커다란 발광이 걸린다. 색만 따로 쓴다. */
+.dp-bluff.dpg-E{ color:#9aa3b2; box-shadow:inset 0 0 0 1px #3a4150; }
+.dp-bluff.dpg-D{ color:#e8ecf2; box-shadow:inset 0 0 0 1px #5a6270; }
+.dp-bluff.dpg-C{ color:#9AE66E; box-shadow:inset 0 0 0 1px rgba(154,230,110,.5); }
+.dp-bluff.dpg-B{ color:#74C0FC; box-shadow:inset 0 0 0 1px rgba(116,192,252,.5); }
+.dp-bluff.dpg-A{ color:#FFD43B; box-shadow:inset 0 0 0 1px rgba(255,212,59,.5); }
+.dp-bluff.dpg-S{ color:#FF9142; box-shadow:inset 0 0 0 1px rgba(255,145,66,.5); }
+.dp-bluff.dpg-SR{ color:#FF4F4F; box-shadow:inset 0 0 0 1px rgba(255,79,79,.55); }
+.dp-bluff.dpg-SSR,
+.dp-bluff.dpg-UR,
+.dp-bluff.dpg-LR{ color:#B794F6; box-shadow:inset 0 0 0 1px rgba(183,148,246,.6); }
+.dp-bluff.dpg-X{ color:#FF0000; box-shadow:inset 0 0 0 1px rgba(255,0,0,.6); }
 
 /* ==========================================================================
    [Ver 15.2] 반응 HUD — 화면 상단 중앙의 검은 각진 판
@@ -3959,18 +4008,7 @@ body.mobile-mode .rv-card-nm{ font-size:19px; }
   background:var(--bg-panel); box-shadow:inset 0 0 0 1px var(--accent), var(--sh-2);
 }
 #reactionBar.show{ display:flex; animation:riseIn var(--t) var(--ease-spring) both; }
-.reaction-bar-wrap{ position:relative; height:22px; border-radius:var(--r-pill); background:var(--bg-3); overflow:hidden; }
-.reaction-bar-fill{
-  position:absolute; inset:0 auto 0 0; height:100%;
-  background:var(--accent); border-radius:inherit;
-  transition:width 0.1s linear, background var(--t) var(--ease);
-}
-.reaction-bar-wrap.urgent .reaction-bar-fill{ background:var(--tone-red); }
-.reaction-bar-num{
-  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  font-family:var(--font-mono); font-size:11px; font-weight:700; color:var(--fg);
-  mix-blend-mode:difference;
-}
+/* [Ver 15.2] .reaction-bar-* 는 걷어냈다 — 반응 시간은 상단 중앙 HUD(.rxh)가 보여준다. */
 .reaction-text{ font-size:12px; color:var(--fg-dim); line-height:1.6; }
 .reaction-actions{ display:flex; flex-wrap:wrap; gap:var(--sp-2); }
 
@@ -5911,6 +5949,19 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 }
 .lan-player.me{ box-shadow:inset 0 0 0 1px var(--accent); }
 .lan-player.host::after{ content:'HOST'; margin-left:auto; font-family:var(--font-mono); font-size:9px; color:var(--accent); font-weight:700; }
+/* [Ver 15.2] 로비 첫 화면 — 만들기 / 참가하기 두 칸 */
+.lan-split{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px; }
+.lan-half{
+  display:flex; flex-direction:column; gap:7px;
+  padding:13px; border-radius:var(--r-sm);
+  background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--line);
+}
+.lan-half-hd{ display:flex; align-items:center; gap:7px; font-size:13.5px; }
+.lan-half-hd .ic{ font-size:17px; line-height:1; }
+.lan-half-ds{ font-size:11px; line-height:1.65; color:var(--fg-faint); flex:1 1 auto; }
+.lan-half .lan-btn{ padding:9px 12px; font-size:12.5px; }
+@media (max-width:560px){ .lan-split{ grid-template-columns:1fr; } }
+
 .lan-status{ font-size:11.5px; color:var(--fg-faint); text-align:center; }
 .lan-hint{ font-size:11px; color:var(--fg-faint); line-height:1.7; }
 .lan-modes{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:var(--sp-2); }
@@ -8383,7 +8434,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.1</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.2</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -8735,9 +8786,13 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
         <div class="arc-title">🕹️ 아케이드</div>
         <div class="arc-coin"><span class="arc-coin-ic">🪙</span><b id="arcCoinNum">0</b>
           <small id="arcCoinCap"></small></div>
+        <!-- [Ver 15.2] 상점을 본문에서 들어내 버튼 하나로 뺐다 -->
+        <button class="btn arc-shop-btn" onclick="openArcadeShop()">🏪 아케이드 상점</button>
         <button class="btn btn-ghost" onclick="goToStart()">뒤로</button>
       </div>
-      <div class="arc-shop" id="arcShop"></div>
+      <!-- [Ver 15.2] 상점이 비운 자리 — 아케이드가 뭔지 여기서 알려준다 -->
+      <div class="arc-intro" id="arcIntro"></div>
+      <div class="arc-shop" id="arcShop" style="display:none;"></div>
       <div class="arc-modes" id="arcModes"></div>
     </div>
   </div>
@@ -9115,13 +9170,10 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
           </div>
         </div>
 
-        <!-- [Ver 9.4] 반응 타이머 — 원형 링에서 막대형으로 교체.
-             남은 시간은 막대 정중앙에 겹쳐 표시한다. -->
+        <!-- [Ver 15.2] 반응 시간 막대는 걷어냈다 — 화면 상단 중앙의 반응 HUD(.rxh)가
+             남은 시간·공격자·대상·데미지·예측 체력을 한꺼번에 보여준다.
+             여기에는 글과 보여주기 카드 버튼만 남는다. -->
         <div id="reactionBar">
-          <div class="reaction-bar-wrap">
-            <div class="reaction-bar-fill" id="reactionTimerFill"></div>
-            <div class="reaction-bar-num" id="reactionTimerNum">4.0</div>
-          </div>
           <div class="reaction-text" id="reactionText"></div>
           <div class="reaction-actions" id="reactionActions"></div>
         </div>
@@ -9717,14 +9769,12 @@ function setReactionTimer(frac, remainMs){
   const urgent = remainMs <= 1000;
   const w = (Math.max(0, Math.min(1, frac)) * 100).toFixed(2) + '%';
   const tx = fmtReactionRemain(remainMs);
-  /* ⚠ [Ver 15.2] 옛 막대와 새 HUD 를 **둘 다** 먹인다.
-     옛 막대를 지우면 랜서버·핫시트에서 부르는 경로가 조용히 죽는다. */
-  [['reactionTimerFill','reactionTimerNum'], ['rxTimerFill','rxTimerNum']].forEach(([fid, nid])=>{
-    const fill = document.getElementById(fid);
-    const num  = document.getElementById(nid);
-    if(fill){ fill.style.width = w; fill.classList.toggle('urgent', urgent); }
-    if(num){ num.textContent = tx; num.classList.toggle('urgent', urgent); }
-  });
+  /* [Ver 15.2] 옛 막대(#reactionTimerFill)는 걷어냈다. 이제 HUD 게이지 하나뿐이다.
+     ⚠ 부르는 쪽은 그대로다(랜서버·핫시트 포함) — 먹이는 대상만 바뀌었다. */
+  const fill = document.getElementById('rxTimerFill');
+  const num  = document.getElementById('rxTimerNum');
+  if(fill){ fill.style.width = w; fill.classList.toggle('urgent', urgent); }
+  if(num){ num.textContent = tx; num.classList.toggle('urgent', urgent); }
 }
 function resetReactionTimer(totalMs){
   setReactionTimer(1, totalMs);
@@ -14005,6 +14055,7 @@ function arcadeBuy(key){
   try{ item.give(); }catch(e){ console.error('[아케이드] 지급 실패', e); }
   try{ renderUbiniteBadge(); }catch(e){}
   renderArcade();
+  try{ if(gwinIsOpen('arcshop')) gwinRender(); }catch(e){}   // [Ver 15.2] 상점 창도 같이 갱신
   showModal('구매 완료', `${item.icon} <b>${escapeHtml(item.name)}</b>을(를) 받았습니다.<br><span style="font-size:12px;color:var(--fg-dim);">남은 랩터코인 ${arcadeCoins()}개</span>`, [{label:'확인', solid:true}]);
 }
 
@@ -27954,41 +28005,93 @@ function renderArcade(){
   const cc = document.getElementById('arcCoinCap');
   if(cc) cc.textContent = `오늘 ${A.earned || 0}/${ARCADE_COIN_DAILY_CAP}`;
 
+  /* [Ver 15.2] 상점은 본문에서 빠졌다 — 머리의 🏪 버튼이 창으로 연다.
+     #arcShop 은 남겨두되 비워서 감춘다(다른 곳에서 찾을 수 있으므로 지우지 않는다). */
   const shop = document.getElementById('arcShop');
-  if(shop){
-    shop.innerHTML = `
-      <div class="arc-sec-t">\u{1F3EA} 아케이드 상점
-        <small>시즌 ${currentSeasonNo()} · ${seasonRemainText()}</small></div>
-      <div class="arc-shop-row">
-        ${ARCADE_SHOP.map(it=>{
-          const left = arcadeLeft(it);
-          const afford = (A.coin || 0) >= it.cost;
-          const limTx = it.daily ? `오늘 ${left}/${it.daily}` : `시즌 ${left}/${it.season}`;
-          return `<button class="arc-item${(left<=0||!afford)?' off':''}" onclick="arcadeBuy('${it.key}')"
-                    ${left<=0?'title="구매 한도를 모두 사용했습니다"':(afford?'':'title="랩터코인이 부족합니다"')}>
-            <span class="arc-item-ic">${it.icon}</span>
-            <span class="arc-item-name">${escapeHtml(it.name)}</span>
-            <span class="arc-item-cost">\u{1FA99} ${it.cost}</span>
-            <span class="arc-item-lim ${left<=0?'out':''}">${limTx}</span>
-          </button>`;
-        }).join('')}
+  if(shop){ shop.innerHTML = ''; shop.style.display = 'none'; }
+
+  /* 상점이 비운 자리 — 아케이드가 뭔지, 코인을 어떻게 벌고 쓰는지 */
+  const intro = document.getElementById('arcIntro');
+  if(intro){
+    const left = Math.max(0, ARCADE_COIN_DAILY_CAP - (A.earned || 0));
+    intro.innerHTML = `
+      <div class="arc-intro-main">
+        <div class="arc-intro-t">\u{1F579}️ 아케이드 — 규칙이 다른 판들</div>
+        <div class="arc-intro-d">
+          일반전과 아예 다른 규칙으로 노는 곳입니다. 어떤 모드든 <b>순위에 들면 \u{1FA99} 랩터코인</b>을 받고,
+          코인은 <b>\u{1F3EA} 아케이드 상점</b>에서 진화석·뽑기권 같은 것으로 바꿉니다.<br>
+          1등 <b>${ARCADE_COIN_REWARD[1]}개</b> · 2등 <b>${ARCADE_COIN_REWARD[2]}개</b> · 3등 <b>${ARCADE_COIN_REWARD[3]}개</b>
+          — 하루에 <b>${ARCADE_COIN_DAILY_CAP}개</b>까지만 쌓입니다.
+        </div>
+      </div>
+      <div class="arc-intro-stats">
+        <div class="arc-stat"><b>${(A.coin || 0).toLocaleString()}</b><small>보유 코인</small></div>
+        <div class="arc-stat"><b>${left}</b><small>오늘 더 벌 수 있음</small></div>
+        <div class="arc-stat"><b>${currentSeasonNo()}</b><small>시즌</small></div>
       </div>`;
   }
+
   const modes = document.getElementById('arcModes');
   if(modes){
+    /* [Ver 15.2] 닫힌 모드도 자리를 지킨다 — 회색으로, 눌러지지 않게.
+       ⚠ SIMPLIFY_CLOSED_MODES 는 일부러 닫아둔 것이다. 여기서 열지 말 것. */
+    const open = ARCADE_MODES.filter(m=> !isModeClosed(m.key));
+    const list = ARCADE_MODES.slice();
     modes.innerHTML = `
-      <div class="arc-sec-t">\u{1F3AE} 모드 선택
-        <small>1등 ${ARCADE_COIN_REWARD[1]}개 · 2등 ${ARCADE_COIN_REWARD[2]}개 · 3등 ${ARCADE_COIN_REWARD[3]}개</small></div>
+      <div class="arc-sec-t">\u{1F3AE} 모드 선택 <small>${open.length}가지 · 준비 중 ${list.length - open.length}가지</small></div>
       <div class="arc-mode-grid">
-        ${ARCADE_MODES.filter(m=> !isModeClosed(m.key)).map(m=> `
+        ${list.map(m=> isModeClosed(m.key) ? `
+          <button class="arc-mode soon" disabled title="아직 열리지 않았습니다">
+            <span class="arc-mode-art"><span class="arc-mode-ic">${m.ic}</span></span>
+            <span class="arc-mode-body">
+              <b>${escapeHtml(m.name)}</b>
+              <small>${escapeHtml(m.desc)}</small>
+              <em class="arc-soon">준비 중</em>
+            </span>
+          </button>` : `
           <button class="arc-mode" onclick="pickGameMode('${m.key}')">
-            <span class="arc-mode-ic">${m.ic}</span>
-            <b>${escapeHtml(m.name)}</b>
-            <small>${escapeHtml(m.desc)}</small>
-            ${m.noReward?'<em class="arc-noreward">보상 없음</em>':''}
+            <!-- ★ 일러스트 자리. 그림이 나오면 이 칸에 background-image 만 얹으면 된다. -->
+            <span class="arc-mode-art"${m.art?` style="background-image:url('${m.art}');"`:''}>
+              ${m.art ? '' : `<span class="arc-mode-ic">${m.ic}</span>`}
+            </span>
+            <span class="arc-mode-body">
+              <b>${escapeHtml(m.name)}</b>
+              <small>${escapeHtml(m.desc)}</small>
+              ${m.noReward?'<em class="arc-noreward">보상 없음</em>':''}
+            </span>
           </button>`).join('')}
       </div>`;
   }
+}
+/* [Ver 15.2] 아케이드 상점 — 본문에서 빠져나와 창이 됐다.
+   ⚠ 공용 창(gwin)을 쓴다. showModal 로 만들면 구매 확인창이 본문을 덮어써서
+     한 번 사고 나면 목록이 사라진다(14.10 에서 실제로 겪은 사고와 같은 자리). */
+function openArcadeShop(){
+  openGWin({ key:'arcshop', title:'\u{1F3EA} 아케이드 상점', render: arcadeShopHtml });
+}
+function arcadeShopHtml(){
+  const A = loadArcade();
+  return `<div class="arc-sec-t" style="margin-bottom:10px;">
+      시즌 ${currentSeasonNo()} · ${seasonRemainText()}
+      <small style="margin-left:8px;">보유 \u{1FA99} <b>${(A.coin || 0).toLocaleString()}</b></small></div>
+    <div class="arc-shop-row" style="flex-wrap:wrap;overflow:visible;">
+      ${ARCADE_SHOP.map(it=>{
+        const left = arcadeLeft(it);
+        const afford = (A.coin || 0) >= it.cost;
+        const limTx = it.daily ? `오늘 ${left}/${it.daily}` : `시즌 ${left}/${it.season}`;
+        return `<button class="arc-item${(left<=0||!afford)?' off':''}" onclick="arcadeBuy('${it.key}')"
+                  ${left<=0?'title="구매 한도를 모두 사용했습니다"':(afford?'':'title="랩터코인이 부족합니다"')}>
+          <span class="arc-item-ic">${it.icon}</span>
+          <span class="arc-item-name">${escapeHtml(it.name)}</span>
+          <span class="arc-item-cost">\u{1FA99} ${it.cost}</span>
+          <span class="arc-item-lim ${left<=0?'out':''}">${limTx}</span>
+        </button>`;
+      }).join('')}
+    </div>
+    <div class="arc-intro-d" style="margin-top:14px;">
+      랩터코인은 아케이드 모드에서 <b>순위에 들면</b> 받습니다.
+      구매 한도는 <b>하루</b> 또는 <b>시즌</b> 단위로 초기화됩니다.
+    </div>`;
 }
 
 function goToStart(){
@@ -28193,6 +28296,18 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 15.2', date: '2026-09-13',
+    items: [
+      '\u{1F6E1}️ <b>[개편] 반응 시간 — 누가 누구를 때리는지 한눈에 보입니다.</b> 공격이 들어와도 <b>그게 나인지 남인지</b> 알기 어려웠습니다. 이제 화면 <b>위쪽 한가운데</b>에 검은 판이 뜹니다.<br><b>공격하는 사람 → 맞는 사람</b> · 카드 · <b>들어올 피해</b>(숫자면 아주 크게) · 맞는 사람의 <b>지금 체력 → 맞은 뒤 체력</b> · 남은 반응 시간 · 지금 낼 수 있는 <b>보여주기 카드 수</b>까지 한 판에 담았습니다.',
+      '\u{1F534} <b>대상이 나라면 게이지가 붉게 점멸합니다.</b> 판 테두리도 함께 뜁니다. 이제 남의 싸움과 내 싸움을 헷갈릴 일이 없습니다.',
+      '\u{2728} <b>[수정] 보여주기 카드가 실은 안 빛나고 있었습니다.</b> 등급 발광이 걸린 카드에서는 강조가 <b>통째로 덮여</b> 보이지 않았습니다. 이제 카드가 <b>위로 떠오르며 금색으로 빛나고</b>, 아래에 <b>"지금 낼 수 있음"</b> 띠가 붙습니다.',
+      '\u{1F441}️ 반응 판은 <b>살짝 비쳐서</b> 뒤가 보이고, <b>✕</b>로 이번 한 번만 가릴 수 있습니다. (다음 반응에는 다시 뜹니다)',
+      '\u{1F0CF} <b>[신규] 드로우 — 다음 카드의 등급을 엿봅니다.</b> 더미 아래에 <b>등급 세 개</b>가 나타납니다. 그중 <b>하나만 진짜</b>이고 둘은 가짜입니다. 무엇이 나올지 정확히는 알 수 없지만, <b>감은 잡힙니다.</b> 뽑으면 다음 등급이 넘어옵니다.',
+      '\u{1F310} <b>[개편] 온라인·LAN이 한 창으로 합쳐졌습니다.</b> 예전에는 "방 만들기 / 방 참가하기"를 고르는 창이 먼저 뜨고 <b>그 다음에</b> 로비가 또 떴습니다. 이제 누르면 <b>바로 로비</b>가 열리고, 그 안에서 만들기와 참가하기를 <b>나란히</b> 고릅니다.',
+      '\u{1F579}️ <b>[개편] 아케이드.</b> 상점이 화면 절반을 먹고 있어서 정작 모드 버튼이 좁은 띠에 눌려 있었습니다. 상점은 <b>🏪 버튼</b>으로 빼고, 그 자리에 <b>아케이드가 뭔지 알려주는 안내</b>를 넣었습니다. 모드 버튼은 <b>크게</b> 키웠고 <b>그림이 들어갈 자리</b>를 비워뒀습니다. 아직 안 열린 모드도 <b>준비 중</b>으로 함께 보입니다.',
+    ]
+  },
   {
     version: 'Ver 15.1', date: '2026-09-13',
     items: [
@@ -41639,8 +41754,33 @@ let draftDrawOwner = null; // [Ver 6.9] 지금 카드를 뽑는 주체 — 드�
      아직 뽑지도 않은 카드의 등급이 미리 새어 나간다.
    ⚠ 봇은 이 길을 타지 않는다. 예전처럼 즉석 추첨이다.
    ########################################################################## */
-const DRAW_PREVIEW_N = 3;
+let __dpLastSig = '';           // 미리보기가 바뀔 때만 연출을 주기 위한 직전 값
+const DRAW_PREVIEW_N = 1;       // [Ver 15.2] 앞을 한 장만 본다 (3장은 다 보여서 심심했다)
+const DRAW_BLUFF_N = 3;         // 그 한 장의 등급 + 가짜 둘
+/* 가짜 등급을 고를 사다리. 위아래로 가까운 것부터 고른다 — 그래야 진짜 고민이 된다. */
+const DRAW_BLUFF_LADDER = ['E','D','C','B','A','S','SR','SSR','UR','LR'];
 let __drawQ = {};      // { [playerId]: { sig, list:[] } }
+/* 진짜 등급 하나에 가짜 둘을 섞어 셋을 만든다.
+   ⚠ 이 함수는 **담을 때 한 번만** 부른다. 그릴 때마다 부르면 후보가 계속 바뀌고,
+     여러 번 본 뒤 겹치는 하나를 고르면 진짜가 드러난다. */
+function drawBluffGrades(real){
+  const L = DRAW_BLUFF_LADDER;
+  const idx = L.indexOf(real);
+  let pool = L.filter(g=> g !== real);
+  if(idx >= 0){
+    pool = pool.slice().sort((a,b)=> Math.abs(L.indexOf(a) - idx) - Math.abs(L.indexOf(b) - idx)).slice(0, 5);
+  }
+  const out = [real];
+  while(out.length < DRAW_BLUFF_N && pool.length){
+    out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  }
+  /* 섞는다 — 진짜가 늘 첫 칸이면 하는 의미가 없다 */
+  for(let i = out.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = out[i]; out[i] = out[j]; out[j] = t;
+  }
+  return out;
+}
 function drawQSig(p){
   try{
     return [
@@ -41661,7 +41801,12 @@ function drawQFor(p){
 function drawQFill(p, n){
   const q = drawQFor(p); if(!q) return null;
   let guard = 0;
-  while(q.list.length < n && guard++ < 40) q.list.push(drawCardRaw(p, true));
+  while(q.list.length < n && guard++ < 40){
+    const c = drawCardRaw(p, true);
+    /* ★ 가짜 등급은 여기서 **한 번만** 정한다. 그릴 때마다 뽑으면 들킨다. */
+    try{ c.__bluff = drawBluffGrades(typeof displayGrade === 'function' ? displayGrade(c) : (c.grade || '?')); }catch(e){}
+    q.list.push(c);
+  }
   return q;
 }
 /* 미리보기용 — 꺼내지 않고 들여다본다 */
@@ -41673,6 +41818,7 @@ function drawQPeek(p, n){
 function drawQTake(p){
   const q = drawQFill(p, 1); if(!q || !q.list.length) return null;
   const c = q.list.shift();
+  try{ if(c) delete c.__bluff; }catch(e){}   // 손에 들어가는 카드에는 남기지 않는다
   try{ drawQFill(p, DRAW_PREVIEW_N); }catch(e){}
   try{ if(c) announceRarityDraw(p.name, c.grade); }catch(e){}
   return c;
@@ -47472,14 +47618,28 @@ function renderDrawPreview(){
   if(!live){ box.style.display = 'none'; box.innerHTML = ''; return; }
   let list = [];
   try{ list = drawQPeek(me, DRAW_PREVIEW_N) || []; }catch(e){ list = []; }
-  if(!list.length){ box.style.display = 'none'; box.innerHTML = ''; return; }
+  const nxt = list[0];
+  if(!nxt){ box.style.display = 'none'; box.innerHTML = ''; return; }
+  /* [Ver 15.2] 이름은 안 보여준다. 등급 셋 중 하나가 진짜다. */
+  let cand = nxt.__bluff;
+  if(!Array.isArray(cand) || !cand.length){
+    try{ cand = nxt.__bluff = drawBluffGrades(typeof displayGrade==='function' ? displayGrade(nxt) : (nxt.grade||'?')); }
+    catch(e){ cand = [nxt.grade || '?']; }
+  }
   box.style.display = '';
-  box.innerHTML = `<div class="dp-prev-lb">NEXT</div><div class="dp-prev-row">`
-    + list.map((c, i)=> `<div class="dp-prev-c${i===0?' next':''}">
-        <span class="g">${escapeHtml(typeof displayGrade==='function' ? displayGrade(c) : (c.grade||'?'))}</span>
-        <span class="n">${escapeHtml(c.name || '?')}</span>
-      </div>`).join('')
-    + `</div>`;
+  const sig = cand.join(',');
+  box.innerHTML = `<div class="dp-prev-lb">NEXT</div>`
+    + `<div class="dp-prev-row">`
+    + cand.map(g=> `<span class="dp-bluff dpg-${escapeHtml(String(g).replace(/[^A-Za-z]/g,'') || 'Q')}">${escapeHtml(g)}</span>`).join('')
+    + `</div>`
+    + `<div class="dp-prev-hint">이 중 하나</div>`;
+  /* [Ver 15.2] 후보가 **바뀌었을 때만** 넘어가는 연출을 준다.
+     ⚠ 매번 주면 손패가 조금만 움직여도(renderHand 는 수시로 돈다) 계속 덜컹거린다. */
+  if(__dpLastSig && __dpLastSig !== sig){
+    const row = box.querySelector('.dp-prev-row');
+    if(row) row.classList.add('dp-swap');
+  }
+  __dpLastSig = sig;
 }
 
 /* 등급별 카드 발광 강도/색상을 부여. E는 효과 없음, D~S는 색이 점점 강렬해지고, SR 이상은 매우 화려한 애니메이션 */
@@ -51171,8 +51331,13 @@ function openReactionWindow(caster, card, targetId, onResolve){
     try{
       lanSend({ t:'to_slot', slot: parseInt(reactor.id.slice(1),10), payload: {
         kind:'react_prompt',
-        card: { name:card.name, type:card.type, grade:card.grade, power:card.power||0 },
+        /* [Ver 15.2] 참가자 화면의 반응 HUD 가 "누가 얼마나 맞는지"를 그리려면
+           hitCount·pierce·desc 와 targetId 가 필요하다.
+           ⚠ 옛 버전 참가자는 모르는 필드를 그냥 무시하므로 섞여 있어도 안전하다. */
+        card: { name:card.name, type:card.type, grade:card.grade, power:card.power||0,
+                hitCount:card.hitCount||1, pierce:card.pierce||'NONE', desc:card.desc||'' },
         casterName: caster.name,
+        targetId: targetId || null,
         usable, ms: REACT_MS
       }});
     }catch(e){}
@@ -72254,19 +72419,17 @@ function openOnlineLobby(mode){ openLanLobby(mode, 'rtdb'); }
 /* [Ver 11.0 신규] 구상도 반영 — 메인 화면의 온라인/LAN서버 버튼이 각 1개로 줄면서,
    눌렀을 때 "방 만들기 / 방 참가하기"를 고르는 작은 팝업이 먼저 뜬다.
    기존 openOnlineLobby('create'|'join') · openLanLobby(mode,'ws') 그대로 재사용한다. */
+/* [Ver 15.2] 창 두 개 → 하나.
+   예전에는 여기서 "방 만들기 / 방 참가하기" 팝업을 먼저 띄우고, 고르면 로비가 또 떴다.
+   그런데 로비 첫 화면에는 이미 둘 다 있어서, 이 팝업은 안내 문구 한 줄만 바꿀 뿐이었다.
+   ⚠ 함수 이름은 그대로 둔다 — 메뉴 버튼 등 부르는 자리가 여럿이다. */
 function openOnlinePicker(){
   if(isBanned()){ showBanScreen(); return; } // [Ver 9.14] 제재 계정은 온라인도 못 쓴다
-  showModal('🌐 온라인', '인터넷이 연결된 곳이면 어디서든 함께할 수 있습니다.', [
-    { label: '🏠 방 만들기', solid: true, action: ()=> openOnlineLobby('create') },
-    { label: '🚪 방 참가하기', action: ()=> openOnlineLobby('join') },
-  ]);
+  openOnlineLobby(null);
 }
 function openLanPicker(){
   if(isBanned()){ showBanScreen(); return; }
-  showModal('📶 LAN서버', '같은 와이파이(핫스팟)에 있는 사람끼리 함께할 수 있습니다.', [
-    { label: '🏠 방 만들기', solid: true, action: ()=> openLanLobby('create', 'ws') },
-    { label: '🚪 방 참가하기', action: ()=> openLanLobby('join', 'ws') },
-  ]);
+  openLanLobby(null, 'ws');
 }
 function closeLanLobby(){
   const ov=document.getElementById('lanOverlay'); if(ov) ov.classList.remove('show');
@@ -72801,18 +72964,28 @@ function lanToast(msg){
 function lanRenderLobby(errMsg){
   const body = document.getElementById('lanBody'); if(!body) return;
   if(!LAN.room){
-    const wantJoin = (LAN.pendingMode==='join');
     const isOnline = (LAN.mode==='rtdb');
-    // 방 선택 화면 (만들기/참가 둘 다 노출하되, 온 경로에 맞춰 안내)
+    /* [Ver 15.2] 만들기 / 참가하기를 **한 창 안에서** 두 칸으로 갈라 보여준다.
+       예전에는 앞에 팝업을 하나 더 띄워 고르게 했는데, 여기 둘 다 있으므로 군더더기였다. */
     body.innerHTML = `
-      <div class="lan-status ok">${isOnline?'온라인 서버에 연결되었습니다.':'서버에 연결되었습니다.'} ${wantJoin?'방 코드를 입력해 참가하세요.':'방을 만들거나 코드로 참여하세요.'}</div>
+      <div class="lan-status ok">${isOnline?'온라인 서버에 연결되었습니다.':'서버에 연결되었습니다.'}</div>
       ${errMsg?`<div class="lan-status err">${escapeHtml(errMsg)}</div>`:''}
       <div class="lan-field"><label>닉네임</label><input id="lanNameInput" maxlength="16" placeholder="이름" value="${escapeHtml(LAN.myName||'')}"></div>
-      <button class="lan-btn" onclick="lanDoCreate()">방 만들기 (호스트)</button>
-      <div style="height:14px;"></div>
-      <div class="lan-field"><label>방 코드로 참여</label><input id="lanCodeInput" maxlength="4" inputmode="numeric" placeholder="4자리 코드"></div>
-      <button class="lan-btn ghost" onclick="lanDoJoin()">참여하기</button>
-      ${isOnline ? '' : `<button class="lan-btn ghost" onclick="lanShowHamachiHelp()" style="margin-top:8px;">📡 멀리 있는 친구와 하려면? (하마치 연결법)</button>`}
+      <div class="lan-split">
+        <div class="lan-half">
+          <div class="lan-half-hd"><span class="ic">🏠</span><b>방 만들기</b></div>
+          <div class="lan-half-ds">내가 호스트가 되어 방을 엽니다. 4자리 코드가 나옵니다.</div>
+          <button class="lan-btn" onclick="lanDoCreate()">방 만들기</button>
+        </div>
+        <div class="lan-half">
+          <div class="lan-half-hd"><span class="ic">🚪</span><b>방 참가하기</b></div>
+          <div class="lan-half-ds">친구에게 받은 4자리 코드를 넣습니다.</div>
+          <input id="lanCodeInput" maxlength="4" inputmode="numeric" placeholder="4자리 코드"
+                 onkeydown="if(event.key==='Enter')lanDoJoin()">
+          <button class="lan-btn ghost" onclick="lanDoJoin()">참여하기</button>
+        </div>
+      </div>
+      ${isOnline ? '' : `<button class="lan-btn ghost" onclick="lanShowHamachiHelp()" style="margin-top:10px;">📡 멀리 있는 친구와 하려면? (하마치 연결법)</button>`}
       <div class="lan-hint">방을 만든 사람이 <b>호스트</b>입니다. 호스트의 기기가 실제 게임을 돌리므로, 호스트는 게임이 끝날 때까지 창을 닫지 마세요.${isOnline?' 같은 와이파이가 아니어도, 인터넷만 되면 어디서든 참가할 수 있습니다.':''}</div>`;
     return;
   }
@@ -74115,6 +74288,13 @@ function lanClientShowReactPrompt(info){
     const me = players.find(p=>p.id===LAN.myPid);
     if(me) me.hand.forEach(c=>{ if(usable.has(c.uid)){ const b=document.createElement('button'); b.className='btn btn-sm btn-solid'; b.textContent=`${c.name}${c.cost?` (${fmtWon(c.cost)})`:''}`; b.onclick=()=>lanClientSendReact(c.uid); actions.appendChild(b); } });
   }
+  /* [Ver 15.2] 참가자에게도 상단 중앙 반응 HUD 를 띄운다.
+     ⚠ 이게 없으면 옛 타이머 막대를 걷어낸 뒤 참가자만 남은 시간을 못 본다.
+       caster 는 이름만 쓰이므로 껍데기로 충분하다. */
+  try{
+    const __meP = players.find(p=>p.id===LAN.myPid) || null;
+    rxHudShow({ name: info.casterName || '?' }, info.card, info.targetId || LAN.myPid, __meP);
+  }catch(e){}
   // [Ver 8.1.18] 카운트다운 표시 = 실제 info.ms (호스트가 reactionMs를 넘기면 38초 등도 그대로 표시)
   const startT = Date.now(); const MS = info.ms || 4000;
   resetReactionTimer(MS);
