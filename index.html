@@ -4989,6 +4989,95 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 .mbody b{ color:var(--fg); }
 .mfoot{ flex-shrink:0; display:flex; justify-content:flex-end; gap:var(--sp-2); flex-wrap:wrap; }
 
+/* ---------- [Ver 15.1] 재화 획득 연출 ---------- */
+.ggfx{
+  position:fixed; z-index:9300; pointer-events:none;
+  font-size:26px; line-height:1;
+  will-change:transform, opacity;
+  animation:ggFly var(--ggfx-dur,760ms) cubic-bezier(.55,-0.25,.35,1) forwards;
+}
+@keyframes ggFly{
+  0%   { transform:translate(-50%,-50%) scale(.4); opacity:0; }
+  14%  { transform:translate(-50%,-50%) scale(1.25); opacity:1; }
+  70%  { opacity:1; }
+  100% { transform:translate(calc(-50% + var(--ggfx-dx)), calc(-50% + var(--ggfx-dy))) scale(.35); opacity:0; }
+}
+/* 숫자가 오를 때 살짝 튄다 */
+.ggfx-pop{ animation:ggPop 420ms var(--ease-spring); }
+@keyframes ggPop{ 0%{ transform:scale(1); } 40%{ transform:scale(1.28); } 100%{ transform:scale(1); } }
+
+/* ---------- [Ver 15.1] 프로필 사진 고르기 ----------
+   ⚠ 옛 픽커는 마크업이 `.fp-cell` 인데 CSS 는 `.pf-cell` 이라 흑백도 자물쇠도
+     선택 테두리도 **전부 죽어 있었다.** 그래서 이름을 새로 판다. */
+.pfk-now{
+  display:flex; align-items:center; gap:14px;
+  padding:14px; margin-bottom:14px; border-radius:var(--r-sm);
+  background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--line-soft);
+}
+.pfk-now-pic{ flex:0 0 auto; }
+.pfk-now-tx{ flex:1; min-width:0; }
+.pfk-now-nm{ font-size:15px; font-weight:800; }
+.pfk-now-how{ font-size:11.5px; color:var(--fg-dim); line-height:1.65; margin-top:3px; overflow-wrap:anywhere; }
+.pfk-now-state{ font-size:10.5px; margin-top:5px; }
+.pfk-sec{ font-size:11px; font-weight:700; color:var(--fg-faint); margin:14px 0 7px; }
+.pfk-sec:first-child{ margin-top:0; }
+.pfk-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(64px,1fr)); gap:8px; }
+.pfk-cell{
+  position:relative; padding:0; border-radius:22%; overflow:hidden;
+  background:transparent; cursor:pointer; line-height:0;
+  transition:transform var(--t) var(--ease), box-shadow var(--t) var(--ease);
+}
+.pfk-cell:hover{ transform:translateY(-2px); }
+.pfk-cell img{ width:100%; aspect-ratio:1/1; object-fit:cover; display:block; border-radius:22%; }
+.pfk-cell.on{ box-shadow:0 0 0 2px var(--accent); }
+.pfk-cell.sel{ box-shadow:0 0 0 2px var(--fg-dim); }
+/* 잠김 — 흑백 + 정가운데 자물쇠 */
+.pfk-cell.lock img{ filter:grayscale(1) brightness(0.55); }
+.pfk-cell.lock::after{
+  content:'🔒'; position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:19px; line-height:1; pointer-events:none;
+}
+
+/* ---------- [Ver 15.1] 공용 창(window) ----------
+   ★ z-index 는 **연출과 모달 둘 다보다 낮아야** 한다. 실측 기준:
+         .gwin-bg 9150  <  .rv-ov 9200 (카드 뒤집기)  <  .rv-flash 9210
+                        <  .mine-dig-ov 9700 (개봉 연출)  =  .modal-bg 9700
+     ⚠ 처음에 9600 으로 뒀다가 **리빌 연출이 창 뒤로 숨는 것**을 발견했다.
+       상자를 창으로 옮기면 카드가 한 장도 안 보이고 클릭도 창이 가로챈다.
+       모달(9700)만 생각하고 연출(9200)을 빠뜨린 실수였다.
+   ⚠ 새 오버레이는 OVERLAY_SEL 에도 등록할 것. */
+.gwin-bg{
+  position:fixed; inset:0; z-index:9150; display:none;
+  align-items:center; justify-content:center; padding:var(--sp-4);
+  background:rgba(0,0,0,0.74);
+}
+.gwin-bg.show{ display:flex; animation:fadeIn var(--t) var(--ease); }
+.gwin-box{
+  width:100%; max-width:720px; max-height:90vh;
+  display:flex; flex-direction:column;
+  border-radius:var(--r-xl); background:var(--bg-panel); box-shadow:var(--sh-3);
+  animation:popIn var(--t-slow) var(--ease-spring) both;
+  overflow:hidden;
+}
+.gwin-head{
+  flex-shrink:0; display:flex; align-items:center; gap:var(--sp-2);
+  padding:16px 18px 12px;
+}
+.gwin-title{ flex:1; min-width:0; font-size:16px; font-weight:700; letter-spacing:-0.02em; }
+.gwin-act{
+  flex:0 0 auto; width:26px; height:26px; border-radius:var(--r-pill);
+  background:var(--bg-2); color:var(--fg-dim); font-size:12px; line-height:26px; text-align:center;
+  cursor:pointer; transition:background var(--t) var(--ease), color var(--t) var(--ease);
+}
+.gwin-act:hover{ background:var(--bg-3); color:var(--fg); }
+.gwin-tabs{ flex-shrink:0; display:flex; gap:5px; padding:0 18px 10px; flex-wrap:wrap; }
+.gwin-body{ flex:1; min-height:0; overflow-y:auto; padding:2px 18px 18px; }
+@media (max-width:560px){
+  .gwin-bg{ padding:0; }
+  .gwin-box{ max-width:none; max-height:100vh; height:100vh; border-radius:0; }
+}
+
 /* ---------- 상점 ---------- */
 .shop-bg{
   position:fixed; inset:0; z-index:110; display:none;
@@ -8773,6 +8862,20 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
     <div class="mtitle" id="modalTitle">알림</div>
     <div class="mbody" id="modalBody">내용</div>
     <div class="mfoot" id="modalFoot"></div>
+  </div>
+</div>
+
+<!-- [Ver 15.1] 공용 창 — showModal 과 **별개**다.
+     탭이 있고, 그 안에서 showModal 확인창을 띄울 수 있어야 하는 화면(출석부·상자·현질)이 쓴다. -->
+<div class="gwin-bg" id="gwinBg" onclick="if(event.target===this) closeGWin();">
+  <div class="gwin-box">
+    <div class="gwin-head">
+      <span class="gwin-title" id="gwinTitle">창</span>
+      <button class="gwin-act" id="gwinInfo" style="display:none;" onclick="gwinInfoClick()">ℹ️</button>
+      <button class="gwin-act" onclick="closeGWin()">✕</button>
+    </div>
+    <div class="gwin-tabs" id="gwinTabs"></div>
+    <div class="gwin-body" id="gwinBody"></div>
   </div>
 </div>
 
@@ -12930,27 +13033,85 @@ function profileFrameHtml(opt){
   return profilePicHtml({ size:o.size, key:o.key, cls:o.cls });
 }
 
+/* ##########################################################################
+   [Ver 15.1] 프로필 사진 고르기
+   --------------------------------------------------------------------------
+   ▶ 격자에는 **글자를 하나도 쓰지 않는다.** 이름과 달성 방법은 전부 위 칸이 맡는다.
+     33장이 글자와 함께 쏟아지면 무엇을 고르는 화면인지 알 수 없다.
+   ▶ 잠긴 것도 **눌러서 달성 방법을 볼 수 있다.** 장착만 안 된다 —
+     "어떻게 얻나"를 보여주는 게 이 화면의 절반이다.
+   ⚠ 창(gwin)으로 만든다. 내 정보(showModal)에서 열리는데 픽커도 showModal 이면
+     서로를 덮어쓴다.
+   ⚠ 분류는 PFP_DEFS 에 없다 — ACHIEVEMENTS 의 kind 로 잇는다. default·sun 만 예외.
+   ########################################################################## */
+const PFK_SECTIONS = [
+  { k:'default', label:'기본' },
+  { k:'normal',  label:'일반 업적' },
+  { k:'hidden',  label:'히든 업적' },
+  { k:'special', label:'스페셜 업적' },
+  { k:'pass',    label:'시즌 패스' },
+];
+/* 이 프사가 어느 갈래인가. 업적 표에 kind 가 있으니 그걸로 잇는다. */
+function pfpKindOf(key){
+  if(key === 'default') return 'default';
+  try{
+    const a = ACHIEVEMENTS.find(x=> x.pfp === key);
+    if(a && a.kind) return a.kind;
+  }catch(e){}
+  return 'pass';   // 업적이 아닌 것 = 시즌 패스(sun) 등
+}
+let __pfkSel = null;   // 위 칸에 보여주는 프사 (장착과 별개다)
+
 function openPfpPicker(){
   syncPfpUnlocks();
+  __pfkSel = equippedPfp();
+  openGWin({ key:'pfp', title:'\u{1F5BC}\uFE0F 프로필 사진', render: pfpPickerHtml });
+}
+/* 타일을 누르면 위 칸에 뜬다. 가진 것이면 장착까지 한다. */
+function pfpPickerPick(key){
+  __pfkSel = key;
+  if(hasPfp(key)) equipPfp(key);
+  gwinRender();
+}
+function pfpPickerHtml(){
   const cur = equippedPfp();
-  const cells = PFP_DEFS.map(f=>{
-    const owned = hasPfp(f.key);
-    return `<button class="fp-cell${f.key===cur?' current':''}${owned?'':' locked'}"
-              ${owned?`onclick="pickPfp('${f.key}')"`:''} title="${escapeHtml(f.how)}">
-      ${profilePicHtml({ size:64, key:f.key })}
-      <span class="fp-name">${escapeHtml(f.name)}</span>
-      <span class="fp-sub">${owned ? (f.key===cur?'사용 중':'') : '\u{1F512} ' + escapeHtml(f.how)}</span>
-    </button>`;
+  const sel = pfpDefOf(__pfkSel || cur);
+  const selOwned = hasPfp(sel.key);
+  const secs = PFK_SECTIONS.map(s=>{
+    const list = PFP_DEFS.filter(f=> pfpKindOf(f.key) === s.k);
+    if(!list.length) return '';
+    const got = list.filter(f=> hasPfp(f.key)).length;
+    const cells = list.map(f=>{
+      const owned = hasPfp(f.key);
+      const cls = (f.key === cur ? ' on' : (f.key === __pfkSel ? ' sel' : '')) + (owned ? '' : ' lock');
+      /* ⚠ 타일에는 글자를 넣지 않는다. title 도 안 넣는다 — 위 칸이 그 역할이다. */
+      return `<button class="pfk-cell${cls}" onclick="pfpPickerPick('${f.key}')">
+          <img src="${pfpSrc(f.key)}" alt=""></button>`;
+    }).join('');
+    return `<div class="pfk-sec">${s.label} <span style="opacity:.6;">${got} / ${list.length}</span></div>
+      <div class="pfk-grid">${cells}</div>`;
   }).join('');
-  showModal('\u{1F5BC}\uFE0F 프로필 사진', `<div class="fp-grid">${cells}</div>
-    <div style="font-size:11px;color:var(--fg-faint);line-height:1.6;margin-top:10px;">
-      프로필 사진은 <b>업적</b>으로 열립니다. 잠긴 칸에 마우스를 올리면 조건이 보입니다.
-    </div>`, [{ label:'닫기', solid:true }]);
+  const state = selOwned
+    ? (sel.key === cur
+        ? '<b style="color:var(--accent);">✔ 사용 중</b>'
+        : '<span style="color:var(--fg-dim);">눌러서 바꿨습니다</span>')
+    : '<b style="color:#d9822b;">🔒 아직 얻지 못했습니다</b>';
+  return `
+    <div class="pfk-now">
+      <div class="pfk-now-pic">${profilePicHtml({ size:72, key:sel.key })}</div>
+      <div class="pfk-now-tx">
+        <div class="pfk-now-nm">${escapeHtml(sel.name)}</div>
+        <div class="pfk-now-how">${escapeHtml(sel.how)}</div>
+        <div class="pfk-now-state">${state}</div>
+      </div>
+    </div>
+    ${secs}
+    <div style="font-size:10.5px;color:var(--fg-faint);line-height:1.65;margin-top:14px;">
+      잠긴 사진도 눌러보시면 <b>어떻게 얻는지</b> 위에 나옵니다.
+    </div>`;
 }
-function pickPfp(key){
-  if(!equipPfp(key)) return;
-  openPfpPicker();
-}
+/* [구버전 호환] 옛 이름으로 부르는 곳이 남아 있어도 동작하게 둔다. */
+function pickPfp(key){ pfpPickerPick(key); }
 /* ##########################################################################
    [Ver 11.8.1] 와일드 진화석 — 원하는 카드의 진화석으로 바꾼다
    --------------------------------------------------------------------------
@@ -13306,7 +13467,13 @@ function copyUserCode(){
 let ubinite = 0;
 try{ const v = parseInt(localStorage.getItem(STORAGE_KEYS.ubinite),10); if(Number.isFinite(v)) ubinite = Math.max(0, v); }catch(e){}
 function saveUbinite(){ try{ localStorage.setItem(STORAGE_KEYS.ubinite, String(ubinite)); }catch(e){} }
-function grantUbinite(n){ ubinite += n; saveUbinite(); try{ renderUbiniteBadge(); }catch(e){} return n; }
+function grantUbinite(n){
+  const before = ubinite;
+  ubinite += n; saveUbinite();
+  try{ renderUbiniteBadge(); }catch(e){}
+  try{ if(n > 0) ggGainFx('💎', '#ubiniteBadge .ubi-num', before, ubinite, 5); }catch(e){}
+  return n;
+}
 function spendUbinite(n){
   walletSyncFromStorage();   // [Ver 13.15.2] 복사 방지 — spendGoldPickaxe 주석 참고
   if(ubinite < n) return false;
@@ -13381,9 +13548,96 @@ function awardBoxKeysForPlacement(placement){
 /* [구버전 호환] 옛 호출부가 남아 있어도 1등 보상으로 이어지게 한다. */
 function awardUbiniteForWin(){ return awardUbiniteForPlacement(1); }
 /* 메인 화면 상단 재화 배지 */
+/* ##########################################################################
+   [Ver 15.1] 재화 획득 연출
+   --------------------------------------------------------------------------
+   ▶ 화면 중앙 → 재화 칸으로 이모지가 빨려 들어가고, 숫자가 카운트업한다.
+     재화가 들어온 것을 **눈으로** 알 수 있게 하는 것이 전부다.
+   ⚠ 대상 칸이 없으면(광산·권능·마트 화면) **아무것도 안 한다.**
+     그 화면들에는 우측 상단 재화 바 자체가 없다.
+   ⚠ 한 번에 여러 번 지급되는 구간(판 정산·상자 10개)은 ggFxMute 로 묶는다.
+     안 묶으면 이모지 폭죽이 된다.
+   ########################################################################## */
+let __ggFxMute = 0;
+function ggFxMute(fn){
+  __ggFxMute++;
+  try{ return fn(); }
+  finally{ __ggFxMute = Math.max(0, __ggFxMute - 1); }
+}
+/* 숫자 카운트업. 선례: startClassExpAnim 의 rAF 루프. */
+function ggCountUp(el, from, to, ms){
+  if(!el) return;
+  if(from === to){ el.textContent = to.toLocaleString(); return; }
+  const dur = ms || 620, t0 = performance.now(), d = to - from;
+  /* ★ 탭이 뒤에 있으면 rAF 가 **한 번도 안 돈다.** 그냥 최종값을 쓴다.
+     안 그러면 숫자가 옛 값에 박힌 채로 남는다(실측으로 확인). */
+  if(document.hidden){ el.textContent = to.toLocaleString(); return; }
+  /* 그물 — 재생 도중 탭을 옮겨도 끝값은 반드시 맞춘다 */
+  setTimeout(()=>{ try{ el.textContent = to.toLocaleString(); }catch(e){} }, dur + 150);
+  el.classList.add('ggfx-pop');
+  setTimeout(()=>{ try{ el.classList.remove('ggfx-pop'); }catch(e){} }, 460);
+  const tick = (now)=>{
+    const k = Math.min(1, (now - t0) / dur);
+    const v = Math.round(from + d * (1 - Math.pow(1 - k, 3)));   // 끝에서 부드럽게
+    el.textContent = v.toLocaleString();
+    if(k < 1) requestAnimationFrame(tick);
+    else el.textContent = to.toLocaleString();
+  };
+  requestAnimationFrame(tick);
+}
+/* 화면 중앙에서 target 으로 이모지 n개를 시차를 두고 날린다. */
+function ggFlyReward(emoji, target, n){
+  if(!target || !emoji) return;
+  let r;
+  try{ r = target.getBoundingClientRect(); }catch(e){ return; }
+  if(!r || (!r.width && !r.height)) return;      // 화면에 없는 칸이면 그만둔다
+  const tx = r.left + r.width/2, ty = r.top + r.height/2;
+  const cx = window.innerWidth/2, cy = window.innerHeight/2;
+  const cnt = Math.max(1, Math.min(8, n || 4));
+  for(let i=0; i<cnt; i++){
+    const el = document.createElement('div');
+    el.className = 'ggfx';
+    el.textContent = emoji;
+    /* 중앙에서 조금씩 흩어뜨려 한 점에서 쏟아지지 않게 한다 */
+    const sx = cx + (Math.random()*120 - 60);
+    const sy = cy + (Math.random()*90  - 45);
+    el.style.left = sx + 'px';
+    el.style.top  = sy + 'px';
+    el.style.setProperty('--ggfx-dx', (tx - sx) + 'px');
+    el.style.setProperty('--ggfx-dy', (ty - sy) + 'px');
+    el.style.setProperty('--ggfx-dur', (700 + i*55) + 'ms');
+    el.style.animationDelay = (i * 65) + 'ms';
+    document.body.appendChild(el);
+    setTimeout(()=>{ try{ el.remove(); }catch(e){} }, 1400 + i*65);
+  }
+}
+/* 재화 하나가 들어왔다 — 이모지를 날리고 숫자를 올린다.
+   ⚠ 여기가 유일한 창구다. grant* 들이 전부 이걸 부른다. */
+function ggGainFx(emoji, targetSel, from, to, n){
+  try{
+    if(__ggFxMute > 0) return;
+    const el = document.querySelector(targetSel);
+    if(!el) return;                              // 그 화면에 재화 바가 없다 → 조용히 넘어간다
+    if(document.hidden) return;   // 안 보이는 화면에서는 연출도 되감기도 하지 않는다
+    /* ⚠ grant* 가 이미 최종값을 그려놨다. 그대로 두면 카운트업이 시작할 때
+       **정답이 보였다가 되감기는** 모양이 된다. 지금 바로 옛 값으로 돌려놓는다. */
+    try{ el.textContent = Number(from).toLocaleString(); }catch(e){}
+    ggFlyReward(emoji, el, n);
+    setTimeout(()=>{ try{ ggCountUp(el, from, to); }catch(e){} }, 420);
+  }catch(e){}
+}
+
 function renderUbiniteBadge(){
   try{
     let el = document.getElementById('ubiniteBadge');
+    /* ★ [Ver 15.1] 이미 있으면 **숫자만** 고친다.
+       예전에는 매번 innerHTML 을 통째로 갈아끼워서, 카운트업 중에 이게 불리면
+       그 요소가 사라져 숫자가 중간에 얼어붙었다. */
+    if(el && el.querySelector('.ubi-num')){
+      const num = el.querySelector('.ubi-num');
+      if(num.textContent !== ubinite.toLocaleString()) num.textContent = ubinite.toLocaleString();
+      return;
+    }
     if(!el){
       el = document.createElement('div');
       el.id = 'ubiniteBadge';
@@ -13711,7 +13965,12 @@ function buildUserStatPanelHtml(){
   const icon = classIconHtml(classState.cls, 40);
   return `
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-      <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;">${icon}</div>
+      ${/* [Ver 15.1] 클래스 아이콘만 있던 자리에 **프사**를 놓고 눌러서 바꿀 수 있게 했다.
+           예전에는 메뉴 화면의 프사를 누르는 길 하나뿐이었다. */''}
+      <div class="usb-avatar-pick" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;"
+           title="프로필 사진 고르기" onclick="openPfpPicker()">
+        ${profilePicHtml({ size:44, cls: classState.cls })}
+      </div>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
           <b style="font-size:16px;" id="uspNameDisplay">${escapeHtml(getPlayerNickname())}</b>
@@ -14038,6 +14297,10 @@ function settleTierForHuman(placement, cause){
     try{ quiz = !!(typeof quizMode !== 'undefined' && quizMode) || !!(window.__qm); }catch(e){}
     if(!quiz) grantExp(computeExpGain(placement, total));
   }catch(e){}
+  /* ⚠ [Ver 15.1] 정산은 우비나이트·곡괭이·열쇠·코인을 **한꺼번에** 준다.
+     묶지 않으면 이모지가 폭죽이 된다. 숫자는 그대로 오르고 연출만 건너뛴다.
+     (판이 끝난 직후라 어차피 결과 화면이 덮고 있어 보이지도 않는다) */
+  ggFxMute(()=>{
   try{ awardUbiniteForPlacement(placement); }catch(e){}
   /* [Ver 11.8] 아케이드 모드였다면 랩터코인도 준다. (놀이터·튜토리얼은 위에서 이미 걸러진다) */
   try{ if(isArcadeModeKey(window.__pickedModeKey)) awardArcadeCoinsForPlacement(placement); }catch(e){}
@@ -14046,6 +14309,7 @@ function settleTierForHuman(placement, cause){
   try{ awardPickaxeForPlacement(placement); }catch(e){}  // [Ver 9.11] 1~2등 30% 확률로 곡괭이
   try{ awardGoldPickaxeOnWin(placement); }catch(e){}     // [Ver 13.1] 유물 '객기' — 1등 확률 보상
   try{ awardBoxKeysForPlacement(placement); }catch(e){}  // [Ver 10.5.3] 1등 8개 · 2등 4개 상자 열쇠
+  });   // ggFxMute 끝
   /* [Ver 14.8.2] 매크로 확인 — 개쩌는 곡괭이가 무제한으로 나오는 길이 전부 여기서
      시작하므로, 묻는 자리도 여기 하나면 된다. 의심스러울 때만 창이 뜬다. */
   try{ hgMaybeChallenge(); }catch(e){}
@@ -18904,8 +19168,10 @@ function grantPickaxe(n){
      지급이 **버려진 객체**에 얹혀 조용히 사라졌을 것이다. 반드시 tick 뒤에 잡는다. */
   tickPickaxeRegen();
   const s = loadPickaxe();
+  const before = s.n;
   s.n += (n||1);   // 보상으로 받은 건 상한을 넘겨도 그대로 쌓인다
   savePickaxe();
+  try{ ggGainFx('⛏️', '#resPick', before, s.n, Math.min(4, n||1)); }catch(e){}
   return s.n;
 }
 /* ##########################################################################
@@ -18984,7 +19250,12 @@ let goldPickaxe = 0;
 try{ const v = parseInt(localStorage.getItem(STORAGE_KEYS.goldPickaxe),10); if(Number.isFinite(v)) goldPickaxe = Math.max(0, v); }catch(e){}
 function saveGoldPickaxe(){ try{ localStorage.setItem(STORAGE_KEYS.goldPickaxe, String(goldPickaxe)); }catch(e){} }
 function goldPickaxeCount(){ return goldPickaxe; }
-function grantGoldPickaxe(n){ goldPickaxe += (n||1); saveGoldPickaxe(); return goldPickaxe; }
+function grantGoldPickaxe(n){
+  const before = goldPickaxe;
+  goldPickaxe += (n||1); saveGoldPickaxe();
+  try{ ggGainFx('🪙', '#resGoldPick', before, goldPickaxe, Math.min(4, n||1)); }catch(e){}
+  return goldPickaxe;
+}
 function spendGoldPickaxe(n){
   n = n||1;
   walletSyncFromStorage();   // [Ver 13.15.2] 다른 창이 이미 썼을 수 있다 — 복사 방지
@@ -19005,7 +19276,12 @@ let boxKeys = 0;
 try{ const v = parseInt(localStorage.getItem(STORAGE_KEYS.boxKeys),10); if(Number.isFinite(v)) boxKeys = Math.max(0, v); }catch(e){}
 function saveBoxKeys(){ try{ localStorage.setItem(STORAGE_KEYS.boxKeys, String(boxKeys)); }catch(e){} }
 function boxKeyCount(){ return boxKeys; }
-function grantBoxKeys(n){ boxKeys += (n||1); saveBoxKeys(); return boxKeys; }
+function grantBoxKeys(n){
+  const before = boxKeys;
+  boxKeys += (n||1); saveBoxKeys();
+  try{ ggGainFx('🔑', '#resKeys', before, boxKeys, 4); }catch(e){}
+  return boxKeys;
+}
 function spendBoxKeys(n){
   n = n||1;
   walletSyncFromStorage();   // [Ver 13.15.2] 복사 방지 — spendGoldPickaxe 주석 참고
@@ -19248,6 +19524,10 @@ function restoreScreenBgm(){
     if(scr === 'screen-battle'){ if(!draftMode) ambientBgmPlay('calltoadventure'); else ambientBgmStop(); }
     else if(scr === 'screen-gacha') ambientBgmPlay('doughv');
     else if(scr === 'screen-mine') ambientBgmPlay('cathedral');   // [Ver 9.11] 유물 광산
+    /* ⚠ [Ver 15.1] 상자는 이제 **창**이다. getComputedScreen() 은 창이 떠 있어도
+       'screen-start' 를 돌려주므로, 화면만 보고 판단하면 메뉴 BGM 으로 되돌려버린다.
+       창을 먼저 본다. (옛 screen-box 분기는 남겨둔다 — 그 화면은 이제 안 뜬다) */
+    else if(typeof gwinIsOpen === 'function' && gwinIsOpen('box')) ambientBgmPlay('challengeboxtheme');
     else if(scr === 'screen-box') ambientBgmPlay('challengeboxtheme'); // [Ver 9.17] 수상한 상자 전용 BGM
     else if(scr === 'screen-credits') ambientBgmPlay('creditstheme');  // [Ver 9.17] 크레딧 전용 BGM (비의 무곡)
     /* [잠수함] 화면마다 자기 곡을 준다 — 어디에 있는지 귀로도 알게 된다 */
@@ -19419,7 +19699,14 @@ let raptorTeeth = 0;
 try{ const v = parseInt(localStorage.getItem(STORAGE_KEYS.teeth), 10); if(Number.isFinite(v)) raptorTeeth = Math.max(0, v); }catch(e){}
 function saveTeeth(){ try{ localStorage.setItem(STORAGE_KEYS.teeth, String(raptorTeeth)); }catch(e){} }
 function teethCount(){ return raptorTeeth; }
-function grantTeeth(n){ raptorTeeth += (n||1); saveTeeth(); return raptorTeeth; }
+function grantTeeth(n){
+  const before = raptorTeeth;
+  raptorTeeth += (n||1); saveTeeth();
+  /* ⚠ 이빨은 재화 바에 칸이 없다 — 권능 화면의 #pwTeethNum 뿐이다.
+     그 화면이 아니면 ggGainFx 가 알아서 건너뛴다. */
+  try{ ggGainFx('🦷', '#pwTeethNum', before, raptorTeeth, Math.min(4, n||1)); }catch(e){}
+  return raptorTeeth;
+}
 function spendTeeth(n){
   n = n || 1;
   walletSyncFromStorage();   // [Ver 13.15.2] 복사 방지 — spendGoldPickaxe 주석 참고
@@ -20605,6 +20892,9 @@ function walletRepaint(){
   try{
     const sc = getComputedScreen();
     if(sc === 'screen-mine')   renderMineScreen();
+    /* [Ver 15.1] 상자·출석부는 창이 됐다. 화면이 아니라 창을 봐야
+       다른 탭에서 재화를 쓴 것이 지금 열린 창에 반영된다. */
+    if(typeof gwinIsOpen === 'function' && gwinIsOpen()) gwinRender();
     if(sc === 'screen-box')    renderBoxScreen();
     if(sc === 'screen-gacha')  renderGachaScreen();
     if(sc === 'screen-arcade') renderArcade();
@@ -25123,12 +25413,59 @@ function boxSpecialText(s){
 }
 
 let boxBusy = false;
-function openBoxScreen(){
+/* [Ver 15.1] 이제 **창**으로 연다.
+   ⚠ 이름은 그대로 둔다 — 재화 바(🔑)와 메뉴 타일이 이 이름을 부른다. */
+function openBoxScreen(){ openBoxWin(); }
+function __oldOpenBoxScreen(){
   closeMenuDrawer();
   showScreen('screen-box');
   renderBoxScreen();
   try{ ambientBgmPlay('challengeboxtheme'); }catch(e){} // [Ver 9.17] 수상한 상자 전용 BGM
 }
+/* ##########################################################################
+   [Ver 15.1] 수상한 상자 — 창
+   --------------------------------------------------------------------------
+   ▶ 드롭 확률표가 본문을 다 차지해 정작 여는 버튼이 아래로 밀려 있었다.
+     표는 제목줄 ℹ️ 로 빼고 본문에는 **여는 것**만 남긴다.
+   ⚠ 안에서 띄우는 것들은 전부 이 창 **위에** 뜬다 —
+     개수 고르기·결과(showModal 9700), 개봉 연출(.mine-dig-ov 9700),
+     카드 뒤집기(.rv-ov 9200). 창이 9150 이라서 그렇다. 그 숫자를 올리면 다 깨진다.
+   ########################################################################## */
+function openBoxWin(){
+  openGWin({
+    key:'box', title:'🎁 우빈이의 수상한 상자',
+    render: boxWinHtml,
+    onInfo: ()=> showModal('ℹ️ 상자 드롭 확률', buildBoxInfoBoardHtml(), [{label:'닫기', solid:true}]),
+    onClose: ()=>{ try{ restoreScreenBgm(); }catch(e){} }
+  });
+  try{ ambientBgmPlay('challengeboxtheme'); }catch(e){}
+}
+function boxWinHtml(){
+  const keys = boxKeyCount();
+  const canOpen = Math.min(BOX_MAX_OPEN, Math.floor(keys / BOX_KEY_COST));
+  const btn = (n, label)=>
+    `<button class="gc-pull gc-pull-box" ${keys < BOX_KEY_COST*n ? 'disabled' : ''} onclick="doOpenBox(${n})">
+       <b>${label}</b><small>🔑 ${BOX_KEY_COST*n}</small></button>`;
+  return `
+    <div class="gc-wallet" style="margin-top:0;">
+      <span class="gc-key">🔑 열쇠 <b id="boxKeyCount">${keys.toLocaleString()}</b></span>
+      <span class="gc-claw">지금 열 수 있는 상자 <b>${canOpen}</b>개</span>
+    </div>
+    <div class="gc-pulls box-pulls">
+      ${btn(1, '상자 1개 열기')}
+      ${btn(5, '상자 5개 열기')}
+      <button class="gc-pull gc-pull-box" ${keys < BOX_KEY_COST ? 'disabled' : ''} onclick="openBoxCountPicker()">
+        <b>원하는 만큼</b><small>🎁 1~${BOX_MAX_OPEN}개</small></button>
+      ${btn(BOX_MAX_OPEN, `상자 ${BOX_MAX_OPEN}개 열기`)}
+    </div>
+    <div class="mine-note">
+      뭐가 들었는지는 우빈이도 모릅니다. 열쇠 <b>${BOX_KEY_COST}개</b>로 하나를 엽니다.<br>
+      열쇠는 <b>일반전·랜서버</b>에서 <b>1등 8개 · 2등 4개</b>를 받습니다.
+      (놀이터 모드와 튜토리얼은 보상이 없습니다)<br>
+      <span style="opacity:.75;">드롭 확률은 오른쪽 위 <b>ℹ️</b> 에서 볼 수 있습니다.</span>
+    </div>`;
+}
+
 function renderBoxScreen(){
   const wrap = document.getElementById('boxWrap');
   if(!wrap) return;
@@ -25208,9 +25545,12 @@ function doOpenBox(count){
   const rolls = [];
   for(let i=0;i<count;i++) rolls.push(boxRollOnce());
   showBoxOpening(()=>{
-    rolls.forEach(boxGrantResult);   // 굴린 뒤 한꺼번에 지급 (미보유 펫 판정이 굴릴 때 기준이라 중복 지급이 없다)
+    /* ⚠ [Ver 15.1] 상자 10개면 지급이 수십 번이다. 묶지 않으면 폭죽이 된다.
+       어차피 바로 뒤에 카드 뒤집기 연출이 결과를 보여준다. */
+    ggFxMute(()=> rolls.forEach(boxGrantResult));   // 굴린 뒤 한꺼번에 지급 (미보유 펫 판정이 굴릴 때 기준이라 중복 지급이 없다)
     boxBusy = false;
     renderBoxScreen();
+    try{ gwinRender(); }catch(e){}   // [Ver 15.1] 창으로 열려 있으면 같이 갱신
     /* [Ver 14.5] 텍스트 모달만 띄우던 것을 **카드 뒤집기**로 바꿨다.
        재단·광산이 쓰는 revealSequence 를 그대로 쓴다 — 요약 모달은 그 뒤에 그대로 뜬다. */
     boxRevealThenSummary(rolls);
@@ -33739,18 +34079,37 @@ function questPoints(){
 function questRewardClaimed(pt){ return loadQuest().claimed.indexOf(pt) !== -1; }
 function questRewardReady(pt){ return questPoints() >= pt && !questRewardClaimed(pt); }
 function questClaimableCount(){ return QUEST_PT_REWARDS.filter(r=> questRewardReady(r.pt)).length; }
-function questClaimReward(pt){
+/* [Ver 15.1] **지급만** 한다. 안내창은 부르는 쪽이 한 번만 띄운다.
+   ⚠ 예전에는 지급과 안내가 한 몸이라, 여러 구간을 연달아 받으면 showModal 이
+     서로를 덮어써 **마지막 하나만 보이고 나머지는 조용히 들어갔다.** */
+function questGrantReward(pt){
   const r = QUEST_PT_REWARDS.find(x=> x.pt === pt);
-  if(!r || !questRewardReady(pt)) return false;
+  if(!r || !questRewardReady(pt)) return null;
   const q = loadQuest();
   q.claimed.push(pt);
   saveQuest();
   try{ r.give(); }catch(e){ console.error('[퀘스트] 보상 지급 실패', e); }
+  return r;
+}
+/* 누른 구간과 **그 아래 안 받은 구간을 전부** 받는다.
+   ▶ 마지막 구간만 눌러도 앞의 것이 남지 않는다 — 하나씩 누르게 하는 건 손만 아프다.
+   ⚠ 요약창은 **하나만** 띄운다(위 주석 참고). */
+function questClaimReward(pt){
+  const got = [];
+  QUEST_PT_REWARDS.forEach(x=>{
+    if(x.pt <= pt && questRewardReady(x.pt)){
+      const r = questGrantReward(x.pt);
+      if(r) got.push(r);
+    }
+  });
+  if(!got.length) return false;
   try{ renderTopResources(); renderUbiniteBadge(); }catch(e){}
+  const many = got.length > 1;
   showModal('🎁 보상 수령', `<div style="text-align:center;line-height:1.9;">
       <div style="font-size:34px;">🎁</div>
-      <div style="font-size:15px;font-weight:700;margin:4px 0;">${escapeHtml(r.label)}</div>
-      <div style="font-size:12px;color:var(--fg-dim);">${pt}P 구간 보상을 받았습니다.</div>
+      ${got.map(r=>`<div style="font-size:14px;font-weight:700;margin:2px 0;">${escapeHtml(r.label)}</div>`).join('')}
+      <div style="font-size:12px;color:var(--fg-dim);margin-top:6px;">
+        ${many ? `밀려 있던 <b>${got.length}개</b> 구간을 한꺼번에 받았습니다.` : `${pt}P 구간 보상을 받았습니다.`}</div>
     </div>`, [{label:'확인', solid:true}]);
   try{ renderQuestScreen(); renderTodoDot(); }catch(e){}
   return true;
@@ -33862,7 +34221,7 @@ function devGiftClaim(day){
       <div style="font-size:15px;font-weight:700;margin:4px 0;">${escapeHtml(g.label)}</div>
       <div style="font-size:12px;color:var(--fg-dim);">${day}일차 선물을 받았습니다.</div>
     </div>`, [{label:'확인', solid:true}]);
-  try{ renderAttendScreen(); renderTodoDot(); }catch(e){}
+  try{ renderAttendScreen(); gwinRender(); renderTodoDot(); }catch(e){}
   return true;
 }
 
@@ -34131,10 +34490,9 @@ function renderQuestScreen(){
 /* ==========================================================================
    [Ver 13.0] 출석체크 화면
    ========================================================================== */
-function openAttendScreen(){
-  showScreen('screen-attend');
-  renderAttendScreen();
-}
+/* [Ver 15.1] 이제 **창**으로 연다.
+   ⚠ screen-attend 마크업은 남겨둔다 — 지우면 showScreen 재렌더 훅과 goToStart 경로가 깨진다. */
+function openAttendScreen(tab){ openAttendWin(tab); }
 /* ##########################################################################
    [Ver 15.0] 신규 유저 출석부
    --------------------------------------------------------------------------
@@ -34211,13 +34569,16 @@ function newbieClaim(){
           : `<b>${n.got}</b> / ${NEWBIE_REWARDS.length}일차 · 다음 보상은 <b>내일</b>`}</div>
     </div>`, [{label:'확인', solid:true}]);
   try{ renderAttendScreen(); }catch(e){}
+  try{ gwinRender(); }catch(e){}   // [Ver 15.1] 창으로 열려 있으면 같이 갱신
   try{ renderTodoDot(); }catch(e){}
   try{ renderTopResources(); renderUbiniteBadge(); }catch(e){}
 }
 /* 출석부 화면 맨 위에 붙는 칸. 다 받았으면 빈 문자열이라 통째로 사라진다.
    ⚠ 클래스는 기존 출석부 것을 그대로 쓴다 — 새로 만들면 CSS 를 또 손봐야 한다. */
-function newbiePanelHtml(){
-  if(newbieDone()) return '';
+function newbiePanelHtml(inTab){
+  if(newbieDone()) return inTab
+    ? '<div style="padding:26px 0;text-align:center;color:var(--fg-dim);">신규 유저 출석부를 전부 받으셨습니다.</div>'
+    : '';
   const n = loadNewbie();
   const can = newbieCanClaim();
   const days = NEWBIE_REWARDS.map((r,i)=>{
@@ -34242,7 +34603,87 @@ function newbiePanelHtml(){
       </button>
     </div>
     <div class="at-days">${days}</div>
-    <div style="height:1px;background:var(--line);margin:16px 0 14px;"></div>`;
+    ${inTab ? '' : '<div style="height:1px;background:var(--line);margin:16px 0 14px;"></div>'}`;
+}
+
+/* ##########################################################################
+   [Ver 15.1] 출석부 — 세 탭 창
+   --------------------------------------------------------------------------
+   ⚠ 신규 유저 탭은 다 받으면 **탭 목록에서 빠진다.** 지금 그 탭을 보고 있었다면
+     gwinRender 가 첫 탭으로 옮겨준다.
+   ⚠ 수령 확인창(showModal)은 이 창 **위에** 뜬다. 그래서 showModal 이 아니라
+     gwin 을 쓴다 — showModal 로 창을 만들면 수령창이 출석부를 통째로 덮는다.
+   ########################################################################## */
+function attendTabs(){
+  const t = [];
+  if(!newbieDone()) t.push({ k:'newbie', label:'🎉 신규 유저', badge: newbieCanClaim() ? 1 : 0 });
+  t.push({ k:'daily',  label:'📅 연속 출석', badge: attendCheckedToday() ? 0 : 1 });
+  t.push({ k:'gift',   label:'🎁 30일 선물', badge: devGiftClaimableCount() });
+  return t;
+}
+function openAttendWin(tab){
+  openGWin({
+    key:'attend', title:'📅 출석체크', tab: tab || null,
+    tabs: attendTabs,
+    render: attendTabHtml
+  });
+}
+function attendTabHtml(tab){
+  if(tab === 'newbie') return newbiePanelHtml(true);
+  if(tab === 'gift')   return attendGiftHtml();
+  return attendDailyHtml();
+}
+/* 연속 출석 7일 */
+function attendDailyHtml(){
+  const a = loadAttend();
+  const checked = attendCheckedToday();
+  const streak = a.streak || 0;
+  const days = ATTEND_REWARDS.map(r=>{
+    const got = checked ? (r.d <= streak) : (r.d < streak + 1 && r.d <= streak);
+    const isToday = !checked && r.d === (streak % ATTEND_REWARDS.length) + 1;
+    const cls = got ? 'done' : (isToday ? 'today' : 'locked');
+    return `<div class="at-day ${cls}">
+        <span class="at-d">${r.d}일차</span>
+        <span class="at-ic">${r.icon}</span>
+        <span class="at-lb">${escapeHtml(r.label)}</span>
+        ${got ? '<span class="at-chk">✔</span>' : ''}
+      </div>`;
+  }).join('');
+  return `
+    <div class="at-head">
+      <div class="at-head-l">
+        <div class="at-head-t">연속 출석 <b>${streak}</b>일차</div>
+        <div class="at-head-note">하루라도 건너뛰면 1일차로 돌아갑니다 · 7일을 다 받으면 다시 처음부터</div>
+      </div>
+      <button class="at-btn${checked?' done':''}" ${checked?'disabled':'onclick="doAttendCheck()"'}>
+        ${checked ? '✔ 오늘 출석 완료' : '오늘 출석하기'}
+      </button>
+    </div>
+    <div class="at-days">${days}</div>`;
+}
+/* 30일 개발자의 선물 */
+function attendGiftHtml(){
+  const a = loadAttend();
+  let gifts = '';
+  for(let d=1; d<=DEV_GIFT_DAYS; d++){
+    const g = devGiftOf(d);
+    const done = a.devClaimed.indexOf(d) !== -1;
+    const ready = devGiftReady(d);
+    const cls = done ? 'done' : (ready ? 'ready' : 'locked');
+    gifts += `<button class="dg-cell ${cls}${g.big?' big':''}" ${ready?`onclick="devGiftClaim(${d})"`:''}>
+        <span class="dg-d">${d}</span>
+        <span class="dg-ic">${g.icon}</span>
+        <span class="dg-lb">${escapeHtml(g.label)}</span>
+        ${done ? '<span class="dg-chk">✔</span>' : (ready ? '<span class="dg-get">받기</span>' : '')}
+      </button>`;
+  }
+  return `
+    <div class="dg-head">
+      <span class="dg-head-t">🎁 30일 개발자의 선물</span>
+      <span class="dg-head-n">누적 출석 <b>${a.total||0}</b>일</span>
+    </div>
+    <div class="dg-note">연속이 끊겨도 <b>누적 출석일</b>은 줄지 않습니다. 오래 남아준 만큼 열립니다.</div>
+    <div class="dg-grid">${gifts}</div>`;
 }
 
 function renderAttendScreen(){
@@ -34309,6 +34750,7 @@ function doAttendCheck(){
       <div style="font-size:12px;color:var(--fg-dim);">연속 <b>${a.streak}</b>일차 · 누적 <b>${a.total}</b>일</div>
     </div>`, [{label:'확인', solid:true}]);
   renderAttendScreen();
+  try{ gwinRender(); }catch(e){}   // [Ver 15.1] 창으로 열려 있으면 같이 갱신
   renderTodoDot();
 }
 
@@ -34480,6 +34922,34 @@ function buildAchievementsPanelHtml(){
    ================================================================================ */
 const INV_GRADES = ['E','D','C','B','A','S','SR','SSR','UR','LR','?'];
 let dexSearch = '', dexGradeFilter = '', dexDiscoveredOnly = false;
+/* [Ver 15.1] 정렬 — 예전에는 **아예 없어서** cards 배열 순서 그대로였다(사실상 무작위).
+   기본은 등급순(높은 등급 먼저). */
+let dexSort = 'grade';
+function setDexSort(v){ dexSort = v || 'grade'; renderDexScreen(); }
+const DEX_SORTS = [
+  { k:'grade',   label:'등급순' },
+  { k:'mastery', label:'마스터리순' },
+  { k:'name',    label:'이름순' },
+];
+/* ⚠ GRADE_RANK 는 파일 한참 뒤에 선언된다. 함수 안이라 실행 시점에는 멀쩡하지만,
+   다른 호출부와 똑같이 typeof 가드를 둔다. */
+function dexGradeRank(g){
+  try{ if(typeof GRADE_RANK !== 'undefined' && GRADE_RANK[g] != null) return GRADE_RANK[g]; }catch(e){}
+  return -1;   // ? · X 등 표에 없는 등급은 맨 뒤로
+}
+function dexSortList(list){
+  const byName = (a,b)=> String(a.name||'').localeCompare(String(b.name||''), 'ko-KR');
+  const arr = list.slice();
+  if(dexSort === 'name')    return arr.sort(byName);
+  if(dexSort === 'mastery') return arr.sort((a,b)=>{
+    let ra=0, rb=0, ca=0, cb=0;
+    try{ ra=getMasteryRank(a.name)||0; rb=getMasteryRank(b.name)||0;
+         ca=getCardMastery(a.name)||0; cb=getCardMastery(b.name)||0; }catch(e){}
+    return (rb-ra) || (cb-ca) || byName(a,b);
+  });
+  /* 등급순 — 높은 등급이 먼저 */
+  return arr.sort((a,b)=> (dexGradeRank(b.grade) - dexGradeRank(a.grade)) || byName(a,b));
+}
 function setDexSearch(v){ dexSearch = (v||'').trim().toLowerCase(); renderDexScreen(); }
 function setDexGradeFilter(v){ dexGradeFilter = v||''; renderDexScreen(); }
 function setDexDiscoveredOnly(v){ dexDiscoveredOnly = !!v; renderDexScreen(); }
@@ -34603,6 +35073,7 @@ function renderDexScreen(){
   else if(dexGradeFilter)                   list = list.filter(c=> c.grade===dexGradeFilter);
   if(dexDiscoveredOnly) list = list.filter(c=> isCardInDex(c.name)); // [Ver 9.13.1] 개발자 모드 전체 해금과 일관되게
   if(dexSearch) list = list.filter(c=> (c.name||'').toLowerCase().includes(dexSearch));
+  list = dexSortList(list);   // [Ver 15.1] 정렬
 
   // 상단 요약
   const sum = document.getElementById('invSummary');
@@ -34611,11 +35082,18 @@ function renderDexScreen(){
   // 등급 필터 칩
   const fw = document.getElementById('invFilters');
   if(fw){
-    const chip = (val, label, count, cls)=>`<button class="inv-chip ${cls||''} ${dexGradeFilter===val?'on':''}" onclick="setDexGradeFilter('${val}')">${label}${count!=null?`<i>${count}</i>`:''}</button>`;
+    /* ⚠ [Ver 15.1] 예전에는 선택된 칩에 `on` 을 붙였는데 CSS 에는 `.active` 만 있다.
+       그래서 **지금 어떤 등급을 보고 있는지 표시가 전혀 안 됐다.** 둘 다 붙여 바로잡는다. */
+    const chip = (val, label, count, cls)=>`<button class="inv-chip ${cls||''} ${dexGradeFilter===val?'active on':''}" onclick="setDexGradeFilter('${val}')">${label}${count!=null?`<i>${count}</i>`:''}</button>`;
+    const sortChips = DEX_SORTS.map(s=>
+      `<button class="inv-chip ${dexSort===s.k?'active on':''}" onclick="setDexSort('${s.k}')">${s.label}</button>`).join('');
     // [Ver 9.10.2] 진화 관련 필터 두 개를 등급 칩 앞에 붙인다
     const evolvableN = all.filter(c=> isEvolvableCardName(c.name) && !isCardEvolved(c.name)).length;
     const evolvedN   = all.filter(c=> isCardEvolved(c.name)).length;
-    fw.innerHTML = chip('', '전체', total)
+    fw.innerHTML = `<span style="font-size:10.5px;color:var(--fg-faint);align-self:center;margin-right:2px;">정렬</span>`
+      + sortChips
+      + `<span style="width:1px;background:var(--line);margin:0 4px;"></span>`
+      + chip('', '전체', total)
       + chip('__evolvable', '💠 진화 가능', evolvableN, 'inv-chip-evo')
       + chip('__evolved',   '🧬 진화됨',   evolvedN,   'inv-chip-evo')
       + INV_GRADES.map(g=>{
@@ -35076,6 +35554,74 @@ function showModal(title, bodyHtml, buttons){
   document.getElementById('modalBg').classList.add('show');
 }
 function closeModal(){ document.getElementById('modalBg').classList.remove('show'); }
+
+/* ##########################################################################
+   [Ver 15.1] 공용 창(window)
+   --------------------------------------------------------------------------
+   ▶ showModal 은 전역 #modalBody 하나를 쓴다. 창 안에서 또 창을 띄우면 통째로
+     덮어써진다(지후펫 상세가 랩터마트를 지우던 사고 — 주석 19277).
+     탭이 있으면서 그 안에서 확인창을 띄워야 하는 화면은 이걸 쓴다.
+   ⚠ .gwin-bg 의 z-index 는 .modal-bg 보다 **낮다**. 그래야 확인창이 창 위에 겹친다.
+   ⚠ 창은 한 번에 하나만 뜬다. 창 안에서 다른 창을 열면 갈아끼워진다 —
+     그건 의도된 것이다(탭으로 해결할 일을 창 중첩으로 풀지 말 것).
+   ########################################################################## */
+let __gwin = null;   // { key, title, tabs, tab, render, onClose, onInfo }
+
+function openGWin(o){
+  /* ⚠ [D2] 창이 이미 떠 있으면 **그 창의 onClose 를 먼저 부른다.**
+     안 그러면 상자(BGM 복구) → 출석부로 넘어갈 때 BGM 이 상자 것으로 굳는다. */
+  try{ if(__gwin && __gwin.onClose) __gwin.onClose(); }catch(e){}
+  __gwin = Object.assign({ tabs:[], tab:null, onClose:null, onInfo:null }, o || {});
+  if(!__gwin.tab && __gwin.tabs.length) __gwin.tab = __gwin.tabs[0].k;
+  const bg = document.getElementById('gwinBg');
+  if(!bg) return;
+  bg.classList.add('show');
+  gwinRender();
+  try{ scheduleOverlayCheck(); }catch(e){}
+}
+function closeGWin(){
+  const bg = document.getElementById('gwinBg');
+  if(bg) bg.classList.remove('show');
+  const cb = __gwin && __gwin.onClose;
+  __gwin = null;
+  try{ if(cb) cb(); }catch(e){}
+  try{ scheduleOverlayCheck(); }catch(e){}
+}
+function gwinIsOpen(key){
+  const bg = document.getElementById('gwinBg');
+  if(!bg || !bg.classList.contains('show') || !__gwin) return false;
+  return key ? (__gwin.key === key) : true;
+}
+function gwinSwitch(tab){ if(!__gwin) return; __gwin.tab = tab; gwinRender(); }
+function gwinInfoClick(){ try{ if(__gwin && __gwin.onInfo) __gwin.onInfo(); }catch(e){} }
+/* 지금 창을 다시 그린다. 안 열려 있으면 아무 일도 안 한다 —
+   덕분에 부르는 쪽에서 "창이 떠 있나"를 일일이 따지지 않아도 된다. */
+function gwinRender(){
+  if(!__gwin) return;
+  const t = document.getElementById('gwinTitle');
+  const tabsEl = document.getElementById('gwinTabs');
+  const body = document.getElementById('gwinBody');
+  if(!body) return;
+  if(t) t.innerHTML = __gwin.title || '';
+  /* 탭 — 없으면 줄 자체를 감춘다 */
+  const tabs = (typeof __gwin.tabs === 'function') ? __gwin.tabs() : (__gwin.tabs || []);
+  if(tabsEl){
+    if(!tabs.length){ tabsEl.style.display = 'none'; tabsEl.innerHTML = ''; }
+    else {
+      tabsEl.style.display = '';
+      /* 탭이 사라졌는데 그게 지금 탭이면 첫 탭으로 옮긴다(신규 출석부가 완료되면 탭이 없어진다) */
+      if(!tabs.some(x=> x.k === __gwin.tab)) __gwin.tab = tabs[0].k;
+      tabsEl.innerHTML = tabs.map(x=>
+        `<button class="qs-tab${__gwin.tab===x.k?' on':''}" onclick="gwinSwitch('${x.k}')">${x.label}${
+          x.badge > 0 ? `<i>${x.badge}</i>` : ''}</button>`).join('');
+    }
+  }
+  const info = document.getElementById('gwinInfo');
+  if(info) info.style.display = __gwin.onInfo ? '' : 'none';
+  try{ body.innerHTML = __gwin.render(__gwin.tab) || ''; }
+  catch(e){ body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--fg-dim);">화면을 그리지 못했습니다.</div>';
+            console.error('[gwin] render 오류', e); }
+}
 /* [편의] 자신의 사망 화면 / 게임 종료(결과) 화면에서 지금까지의 전체 로그를 다시 볼 수 있는 모달.
    사망 시 넘어오는 htmlOverride가 있으면 그 시점(사망까지)의 스냅샷만 보여주고,
    없으면(게임 종료 등) 현재 logArea의 전체 내용을 그대로 보여준다. */
@@ -73429,7 +73975,7 @@ function scheduleRefresh(){
 /* ---- 전체화면 창이 떠 있는 동안 표시를 남긴다 ------------------------
    CSS(body.ui-overlay-open …)가 이걸 보고 뒤쪽 애니메이션을 세운다.
    창 뒤에서 도는 애니메이션은 보이지도 않으면서 프레임만 먹는다. */
-var OVERLAY_SEL = '.modal-bg.show, .shop-bg.show, .gm-bg.show, .lan-overlay.show,'
+var OVERLAY_SEL = '.modal-bg.show, .gwin-bg.show, .shop-bg.show, .gm-bg.show, .lan-overlay.show,'
                 + '.devauth-bg.show, .nm-drawer-bg.show, .fdn-bg.show,'
                 + '.match-intro.show, .qm-intro.show,'
                 + '.auction-overlay, .cm-overlay, .clsup-ov, .re-overlay,'
