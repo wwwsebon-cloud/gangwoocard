@@ -5560,6 +5560,48 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
   55%    { transform:translateY(0) rotate(-.6deg) scale(1.02,.98); }
   72%    { transform:translateY(-3px) rotate(.4deg) scale(1,1); }
 }
+/* [Ver 15.9] VIP 2배속 토글 */
+.vip-speed{
+  background:linear-gradient(135deg,#3a3350,#241f33) !important;
+  color:#c9bdf0 !important; font-weight:800;
+  box-shadow:inset 0 0 0 1px rgba(160,140,255,.35);
+}
+.vip-speed.on{
+  background:linear-gradient(135deg,#7c3aed,#5b21b6) !important; color:#fff !important;
+  box-shadow:inset 0 0 0 1px rgba(196,181,253,.6), 0 0 14px -4px rgba(124,58,237,.8);
+}
+
+/* [Ver 15.9] 로그인 화면에서 맞이하는 점주 */
+.bi-clerk{
+  position:relative; display:flex; align-items:flex-end; justify-content:center; gap:8px;
+  margin-bottom:6px; pointer-events:none; user-select:none;
+}
+.bi-clerk img{
+  width:96px; height:96px; object-fit:contain;
+  filter:drop-shadow(0 5px 12px rgba(0,0,0,.22));
+  animation:rmBob 2.6s var(--ease-in-out) infinite;
+  transform-origin:50% 100%;
+}
+.bi-clerk-say{
+  position:relative; margin-bottom:22px; padding:8px 13px; border-radius:13px 13px 13px 4px;
+  background:#20242c; color:#eef1f6;
+  font-size:12.5px; font-weight:700; white-space:nowrap;
+  box-shadow:0 5px 14px -6px rgba(0,0,0,.4);
+  animation:biSay 2.8s var(--ease-in-out) infinite;
+}
+.bi-clerk-say::after{
+  content:''; position:absolute; left:-6px; bottom:6px;
+  border:6px solid transparent; border-right-color:#20242c;
+}
+@keyframes biSay{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-3px); } }
+@media (max-width:480px){
+  .bi-clerk img{ width:74px; height:74px; }
+  .bi-clerk-say{ font-size:11.5px; padding:6px 10px; margin-bottom:16px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .bi-clerk img, .bi-clerk-say{ animation:none !important; }
+}
+
 /* [Ver 15.6] 점원 말풍선 — 점원 왼쪽에서 톡 튀어나온다.
    ⚠ pointer-events:none. 지갑·뒤로 버튼을 가로채면 안 된다. */
 /* [Ver 15.8] 말풍선을 **점원과 똑같은 속도로** 옮기는 껍데기.
@@ -8807,6 +8849,11 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
   <!-- ③ 로그인 선택 -->
   <div class="bi-stage" id="biLogin">
     <div class="bi-login">
+      <!-- [Ver 15.9] 점주가 여기서 맞이한다. 마트의 그 아이다. -->
+      <div class="bi-clerk">
+        <img src="art/rm25.png" alt="" draggable="false" onerror="this.closest('.bi-clerk').remove()">
+        <div class="bi-clerk-say">어서와~ 처음이지?</div>
+      </div>
       <div class="bi-login-h">
         <div class="bi-login-t">시작 방법을 고르세요</div>
         <div class="bi-login-d">한 번만 고르면 다음부터는 바로 시작됩니다.</div>
@@ -8862,7 +8909,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.8</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.9</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -9615,6 +9662,8 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
                  ⚠ 시작 화면 메뉴에만 두면 "게임이 진행 중일 때만 예약 가능"이라 영영 못 쓴다.
                     실제로 쓰는 자리는 인게임이므로 여기 눈에 띄게 둔다. -->
             <button class="btn btn-sm" id="devEventBtnGame" onclick="openDevEventForce()" style="display:none;background:#7c3aed;color:#fff;font-weight:800;">🎲 이벤트 강제</button>
+            <!-- [Ver 15.9] VIP 전용 2배속 토글 — VIP 가 아니면 숨는다 -->
+            <button class="btn btn-sm vip-speed" id="vipSpeedBtn" style="display:none;" onclick="vipToggleX2()">⏩ 2배속</button>
             <button class="btn btn-sm btn-ghost" id="surrenderBtn" onclick="confirmSurrender()">항복</button>
             <button class="btn btn-sm btn-ghost" onclick="confirmExitGame()">종료</button>
           </div>
@@ -13285,6 +13334,7 @@ const STORAGE_KEYS = {
   pay: 'gang_card_pay_v1',           // [Ver 15.1] 현질 { pending:{id,...}, starter:true, last:{} }
   newsRead: 'gang_card_news_read_v1',// [Ver 15.4] 새 소식 읽기 보상 { ver:'Ver 15.4', got:['rank',...] }
   payTotal: 'gang_card_pay_total_v1',// [Ver 15.4] 누적 현질액 { won:0, got:[300,1000,...] }
+  vip: 'gang_card_vip_v1',           // [Ver 15.9] VIP { until:ts, daily:'YYYY-MM-DD', x2:true }
   bio: 'gang_card_bio_v1', // [Ver 10.5] 상태메시지 — 리더보드 프로필에 함께 표시된다
   friendCode: 'gang_card_friend_code_v1', // [Ver 10.5] 친구 코드 (공개용 · 사용자가 마음대로 바꾼다)
   friends: 'gang_card_friends_v1',        // [Ver 10.5] 친구 목록 (이 기기에만 저장)
@@ -14044,6 +14094,10 @@ function settleSeasonEndRewards(){
    ########################################################################## */
 const PFP_DEFS = [
   { key:'default',  name:'기본',        how:'처음부터 갖고 있습니다.' },
+  /* [Ver 15.9] */
+  { key:'sorry',    name:'미안',        how:'업적 · 미안' },
+  { key:'p2w',      name:'P2W',        how:'업적 · P2W' },
+  { key:'vip',      name:'VIP',        how:'VIP 상품을 구매하면 영구히 남습니다.' },
   { key:'rank1',    name:'최강자',      how:'업적 · 최강자' },
   { key:'rank2',    name:'#2',          how:'업적 · #2' },
   { key:'rank3',    name:'#3',          how:'업적 · #3' },
@@ -15137,6 +15191,86 @@ async function supDoResolve(id){
   }
 }
 
+/* ##########################################################################
+   [Ver 15.9] VIP
+   --------------------------------------------------------------------------
+   · 프로필 사진 'VIP' — **영구** (기간이 끝나도 남는다)
+   · 봇전 2배속 — 인게임 버튼으로 언제든 껐다 켠다
+   · 매일 600 우비나이트
+   ⚠ 기간은 쌓인다. 남아 있을 때 또 사면 그 위에 얹힌다.
+   ⚠ 날짜는 todayKey()(서버 보정 시각)를 쓴다 — PC 시계로 세면 하루를 여러 번 받는다.
+   ########################################################################## */
+const VIP_DAYS       = 14;
+const VIP_DAILY_UBI  = 600;
+const VIP_SPEED      = 2;      // 봇전 배속
+
+function vipLoad(){
+  try{
+    const o = JSON.parse(localStorage.getItem(STORAGE_KEYS.vip) || 'null');
+    if(o && typeof o.until === 'number') return { until:o.until, daily:o.daily||'', x2:(o.x2 !== false) };
+  }catch(e){}
+  return { until:0, daily:'', x2:true };
+}
+function vipSave(o){ try{ localStorage.setItem(STORAGE_KEYS.vip, JSON.stringify(o)); }catch(e){} }
+function vipActive(){ try{ return vipLoad().until > ggNow(); }catch(e){ return false; } }
+function vipLeftMs(){ try{ return Math.max(0, vipLoad().until - ggNow()); }catch(e){ return 0; } }
+/* 기간을 얹는다. ⚠ 남아 있으면 그 위에 더한다 — 덮어쓰면 산 만큼 날아간다. */
+function grantVipDays(n){
+  n = Math.max(1, n | 0);
+  const v = vipLoad();
+  const base = Math.max(v.until, ggNow());
+  v.until = base + n * 24 * 60 * 60 * 1000;
+  vipSave(v);
+  try{ grantPfp('vip'); }catch(e){}    // 프사는 영구다
+  try{ renderTopResources(); }catch(e){}
+  return v.until;
+}
+/* 오늘 몫을 아직 안 받았으면 준다. 게임을 켤 때·메뉴로 돌아올 때 지나간다. */
+function vipDailyCheck(){
+  try{
+    if(!vipActive()) return 0;
+    const v = vipLoad();
+    const t = todayKey();
+    if(v.daily === t) return 0;
+    v.daily = t; vipSave(v);
+    grantUbinite(VIP_DAILY_UBI);
+    try{ renderUbiniteBadge(); }catch(e){}
+    try{ newsToast && newsToast('VIP 오늘의 보상'); }catch(e){}
+    try{ log && log('highlight', `👑 VIP — 오늘의 우비나이트 ${VIP_DAILY_UBI}개를 받았습니다.`); }catch(e){}
+    return VIP_DAILY_UBI;
+  }catch(e){}
+  return 0;
+}
+/* 봇전 배속. VIP 가 아니거나 꺼두었으면 1배다. */
+function vipSpeed(){
+  try{ const v = vipLoad(); return (v.until > ggNow() && v.x2 !== false) ? VIP_SPEED : 1; }catch(e){ return 1; }
+}
+function vipToggleX2(){
+  const v = vipLoad();
+  v.x2 = !(v.x2 !== false);
+  vipSave(v);
+  try{ renderVipSpeedBtn(); }catch(e){}
+}
+/* 인게임의 작은 버튼 — VIP 에게만 보인다 */
+function renderVipSpeedBtn(){
+  try{
+    const b = document.getElementById('vipSpeedBtn');
+    if(!b) return;
+    if(!vipActive()){ b.style.display = 'none'; return; }
+    b.style.display = '';
+    const on = vipSpeed() > 1;
+    b.classList.toggle('on', on);
+    b.textContent = on ? '⏩ 2배속' : '▶ 1배속';
+    b.title = on ? 'VIP · 봇이 빠르게 움직입니다 (눌러서 끄기)' : 'VIP · 보통 속도 (눌러서 2배속)';
+  }catch(e){}
+}
+function vipRemainText(){
+  const ms = vipLeftMs();
+  if(ms <= 0) return '';
+  const d = Math.floor(ms / 86400000), h = Math.floor(ms % 86400000 / 3600000);
+  return d > 0 ? `${d}일 ${h}시간 남음` : `${h}시간 남음`;
+}
+
 const PAY_ACCOUNT = '1002-3952-5512';
 const PAY_BANK    = '토스뱅크';
 const PAY_PRODUCTS = [
@@ -15147,6 +15281,10 @@ const PAY_PRODUCTS = [
   { id:'u50000',  emoji:'🔷', name:'우비나이트 50,000', won:32500, ubinite:50000, off:35 },
   { id:'starter', emoji:'🎁', name:'초보자 패키지',     won:9900,  once:true,
     reward:{ ubinite:8000, pickaxe:20, teeth:30, pwStone:1 } },
+  /* [Ver 15.9] VIP — 기간제. 프사만 영구로 남는다. */
+  { id:'vip',     emoji:'👑', name:`VIP ${VIP_DAYS}일`,  won:4900,
+    reward:{ vip:VIP_DAYS },
+    desc:`🖼️ VIP 프로필 사진(영구) · ⏩ 봇전 2배속 · 💎 매일 ${VIP_DAILY_UBI}` },
 ];
 /* ##########################################################################
    [Ver 15.4] 누적 현질량 이정표 — "첫 구매 보상"
@@ -15213,7 +15351,10 @@ function payMilestoneHtml(){
 
 function payProduct(id){ return PAY_PRODUCTS.find(p=> p.id === id) || null; }
 function payRewardOf(p){ return p && p.reward ? p.reward : { ubinite:(p && p.ubinite) || 0 }; }
-function payRewardText(p){ try{ return mailRewardText(payRewardOf(p)); }catch(e){ return ''; } }
+function payRewardText(p){
+  if(p && p.desc) return p.desc;       // [Ver 15.9] 직접 적어둔 설명이 있으면 그걸 쓴다
+  try{ return mailRewardText(payRewardOf(p)); }catch(e){ return ''; }
+}
 function payWon(n){ return Number(n||0).toLocaleString() + '원'; }
 
 function payLoadLocal(){
@@ -17396,6 +17537,7 @@ function loadSavedGame(){
   isFriendlyMatch = !isRankedMatch;
   pendingCard = null;
   awaitingReaction = false;
+  try{ renderVipSpeedBtn(); }catch(e){}   // [Ver 15.9] VIP 2배속 버튼
   try{ rxHudHide(); }catch(e){}   // [Ver 15.2] 반응 HUD가 새 판까지 따라오지 않게
   try{ drawQReset(); }catch(e){}  // [Ver 15.2] 지난 판의 대기열을 물려받지 않게
   pendingDealAnimation = false;
@@ -17842,6 +17984,7 @@ function newsClaimRankIf(tab){ try{ if(tab === 'rank') newsClaim('rank'); }catch
 
 function renderMenuNote(){
   try{ newsPaintDots(); }catch(e){}   // [Ver 15.4] 새 소식 딱지
+  try{ vipDailyCheck(); }catch(e){}   // [Ver 15.9] VIP 오늘의 우비나이트
   try{ renderPassBar(); }catch(e){}   // [Ver 11.8] 시즌 패스 막대도 함께 갱신
   const el = document.getElementById('nmNote');
   if(!el) return;
@@ -21676,6 +21819,12 @@ function rm25Poke(){
       setTimeout(()=>{ try{ el.classList.remove('poke'); }catch(e){} }, 480);
     }
     try{ if(typeof UISfx !== 'undefined' && UISfx.tap) UISfx.tap(); }catch(e){}
+    /* [Ver 15.9] 업적 '미안' — 누적이라 STATS 에 쌓는다(판을 넘어 살아남아야 한다) */
+    try{
+      STATS.clerkPokes = (STATS.clerkPokes || 0) + 1;
+      saveStats();
+      if(STATS.clerkPokes === 100) evaluateAchievements(false);
+    }catch(e){}
     /* 같은 말을 연달아 하지 않는다 */
     let i = __rm25PokeLast;
     for(let t = 0; t < 8 && i === __rm25PokeLast; t++){
@@ -22295,6 +22444,7 @@ function mailRewardText(r){
   if(r.boxKeys) parts.push(`🔑 상자 열쇠 ${r.boxKeys.toLocaleString()}개`);        // [Ver 9.16]
   if(r.cream) parts.push(`☀️ 썬크림 ${r.cream.toLocaleString()}개`);              // [Ver 12.4.4]
   if(r.pwStone) parts.push(`🔷 권능석 ${r.pwStone.toLocaleString()}개`);           // [Ver 15.1] 초보자 패키지
+  if(r.vip) parts.push(`👑 VIP ${r.vip}일 (프로필 사진은 영구)`);                  // [Ver 15.9]
   // [Ver 9.13.1] 등급 확정 진화석 뽑기권 — { tier:'Ephemeral', n:1 }
   if(r.evoPick && r.evoPick.tier) parts.push(`🎫 ${r.evoPick.tier} 확정 진화석 뽑기권 ${(r.evoPick.n||1).toLocaleString()}장`);
   return parts.length ? parts.join(' · ') : '보상 없음';
@@ -22322,6 +22472,7 @@ function claimMail(id){
     if(m.reward.boxKeys) grantBoxKeys(m.reward.boxKeys);      // [Ver 9.16] 상자 열쇠
     if(m.reward.cream) grantCream(m.reward.cream);            // [Ver 12.4.4] 시즌 패스 썬크림
     if(m.reward.pwStone) grantPwStones(m.reward.pwStone);     // [Ver 15.1] 권능석 (초보자 패키지)
+    if(m.reward.vip) grantVipDays(m.reward.vip);              // [Ver 15.9] VIP 기간 (+ 프사 영구)
     if(m.reward.pfp) grantPfp(m.reward.pfp);                  // [Ver 12.6.1] 프로필 사진
     // [Ver 9.13.1] 등급 확정 진화석 뽑기권
     if(m.reward.evoPick && m.reward.evoPick.tier) grantEvoPick(m.reward.evoPick.tier, m.reward.evoPick.n||1);
@@ -29627,6 +29778,14 @@ function exitPlaygroundBar(){
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
   {
+    version: 'Ver 15.9', date: '2026-09-13',
+    items: [
+      '\u{1F451} <b>[신규] VIP (14일) · 4,900원</b><br>\u{1F5BC}️ <b>VIP 프로필 사진</b> — 기간이 끝나도 <b>영구히</b> 남습니다<br>\u23E9 <b>봇전 2배속</b> — 인게임의 작은 버튼으로 <b>언제든 껐다 켤 수 있습니다</b><br>\u{1F48E} <b>매일 600 우비나이트</b><br><span style="font-size:11.5px;color:var(--fg-dim);">남아 있을 때 또 사면 기간이 <b>그 위에 쌓입니다.</b></span>',
+      '\u{1F3C6} <b>[신규] 업적 2개.</b> <b>P2W</b> — 현질을 1회 하세요. <b>미안</b>(히든) — …점주를 100번 때려보세요. 둘 다 <b>전용 프로필 사진</b>을 줍니다.',
+      '\u{1F44B} <b>점주가 첫 화면에서 맞이합니다.</b> 게임을 처음 켜면 <b>RM25</b>가 인사합니다.',
+    ]
+  },
+  {
     version: 'Ver 15.8', date: '2026-09-13',
     items: [
       '\u{1F6B6} <b>[신규] 점원이 가판대를 걸어다닙니다.</b> <b>RM25</b>가 좌우로 어슬렁거리고, 오른쪽으로 갈 때는 <b>몸을 돌립니다.</b> 말풍선도 <b>계속 따라다닙니다.</b> 누르면 <b>그 자리에 멈춰</b> 움찔한 다음 다시 걷습니다.',
@@ -36273,6 +36432,8 @@ const ACHIEVEMENTS = [
   { id:'streak5', kind:'normal', name:'중수',     desc:'5연승 하기',                               pfp:'streak5',  check:c=>(c.stats.bestStreak||0)>=5 },
   { id:'streak10',kind:'normal', name:'고수',     desc:'10연승 하기',                              pfp:'streak10', check:c=>(c.stats.bestStreak||0)>=10 },
   { id:'class20', kind:'normal', name:'클래스 20', desc:'클래스 20 달성하기',                        pfp:'num20',    check:c=>{ try{ return (classState.cls|0) >= CLASS_MAX; }catch(e){ return false; } } },
+  /* [Ver 15.9] 현질 한 번. ⚠ 근거는 누적 결제액이다 — 승인이 확인돼야 오른다. */
+  { id:'p2w',     kind:'normal', name:'P2W',      desc:'현질을 1회 하세요',                          pfp:'p2w',      check:c=>(c.paidWon||0) > 0 },
 
   // ---------- 히든 (조건은 보이지만 매우 까다롭다) ----------
   { id:'spotdev', kind:'hidden', name:'개발자 발견', desc:'개발자와 함께 게임을 끝까지 마치세요',      pfp:'spotdev',  check:c=>!!c.game.metDev },
@@ -36292,6 +36453,9 @@ const ACHIEVEMENTS = [
     pfp:'credits30', check:c=>!!c.creditsWatched },
   { id:'teamkill',  kind:'hidden', name:'인성파탄자', desc:'아군을 직접 처치하기',
     pfp:'teamkill',  check:c=>!!c.game.teamKill },
+  /* [Ver 15.9] 점주를 100번 때리면 — 미안해진다. */
+  { id:'sorry',     kind:'hidden', name:'미안',       desc:'점주를 100번 때리세요',
+    pfp:'sorry',    check:c=>(c.stats.clerkPokes||0) >= 100 },
   { id:'devpfp',    kind:'hidden', name:'개발자',     desc:'개발자만 아는 방법으로 얻는 프로필 사진을 손에 넣으세요',
     pfp:'devpfp',    check:c=>!!c.ownsDevPfp },
 
@@ -36448,6 +36612,8 @@ function buildAchContext(won){
     ownsDevPfp:    (function(){ try{ return hasPfp('devpfp'); }catch(e){ return false; } })(),
     /* [Ver 14.8.1] 출석 연속 일수 — 업적 '랩터 러버' */
     attendStreak:  (function(){ try{ return loadAttend().streak || 0; }catch(e){ return 0; } })(),
+    /* [Ver 15.9] 누적 결제액 — 업적 'P2W'. 승인이 확인돼야 오르는 값이다. */
+    paidWon:       (function(){ try{ return payTotalLoad().won || 0; }catch(e){ return 0; } })(),
     state: { shopClosedForever: (typeof shopClosedForever!=='undefined' && shopClosedForever) },
     game: gameAchFlags,
     dexCount: dexNames.length,
@@ -66309,8 +66475,14 @@ function botStep(label, fn){
     try{ advanceTurn(); }catch(_){}
   }
 }
-/* 사슬의 마디를 setTimeout 으로 이을 때 쓴다 — 감싸지 않은 setTimeout 을 새로 만들지 말 것. */
-function botLater(label, fn, ms){ setTimeout(()=> botStep(label, fn), ms); }
+/* 사슬의 마디를 setTimeout 으로 이을 때 쓴다 — 감싸지 않은 setTimeout 을 새로 만들지 말 것.
+   ⚠ [Ver 15.9] VIP 2배속은 **여기 한 곳**에서만 걸린다. 봇 사슬의 모든 마디가 이 문을 지난다.
+     반응 시간(openReactionWindow)은 건드리지 않는다 — 막기·매크로 판정과 얽힌다. */
+function botLater(label, fn, ms){
+  let k = 1;
+  try{ k = vipSpeed() || 1; }catch(e){ k = 1; }
+  setTimeout(()=> botStep(label, fn), Math.max(0, Math.round((ms || 0) / k)));
+}
 
 function botPlay(){
   if(!gameActive) return;
