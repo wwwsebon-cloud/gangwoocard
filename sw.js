@@ -26,7 +26,7 @@
    ⚠ 캐시 이름에 버전을 박아 둔다. 올리면 옛 캐시가 통째로 버려진다.
      그림·소리는 다시 받아야 하지만, 껍데기가 꼬였을 때 확실히 푸는 유일한 수단이다.
    ########################################################################## */
-const SW_VERSION  = 'v15.7';
+const SW_VERSION  = 'v15.8';
 const SHELL_CACHE = 'gg-shell-' + SW_VERSION;   // 게임 본체
 const ASSET_CACHE = 'gg-asset-' + SW_VERSION;   // 그림·소리
 

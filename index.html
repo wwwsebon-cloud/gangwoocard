@@ -5503,32 +5503,50 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
   padding-top:14px;
 }
 .mart-scene .mart-sign{ position:relative; z-index:3; }
+/* [Ver 15.8] 걷는 껍데기.
+   ⚠ 한 요소에 transform 은 하나뿐이다. 걷기·통통·방향·눌림 넷을 층으로 나눴다.
+   ⚠ z-index 1 — 카운터(2)보다 아래여야 아랫부분이 가려진다. */
+.mart-walker{
+  /* ⚠ 겹침 = 카운터높이(40) - 이 값. 8 이면 32px 가 가려진다.
+     기준이 .mart-head 로 바뀌었으니 음수로 두면 너무 깊이 묻힌다(측정 70px). */
+  position:absolute; left:0; bottom:8px; z-index:1;
+  width:164px; height:164px;
+  /* ⚠ CSS transition 은 쓰지 않는다 — 이 자리에서 전환이 아예 시작되지 않았다(측정).
+     움직임은 el.animate() 가 맡는다. 여기 값은 시작 위치일 뿐이다. */
+  transform:translateX(200px);
+  will-change:transform;
+}
 /* 점원 — 카운터 뒤에 서 있다. 아래쪽은 카운터에 가려진다.
    ⚠ [Ver 15.7] 껍데기(button)가 상시 통통(rmBob)을 맡고, 안쪽 img 가 누름 연출을 맡는다.
      같은 요소에 둘을 걸면 하나가 다른 하나를 덮어써 죽는다. */
 .mart-clerk{
-  /* ⚠ bottom 을 카운터 높이보다 **낮게** 둬야 카운터가 아랫부분을 가린다.
-     예전엔 16px 이라 22px 카운터 위에 올라앉은 것처럼 보였다. */
-  /* ⚠ 씬 아래로 삐져나와야 전폭 카운터가 아랫부분을 가린다.
-     카운터는 이제 씬 밖(.mart-head 기준)이라, bottom:0 이면 둘이 안 만난다. */
-  position:absolute; right:10px; bottom:-30px; z-index:1;
-  width:164px; height:164px; padding:0; border:none; background:none;
+  position:absolute; inset:0; z-index:1;
+  width:100%; height:100%; padding:0; border:none; background:none;
   /* ⚠ 점원만 되살린다. 카운터·말풍선은 계속 none 이라 지갑을 가리지 않는다. */
   pointer-events:auto; cursor:pointer; user-select:none;
   -webkit-tap-highlight-color:transparent;
   transform-origin:50% 100%;
   animation:rmBob 2.6s var(--ease-in-out) infinite;
 }
+/* 방향 — 오른쪽으로 걸을 때 좌우반전한다 */
+.mart-face{
+  display:block; width:100%; height:100%;
+  transform:scaleX(1); transform-origin:50% 50%;
+  transition:transform .22s var(--ease);
+}
+.mart-face.right{ transform:scaleX(-1); }
 .mart-clerk > img{
   display:block; width:100%; height:100%; object-fit:contain;
   pointer-events:none; user-select:none;
   filter:drop-shadow(0 6px 14px rgba(0,0,0,.32));
   transform-origin:50% 100%;
 }
-/* 누르는 동안 — 손끝에 바로 반응이 온다 */
-.mart-clerk:active > img{ transform:scale(1.04, .93) translateY(3px); }
+/* 누르는 동안 — 손끝에 바로 반응이 온다.
+   ⚠ img 는 이제 .mart-face 안에 있다(걷기 층이 생기며 손자가 됐다).
+     '> img' 로 쓰면 아무 일도 안 일어난다 — 조용히 죽는 종류의 버그다. */
+.mart-clerk:active img{ transform:scale(1.04, .93) translateY(3px); }
 /* 손을 떼면 눌렸다가 튀어오른다 */
-.mart-clerk.poke > img{ animation:rmPoke 460ms var(--ease-spring); }
+.mart-clerk.poke img{ animation:rmPoke 460ms var(--ease-spring); }
 @keyframes rmPoke{
   0%   { transform:scale(1.10, .86) translateY(6px) rotate(0deg); }
   35%  { transform:scale(.93, 1.10) translateY(-9px) rotate(-4deg); }
@@ -5544,36 +5562,58 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 }
 /* [Ver 15.6] 점원 말풍선 — 점원 왼쪽에서 톡 튀어나온다.
    ⚠ pointer-events:none. 지갑·뒤로 버튼을 가로채면 안 된다. */
+/* [Ver 15.8] 말풍선을 **점원과 똑같은 속도로** 옮기는 껍데기.
+   ⚠ 한 요소의 transform 하나에 서로 다른 시간을 줄 수 없다. 그래서 층을 나눴다 —
+     껍데기는 걷고(--walk-ms), 안쪽 말풍선은 뜨고 진다(0.28초).
+     예전엔 둘을 한 요소에 몰아 말풍선만 0.28초 만에 먼저 도착했다.
+   ⚠ z-index 4 — transform 이 쌓임 맥락을 만들지만 껍데기가 카운터(2)보다 위라 괜찮다. */
+.mart-bubble-follow{
+  position:absolute; left:0; top:16px; z-index:4;
+  width:164px; height:0; pointer-events:none;
+  /* ⚠ 점원과 **같은 값**으로 함께 움직인다(el.animate). 따로 두면 말풍선만 먼저 도착한다. */
+  transform:translateX(200px);
+}
 .mart-bubble{
-  /* ⚠ 점원 **오른쪽** 빈 자리에 둔다. 왼쪽에 두면 간판 이름을 가린다(측정으로 확인). */
-  position:absolute; left:calc(100% + 10px); top:16px; z-index:4;
+  /* 점원 기준 오른쪽에 붙는다. 왼쪽에 두면 간판 이름을 가린다(측정으로 확인). */
+  position:absolute; left:calc(100% + 10px); top:0;
   width:max-content; max-width:min(250px, 30vw); padding:9px 13px;
   border-radius:13px 13px 13px 4px;
   background:var(--bg-panel); color:var(--fg);
   box-shadow:inset 0 0 0 1px var(--line), 0 6px 18px -8px rgba(0,0,0,.55);
   font-size:12.5px; line-height:1.5; font-weight:600; white-space:normal;
-  pointer-events:none; transform-origin:100% 100%;
+  pointer-events:none; transform-origin:0% 100%;
   opacity:0; transform:scale(.7) translateY(6px);
   transition:opacity .18s var(--ease), transform .28s var(--ease-spring);
 }
 .mart-bubble.on{ opacity:1; transform:scale(1) translateY(0); }
-/* 꼬리 — 왼쪽 아래에서 점원 쪽을 가리킨다 */
+/* 점원이 오른쪽 절반에 서면 말풍선을 왼쪽으로 넘긴다 — 안 그러면 화면 밖으로 나간다 */
+.mart-bubble.flip{ left:auto; right:calc(100% + 10px); border-radius:13px 13px 4px 13px;
+  transform-origin:100% 100%; }
+/* 꼬리 — 점원 쪽을 가리킨다 */
 .mart-bubble::after{
   content:''; position:absolute; left:-7px; bottom:6px;
   border:7px solid transparent; border-right-color:var(--bg-panel);
   filter:drop-shadow(-1px 0 0 var(--line));
 }
-.mart-bubble{ transform-origin:0% 100%; }
+.mart-bubble.flip::after{ left:auto; right:-7px;
+  border-right-color:transparent; border-left-color:var(--bg-panel);
+  filter:drop-shadow(1px 0 0 var(--line)); }
 @media (max-width:820px){
   /* 좁은 화면 — 오른쪽 빈 자리가 없다. 간판 **글자 아래**로 내려 이름을 가리지 않게. */
   .mart-scene{ height:132px; }
-  .mart-bubble{
-    left:4px; top:60px; max-width:min(62vw, 230px);
-    font-size:11.5px; padding:7px 11px;
+  /* 좁은 화면 — 옆에 붙일 자리가 없다. 점원 **머리 위**로 올린다. */
+  .mart-bubble-follow{ top:-6px; }
+  .mart-bubble, .mart-bubble.flip{
+    left:50%; right:auto; transform-origin:50% 100%;
+    max-width:min(62vw, 230px); font-size:11.5px; padding:7px 11px;
     border-radius:13px 13px 13px 4px;
+    margin-left:-50%;
   }
-  .mart-bubble::after{ left:12px; bottom:-7px; border:7px solid transparent;
-    border-top-color:var(--bg-panel); filter:drop-shadow(0 1px 0 var(--line)); }
+  .mart-bubble::after, .mart-bubble.flip::after{
+    left:50%; right:auto; bottom:-7px; margin-left:-7px;
+    border:7px solid transparent;
+    border-top-color:var(--bg-panel); border-right-color:transparent; border-left-color:transparent;
+    filter:drop-shadow(0 1px 0 var(--line)); }
 }
 
 /* 카운터 — 낮은 진열대. 점원의 아래쪽만 가린다. */
@@ -5607,12 +5647,13 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 }
 @media (max-width:640px){
   .mart-scene{ min-width:100%; height:110px; }
-  .mart-clerk{ width:124px; height:124px; bottom:-24px; right:6px; }
+  .mart-walker{ width:124px; height:124px; bottom:6px; }   /* 카운터 32 - 6 = 26px 가려짐 */
   .mart-counter{ height:32px; }
   .mart-head{ padding-bottom:36px; }
 }
 @media (prefers-reduced-motion: reduce){
   .mart-clerk, .pw-offer-art{ animation:none !important; }
+  .mart-walker{ transition:none !important; }
 }
 
 .mart-sign{ display:flex; align-items:center; gap:10px; }
@@ -8821,7 +8862,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.7</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.8</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -9150,10 +9191,18 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
             <span class="mart-sign-ic">🏪</span>
             <div class="mart-sign-tx"><b>랩터마트24</b><small>24시간 영업 중</small></div>
           </div>
-          <div class="mart-bubble" id="martBubble" aria-hidden="true"></div>
+        </div>
+        <!-- [Ver 15.8] 걷는 껍데기. 말풍선은 **밖**에 둔다 —
+             transform 이 쌓임 맥락을 만들어 안에 넣으면 카운터 아래로 갇힌다. -->
+        <div class="mart-walker" id="martWalker">
           <button type="button" class="mart-clerk" onclick="rm25Poke()" aria-label="점원">
-            <img src="art/rm25.png" alt="" draggable="false" onerror="this.closest('.mart-clerk').remove()">
+            <span class="mart-face" id="martFace">
+              <img src="art/rm25.png" alt="" draggable="false" onerror="this.closest('.mart-walker').remove()">
+            </span>
           </button>
+        </div>
+        <div class="mart-bubble-follow" id="martBubbleFollow" aria-hidden="true">
+          <div class="mart-bubble" id="martBubble"></div>
         </div>
         <div class="mart-wallet" id="martWallet"></div>
         <button class="btn btn-ghost" onclick="goToStart()">뒤로</button>
@@ -20627,11 +20676,14 @@ const ARTIFACT_UPGRADE_NEED_BY_RARITY = {
 };
 /* [구버전 호환] 등급을 모르는 옛 호출부가 남아 있어도 동작하도록 Common 표를 기본으로 둔다. */
 const ARTIFACT_UPGRADE_NEED = ARTIFACT_UPGRADE_NEED_BY_RARITY.common;
+/* [Ver 15.8] 배율(×5)은 등급을 **한 번만** 굴려 그 등급에서 N개를 준다.
+   등급 하나가 곧 결과 전체라, Common 58% 는 "일반 5개"를 너무 자주 만들었다.
+   ⚠ 합은 100 을 유지할 것. 어긋나면 마지막 등급이 나머지를 다 먹는다. */
 const ARTIFACT_RARITIES = [
-  { key:'common',    label:'Common',    cls:'art-common',    rate:58 },
-  { key:'rare',      label:'Rare',      cls:'art-rare',      rate:27 },
-  { key:'epic',      label:'Epic',      cls:'art-epic',      rate:11 },
-  { key:'legendary', label:'Legendary', cls:'art-legendary', rate:4  },
+  { key:'common',    label:'Common',    cls:'art-common',    rate:44 },
+  { key:'rare',      label:'Rare',      cls:'art-rare',      rate:34 },
+  { key:'epic',      label:'Epic',      cls:'art-epic',      rate:16 },
+  { key:'legendary', label:'Legendary', cls:'art-legendary', rate:6  },
 ];
 function artRarityDef(key){ return ARTIFACT_RARITIES.find(r=> r.key===key) || ARTIFACT_RARITIES[0]; }
 /* base = Lv1 수치, per = 레벨당 증가분. 표기는 fmt(v)가 만든다.
@@ -21576,8 +21628,44 @@ const RM25_POKE_LINES = [
   '으음..?',
 ];
 let __rm25PokeLast = -1;
+/* 요소가 지금 실제로 서 있는 x */
+function rm25ElX(el){
+  try{ const m = new DOMMatrixReadOnly(getComputedStyle(el).transform); if(Number.isFinite(m.m41)) return m.m41; }catch(e){}
+  return __rmWx;
+}
+function rm25CurX(){
+  const w = document.getElementById('martWalker');
+  return w ? rm25ElX(w) : __rmWx;
+}
+/* 점원과 말풍선을 **같은 값으로 함께** 옮긴다.
+   ⚠ CSS transition 은 이 자리에서 시작되지 않았다(측정). el.animate() 를 쓴다.
+   ⚠ fill:'forwards' 를 cancel 하면 원래 자리로 튄다 → **지금 값을 먼저 읽고** 이어붙인다. */
+let __rmAnims = [];
+function rm25SetPos(x, ms){
+  try{
+    const els = [document.getElementById('martWalker'), document.getElementById('martBubbleFollow')].filter(Boolean);
+    if(!els.length) return;
+    const froms = els.map(rm25ElX);                       // ★ 취소 전에 읽는다
+    __rmAnims.forEach(a=>{ try{ a.cancel(); }catch(e){} });
+    const to = Math.round(x);
+    __rmAnims = els.map((el, i)=> el.animate(
+      [{ transform:`translateX(${Math.round(froms[i])}px)` }, { transform:`translateX(${to}px)` }],
+      { duration: Math.max(0, ms | 0), easing:'linear', fill:'forwards' }));
+  }catch(e){}
+}
+/* [Ver 15.8] 걷던 중이면 **그 자리에** 세운다. */
+function rm25WalkFreeze(){
+  try{
+    rm25WalkStop();
+    const x = rm25CurX();
+    rm25SetPos(x, 0);
+    __rmWx = x;
+  }catch(e){}
+}
 function rm25Poke(){
   try{
+    rm25WalkFreeze();                       // 멈춰서 보여준다
+    setTimeout(()=>{ try{ rm25WalkStart(); }catch(e){} }, 900);   // 연출이 끝나면 다시 걷는다
     /* 눌리는 연출 — 끝나면 클래스를 뗀다.
        ⚠ 안 떼면 두 번째 클릭에 애니메이션이 다시 안 돈다(같은 값이라 브라우저가 무시한다). */
     const el = document.querySelector('.mart-clerk');
@@ -21596,6 +21684,53 @@ function rm25Poke(){
     __rm25PokeLast = i;
     rm25Say(RM25_POKE_LINES[i]);
   }catch(e){}
+}
+
+/* ##########################################################################
+   [Ver 15.8] 점원이 가판대를 걸어다닌다
+   --------------------------------------------------------------------------
+   ⚠ 간판 오른쪽부터 걷는다 — 안 그러면 가게 이름 앞을 가로지른다.
+   ⚠ 마트를 떠나면 타이머를 끈다. 안 끄면 다른 화면에서도 계속 돈다.
+   ########################################################################## */
+const RM25_SPEED = 80;       // px/초 — 46 은 가로지르는 데 17초라 멈춰 보였다
+const RM25_LEFT_PAD = 186;   // 간판이 끝나는 자리
+let __rmWalkT = null, __rmWx = 200;
+
+function rm25WalkStop(){ clearTimeout(__rmWalkT); __rmWalkT = null; }
+function rm25WalkStart(){
+  rm25WalkStop();
+  /* 지금 서 있는 자리에서 이어 걷는다 — 다시 들어와도 순간이동하지 않게 */
+  try{ __rmWx = rm25CurX(); rm25SetPos(__rmWx, 0); }catch(e){}
+  __rmWalkT = setTimeout(rm25WalkStep, 700);
+}
+function rm25WalkStep(){
+  try{
+    const head = document.querySelector('.mart-head');
+    const walker = document.getElementById('martWalker');
+    /* 마트를 떠났거나 그림이 없으면 여기서 끝낸다 */
+    if(!head || !walker || (typeof getComputedScreen === 'function' && getComputedScreen() !== 'screen-mart')){
+      rm25WalkStop(); return;
+    }
+    const w = head.clientWidth;
+    const cw = walker.offsetWidth || 164;
+    const MIN = Math.min(RM25_LEFT_PAD, Math.max(0, w - cw - 8));
+    const MAX = Math.max(MIN, w - cw - 8);
+    let target = MIN + Math.random() * (MAX - MIN);
+    /* 너무 가까우면 제자리걸음처럼 보인다 — 반대편으로 보낸다 */
+    if(Math.abs(target - __rmWx) < 60) target = (__rmWx < (MIN + MAX) / 2) ? MAX : MIN;
+    const dist = Math.abs(target - __rmWx);
+    const ms = Math.max(700, Math.round(dist / RM25_SPEED * 1000));
+    /* 오른쪽으로 갈 때 좌우반전 */
+    const face = document.getElementById('martFace');
+    if(face) face.classList.toggle('right', target > __rmWx);
+    /* 오른쪽 끝에 서면 말풍선을 왼쪽으로 넘긴다 */
+    const bub = document.getElementById('martBubble');
+    if(bub) bub.classList.toggle('flip', target > (MIN + MAX) / 2);
+
+    rm25SetPos(target, ms);
+    __rmWx = target;
+    __rmWalkT = setTimeout(rm25WalkStep, ms + 1100 + Math.random() * 2600);
+  }catch(e){ rm25WalkStop(); }
 }
 
 let __rm25Timer = null;
@@ -21622,6 +21757,7 @@ function openRaptorMart(tab){
   renderRaptorMart();
   /* [Ver 15.6] 들어왔으니 점원이 한마디 한다. 탭을 옮길 때는 말하지 않는다. */
   setTimeout(()=>{ try{ rm25Say(); }catch(e){} }, 420);
+  try{ rm25WalkStart(); }catch(e){}   // [Ver 15.8] 가판대를 어슬렁거린다
 }
 /* ★ [Ver 15.1] 마트 **밖에서도** 불린다 — buyTeeth·buyPet·buyDevPfp 등이 부른다.
    예전에는 #rmBody 가 모달 안에만 있어 없으면 그냥 아무 일도 안 했다.
@@ -29288,6 +29424,7 @@ function arcadeShopHtml(){
 }
 
 function goToStart(){
+  try{ rm25WalkStop(); }catch(e){}   // [Ver 15.8] 마트를 떠나면 점원도 멈춘다
   // 게임을 "완전히" 끝내기 위해, 리액션 대기/카드 확정대기 등 잔여 UI 상태를 먼저 모두 정리한다.
   // 여기서 뭔가 실패하더라도 화면 전환 자체는 반드시 이루어져야 하므로 try/catch로 감싼다.
   // [Ver 5.9 버그수정] gameActive=false를 "가장 먼저" 세팅한다. 실시간 틱 타이머(닥터후/시간의 저주 등)와
@@ -29489,6 +29626,13 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 15.8', date: '2026-09-13',
+    items: [
+      '\u{1F6B6} <b>[신규] 점원이 가판대를 걸어다닙니다.</b> <b>RM25</b>가 좌우로 어슬렁거리고, 오른쪽으로 갈 때는 <b>몸을 돌립니다.</b> 말풍선도 <b>계속 따라다닙니다.</b> 누르면 <b>그 자리에 멈춰</b> 움찔한 다음 다시 걷습니다.',
+      '\u{1F3FA} <b>[상향] 유물 등급 확률.</b> 일반 <b>58% → 44%</b>, 희귀 <b>27% → 34%</b>, 영웅 <b>11% → 16%</b>, 전설 <b>4% → 6%</b>.<br>곡괭이를 여러 개 걸면 <b>등급을 한 번만 굴려</b> 그 등급으로 전부 주기 때문에, 일반이 58%나 되면 "일반 5개"가 너무 자주 나왔습니다.',
+    ]
+  },
   {
     version: 'Ver 15.7', date: '2026-09-13',
     items: [
