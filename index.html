@@ -5560,6 +5560,17 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
   55%    { transform:translateY(0) rotate(-.6deg) scale(1.02,.98); }
   72%    { transform:translateY(-3px) rotate(.4deg) scale(1,1); }
 }
+/* [Ver 15.10] 현질 창의 VIP 상태 줄 */
+.vip-status{
+  display:flex; align-items:center; gap:11px; margin-bottom:12px;
+  padding:12px 15px; border-radius:13px;
+  background:linear-gradient(135deg, rgba(124,58,237,.16), rgba(91,33,182,.10));
+  box-shadow:inset 0 0 0 1px rgba(167,139,250,.45);
+}
+.vip-crown{ font-size:26px; line-height:1; }
+.vip-tx b{ display:block; font-size:14px; font-weight:800; }
+.vip-tx small{ display:block; margin-top:2px; font-size:11.5px; color:var(--fg-dim); line-height:1.6; }
+
 /* [Ver 15.9] VIP 2배속 토글 */
 .vip-speed{
   background:linear-gradient(135deg,#3a3350,#241f33) !important;
@@ -8909,7 +8920,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.9</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.10</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -15207,13 +15218,27 @@ const VIP_SPEED      = 2;      // 봇전 배속
 function vipLoad(){
   try{
     const o = JSON.parse(localStorage.getItem(STORAGE_KEYS.vip) || 'null');
-    if(o && typeof o.until === 'number') return { until:o.until, daily:o.daily||'', x2:(o.x2 !== false) };
+    if(o && typeof o.until === 'number'){
+      return { until:o.until, daily:o.daily||'', x2:(o.x2 !== false), forever:!!o.forever };
+    }
   }catch(e){}
-  return { until:0, daily:'', x2:true };
+  return { until:0, daily:'', x2:true, forever:false };
 }
 function vipSave(o){ try{ localStorage.setItem(STORAGE_KEYS.vip, JSON.stringify(o)); }catch(e){} }
-function vipActive(){ try{ return vipLoad().until > ggNow(); }catch(e){ return false; } }
+function vipForever(){ try{ return !!vipLoad().forever; }catch(e){ return false; } }
+function vipActive(){ try{ const v = vipLoad(); return !!v.forever || v.until > ggNow(); }catch(e){ return false; } }
 function vipLeftMs(){ try{ return Math.max(0, vipLoad().until - ggNow()); }catch(e){ return 0; } }
+/* [Ver 15.10] 업적으로 얻는 **영구** VIP.
+   ⚠ until 에 큰 수를 넣어 흉내 내지 않는다 — 나중에 기간제를 사면
+     "남은 기간 위에 얹기" 계산이 터무니없어진다. */
+function grantVipForever(){
+  const v = vipLoad();
+  v.forever = true;
+  vipSave(v);
+  try{ grantPfp('vip'); }catch(e){}
+  try{ renderTopResources(); renderVipSpeedBtn(); }catch(e){}
+  return true;
+}
 /* 기간을 얹는다. ⚠ 남아 있으면 그 위에 더한다 — 덮어쓰면 산 만큼 날아간다. */
 function grantVipDays(n){
   n = Math.max(1, n | 0);
@@ -15243,7 +15268,7 @@ function vipDailyCheck(){
 }
 /* 봇전 배속. VIP 가 아니거나 꺼두었으면 1배다. */
 function vipSpeed(){
-  try{ const v = vipLoad(); return (v.until > ggNow() && v.x2 !== false) ? VIP_SPEED : 1; }catch(e){ return 1; }
+  try{ const v = vipLoad(); return (vipActive() && v.x2 !== false) ? VIP_SPEED : 1; }catch(e){ return 1; }
 }
 function vipToggleX2(){
   const v = vipLoad();
@@ -15265,6 +15290,7 @@ function renderVipSpeedBtn(){
   }catch(e){}
 }
 function vipRemainText(){
+  if(vipForever()) return '영구';
   const ms = vipLeftMs();
   if(ms <= 0) return '';
   const d = Math.floor(ms / 86400000), h = Math.floor(ms % 86400000 / 3600000);
@@ -15380,6 +15406,18 @@ function payTabs(){
 function payWinHtml(tab){
   return (tab === 'admin') ? payAdminHtml() : payShopHtml();
 }
+/* [Ver 15.10] 지금 VIP 인지 한 줄로 보여준다 */
+function vipStatusHtml(){
+  try{
+    if(!vipActive()) return '';
+    return `<div class="vip-status">
+      <span class="vip-crown">👑</span>
+      <div class="vip-tx"><b>VIP ${vipForever() ? '· 영구' : ''}</b>
+        <small>${vipForever() ? '업적으로 얻은 영구 VIP입니다.' : escapeHtml(vipRemainText())}
+          · 봇전 2배속 · 매일 ${VIP_DAILY_UBI} 우비나이트</small></div>
+    </div>`;
+  }catch(e){ return ''; }
+}
 function payShopHtml(){
   const L = payLoadLocal();
   let head = '';
@@ -15397,17 +15435,20 @@ function payShopHtml(){
       <button class="pay-btn" style="margin-top:8px;" onclick="payClearLast()">확인</button></div>`;
   }
   const cards = PAY_PRODUCTS.map(p=>{
-    const once = p.once && L.starter;
+    /* [Ver 15.10] 이미 영구 VIP 면 기간제를 팔지 않는다 — 돈만 받고 줄 게 없다 */
+    const vipLocked = (p.id === 'vip') && (function(){ try{ return vipForever(); }catch(e){ return false; } })();
+    const once = (p.once && L.starter) || vipLocked;
     return `<button class="pay-card${p.off>=20?' best':''}" ${once?'disabled style="opacity:.45;cursor:not-allowed;"':`onclick="payPick('${p.id}')"`}>
       ${p.off ? `<span class="pay-c-off">${p.off}% 할인</span>` : ''}
       <span class="pay-c-em">${p.emoji}</span>
       <span class="pay-c-nm">${escapeHtml(p.name)}</span>
       <span class="pay-c-ds">${escapeHtml(payRewardText(p))}</span>
       ${p.once ? `<span class="pay-c-once">${once ? '구매 완료' : '계정당 1회'}</span>` : ''}
+      ${vipLocked ? `<span class="pay-c-once">이미 영구 VIP</span>` : ''}
       <span class="pay-c-won">${escapeHtml(payWon(p.won))}</span>
     </button>`;
   }).join('');
-  return head + payMilestoneHtml() + `<div class="pay-grid">${cards}</div>
+  return head + vipStatusHtml() + payMilestoneHtml() + `<div class="pay-grid">${cards}</div>
     <div class="pay-note">
       <b>💳 이건 이렇게 굴러갑니다</b><br>
       ① 상품을 고르면 계좌가 나옵니다 → ② 그 계좌로 송금 → ③ 입금자명을 적어 신청<br>
@@ -29778,6 +29819,13 @@ function exitPlaygroundBar(){
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
   {
+    version: 'Ver 15.10', date: '2026-09-13',
+    items: [
+      '\u{1F451} <b>[신규] 돈을 쓰지 않고도 VIP가 될 수 있습니다.</b> 업적 <b>VIP</b> — 아래 셋을 <b>모두</b> 만족하면 <b>영구 VIP</b>를 드립니다.<br>\u2460 <b>30일 연속</b> 모든 일일 퀘스트 완료 \u00b7 \u2461 <b>클래스 20</b> \u00b7 \u2462 <b>레벨 75</b><br><span style="font-size:11.5px;color:var(--fg-dim);">기간이 없습니다. 프로필 사진 \u00b7 봇전 2배속 \u00b7 매일 600 우비나이트가 <b>계속</b> 유지됩니다.</span>',
+      '\u{1F6D2} 이미 <b>영구 VIP</b>라면 기간제 VIP 상품은 <b>구매할 수 없습니다.</b> 드릴 것이 없는데 돈을 받지 않습니다.',
+    ]
+  },
+  {
     version: 'Ver 15.9', date: '2026-09-13',
     items: [
       '\u{1F451} <b>[신규] VIP (14일) · 4,900원</b><br>\u{1F5BC}️ <b>VIP 프로필 사진</b> — 기간이 끝나도 <b>영구히</b> 남습니다<br>\u23E9 <b>봇전 2배속</b> — 인게임의 작은 버튼으로 <b>언제든 껐다 켤 수 있습니다</b><br>\u{1F48E} <b>매일 600 우비나이트</b><br><span style="font-size:11.5px;color:var(--fg-dim);">남아 있을 때 또 사면 기간이 <b>그 위에 쌓입니다.</b></span>',
@@ -36434,6 +36482,12 @@ const ACHIEVEMENTS = [
   { id:'class20', kind:'normal', name:'클래스 20', desc:'클래스 20 달성하기',                        pfp:'num20',    check:c=>{ try{ return (classState.cls|0) >= CLASS_MAX; }catch(e){ return false; } } },
   /* [Ver 15.9] 현질 한 번. ⚠ 근거는 누적 결제액이다 — 승인이 확인돼야 오른다. */
   { id:'p2w',     kind:'normal', name:'P2W',      desc:'현질을 1회 하세요',                          pfp:'p2w',      check:c=>(c.paidWon||0) > 0 },
+  /* [Ver 15.10] 돈 대신 시간을 쓴 사람에게 — **영구 VIP**.
+     ⚠ 히든으로 두면 조건이 ? 로 가려져 아무도 목표로 삼을 수 없다. 일반으로 둔다. */
+  { id:'vipmaster', kind:'normal', name:'VIP',
+    desc:'30일 연속 모든 일일 퀘스트 완료 · 클래스 20 · 레벨 75',
+    pfp:'vip', give:()=>{ try{ grantVipForever(); }catch(e){} },
+    check:c=> (c.questStreak||0) >= 30 && (c.cls||0) >= 20 && (c.level||0) >= 75 },
 
   // ---------- 히든 (조건은 보이지만 매우 까다롭다) ----------
   { id:'spotdev', kind:'hidden', name:'개발자 발견', desc:'개발자와 함께 게임을 끝까지 마치세요',      pfp:'spotdev',  check:c=>!!c.game.metDev },
@@ -36614,6 +36668,9 @@ function buildAchContext(won){
     attendStreak:  (function(){ try{ return loadAttend().streak || 0; }catch(e){ return 0; } })(),
     /* [Ver 15.9] 누적 결제액 — 업적 'P2W'. 승인이 확인돼야 오르는 값이다. */
     paidWon:       (function(){ try{ return payTotalLoad().won || 0; }catch(e){ return 0; } })(),
+    /* [Ver 15.10] 업적 'VIP' — 클래스와 레벨 */
+    cls:           (function(){ try{ return (classState && classState.cls) | 0; }catch(e){ return 0; } })(),
+    level:         (function(){ try{ return (expState && expState.level) | 0; }catch(e){ return 0; } })(),
     state: { shopClosedForever: (typeof shopClosedForever!=='undefined' && shopClosedForever) },
     game: gameAchFlags,
     dexCount: dexNames.length,
@@ -36639,6 +36696,9 @@ function evaluateAchievements(won){
       ACH_UNLOCKED[a.id] = Date.now();
       /* [Ver 12.6.1] 업적 보상 = 프로필 사진 */
       if(a.pfp){ try{ grantPfp(a.pfp); }catch(e){} }
+      /* [Ver 15.10] 프사 말고 더 줄 것이 있는 업적을 위한 통로.
+         ⚠ 없는 업적은 그냥 지나간다 — 기존 업적은 아무것도 달라지지 않는다. */
+      if(typeof a.give === 'function'){ try{ a.give(); }catch(e){ console.error('[업적] 보상 지급 실패', a.id, e); } }
       newly.push(a);
     }
   });
