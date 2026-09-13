@@ -5477,10 +5477,17 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 .mart-shell{
   width:100%; max-width:1040px; margin:0 auto; height:100%;
   display:flex; flex-direction:column; padding:var(--sp-4) var(--sp-4) 0;
+  /* [Ver 15.7] 가판대가 여백을 뚫고 나가도 가로 스크롤이 생기지 않게.
+     ⚠ hidden 이 아니라 clip — hidden 은 스크롤 컨테이너를 만들어
+       안쪽 position:fixed 요소를 가둘 수 있다. */
+  overflow-x:clip;
 }
+/* [Ver 15.7] 머리 전체가 가게 앞이다. 바닥에 가판대가 전폭으로 깔린다.
+   ⚠ position:relative 가 있어야 카운터가 여기 기준으로 눕는다. */
 .mart-head{
-  flex-shrink:0; display:flex; align-items:center; gap:var(--sp-3);
-  padding-bottom:var(--sp-3); flex-wrap:wrap;
+  position:relative; flex-shrink:0;
+  display:flex; align-items:flex-start; gap:var(--sp-3);
+  padding-bottom:44px; flex-wrap:wrap;
 }
 /* ==========================================================================
    [Ver 15.5] 랩터마트24 — 카운터 뒤에 선 점원
@@ -5496,16 +5503,37 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
   padding-top:14px;
 }
 .mart-scene .mart-sign{ position:relative; z-index:3; }
-/* 점원 — 카운터 뒤에 서 있다. 아래쪽은 카운터에 가려진다. */
+/* 점원 — 카운터 뒤에 서 있다. 아래쪽은 카운터에 가려진다.
+   ⚠ [Ver 15.7] 껍데기(button)가 상시 통통(rmBob)을 맡고, 안쪽 img 가 누름 연출을 맡는다.
+     같은 요소에 둘을 걸면 하나가 다른 하나를 덮어써 죽는다. */
 .mart-clerk{
   /* ⚠ bottom 을 카운터 높이보다 **낮게** 둬야 카운터가 아랫부분을 가린다.
      예전엔 16px 이라 22px 카운터 위에 올라앉은 것처럼 보였다. */
-  position:absolute; right:10px; bottom:2px; z-index:1;
-  width:164px; height:164px; object-fit:contain;
+  /* ⚠ 씬 아래로 삐져나와야 전폭 카운터가 아랫부분을 가린다.
+     카운터는 이제 씬 밖(.mart-head 기준)이라, bottom:0 이면 둘이 안 만난다. */
+  position:absolute; right:10px; bottom:-30px; z-index:1;
+  width:164px; height:164px; padding:0; border:none; background:none;
+  /* ⚠ 점원만 되살린다. 카운터·말풍선은 계속 none 이라 지갑을 가리지 않는다. */
+  pointer-events:auto; cursor:pointer; user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  transform-origin:50% 100%;
+  animation:rmBob 2.6s var(--ease-in-out) infinite;
+}
+.mart-clerk > img{
+  display:block; width:100%; height:100%; object-fit:contain;
   pointer-events:none; user-select:none;
   filter:drop-shadow(0 6px 14px rgba(0,0,0,.32));
   transform-origin:50% 100%;
-  animation:rmBob 2.6s var(--ease-in-out) infinite;
+}
+/* 누르는 동안 — 손끝에 바로 반응이 온다 */
+.mart-clerk:active > img{ transform:scale(1.04, .93) translateY(3px); }
+/* 손을 떼면 눌렸다가 튀어오른다 */
+.mart-clerk.poke > img{ animation:rmPoke 460ms var(--ease-spring); }
+@keyframes rmPoke{
+  0%   { transform:scale(1.10, .86) translateY(6px) rotate(0deg); }
+  35%  { transform:scale(.93, 1.10) translateY(-9px) rotate(-4deg); }
+  62%  { transform:scale(1.04, .97) translateY(2px) rotate(3deg); }
+  100% { transform:none; }
 }
 /* 상시로 통통 — 위아래로 살짝 뛰고 아주 조금 기울인다 */
 @keyframes rmBob{
@@ -5550,9 +5578,13 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 
 /* 카운터 — 낮은 진열대. 점원의 아래쪽만 가린다. */
 .mart-counter{
-  position:absolute; left:0; right:0; bottom:0; z-index:2; height:32px;
+  /* [Ver 15.7] 셸 좌우 패딩 + (화면 - 셸) 만큼 더 빼서 **화면 끝까지** 깐다.
+     max() 로 음수가 되지 않게 막는다 — 좁은 화면에서는 패딩만큼만 나간다. */
+  position:absolute; z-index:2; height:40px; bottom:0;
+  left:calc(-1 * var(--sp-4) - max(0px, (100vw - 1040px) / 2));
+  right:calc(-1 * var(--sp-4) - max(0px, (100vw - 1040px) / 2));
   pointer-events:none;
-  border-radius:4px 4px 2px 2px;
+  border-radius:0;
   /* ⚠ 토큰(--bg-2/--bg-3)을 쓰면 이 게임에서 그건 **입력칸 색**이라
      카운터가 빈 텍스트 박스처럼 읽힌다. 나무는 테마와 무관하게 나무여야 한다. */
   background:linear-gradient(180deg, #6b4f38 0%, #55402d 42%, #402f21 100%);
@@ -5561,22 +5593,23 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 }
 /* 상판 — 윗면 한 겹. 이게 있어야 "띠"가 아니라 "판"으로 읽힌다. */
 .mart-counter > i{
-  position:absolute; left:0; right:0; top:0; height:7px;
-  border-radius:4px 4px 0 0;
+  position:absolute; left:0; right:0; top:0; height:9px;
+  border-radius:0;
   background:linear-gradient(180deg, #a67c52 0%, #8a6644 60%, #6b4f38 100%);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.22);
 }
 /* 나뭇결 — 아주 옅게. 진해지면 지저분해진다. */
 .mart-counter::after{
-  content:''; position:absolute; left:0; right:0; top:7px; bottom:0;
+  content:''; position:absolute; left:0; right:0; top:9px; bottom:0;
   background:repeating-linear-gradient(90deg,
     rgba(255,255,255,.05) 0 2px, transparent 2px 26px);
   opacity:.7;
 }
 @media (max-width:640px){
-  .mart-scene{ min-width:100%; height:126px; }
-  .mart-clerk{ width:124px; height:124px; bottom:2px; right:6px; }
-  .mart-counter{ height:26px; }
+  .mart-scene{ min-width:100%; height:110px; }
+  .mart-clerk{ width:124px; height:124px; bottom:-24px; right:6px; }
+  .mart-counter{ height:32px; }
+  .mart-head{ padding-bottom:36px; }
 }
 @media (prefers-reduced-motion: reduce){
   .mart-clerk, .pw-offer-art{ animation:none !important; }
@@ -8788,7 +8821,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.6.1</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.7</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -9118,11 +9151,14 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
             <div class="mart-sign-tx"><b>랩터마트24</b><small>24시간 영업 중</small></div>
           </div>
           <div class="mart-bubble" id="martBubble" aria-hidden="true"></div>
-          <img class="mart-clerk" src="art/rm25.png" alt="" draggable="false" onerror="this.remove()">
-          <div class="mart-counter" aria-hidden="true"><i></i></div>
+          <button type="button" class="mart-clerk" onclick="rm25Poke()" aria-label="점원">
+            <img src="art/rm25.png" alt="" draggable="false" onerror="this.closest('.mart-clerk').remove()">
+          </button>
         </div>
         <div class="mart-wallet" id="martWallet"></div>
         <button class="btn btn-ghost" onclick="goToStart()">뒤로</button>
+        <!-- [Ver 15.7] 가판대는 **씬 밖**에 둔다 — 머리 전체 폭으로 깔려야 화면 끝까지 간다 -->
+        <div class="mart-counter" aria-hidden="true"><i></i></div>
       </div>
       <div class="mart-tabs" id="martTabs"></div>
       <div class="mart-body rm-body" id="rmBody"></div>
@@ -21522,6 +21558,46 @@ function rm25Pick(){
   }
   return RM25_LINES[0].t;
 }
+/* [Ver 15.7] 눌렸을 때의 대사 — 들어올 때 하는 인사와는 다른 결이다.
+   ⚠ 자는 중에 깬 반응("믕?" 류)이 섞여 있다. 전부 같은 확률로 둔다. */
+const RM25_POKE_LINES = [
+  '아 왜 눌러!',
+  '아얏!',
+  '어딜만져!',
+  '자꾸 누르면 안팔거야?',
+  '때리지마라',
+  '너 솔직히 뭐 사러온거 아니지',
+  '안살거면 나가셈',
+  '안 자고 있었거든?',
+  '뭐하냐;;',
+  '드르렁...쿨... 으에?',
+  '믕?',
+  '밍?',
+  '으음..?',
+];
+let __rm25PokeLast = -1;
+function rm25Poke(){
+  try{
+    /* 눌리는 연출 — 끝나면 클래스를 뗀다.
+       ⚠ 안 떼면 두 번째 클릭에 애니메이션이 다시 안 돈다(같은 값이라 브라우저가 무시한다). */
+    const el = document.querySelector('.mart-clerk');
+    if(el){
+      el.classList.remove('poke');
+      void el.offsetWidth;
+      el.classList.add('poke');
+      setTimeout(()=>{ try{ el.classList.remove('poke'); }catch(e){} }, 480);
+    }
+    try{ if(typeof UISfx !== 'undefined' && UISfx.tap) UISfx.tap(); }catch(e){}
+    /* 같은 말을 연달아 하지 않는다 */
+    let i = __rm25PokeLast;
+    for(let t = 0; t < 8 && i === __rm25PokeLast; t++){
+      i = Math.floor(Math.random() * RM25_POKE_LINES.length);
+    }
+    __rm25PokeLast = i;
+    rm25Say(RM25_POKE_LINES[i]);
+  }catch(e){}
+}
+
 let __rm25Timer = null;
 function rm25Say(text){
   try{
@@ -29413,6 +29489,13 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 15.7', date: '2026-09-13',
+    items: [
+      '\u{1F449} <b>[신규] 점원을 눌러보세요.</b> <b>RM25</b>를 누르면 <b>움찔하며</b> 반응합니다. 전용 대사가 <b>13가지</b> 준비돼 있습니다 — 자고 있었던 건 아니라고 합니다.',
+      '\u{1F3EA} <b>가판대가 화면 끝까지 넓어졌습니다.</b> 이제 진짜 가게 앞처럼 보입니다.',
+    ]
+  },
   {
     version: 'Ver 15.6.1', date: '2026-09-13',
     items: [
