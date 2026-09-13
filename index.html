@@ -1029,6 +1029,26 @@ body.ink.force-dark .nm-stage-art{ filter:invert(1); }   /* 강제 다크는 언
 }
 .pw-offer:hover{ transform:translateY(-2px); background:var(--bg-2); }
 .pw-offer.off{ opacity:0.45; pointer-events:none; }
+/* [Ver 15.5] 뽑기 봉지 그림. 그림이 없으면(onerror 로 지워지면) 예전 모습 그대로다. */
+.pw-offer.has-art{ position:relative; overflow:hidden; padding-top:118px; }
+.pw-offer-art{
+  position:absolute; left:50%; top:6px; transform:translateX(-50%);
+  width:108px; height:108px; object-fit:contain; pointer-events:none;
+  filter:drop-shadow(0 5px 12px rgba(0,0,0,.3));
+  transition:transform .18s var(--ease-spring);
+}
+.pw-offer.has-art:hover .pw-offer-art{ transform:translateX(-50%) scale(1.07) rotate(-3deg); }
+.pw-offer.has-art .pw-offer-n{ text-align:center; }
+.pw-offer.has-art .pw-offer-fix,
+.pw-offer.has-art .pw-offer-bonus{ text-align:center; }
+/* 봉지가 흔들흔들 — 살아 있는 느낌 */
+.pw-offer-art{ animation:pkgSway 3.4s var(--ease-in-out) infinite; }
+@keyframes pkgSway{
+  0%,100%{ transform:translateX(-50%) translateY(0) rotate(-1.5deg); }
+  50%    { transform:translateX(-50%) translateY(-5px) rotate(1.5deg); }
+}
+.pw-offer.has-art:hover .pw-offer-art{ animation:none; }
+
 .pw-offer-n{ font-size:17px; font-weight:700; font-family:var(--font-mono); }
 .pw-offer-fix{ font-size:11.5px; color:var(--fg-dim); }
 .pw-offer-bonus{ font-size:11px; color:var(--fg-faint); }
@@ -5461,6 +5481,72 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
   flex-shrink:0; display:flex; align-items:center; gap:var(--sp-3);
   padding-bottom:var(--sp-3); flex-wrap:wrap;
 }
+/* ==========================================================================
+   [Ver 15.5] 랩터마트24 — 카운터 뒤에 선 점원
+   ⚠ 카운터는 **낮게**. 높으면 얼굴이 잘린다(참고 구도는 상반신이 다 보인다).
+   ⚠ 점원·카운터는 pointer-events:none — 뒤로 버튼과 지갑을 가로채면 안 된다.
+   ⚠ 움직임은 transform 만 쓴다. top/height 를 건드리면 매 프레임 레이아웃이
+     다시 계산돼 저사양 기기에서 눈에 띄게 버벅인다.
+   ========================================================================== */
+.mart-scene{
+  position:relative; flex:0 0 auto;
+  min-width:min(340px, 64vw); height:112px;
+  display:flex; align-items:flex-start;
+  padding-top:10px;
+}
+.mart-scene .mart-sign{ position:relative; z-index:3; }
+/* 점원 — 카운터 뒤에 서 있다. 아래쪽은 카운터에 가려진다. */
+.mart-clerk{
+  /* ⚠ bottom 을 카운터 높이보다 **낮게** 둬야 카운터가 아랫부분을 가린다.
+     예전엔 16px 이라 22px 카운터 위에 올라앉은 것처럼 보였다. */
+  position:absolute; right:10px; bottom:2px; z-index:1;
+  width:118px; height:118px; object-fit:contain;
+  pointer-events:none; user-select:none;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.32));
+  transform-origin:50% 100%;
+  animation:rmBob 2.6s var(--ease-in-out) infinite;
+}
+/* 상시로 통통 — 위아래로 살짝 뛰고 아주 조금 기울인다 */
+@keyframes rmBob{
+  0%,100%{ transform:translateY(0) rotate(-1deg) scale(1,1); }
+  28%    { transform:translateY(-7px) rotate(1.2deg) scale(.985,1.015); }
+  55%    { transform:translateY(0) rotate(-.6deg) scale(1.02,.98); }
+  72%    { transform:translateY(-3px) rotate(.4deg) scale(1,1); }
+}
+/* 카운터 — 낮은 진열대. 점원의 아래쪽만 가린다. */
+.mart-counter{
+  position:absolute; left:0; right:0; bottom:0; z-index:2; height:26px;
+  pointer-events:none;
+  border-radius:4px 4px 2px 2px;
+  /* ⚠ 토큰(--bg-2/--bg-3)을 쓰면 이 게임에서 그건 **입력칸 색**이라
+     카운터가 빈 텍스트 박스처럼 읽힌다. 나무는 테마와 무관하게 나무여야 한다. */
+  background:linear-gradient(180deg, #6b4f38 0%, #55402d 42%, #402f21 100%);
+  box-shadow:inset 0 -1px 0 rgba(0,0,0,.45),
+             0 6px 16px -8px rgba(0,0,0,.65);
+}
+/* 상판 — 윗면 한 겹. 이게 있어야 "띠"가 아니라 "판"으로 읽힌다. */
+.mart-counter > i{
+  position:absolute; left:0; right:0; top:0; height:7px;
+  border-radius:4px 4px 0 0;
+  background:linear-gradient(180deg, #a67c52 0%, #8a6644 60%, #6b4f38 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22);
+}
+/* 나뭇결 — 아주 옅게. 진해지면 지저분해진다. */
+.mart-counter::after{
+  content:''; position:absolute; left:0; right:0; top:7px; bottom:0;
+  background:repeating-linear-gradient(90deg,
+    rgba(255,255,255,.05) 0 2px, transparent 2px 26px);
+  opacity:.7;
+}
+@media (max-width:640px){
+  .mart-scene{ min-width:100%; height:98px; }
+  .mart-clerk{ width:96px; height:96px; bottom:2px; right:6px; }
+  .mart-counter{ height:22px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .mart-clerk, .pw-offer-art{ animation:none !important; }
+}
+
 .mart-sign{ display:flex; align-items:center; gap:10px; }
 .mart-sign-ic{
   width:46px; height:46px; border-radius:var(--r-sm);
@@ -8667,7 +8753,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.4</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.5</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -8988,10 +9074,16 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
          이 이름으로 본문을 갈아끼운다. 바꾸면 상점 전체가 조용히 죽는다. -->
   <div id="screen-mart" class="screen theme-light">
     <div class="mart-shell">
+      <!-- [Ver 15.5] 카운터 뒤에 점원이 서 있다.
+           ⚠ 카운터는 **낮게** — 높으면 얼굴이 잘린다. -->
       <div class="mart-head">
-        <div class="mart-sign">
-          <span class="mart-sign-ic">🏪</span>
-          <div class="mart-sign-tx"><b>랩터마트24</b><small>24시간 영업 중</small></div>
+        <div class="mart-scene">
+          <div class="mart-sign">
+            <span class="mart-sign-ic">🏪</span>
+            <div class="mart-sign-tx"><b>랩터마트24</b><small>24시간 영업 중</small></div>
+          </div>
+          <img class="mart-clerk" src="art/rm25.png" alt="" draggable="false" onerror="this.remove()">
+          <div class="mart-counter" aria-hidden="true"><i></i></div>
         </div>
         <div class="mart-wallet" id="martWallet"></div>
         <button class="btn btn-ghost" onclick="goToStart()">뒤로</button>
@@ -19118,12 +19210,13 @@ function equippedPowerCount(){ return loadEquippedPowers().filter(Boolean).lengt
      offerToAltar 는 fixed 를 그냥 훑으므로 개수 제한은 없지만,
      revealSequence 가 19장을 받으니 '전부 열기' 버튼이 반드시 살아 있어야 한다.
    (일러스트 자리는 비워 뒀다 — art 가 생기면 여기 key 로 붙이면 된다) */
+/* [Ver 15.5] art 는 뽑기 봉지 그림이다. 없으면 글자만 나온다(onerror 로 지운다). */
 const POWER_ALTAR_OFFERS = [
-  { teeth:1,  label:'이빨 1개',  fixed:['normal'],         bonus:[['rare',40],['epic',10],['legend',3]] },
-  { teeth:5,  label:'이빨 5개',  fixed:['normal','rare'],  bonus:[['epic',35],['legend',25]] },   // [Ver 13.4] 전설 12→25 · [Ver 13.15] 영웅 22→35
-  { teeth:15, label:'이빨 15개', fixed:['legend'],         bonus:[['epic',30],['rare',30]] },
+  { teeth:1,  label:'이빨 1개',  art:'art/gacha_low.png',   fixed:['normal'],         bonus:[['rare',40],['epic',10],['legend',3]] },
+  { teeth:5,  label:'이빨 5개',  art:'art/gacha_mid.png',   fixed:['normal','rare'],  bonus:[['epic',35],['legend',25]] },   // [Ver 13.4] 전설 12→25 · [Ver 13.15] 영웅 22→35
+  { teeth:15, label:'이빨 15개', art:'art/gacha_high.png',  fixed:['legend'],         bonus:[['epic',30],['rare',30]] },
   /* [Ver 15.1] 울트라프로맥스+ — 전부 확정. 보너스 없음. */
-  { teeth:25, label:'이빨 25개',
+  { teeth:25, label:'이빨 25개', art:'art/gacha_ultra.png',
     fixed:[].concat(Array(10).fill('normal'), Array(5).fill('rare'), Array(3).fill('epic'), ['legend']),
     bonus:[] },
 ];
@@ -19158,7 +19251,9 @@ function buildMartGachaHtml(){
     const bonusTx = o.bonus.length
       ? o.bonus.map(([r,p])=> `${powerRarityDef(r).label} ${p}%`).join(' · ')
       : '없음';
-    return `<button class="pw-offer${can?'':' off'}" ${can?'':'disabled'} onclick="doAltarOffer(${o.teeth})">
+    return `<button class="pw-offer${can?'':' off'}${o.art?' has-art':''}" ${can?'':'disabled'} onclick="doAltarOffer(${o.teeth})">
+        ${o.art ? `<img class="pw-offer-art" src="${o.art}" alt="" draggable="false"
+                       onerror="this.remove()">` : ''}
         <span class="pw-offer-n">${nm.ic} ${escapeHtml(nm.name)}</span>
         <span class="pw-offer-fix">🦷 ${o.teeth} · 확정 — ${escapeHtml(fixedTx)}</span>
         <span class="pw-offer-bonus">보너스 — ${escapeHtml(bonusTx)}</span>
@@ -29227,6 +29322,13 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 15.5', date: '2026-09-13',
+    items: [
+      '\u{1F3A8} <b>[일러스트] 권능 뽑기에 그림이 붙었습니다.</b> <b>하급 · 중급 · 상급 · 울트라프로맥스+</b> 네 종류 모두 봉지 그림이 생겼고, 가만히 두면 <b>살랑살랑</b> 흔들립니다.',
+      '\u{1F3EA} <b>[일러스트] 랩터마트24에 점원이 생겼습니다.</b> <b>RM25</b>가 계산대 뒤에 서 있습니다. 상시로 <b>통통 튀며</b> 살아 있습니다.',
+    ]
+  },
   {
     version: 'Ver 15.4', date: '2026-09-13',
     items: [
