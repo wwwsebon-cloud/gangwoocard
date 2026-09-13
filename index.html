@@ -8920,7 +8920,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.10</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.10.1</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -24358,6 +24358,98 @@ async function fbLookupRemoteCode(code){
    ########################################################################## */
 const BALANCE_PATCHES = [
   {
+    version: 'Ver 15.10', date: '2026-09-13',
+    groups: [
+      { title:'곡괭이 — 개수는 줄었지만, 한 개가 하는 일이 커졌습니다', kind:'econ',
+        note:'채굴이 <b>돌 깨기</b>로 바뀌면서 곡괭이 하나가 만들어내는 것이 달라졌습니다. ' +
+             '예전에는 곡괭이 1개 = <b>유물 1개</b>, 그게 전부였습니다. 지금은 같은 1개로 ' +
+             '<b>유물 약 1.1개에 더해 재화가 덤으로</b> 들어옵니다.<br><br>' +
+             '다만 솔직하게 적자면 — <b>시간당 유물 수는 줄었습니다.</b> 충전이 3배 느려졌기 때문입니다. ' +
+             '한 개의 값어치를 올리는 대신 <b>수도꼭지를 잠근</b> 것이고, 그렇게 하지 않으면 ' +
+             '돌에서 나오는 재화까지 무한정 쌓입니다.<br>' +
+             '<b>승리 보상</b>이 1~2등 30%에서 1등 25%로 좁아진 것도 같은 이유입니다.',
+        rows:[
+          { name:'곡괭이 1개가 주는 것', icon:'⛏️', rows:[
+            { label:'유물',           from:'1개',   to:'약 <b>1.1개</b>', dir:'up' },
+            { label:'우비나이트',      from:'없음',  to:'약 <b>93</b>',    dir:'up' },
+            { label:'우빈랩터의 발톱', from:'없음',  to:'약 <b>2.3</b>',   dir:'up' },
+            { label:'랩터의 이빨',     from:'없음',  to:'약 <b>0.2</b>',   dir:'up' },
+            { label:'개쩌는 곡괭이',   from:'없음',  to:'약 <b>1/19 개</b>', dir:'up' },
+            { label:'권능석',         from:'없음',  to:'약 <b>1/28 개</b>', dir:'up' }]},
+          { name:'공급', icon:'⏳', rows:[
+            { label:'자동 충전',   from:'10분에 1개', to:'<b>30분</b>에 1개', dir:'down' },
+            { label:'시간당',     from:'6개',        to:'<b>2개</b>',        dir:'down' },
+            { label:'승리 보상',   from:'1~2등 30%',  to:'<b>1등 25%</b>',    dir:'down' },
+            { label:'시간당 유물', from:'6.0개',      to:'<b>2.2개</b>',      dir:'down' },
+            { label:'시간당 우비나이트', from:'0',    to:'약 <b>186</b>',     dir:'up' }]},
+        ]},
+
+      { title:'돌 — 유물만 나오던 자리에 재화가 섞였습니다', kind:'econ',
+        note:'돌 <b>5개</b> 중 <b>2개는 반드시 빈 돌</b>이고, 캘 수 있는 건 <b>3개</b>입니다. ' +
+             '빈 돌이 늘어난 것처럼 보이지만 <b>확률이 아니라 고정</b>이라, ' +
+             '<b>셋 다 허탕인 경우는 아예 없습니다.</b> 예전 방식(확률 꽝)에서는 있었습니다.<br><br>' +
+             '<b>우비나이트</b>는 나오는 양이 절반이 됐지만 <b>나올 확률이 두 배</b>가 됐습니다 — ' +
+             '총량은 비슷하고 <b>더 자주</b> 보입니다.<br>' +
+             '<b>곡괭이</b>는 돌에서 빠졌습니다. 곡괭이로 캐서 곡괭이가 나오면 채굴이 <b>스스로 굴러가</b> ' +
+             '위의 공급 조정이 통째로 무의미해집니다. 그 자리는 <b>우빈랩터의 발톱</b>이 받았습니다.',
+        rows:[
+          { name:'돌 안에 든 것', icon:'\u{1FAA8}', rows:[
+            { label:'유물',           from:'100%',        to:'<b>62%</b> (빈 돌 아닌 것 중)', dir:'neutral' },
+            { label:'우비나이트',      from:'없음',        to:'<b>18%</b> · 125~450',  dir:'up' },
+            { label:'우빈랩터의 발톱', from:'없음',        to:'<b>10%</b> · 5~20',     dir:'up' },
+            { label:'랩터의 이빨',     from:'없음',        to:'<b>5%</b> · 1~3',       dir:'up' },
+            { label:'개쩌는 곡괭이',   from:'없음',        to:'<b>3%</b>',             dir:'up' },
+            { label:'권능석',         from:'없음',        to:'<b>2%</b>',             dir:'up' },
+            { label:'빈 돌',          from:'없음',        to:'5개 중 <b>2개 고정</b>', dir:'down' }]},
+          { name:'베팅', icon:'\u{1F3B2}', rows:[
+            { label:'곡괭이 여러 개', from:'개수만큼 여러 판', to:'<b>한 판 · 보상 ×N</b>', dir:'neutral' },
+            { label:'예',           from:'10개 = 10번 캐기',  to:'10개 = <b>1번 · 보상 10배</b>', dir:'neutral' }]},
+        ]},
+
+      { title:'유물 등급과 열쇠는 올렸습니다', kind:'econ',
+        note:'베팅은 <b>등급을 한 번만 굴려</b> 그 등급으로 전부 줍니다. ' +
+             '그래서 일반이 58%나 되면 곡괭이 5개를 걸어도 <b>일반 5개</b>가 너무 자주 나왔습니다. ' +
+             '일반을 덜어 <b>희귀 이상</b>으로 옮겼습니다.',
+        rows:[
+          { name:'유물 등급', icon:'\u{1F3FA}', rows:[
+            { label:'Common',    from:'58%', to:'<b>44%</b>', dir:'down' },
+            { label:'Rare',      from:'27%', to:'<b>34%</b>', dir:'up' },
+            { label:'Epic',      from:'11%', to:'<b>16%</b>', dir:'up' },
+            { label:'Legendary', from:'4%',  to:'<b>6%</b>',  dir:'up' }]},
+          { name:'상자 열쇠', icon:'\u{1F511}', rows:[
+            { label:'1등', from:'8개', to:'<b>10~20개</b>', dir:'up' },
+            { label:'2등', from:'4개', to:'<b>4~7개</b>',   dir:'up' }]},
+        ]},
+
+      { title:'4등 보상 — 없앴습니다', kind:'econ',
+        note:'판에 들어가자마자 나가 <b>4등으로 작은 보상만</b> 챙기는 것을 막습니다. ' +
+             '경험치 50 · 우비나이트 3~7 · 썬크림은 티끌이지만, <b>무한히 반복되면</b> 티끌이 아닙니다.<br>' +
+             '<b>끝까지 플레이하는 분께는 영향이 거의 없습니다</b> — 4등은 원래 거의 주지 않았습니다. ' +
+             '대신 <b>잃는 것(클래스 강등)은 그대로</b>입니다.',
+        rows:[
+          { name:'4등 이하', icon:'\u{1F6AB}', rows:[
+            { label:'경험치',     from:'50',    to:'<b>없음</b>', dir:'down' },
+            { label:'우비나이트', from:'3~7',   to:'<b>없음</b>', dir:'down' },
+            { label:'랩터코인',   from:'지급',  to:'<b>없음</b>', dir:'down' },
+            { label:'썬크림',     from:'지급',  to:'<b>없음</b>', dir:'down' },
+            { label:'클래스 강등', from:'적용',  to:'그대로',      dir:'neutral' }]},
+        ]},
+
+      { title:'새로 생긴 수급처', kind:'econ',
+        note:'깎기만 한 것이 아니라, <b>새로 주는 곳</b>도 함께 늘렸습니다.',
+        rows:[
+          { name:'새 소식 읽기', icon:'\u{1F381}', rows:[
+            { label:'리더보드 · 신규 카드 · 밸런스 · 업데이트 로그',
+              from:'없음', to:'각각 <b>100 우비나이트</b> (업데이트마다 1회)', dir:'up' }]},
+          { name:'아케이드 상점', icon:'\u{1FA99}', rows:[
+            { label:'권능석', from:'판매 없음', to:'<b>50코인</b> · 시즌 3회', dir:'up' }]},
+          { name:'VIP', icon:'\u{1F451}', rows:[
+            { label:'매일',   from:'없음', to:'<b>600 우비나이트</b>', dir:'up' },
+            { label:'얻는 법', from:'—',  to:'상품(14일) 또는 <b>업적(영구)</b>', dir:'neutral' }]},
+        ]},
+    ]
+  },
+  {
     version: 'Ver 14.15', date: '2026-09-11',
     groups: [
       { title:'용병 지후 — 계약 하나로 판이 끝나면 안 된다', kind:'pet',
@@ -29818,6 +29910,12 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 15.10.1', date: '2026-09-13',
+    items: [
+      '\u2696\ufe0f <b>[안내] 밸런스 패치 탭에 재화 보상 조정을 정리했습니다.</b> 로그만 보면 <b>그냥 깎은 것처럼</b> 보이지만, 곡괭이 한 개가 하는 일은 오히려 커졌습니다 — <b>곡괭이 1개당 유물 1개 → 약 1.1개 + 재화가 덤으로</b>.<br>다만 <b>시간당 유물 수는 실제로 줄었습니다</b>(충전이 3배 느려졌습니다). 올라간 것과 내려간 것을 <b>숫자로 나란히</b> 적어두었으니 <b>메뉴 → 밸런스</b>에서 확인해주세요.',
+    ]
+  },
   {
     version: 'Ver 15.10', date: '2026-09-13',
     items: [
