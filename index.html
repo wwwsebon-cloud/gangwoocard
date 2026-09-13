@@ -5513,6 +5513,40 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
   55%    { transform:translateY(0) rotate(-.6deg) scale(1.02,.98); }
   72%    { transform:translateY(-3px) rotate(.4deg) scale(1,1); }
 }
+/* [Ver 15.6] 점원 말풍선 — 점원 왼쪽에서 톡 튀어나온다.
+   ⚠ pointer-events:none. 지갑·뒤로 버튼을 가로채면 안 된다. */
+.mart-bubble{
+  /* ⚠ 점원 **오른쪽** 빈 자리에 둔다. 왼쪽에 두면 간판 이름을 가린다(측정으로 확인). */
+  position:absolute; left:calc(100% + 10px); top:16px; z-index:4;
+  width:max-content; max-width:min(250px, 30vw); padding:9px 13px;
+  border-radius:13px 13px 13px 4px;
+  background:var(--bg-panel); color:var(--fg);
+  box-shadow:inset 0 0 0 1px var(--line), 0 6px 18px -8px rgba(0,0,0,.55);
+  font-size:12.5px; line-height:1.5; font-weight:600; white-space:normal;
+  pointer-events:none; transform-origin:100% 100%;
+  opacity:0; transform:scale(.7) translateY(6px);
+  transition:opacity .18s var(--ease), transform .28s var(--ease-spring);
+}
+.mart-bubble.on{ opacity:1; transform:scale(1) translateY(0); }
+/* 꼬리 — 왼쪽 아래에서 점원 쪽을 가리킨다 */
+.mart-bubble::after{
+  content:''; position:absolute; left:-7px; bottom:6px;
+  border:7px solid transparent; border-right-color:var(--bg-panel);
+  filter:drop-shadow(-1px 0 0 var(--line));
+}
+.mart-bubble{ transform-origin:0% 100%; }
+@media (max-width:820px){
+  /* 좁은 화면 — 오른쪽 빈 자리가 없다. 간판 **글자 아래**로 내려 이름을 가리지 않게. */
+  .mart-scene{ height:132px; }
+  .mart-bubble{
+    left:4px; top:60px; max-width:min(62vw, 230px);
+    font-size:11.5px; padding:7px 11px;
+    border-radius:13px 13px 13px 4px;
+  }
+  .mart-bubble::after{ left:12px; bottom:-7px; border:7px solid transparent;
+    border-top-color:var(--bg-panel); filter:drop-shadow(0 1px 0 var(--line)); }
+}
+
 /* 카운터 — 낮은 진열대. 점원의 아래쪽만 가린다. */
 .mart-counter{
   position:absolute; left:0; right:0; bottom:0; z-index:2; height:26px;
@@ -8753,7 +8787,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.5</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.6</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -9082,6 +9116,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
             <span class="mart-sign-ic">🏪</span>
             <div class="mart-sign-tx"><b>랩터마트24</b><small>24시간 영업 중</small></div>
           </div>
+          <div class="mart-bubble" id="martBubble" aria-hidden="true"></div>
           <img class="mart-clerk" src="art/rm25.png" alt="" draggable="false" onerror="this.remove()">
           <div class="mart-counter" aria-hidden="true"><i></i></div>
         </div>
@@ -21447,6 +21482,59 @@ function restoreScreenBgm(){
   }catch(e){}
 }
 let martBgmKey = RAPTOR_MART_BGMS[0];   // [Ver 15.1] 뒤로 갈 때 되돌릴 기준
+/* ##########################################################################
+   [Ver 15.6] 점원 RM25 의 대사
+   --------------------------------------------------------------------------
+   ⚠ w 는 가중치다. 낮은 확률로 나와야 하는 줄은 여기서 낮춘다 —
+     배열에 한 번씩만 넣으면 전부 같은 확률이 된다.
+   ⚠ 마트에 **들어올 때만** 말한다. 탭을 옮길 때마다 말하면 금방 시끄러워진다.
+   ########################################################################## */
+const RM25_LINES = [
+  { t:'어서와~',                              w:1 },
+  { t:'잘 지냈어?',                            w:1 },
+  { t:'돈내놔',                                w:1 },
+  { t:'안살거면 만지지 마!',                    w:1 },
+  { t:'상품이 친절하고 사장님이 맛있다고..?',    w:1 },
+  { t:'그래그래 편히 둘러보다 가라구~',          w:1 },
+  { t:'우리 상점은 특S급 상품만 취급한다고!',    w:1 },
+  { t:'오랜만이네~ 게임은 즐겁게 하고 있어?',    w:1 },
+  { t:'외상은 안돼!',                          w:1 },
+  { t:'신중하게 골라. 환불은 안되니까',          w:1 },
+  { t:'네고하면 차단함',                        w:1 },
+  { t:'나 보고싶어서 왔지?',                    w:1 },
+  /* 낮은 확률 — 가끔 속마음이 샌다 */
+  { t:'아 일하기싫다',                          w:0.3 },
+  { t:'퇴근마렵다',                            w:0.3 },
+];
+let __rm25Last = -1;
+function rm25Pick(){
+  /* ⚠ 같은 말을 연달아 하지 않는다 — 두 번 연속이면 기계로 읽힌다.
+     후보가 하나뿐인 극단적인 경우를 대비해 몇 번만 다시 굴린다. */
+  for(let tries = 0; tries < 8; tries++){
+    let sum = 0; RM25_LINES.forEach(l=> sum += l.w);
+    let r = Math.random() * sum, idx = 0;
+    for(let i = 0; i < RM25_LINES.length; i++){
+      r -= RM25_LINES[i].w;
+      if(r <= 0){ idx = i; break; }
+    }
+    if(idx !== __rm25Last || RM25_LINES.length < 2){ __rm25Last = idx; return RM25_LINES[idx].t; }
+  }
+  return RM25_LINES[0].t;
+}
+let __rm25Timer = null;
+function rm25Say(text){
+  try{
+    const el = document.getElementById('martBubble');
+    if(!el) return;
+    clearTimeout(__rm25Timer);
+    el.textContent = text || rm25Pick();
+    el.classList.remove('on');
+    void el.offsetWidth;                 // 애니메이션을 다시 태우려면 한 번 끊어야 한다
+    el.classList.add('on');
+    __rm25Timer = setTimeout(()=>{ try{ el.classList.remove('on'); }catch(e){} }, 4600);
+  }catch(e){}
+}
+
 function openRaptorMart(tab){
   raptorMartTab = tab || 'pet';
   petShopDetailKey = null;   // [Ver 14.7] 마트를 새로 열면 언제나 펫 목록부터
@@ -21455,6 +21543,8 @@ function openRaptorMart(tab){
   try{ ambientBgmPlay(martBgmKey); }catch(e){}
   showScreen('screen-mart');   // [Ver 15.1] 모달 → 전체 페이지
   renderRaptorMart();
+  /* [Ver 15.6] 들어왔으니 점원이 한마디 한다. 탭을 옮길 때는 말하지 않는다. */
+  setTimeout(()=>{ try{ rm25Say(); }catch(e){} }, 420);
 }
 /* ★ [Ver 15.1] 마트 **밖에서도** 불린다 — buyTeeth·buyPet·buyDevPfp 등이 부른다.
    예전에는 #rmBody 가 모달 안에만 있어 없으면 그냥 아무 일도 안 했다.
@@ -29322,6 +29412,12 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 15.6', date: '2026-09-13',
+    items: [
+      '\u{1F4AC} <b>[신규] 점원이 말을 겁니다.</b> 랩터마트24에 들어갈 때마다 <b>RM25</b>가 한마디씩 합니다. <b>14가지</b> 대사가 준비돼 있고, 같은 말을 연달아 하지는 않습니다. 그중 둘은 <b>아주 가끔만</b> 나오는 속마음입니다 — 운이 좋으면(?) 보실 수 있습니다.',
+    ]
+  },
   {
     version: 'Ver 15.5', date: '2026-09-13',
     items: [
