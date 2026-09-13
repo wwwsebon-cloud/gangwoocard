@@ -3944,6 +3944,39 @@ body.mobile-mode .rv-card-nm{ font-size:19px; }
   .mrock-hp{ width:78px; }
 }
 
+/* [Ver 15.4] 누적 결제 보상 */
+.pay-mile{ margin-bottom:14px; padding:13px 15px; border-radius:13px;
+  background:var(--bg-soft); box-shadow:inset 0 0 0 1px var(--line); }
+.pay-mile-t{ font-size:13px; font-weight:800; }
+.pay-mile-t small{ margin-left:8px; font-size:11.5px; font-weight:500; color:var(--fg-dim); }
+.pay-mile-bar{ height:7px; margin:9px 0 6px; border-radius:99px; background:var(--bg-3); overflow:hidden; }
+.pay-mile-bar > i{ display:block; height:100%; background:linear-gradient(90deg,#4f8ef7,#8ab4ff);
+  transition:width .5s var(--ease-spring); }
+.pay-mile-next{ font-size:11.5px; color:var(--fg-dim); margin-bottom:10px; }
+.pay-mile-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:7px; }
+.pay-mile-c{ position:relative; display:flex; flex-direction:column; align-items:center; gap:2px;
+  padding:9px 6px; border-radius:10px; background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--line); }
+.pay-mile-c .ic{ font-size:19px; line-height:1; }
+.pay-mile-c b{ font-family:var(--font-mono); font-size:12px; }
+.pay-mile-c small{ font-size:10px; color:var(--fg-faint); text-align:center; line-height:1.4; }
+.pay-mile-c.done{ opacity:.55; box-shadow:inset 0 0 0 1px #3aa76d; }
+.pay-mile-c em{ position:absolute; top:4px; right:5px; font-style:normal; font-size:9px;
+  font-weight:800; color:#3aa76d; }
+.pay-mile-hit{ padding:8px 12px; margin-bottom:6px; border-radius:10px; background:var(--bg-2); }
+.pay-mile-hit small{ margin-left:8px; font-size:11px; color:var(--fg-faint); }
+
+/* [Ver 15.4] 새 소식을 읽으면 주는 우비나이트 딱지 */
+.nm-gift{
+  position:absolute; top:-7px; right:-6px; z-index:2;
+  padding:2px 7px; border-radius:999px; white-space:nowrap;
+  background:linear-gradient(135deg,#4f8ef7,#2f6fe0); color:#fff;
+  font-size:9.5px; font-weight:800; letter-spacing:.2px;
+  box-shadow:0 3px 9px -3px rgba(0,0,0,.6);
+  animation:nmGift 1.6s var(--ease-in-out) infinite;
+}
+@keyframes nmGift{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.1); } }
+.nm-mini, .nm-log{ position:relative; overflow:visible; }
+
 /* [Ver 15.4] 개쩌는 곡괭이 — 금빛으로 물들인 곡괭이 + 빛무리 */
 .gpick{
   display:inline-block;
@@ -8634,7 +8667,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.3.2</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.4</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -8810,20 +8843,24 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
           <!-- [Ver 13.15] 서랍에서 꺼낸 셋. 자주 보는 것이라 한 번에 닿게 둔다.
                ⚠ nmNewCardsDot · nmBalanceDot 는 렌더 함수가 찾는 id다 — 이름을 바꾸지 말 것. -->
           <div class="nm-mini-row">
-            <button class="nm-mini" onclick="openOnlineScreen('rank')" title="리더보드 · 전체 순위">
+            <button class="nm-mini" onclick="newsClaimRankIf('rank'); openOnlineScreen('rank')" title="리더보드 · 전체 순위">
               <span class="ic">🏆</span><b>리더보드</b>
+              <span class="nm-gift" id="nmRankGift" style="display:none;">💎100</span>
             </button>
             <button class="nm-mini" onclick="openNewCards()" title="이번 버전에 추가된 카드">
               <span class="ic">🃏</span><b>신규 카드</b>
               <span class="nm-new" id="nmNewCardsDot" style="display:none;">New</span>
+              <span class="nm-gift" id="nmCardGift" style="display:none;">💎100</span>
             </button>
             <button class="nm-mini" onclick="openBalancePatch()" title="세진 카드 · 약해진 카드">
               <span class="ic">⚖️</span><b>밸런스</b>
               <span class="nm-new" id="nmBalanceDot" style="display:none;">New</span>
+              <span class="nm-gift" id="nmBalGift" style="display:none;">💎100</span>
             </button>
           </div>
           <button class="nm-log" onclick="goToChangelog()">
             <span class="ic">📜</span><b>업데이트 로그</b>
+            <span class="nm-gift" id="nmLogGift" style="display:none;">💎100</span>
           </button>
         </div>
 
@@ -13033,6 +13070,8 @@ const STORAGE_KEYS = {
   ubinite: 'gang_card_ubinite_v1', // [Ver 8.4] 꾸미기 재화 '우비나이트'
   userCode: 'gang_card_user_code_v1', // [Ver 9.12.1] 기기마다 한 번 발급되는 고유 유저 코드
   pay: 'gang_card_pay_v1',           // [Ver 15.1] 현질 { pending:{id,...}, starter:true, last:{} }
+  newsRead: 'gang_card_news_read_v1',// [Ver 15.4] 새 소식 읽기 보상 { ver:'Ver 15.4', got:['rank',...] }
+  payTotal: 'gang_card_pay_total_v1',// [Ver 15.4] 누적 현질액 { won:0, got:[300,1000,...] }
   bio: 'gang_card_bio_v1', // [Ver 10.5] 상태메시지 — 리더보드 프로필에 함께 표시된다
   friendCode: 'gang_card_friend_code_v1', // [Ver 10.5] 친구 코드 (공개용 · 사용자가 마음대로 바꾼다)
   friends: 'gang_card_friends_v1',        // [Ver 10.5] 친구 목록 (이 기기에만 저장)
@@ -14896,6 +14935,69 @@ const PAY_PRODUCTS = [
   { id:'starter', emoji:'🎁', name:'초보자 패키지',     won:9900,  once:true,
     reward:{ ubinite:8000, pickaxe:20, teeth:30, pwStone:1 } },
 ];
+/* ##########################################################################
+   [Ver 15.4] 누적 현질량 이정표 — "첫 구매 보상"
+   --------------------------------------------------------------------------
+   ⚠ 누적은 **승인이 확인된 순간**에만 오른다. 신청만으로 오르면
+     송금 없이 신청만 눌러 보상을 챙기는 길이 열린다.
+   ⚠ 누적이라 한 번에 여러 이정표가 열릴 수 있다. 전부 주고 한 장으로 알린다.
+   ########################################################################## */
+const PAY_MILESTONES = [
+  { won:300,   ic:'\u{1F511}', label:'상자 열쇠 100개',    give:()=> grantBoxKeys(100) },
+  { won:1000,  ic:'\u{1F48E}', label:'우비나이트 2,500개', give:()=> grantUbinite(2500) },
+  { won:5000,  ic:'\u{1F9B7}', label:'랩터의 이빨 50개',   give:()=> grantTeeth(50) },
+  { won:10000, ic:'\u{1F537}', label:'권능석 1개',         give:()=> grantPwStones(1) },
+];
+function payTotalLoad(){
+  try{
+    const o = JSON.parse(localStorage.getItem(STORAGE_KEYS.payTotal) || 'null');
+    if(o && typeof o.won === 'number' && Array.isArray(o.got)) return o;
+  }catch(e){}
+  return { won:0, got:[] };
+}
+function payTotalSave(o){ try{ localStorage.setItem(STORAGE_KEYS.payTotal, JSON.stringify(o)); }catch(e){} }
+/* 승인이 확인됐다 — 누적을 올리고, 넘어선 이정표를 전부 지급한다. */
+function payAddTotal(won){
+  won = Math.max(0, won | 0);
+  if(!won) return;
+  const t = payTotalLoad();
+  t.won += won;
+  const hit = PAY_MILESTONES.filter(m=> t.won >= m.won && !t.got.includes(m.won));
+  hit.forEach(m=>{ t.got.push(m.won); try{ m.give(); }catch(e){} });
+  payTotalSave(t);
+  if(!hit.length) return;
+  try{ renderUbiniteBadge(); renderTopResources(); }catch(e){}
+  showModal('\u{1F381} 누적 결제 보상', `<div style="line-height:1.9;">
+      누적 결제 <b>${t.won.toLocaleString()}원</b>을 넘어 보상이 도착했습니다.<br><br>
+      ${hit.map(m=> `<div class="pay-mile-hit">${m.ic} <b>${escapeHtml(m.label)}</b>
+        <small>${m.won.toLocaleString()}원 달성</small></div>`).join('')}
+      <div style="font-size:12px;color:var(--fg-dim);margin-top:10px;">감사합니다. 앞으로도 잘 부탁드립니다!</div>
+    </div>`, [{ label:'확인', solid:true }]);
+}
+/* 현질 창에 붙는 이정표 줄 */
+function payMilestoneHtml(){
+  const t = payTotalLoad();
+  const next = PAY_MILESTONES.find(m=> !t.got.includes(m.won));
+  const pct = next ? Math.max(0, Math.min(100, t.won / next.won * 100)) : 100;
+  return `<div class="pay-mile">
+    <div class="pay-mile-t">\u{1F381} 누적 결제 보상
+      <small>지금까지 <b>${t.won.toLocaleString()}원</b></small></div>
+    ${next ? `<div class="pay-mile-bar"><i style="width:${pct.toFixed(1)}%"></i></div>
+      <div class="pay-mile-next">다음 — <b>${next.won.toLocaleString()}원</b>에서 ${next.ic} ${escapeHtml(next.label)}</div>` : ''}
+    <div class="pay-mile-row">
+      ${PAY_MILESTONES.map(m=>{
+        const done = t.got.includes(m.won);
+        return `<div class="pay-mile-c${done?' done':''}">
+          <span class="ic">${m.ic}</span>
+          <b>${m.won.toLocaleString()}원</b>
+          <small>${escapeHtml(m.label)}</small>
+          ${done?'<em>받음</em>':''}
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
 function payProduct(id){ return PAY_PRODUCTS.find(p=> p.id === id) || null; }
 function payRewardOf(p){ return p && p.reward ? p.reward : { ubinite:(p && p.ubinite) || 0 }; }
 function payRewardText(p){ try{ return mailRewardText(payRewardOf(p)); }catch(e){ return ''; } }
@@ -14951,7 +15053,7 @@ function payShopHtml(){
       <span class="pay-c-won">${escapeHtml(payWon(p.won))}</span>
     </button>`;
   }).join('');
-  return head + `<div class="pay-grid">${cards}</div>
+  return head + payMilestoneHtml() + `<div class="pay-grid">${cards}</div>
     <div class="pay-note">
       <b>💳 이건 이렇게 굴러갑니다</b><br>
       ① 상품을 고르면 계좌가 나옵니다 → ② 그 계좌로 송금 → ③ 입금자명을 적어 신청<br>
@@ -15082,6 +15184,10 @@ async function payPendingRefresh(loud){
     }
     const L2 = payLoadLocal();
     if(d.status === 'approved' && d.product === 'starter') L2.starter = true;
+    /* ★ [Ver 15.4] 승인이 확인된 **지금** 누적이 오른다. 신청만으로는 오르지 않는다. */
+    if(d.status === 'approved'){
+      try{ payAddTotal(Number(d.won) || (L2.pending && L2.pending.won) || 0); }catch(e){}
+    }
     L2.last = { status: d.status, label: d.label || (L2.pending && L2.pending.label) || '' };
     L2.pending = null;
     paySaveLocal(L2);
@@ -17518,7 +17624,11 @@ function brSwitchTab(which){
   if(tl) tl.classList.toggle('active', !isMoves);
 }
 
+/* [Ver 15.4] 리더보드는 온라인 화면의 한 탭이다 — 'rank' 로 들어갈 때만 센다. */
+function newsClaimRankIf(tab){ try{ if(tab === 'rank') newsClaim('rank'); }catch(e){} }
+
 function renderMenuNote(){
+  try{ newsPaintDots(); }catch(e){}   // [Ver 15.4] 새 소식 딱지
   try{ renderPassBar(); }catch(e){}   // [Ver 11.8] 시즌 패스 막대도 함께 갱신
   const el = document.getElementById('nmNote');
   if(!el) return;
@@ -21394,14 +21504,14 @@ function buildMartMineHtml(){
     </div>
 
     <div class="mart-sec">
-      <div class="mart-sec-t">🪙 개쩌는 곡괭이로 캐기
+      <div class="mart-sec-t">${goldPickIcon()} 개쩌는 곡괭이로 캐기
         <small>유물이 나오면 영웅 · 전설만</small></div>
       <div class="mart-mine-have">
         <span>${goldPickIcon()} 개쩌는 곡괭이 <b>${gold.toLocaleString()}</b>개</span>
       </div>
       <div class="gc-pulls gp-pulls">
-        ${martPullBtn('gc-pull-gold', '1회 캐기', '🪙 1 · 보상 ×1', gold >= 1, 'doGoldMine(1)')}
-        ${martPullBtn('gc-pull-gold mart-x5', '×5 캐기', '🪙 5 · 보상 ×5', gold >= 5, 'doGoldMine(5)')}
+        ${martPullBtn('gc-pull-gold', '1회 캐기', goldPickIcon()+' 1 · 보상 ×1', gold >= 1, 'doGoldMine(1)')}
+        ${martPullBtn('gc-pull-gold mart-x5', '×5 캐기', goldPickIcon()+' 5 · 보상 ×5', gold >= 5, 'doGoldMine(5)')}
       </div>
     </div>
 
@@ -26557,6 +26667,7 @@ const NEW_CARDS = [
 ];
 let newCardsIdx = 0;
 function openNewCards(){
+  try{ newsClaim('cards'); }catch(e){}   // [Ver 15.4] 읽으면 100 우비나이트 (업데이트당 한 번)
   try{ markSeen(STORAGE_KEYS.seenCards, newCardsVersion()); renderNewBadges(); }catch(e){}   // [Ver 13.0]
   closeMenuDrawer();
   newCardsIdx = 0;
@@ -26615,6 +26726,7 @@ function renderNewCards(){
 }
 
 function openBalancePatch(){
+  try{ newsClaim('balance'); }catch(e){}   // [Ver 15.4]
   try{ markSeen(STORAGE_KEYS.seenBalance, balanceVersion()); renderNewBadges(); }catch(e){}  // [Ver 13.0]
   closeMenuDrawer();
   balancePatchIdx = 0;
@@ -28379,6 +28491,72 @@ function toggleMenuFolder(headEl){
 function openDefaultMenuFolder(){ /* 의도적으로 비워둔다 */ }
 /* [Ver 5.2.1] 메뉴 포스트잇: 최신 CHANGELOG 항목을 시작 화면에 노출. X로 닫으면 그 버전은 다시 안 뜨고, 📌 칩으로 재열람 가능 */
 function latestChangelogVersion(){ return (CHANGELOG[0] && CHANGELOG[0].version) || ''; }
+
+/* ##########################################################################
+   [Ver 15.4] 새 소식을 읽으면 100 우비나이트
+   --------------------------------------------------------------------------
+   ▶ 리더보드 · 업데이트 로그 · 밸런스 · 신규 카드 — 넷 각각, **업데이트마다 한 번.**
+   ⚠ "한 번"의 기준은 최신 CHANGELOG 버전 문자열이다. 버전이 바뀌면 넷 다 다시 열린다.
+   ⚠ 지급은 **들어간 직후**에 한다. 나올 때 주면 뒤로가기 경로가 여럿이라 새는 곳이 생긴다.
+   ########################################################################## */
+const NEWS_REWARD = 100;
+const NEWS_KINDS = {
+  rank:    { dot:'nmRankGift',  label:'리더보드' },
+  log:     { dot:'nmLogGift',   label:'업데이트 로그' },
+  balance: { dot:'nmBalGift',   label:'밸런스 패치' },
+  cards:   { dot:'nmCardGift',  label:'신규 카드' },
+};
+function newsLoad(){
+  try{
+    const o = JSON.parse(localStorage.getItem(STORAGE_KEYS.newsRead) || 'null');
+    if(o && o.ver === latestChangelogVersion() && Array.isArray(o.got)) return o;
+  }catch(e){}
+  return { ver: latestChangelogVersion(), got: [] };   // 새 버전이면 넷 다 다시 열린다
+}
+function newsSave(o){ try{ localStorage.setItem(STORAGE_KEYS.newsRead, JSON.stringify(o)); }catch(e){} }
+function newsCanGet(kind){ return !newsLoad().got.includes(kind); }
+/* 들어갔다 — 아직 안 받았으면 준다. */
+function newsClaim(kind){
+  try{
+    if(!NEWS_KINDS[kind]) return;
+    const o = newsLoad();
+    if(o.got.includes(kind)) return;
+    o.got.push(kind); newsSave(o);
+    grantUbinite(NEWS_REWARD);
+    try{ renderUbiniteBadge(); }catch(e){}
+    setTimeout(()=>{ try{ newsPaintDots(); }catch(e){} }, 0);
+    newsToast(NEWS_KINDS[kind].label);
+  }catch(e){}
+}
+/* 받았다는 알림.
+   ⚠ 이 파일에는 범용 토스트가 없다. 퀘스트 알림 층(qt-layer)을 그대로 빌린다. */
+function newsToast(label){
+  try{
+    let layer = document.getElementById('questToastLayer');
+    if(!layer){
+      layer = document.createElement('div');
+      layer.id = 'questToastLayer'; layer.className = 'qt-layer';
+      document.body.appendChild(layer);
+    }
+    const el = document.createElement('div');
+    el.className = 'qt-toast';
+    el.innerHTML = `<span class="qt-ic">💎</span>
+      <span class="qt-tx"><b>우비나이트 +${NEWS_REWARD}</b><small>${escapeHtml(label)}을(를) 확인했습니다</small></span>`;
+    layer.appendChild(el);
+    requestAnimationFrame(()=> requestAnimationFrame(()=> el.classList.add('show')));
+    setTimeout(()=>{ el.classList.remove('show'); setTimeout(()=>{ try{ el.remove(); }catch(e){} }, 400); }, 2600);
+  }catch(e){}
+}
+
+/* 버튼 옆 딱지 — 받을 게 남아 있을 때만 보인다 */
+function newsPaintDots(){
+  try{
+    Object.keys(NEWS_KINDS).forEach(k=>{
+      const el = document.getElementById(NEWS_KINDS[k].dot);
+      if(el) el.style.display = newsCanGet(k) ? '' : 'none';
+    });
+  }catch(e){}
+}
 function renderMenuPostit(){
   const head = document.getElementById('postitHead');
   const body = document.getElementById('postitBody');
@@ -29049,6 +29227,24 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 15.4', date: '2026-09-13',
+    items: [
+      '\u{1F3EA} <b>[개편] 채굴과 강화가 랩터마트24로 옮겨왔습니다.</b> <b>⛏️ 채굴</b> 탭에서 캐고, <b>⚒️ 대장장이</b> 탭에서 곡괭이를 강화합니다. 채굴은 <b>1회</b> 또는 <b>×5</b>(보라색, 곡괭이 5개 이상일 때) 두 가지입니다. 확률은 <b>ℹ️ 확률 보기</b> 안에 전부 들어갔습니다. <b>유물 광산</b>은 이제 도감 화면입니다.',
+      '\u{26CF}️ <b>[조정] 곡괭이 충전 10분 → 30분.</b> 돌 채굴로 보상이 크게 올라 공급을 조입니다. 승리 보상도 <b>1~2등 30% → 1등 25%</b>로 바뀝니다.',
+      '\u{1F32B}️ <b>[조정] 일반 돌도 빈 돌이 정확히 2개입니다.</b> 확률이 아니라 <b>반드시 2개</b>가 섞입니다 — 개쩌는 곡괭이와 같은 규칙이 됐습니다. 셋 다 허탕일 일은 <b>이제 없습니다.</b>',
+      '\u{1F48E} <b>[조정] 돌의 우비나이트는 개수 절반, 확률 두 배.</b> 총량은 비슷하되 <b>더 자주</b> 보입니다.',
+      '\u{1F511} <b>[상향] 상자 열쇠 —</b> 1등 <b>10~20개</b> · 2등 <b>4~7개</b>. (기존 8 / 4 고정)',
+      '\u{1F6AB} <b>[차단] 4등은 아무것도 받지 못합니다.</b> 판에 들어가자마자 나가 4등으로 작은 보상만 챙기는 것을 막습니다. 경험치 · 우비나이트 · 랩터코인 · 썬크림 전부 없습니다.',
+      '\u{1F0CF} <b>[변경] 드로우 후보가 턴마다 다시 뽑힙니다.</b> 남의 턴 내내 답을 들고 있을 수 없습니다. 후보 등급은 <b>실제로 존재하는 등급만</b> 나오고, <b>UR 이상은 표시되지 않습니다.</b>',
+      '\u{1F4B8} <b>[연출] 재화를 쓸 때도 보입니다.</b> 쓴 만큼 재화 칸에서 <b>빠져나가는</b> 연출이 붙었습니다. 받을 때도 <b>자동으로 백업</b>됩니다.',
+      '\u{1F6D2} <b>[편의] 랩터마트24에서 살 때 한 번 묻습니다.</b> 잘못 눌러 사는 일이 없습니다.',
+      '\u{1F381} <b>[신규] 새 소식을 읽으면 우비나이트 100개.</b> <b>리더보드 · 신규 카드 · 밸런스 · 업데이트 로그</b> 넷 각각, <b>업데이트마다 한 번</b>씩 드립니다. 버튼에 딱지가 붙어 있으면 아직 안 받은 것입니다.',
+      '\u{1F4B3} <b>[신규] 누적 결제 보상.</b> 300원 <b>열쇠 100개</b> · 1,000원 <b>우비나이트 2,500개</b> · 5,000원 <b>랩터의 이빨 50개</b> · 10,000원 <b>권능석 1개</b>. 승인이 확인되면 자동으로 들어옵니다.',
+      '\u{1FA99} <b>[신규] 아케이드 상점에 권능석.</b> 랩터코인 <b>50개</b> · 시즌당 <b>3번</b>까지.',
+      '\u2728 <b>개쩌는 곡괭이 아이콘이 바뀌었습니다.</b> 동전이 아니라 <b>금빛으로 빛나는 곡괭이</b>입니다.',
+    ]
+  },
   {
     version: 'Ver 15.3.2', date: '2026-09-13',
     items: [
@@ -37753,6 +37949,7 @@ function resetStats(){
   ]);
 }
 function goToChangelog(){
+  try{ newsClaim('log'); }catch(e){}   // [Ver 15.4]
   showScreen('screen-changelog');
   const wrap = document.getElementById('changelogWrap');
   wrap.innerHTML = CHANGELOG.map((entry,i)=>`
