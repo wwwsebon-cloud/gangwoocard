@@ -3944,6 +3944,69 @@ body.mobile-mode .rv-card-nm{ font-size:19px; }
   .mrock-hp{ width:78px; }
 }
 
+/* [Ver 15.4] 개쩌는 곡괭이 — 금빛으로 물들인 곡괭이 + 빛무리 */
+.gpick{
+  display:inline-block;
+  filter:sepia(1) saturate(5) hue-rotate(-18deg) brightness(1.18)
+         drop-shadow(0 0 6px rgba(255,196,60,.95)) drop-shadow(0 0 14px rgba(255,170,20,.55));
+  animation:gpickGlow 2.2s var(--ease-in-out) infinite;
+}
+@keyframes gpickGlow{
+  0%,100%{ filter:sepia(1) saturate(5) hue-rotate(-18deg) brightness(1.12)
+                  drop-shadow(0 0 5px rgba(255,196,60,.8)) drop-shadow(0 0 12px rgba(255,170,20,.4)); }
+  50%    { filter:sepia(1) saturate(6) hue-rotate(-18deg) brightness(1.3)
+                  drop-shadow(0 0 9px rgba(255,210,90,1)) drop-shadow(0 0 20px rgba(255,170,20,.7)); }
+}
+
+/* [Ver 15.4] 채굴 확률 창 */
+.mri{ font-size:12.5px; }
+.mri-t{ font-size:13px; font-weight:800; margin-bottom:6px; }
+.mri-t small{ margin-left:7px; font-size:11px; font-weight:500; color:var(--fg-faint); }
+.mri-note{ margin-bottom:9px; padding:9px 11px; border-radius:9px; background:var(--bg-soft);
+  font-size:11.5px; line-height:1.8; color:var(--fg-dim); }
+.mri-two{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.mri-h{ font-size:11px; font-weight:700; color:var(--fg-faint); margin-bottom:4px; letter-spacing:.3px; }
+.mri-row{ display:flex; justify-content:space-between; align-items:center; gap:8px;
+  padding:4px 8px; border-radius:6px; background:var(--bg-2); margin-bottom:3px; font-size:11.5px; }
+.mri-row b{ font-family:var(--font-mono); font-weight:800; }
+.mri-row em{ font-style:normal; font-size:10px; color:var(--fg-faint); margin-left:4px; }
+@media (max-width:520px){ .mri-two{ grid-template-columns:1fr; } }
+
+/* [Ver 15.4] 마트 — 채굴 · 대장장이 탭 */
+.mart-sec{ margin-bottom:18px; }
+.mart-sec-t{ font-size:13px; font-weight:800; margin-bottom:8px; }
+.mart-sec-t small{ margin-left:8px; font-size:11px; font-weight:500; color:var(--fg-faint); }
+.mart-mine-have{
+  display:flex; gap:14px; flex-wrap:wrap; align-items:center;
+  padding:9px 13px; margin-bottom:9px; border-radius:var(--r-sm);
+  background:var(--bg-2); font-size:12.5px; font-family:var(--font-mono);
+}
+.mart-mine-have .dim{ color:var(--fg-faint); font-family:var(--font); }
+/* ×5 는 배율이다 — 보라색으로 확실히 구분한다 */
+.gc-pull.mart-x5{
+  background:linear-gradient(135deg,#7c3aed,#5b21b6) !important;
+  color:#fff !important; box-shadow:0 0 0 1px rgba(167,139,250,.5), 0 6px 18px -8px rgba(124,58,237,.8);
+}
+.gc-pull.mart-x5:hover:not(:disabled){ filter:brightness(1.12); }
+.gc-pull.mart-x5 small{ color:#ddd0ff !important; }
+.gc-pull.mart-x5:disabled{ background:var(--bg-3) !important; color:var(--fg-faint) !important; box-shadow:none; }
+.mart-note{
+  padding:12px 14px; border-radius:var(--r-sm); background:var(--bg-soft);
+  font-size:11.5px; line-height:1.85; color:var(--fg-dim);
+}
+/* 대장장이 */
+.smith-hero{ text-align:center; padding:18px 12px 12px; }
+.smith-anvil{ font-size:52px; line-height:1; filter:drop-shadow(0 6px 14px rgba(0,0,0,.35)); }
+.smith-arrow{ margin-top:8px; font-size:24px; letter-spacing:4px; }
+.smith-arrow span{ font-size:16px; color:var(--fg-faint); margin:0 4px; }
+.smith-t{ margin-top:8px; font-size:17px; font-weight:800; }
+.smith-d{ margin-top:5px; font-size:12.5px; color:var(--fg-dim); line-height:1.75; }
+.smith-warn{
+  margin-top:14px; padding:11px 13px; border-radius:var(--r-sm);
+  background:rgba(214,69,69,.08); box-shadow:inset 0 0 0 1px rgba(214,69,69,.35);
+  font-size:11.5px; line-height:1.85; color:var(--fg-dim);
+}
+
 /* ---------- [Ver 15.2] 드로우 미리보기 — 더미 아래 다음 3장 ---------- */
 .dp-prev{ display:flex; flex-direction:column; gap:3px; margin-top:5px; width:100%; }
 .dp-prev-lb{
@@ -5598,6 +5661,13 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
   100% { transform:translate(calc(-50% + var(--ggfx-dx)), calc(-50% + var(--ggfx-dy))) scale(.35); opacity:0; }
 }
 /* 숫자가 오를 때 살짝 튄다 */
+/* [Ver 15.4] 나가는 재화 — 커졌다가 흩어지며 사라진다 */
+.ggfx.ggfx-out{ animation:ggFlyOut var(--ggfx-dur,660ms) cubic-bezier(.3,.7,.4,1) forwards; }
+@keyframes ggFlyOut{
+  0%   { transform:translate(-50%,-50%) scale(.5); opacity:0; }
+  16%  { transform:translate(-50%,-50%) scale(1.2); opacity:1; }
+  100% { transform:translate(calc(-50% + var(--ggfx-dx)), calc(-50% + var(--ggfx-dy))) scale(.4); opacity:0; }
+}
 .ggfx-pop{ animation:ggPop 420ms var(--ease-spring); }
 @keyframes ggPop{ 0%{ transform:scale(1); } 40%{ transform:scale(1.28); } 100%{ transform:scale(1); } }
 
@@ -14160,6 +14230,8 @@ const ARCADE_SHOP = [
   { key:'gacha11', icon:'\u{1F3B4}', name:'카드 뽑기 10+1 회권',      cost:8,  daily:10,          give:()=> grantGachaTickets(1) },
   { key:'ephpick', icon:'\u{1F31F}', name:'에피메랄 진화석 확정권',    cost:20, season:5,          give:()=> grantEvoPick('Ephemeral', 1) },
   { key:'wild',    icon:'\u{1F0CF}', name:'와일드 진화석',            cost:50, season:1,          give:()=> grantWildStone(1) },
+  /* [Ver 15.4] 권능석 — 코인을 오래 모은 사람에게 줄 굵직한 목표가 하나 더 필요했다. */
+  { key:'pwstone', icon:'\u{1F537}', name:'권능석 1개',               cost:50, season:3,          give:()=> grantPwStones(1) },
 ];
 function arcadeBought(item){
   const A = loadArcade();
@@ -14295,8 +14367,10 @@ function grantUbinite(n){
 function spendUbinite(n){
   walletSyncFromStorage();   // [Ver 13.15.2] 복사 방지 — spendGoldPickaxe 주석 참고
   if(ubinite < n) return false;
+  const __before = ubinite;
   ubinite -= n; saveUbinite();
   try{ renderUbiniteBadge(); }catch(e){}
+  try{ if(n > 0) ggSpendFx('💎', '#ubiniteBadge .ubi-num', __before, ubinite, 5); }catch(e){}   // [Ver 15.4]
   try{ questBump('ubinite', n); }catch(e){}   // [Ver 13.0] 일일 퀘스트 '우비나이트 소비'
   /* [Ver 14.8.1] 누적 소비 — 업적 '흑우'. 여기가 우비나이트가 나가는 **유일한 관문**이다. */
   try{ STATS.ubiniteSpent = (STATS.ubiniteSpent || 0) + n; saveStats(); }catch(e){}
@@ -14327,14 +14401,15 @@ function awardUbiniteForPlacement(placement){
 }
 /* [Ver 9.11] 1등·2등을 하면 30% 확률로 곡괭이 1개를 준다.
    (곡괭이는 평소 10분에 1개씩 차오르므로, 이건 잘한 판에 붙는 덤이다) */
-const PICKAXE_WIN_CHANCE = 0.30;
+/* [Ver 15.4] 1~2등 30% → **1등만 25%**. "승리하면" 주는 것으로 좁혔다. */
+const PICKAXE_WIN_CHANCE = 0.25;
 function awardPickaxeForPlacement(placement){
   if(window.__pickaxeAwardedThisGame) return 0;
   window.__pickaxeAwardedThisGame = true;
-  if(placement !== 1 && placement !== 2) return 0;
+  if(placement !== 1) return 0;                      // [Ver 15.4] 승리(1등)일 때만
   if(Math.random() >= PICKAXE_WIN_CHANCE) return 0;
   grantPickaxe(1);
-  log('highlight', `⛏️ ${placement}등 보상으로 곡괭이 1개를 획득했습니다! (보유 ${pickaxeCount()}개)`);
+  log('highlight', `⛏️ 승리 보상으로 곡괭이 1개를 획득했습니다! (보유 ${pickaxeCount()}개)`);
   return 1;
 }
 /* [Ver 13.1] 유물 "우빈이의 객기" — **1등일 때만** 확률로 개쩌는 곡괭이를 준다.
@@ -14353,11 +14428,13 @@ function awardGoldPickaxeOnWin(placement){
 /* [Ver 9.16] 1등 8개 · 2등 4개의 상자 열쇠. 곡괭이와 달리 **확률이 아니라 확정**이다.
    [Ver 10.5.3 밸런스] 2등 보상 2개 → 4개로 상향.
    (일반전이든 랜서버든 settleTierForHuman 한 곳을 지나므로 여기서만 지급하면 된다) */
-const BOX_KEY_PLACEMENT_REWARD = { 1: 8, 2: 4 };
+/* [Ver 15.4] 확정 8/4 → **범위**로. 1등 10~20 · 2등 4~7. */
+const BOX_KEY_PLACEMENT_REWARD = { 1: [10, 20], 2: [4, 7] };
 function awardBoxKeysForPlacement(placement){
   if(window.__boxKeyAwardedThisGame) return 0;
   window.__boxKeyAwardedThisGame = true;
-  const n = BOX_KEY_PLACEMENT_REWARD[placement] || 0;
+  const r = BOX_KEY_PLACEMENT_REWARD[placement];
+  const n = r ? (r[0] + Math.floor(Math.random() * (r[1] - r[0] + 1))) : 0;
   if(n <= 0) return 0;
   grantBoxKeys(n);
   log('highlight', `🔑 ${placement}등 보상으로 상자 열쇠 ${n}개를 획득했습니다! (보유 ${boxKeyCount()}개)`);
@@ -14429,10 +14506,52 @@ function ggFlyReward(emoji, target, n){
     setTimeout(()=>{ try{ el.remove(); }catch(e){} }, 1400 + i*65);
   }
 }
+/* [Ver 15.4] 재화가 **나갔다** — 이모지가 재화 칸에서 바깥으로 흩어지고 숫자가 내려간다.
+   ggFlyReward 의 거울상이다(도착점과 출발점이 바뀌었을 뿐). */
+function ggFlySpend(emoji, target, n){
+  if(!target || !emoji) return;
+  let r;
+  try{ r = target.getBoundingClientRect(); }catch(e){ return; }
+  if(!r || (!r.width && !r.height)) return;
+  const sx = r.left + r.width/2, sy = r.top + r.height/2;
+  const cnt = Math.max(1, Math.min(8, n || 4));
+  for(let i=0; i<cnt; i++){
+    const el = document.createElement('div');
+    el.className = 'ggfx ggfx-out';
+    el.textContent = emoji;
+    el.style.left = sx + 'px';
+    el.style.top  = sy + 'px';
+    /* 아래·바깥으로 흩어진다 — "빠져나간다"가 눈에 보이도록 */
+    el.style.setProperty('--ggfx-dx', (Math.random()*220 - 110) + 'px');
+    el.style.setProperty('--ggfx-dy', (70 + Math.random()*120) + 'px');
+    el.style.setProperty('--ggfx-dur', (620 + i*50) + 'ms');
+    el.style.animationDelay = (i * 55) + 'ms';
+    document.body.appendChild(el);
+    setTimeout(()=>{ try{ el.remove(); }catch(e){} }, 1200 + i*55);
+  }
+}
+/* 재화 하나가 나갔다 — 여기가 유일한 창구다. spend* 들이 전부 이걸 부른다. */
+function ggSpendFx(emoji, targetSel, from, to, n){
+  try{
+    if(__ggFxMute > 0) return;
+    const el = document.querySelector(targetSel);
+    if(!el) return;                              // 그 화면에 재화 바가 없다 → 조용히 넘어간다
+    if(document.hidden) return;
+    try{ el.textContent = Number(from).toLocaleString(); }catch(e){}
+    ggFlySpend(emoji, el, n);
+    setTimeout(()=>{ ggCountUp(el, from, to); }, 140);   // 나가는 건 빨리 줄어야 시원하다
+  }catch(e){}
+}
 /* 재화 하나가 들어왔다 — 이모지를 날리고 숫자를 올린다.
    ⚠ 여기가 유일한 창구다. grant* 들이 전부 이걸 부른다. */
+/* [Ver 15.4] 재화가 들어오거나 나가면 **조용히 백업**한다.
+   ⚠ 새 타이머를 만들지 않는다 — backupAfterTeethSpend 가 이미 15초에 한 번으로
+     눌려 있다. 두 개를 따로 돌리면 서버를 두 배로 두드린다. */
+function backupAfterWalletChange(){ try{ backupAfterTeethSpend(); }catch(e){} }
+
 function ggGainFx(emoji, targetSel, from, to, n){
   try{
+    backupAfterWalletChange();          // [Ver 15.4] 재화를 받았다 → 조용히 백업
     if(__ggFxMute > 0) return;
     const el = document.querySelector(targetSel);
     if(!el) return;                              // 그 화면에 재화 바가 없다 → 조용히 넘어간다
@@ -15760,6 +15879,17 @@ function settleTierForHuman(placement, cause){
      **놀이터·퀴즈·튜토리얼만 빼고 어디서든** 오른다(야차·팀전·온라인·아케이드 전부).
      ⚠ 놀이터·튜토리얼은 이 함수 위쪽에서 이미 걸러져 여기까지 못 온다.
        퀴즈는 애초에 이 정산을 부르지 않지만(qmFinish 는 따로 논다) 혹시 몰라 한 번 더 막는다. */
+  /* ★ [Ver 15.4] 패작 방지 — **4등 이하는 아무것도 받지 못한다.**
+     ▶ 왜 — 판에 들어가자마자 나가 4등을 하고 작은 보상만 챙기는 짓을 막는다.
+       경험치 50, 우비나이트 3~7, 썬크림… 티끌이지만 무한히 반복되면 티끌이 아니다.
+     ⚠ 잃는 것(클래스 강등)은 그대로 둔다 — 위 settleClassForHuman 은 이미 지났다.
+       "얻는 것 없이 잃는 것만"이 이 규칙의 전부다. */
+  if(placement >= 4){
+    try{ log('sys', '4등은 보상이 없습니다.'); }catch(e){}
+    try{ logActivity(`게임 종료 ${placement}등 (보상 없음)`); actFlush(true); }catch(e){}
+    try{ autoBackupAfterGame(); }catch(e){}
+    return;
+  }
   try{
     let quiz = false;
     try{ quiz = !!(typeof quizMode !== 'undefined' && quizMode) || !!(window.__qm); }catch(e){}
@@ -20604,7 +20734,8 @@ function pickaxeCap(){
 }
 /* [구버전 호환] 옛 이름을 읽는 코드가 남아 있어도 기본값은 보이게 둔다. */
 const PICKAXE_CAP = PICKAXE_CAP_BASE;        // 자동 충전이 차오르는 상한(기본값)
-const PICKAXE_REGEN_MS = 10 * 60 * 1000;     // 10분에 1개
+/* [Ver 15.4] 10분 → 30분. 돌 채굴로 보상이 크게 올라 공급을 조인다. */
+const PICKAXE_REGEN_MS = 30 * 60 * 1000;     // 30분에 1개
 let PICKAXE = null;
 function loadPickaxe(){
   if(PICKAXE) return PICKAXE;
@@ -20739,7 +20870,9 @@ function spendPickaxe(n){
   const s = loadPickaxe();
   if(s.n < n) return false;
   const wasFull = s.n >= pickaxeCap();
+  const __before = s.n;
   s.n -= n;
+  try{ ggSpendFx('⛏️', '#resPick', __before, s.n, Math.min(4, n)); }catch(e){}   // [Ver 15.4]
   try{ logActivity(`곡괭이 -${n} (남은 ${s.n})`); }catch(e){}   // [Ver 14.9]
   // 가득 찬 상태에서 처음 쓴 순간부터 충전 시계가 다시 돈다
   if(wasFull) s.at = ggNow();
@@ -20779,6 +20912,11 @@ let goldPickaxe = 0;
 try{ const v = parseInt(localStorage.getItem(STORAGE_KEYS.goldPickaxe),10); if(Number.isFinite(v)) goldPickaxe = Math.max(0, v); }catch(e){}
 function saveGoldPickaxe(){ try{ localStorage.setItem(STORAGE_KEYS.goldPickaxe, String(goldPickaxe)); }catch(e){} }
 function goldPickaxeCount(){ return goldPickaxe; }
+/* [Ver 15.4] 개쩌는 곡괭이 아이콘 — 동전(🪙)이 아니라 **금빛 곡괭이**다.
+   ⚠ 이모지 자체에 색을 칠할 방법이 없어, 곡괭이 이모지를 금빛으로 물들이고
+     빛을 둘러 표현한다(.gpick). 글자만 필요한 자리(로그 등)에는 쓰지 않는다. */
+function goldPickIcon(){ return '<span class="gpick">⛏️</span>'; }
+
 function grantGoldPickaxe(n){
   const before = goldPickaxe;
   goldPickaxe += (n||1); saveGoldPickaxe();
@@ -20789,7 +20927,9 @@ function spendGoldPickaxe(n){
   n = n||1;
   walletSyncFromStorage();   // [Ver 13.15.2] 다른 창이 이미 썼을 수 있다 — 복사 방지
   if(goldPickaxe < n) return false;
+  const __before = goldPickaxe;
   goldPickaxe -= n; saveGoldPickaxe();
+  try{ ggSpendFx('⛏️', '#resGoldPick', __before, goldPickaxe, Math.min(4, n)); }catch(e){}   // [Ver 15.4]
   bumpSpendOdo('goldPickaxe', n);   // [Ver 13.17] 소비 계기판
   try{ logActivity(`개쩌는곡괭이 -${n} (남은 ${goldPickaxe})`); }catch(e){}   // [Ver 14.9]
   return true;
@@ -20815,7 +20955,9 @@ function spendBoxKeys(n){
   n = n||1;
   walletSyncFromStorage();   // [Ver 13.15.2] 복사 방지 — spendGoldPickaxe 주석 참고
   if(boxKeys < n) return false;
+  const __before = boxKeys;
   boxKeys -= n; saveBoxKeys();
+  try{ ggSpendFx('🔑', '#resKeys', __before, boxKeys, Math.min(4, n)); }catch(e){}   // [Ver 15.4]
   try{ logActivity(`상자열쇠 -${n} (남은 ${boxKeys})`); }catch(e){}   // [Ver 14.9]
   return true;
 }
@@ -20970,10 +21112,31 @@ function setEquippedPet(key){
     else localStorage.removeItem(STORAGE_KEYS.equippedPet);
   }catch(e){}
 }
+/* [Ver 15.4] 살 때 한 번 묻는다.
+   ⚠ 이미 가진 펫을 누르는 건 **장착**이다 — 그건 묻지 않는다. */
 function buyPet(key){
   const def = petDefOf(key);
   if(!def) return;
   if(ownsPet(key)){ setEquippedPet(key); raptorMartSwitch('pet'); return; }
+  const cost = petPriceOf(def);
+  if(ubinite < cost){
+    showModal('우비나이트 부족', `<b>${escapeHtml(def.name)}</b>을(를) 사려면 우비나이트 <b>${cost.toLocaleString()}</b>개가 필요합니다. (보유 ${ubinite.toLocaleString()}개)`, [{label:'확인', solid:true}]);
+    return;
+  }
+  showModal('구매하시겠습니까?', `<div style="text-align:center;line-height:1.9;">
+      <div class="petbuy-ic">${petIconHtml(def, 'big')}</div>
+      <div style="font-size:15px;font-weight:800;margin-top:6px;">${escapeHtml(def.name)}</div>
+      <div style="font-size:12px;color:var(--fg-dim);margin-top:6px;">${def.desc}</div>
+      <div style="font-size:14px;margin-top:12px;">💎 <b>${cost.toLocaleString()}</b>
+        <span style="font-size:11.5px;color:var(--fg-dim);">(보유 ${ubinite.toLocaleString()} → ${(ubinite-cost).toLocaleString()})</span></div>
+    </div>`, [
+    { label:'취소' },
+    { label:'구매', solid:true, action: ()=> doBuyPet(key) }   // ⚠ 고른 것을 인자로 넘긴다
+  ]);
+}
+function doBuyPet(key){
+  const def = petDefOf(key);
+  if(!def || ownsPet(key)) return;
   const cost = petPriceOf(def);
   if(!spendUbinite(cost)){
     showModal('우비나이트 부족', `<b>${escapeHtml(def.name)}</b>을(를) 사려면 우비나이트 <b>${cost.toLocaleString()}</b>개가 필요합니다. (보유 ${ubinite.toLocaleString()}개)`, [{label:'확인', solid:true}]);
@@ -21027,6 +21190,10 @@ const RAPTOR_MART_TABS = [
   { key:'pet',     icon:'🐾', label:'지후펫',    desc:'장착하면 전투에 효과가 적용되는 펫입니다.' },
   /* [Ver 15.1] 권능 화면에 있던 재단·권능석을 여기로 옮겼다 — 뽑는 것은 상점에 모인다. */
   { key:'gacha',   icon:'🎰', label:'뽑기',      desc:'랩터의 재단 · 권능석 특성.' },
+  /* [Ver 15.4] 유물 광산에 얹혀 있던 캐기·강화를 여기로 옮겼다.
+     광산 화면은 이제 **유물 도감**만 보여준다. */
+  { key:'mine',    icon:'⛏️', label:'채굴',      desc:'곡괭이로 돌을 캐 유물을 얻습니다.' },
+  { key:'smith',   icon:'⚒️', label:'대장장이',  desc:'곡괭이를 걸어 개쩌는 곡괭이로 만듭니다.' },
   /* [Ver 13.1] 칭호 탭이 사라진 자리에 재화 탭이 들어왔다 — 랩터의 이빨을 우비나이트로 산다. */
   { key:'resource',icon:'🦷', label:'재화',      desc:'우비나이트로 다른 재화를 삽니다.' },
   /* ⚠ soon 을 명시한다. 예전에는 "알아볼 수 없는 키 = 준비중" 이라,
@@ -21197,11 +21364,122 @@ function renderRaptorMart(){
   const b = document.getElementById('rmBody');
   if(b) b.innerHTML = buildRaptorMartBodyHtml();
 }
+/* ##########################################################################
+   [Ver 15.4] 마트 — 채굴 탭
+   --------------------------------------------------------------------------
+   ⚠ ×5 는 "다섯 번 캔다"가 아니라 **배율 5**다(15.3 베팅).
+     곡괭이 5개를 걸고 **한 판**을 돌리며, 돌 안의 보상이 5배가 된다.
+     그래서 5개 미만이면 버튼을 흐리게 둔다 — 눌러봐야 못 건다.
+   ⚠ 확률표는 여기 적지 않는다. 제목줄의 ℹ️ 안에 있다(수상한 상자와 같은 방식).
+   ########################################################################## */
+function martPullBtn(cls, label, sub, ok, onclick){
+  return `<button class="gc-pull ${cls}" ${ok?'':'disabled'} ${ok?`onclick="${onclick}"`:''}>
+    <b>${label}</b><small>${sub}</small></button>`;
+}
+function buildMartMineHtml(){
+  const n = pickaxeCount(), gold = goldPickaxeCount();
+  const waitMs = pickaxeNextInMs();
+  return `
+    <div class="mart-sec">
+      <div class="mart-sec-t">⛏️ 유물 채굴
+        <small>돌 ${MROCK_SPAWN}개 중 ${MROCK_PICKS}개를 캡니다 · ${MROCK_BLANKS}개는 반드시 빈 돌</small></div>
+      <div class="mart-mine-have">
+        <span>⛏️ 곡괭이 <b>${n.toLocaleString()}</b> / ${pickaxeCap()}</span>
+        <span class="dim">${waitMs==null ? '가득 찼습니다' : `다음 곡괭이까지 ${fmtPickaxeWait(waitMs)}`}</span>
+      </div>
+      <div class="gc-pulls mine-pulls">
+        ${martPullBtn('gc-pull-mine', '1회 캐기', '⛏️ 1 · 보상 ×1', n >= 1, 'doMine(1)')}
+        ${martPullBtn('gc-pull-mine mart-x5', '×5 캐기', '⛏️ 5 · 보상 ×5', n >= 5, 'doMine(5)')}
+      </div>
+    </div>
+
+    <div class="mart-sec">
+      <div class="mart-sec-t">🪙 개쩌는 곡괭이로 캐기
+        <small>유물이 나오면 영웅 · 전설만</small></div>
+      <div class="mart-mine-have">
+        <span>${goldPickIcon()} 개쩌는 곡괭이 <b>${gold.toLocaleString()}</b>개</span>
+      </div>
+      <div class="gc-pulls gp-pulls">
+        ${martPullBtn('gc-pull-gold', '1회 캐기', '🪙 1 · 보상 ×1', gold >= 1, 'doGoldMine(1)')}
+        ${martPullBtn('gc-pull-gold mart-x5', '×5 캐기', '🪙 5 · 보상 ×5', gold >= 5, 'doGoldMine(5)')}
+      </div>
+    </div>
+
+    <div class="mart-note">
+      곡괭이는 <b>${Math.round(PICKAXE_REGEN_MS/60000)}분</b>에 1개씩 차오르고, 게임에서 <b>승리</b>하면
+      <b>${Math.round(PICKAXE_WIN_CHANCE*100)}%</b> 확률로 1개를 더 받습니다.
+      캐낸 유물은 <b>유물 광산</b>에서 볼 수 있습니다.
+    </div>`;
+}
+/* [Ver 15.4] 대장장이 — 강화 하나만 있는 탭이라 크게 한 판으로 보여준다. */
+function buildMartSmithHtml(){
+  const n = pickaxeCount(), gold = goldPickaxeCount();
+  const pct = Math.round(goldPickaxeUpChance()*100);
+  return `
+    <div class="smith-hero">
+      <div class="smith-anvil">⚒️</div>
+      <div class="smith-arrow">⛏️ <span>→</span> ${goldPickIcon()}</div>
+      <div class="smith-t">곡괭이 강화</div>
+      <div class="smith-d">곡괭이를 <b>1개 걸고</b> 굴립니다. <b>${pct}%</b>로 <b>개쩌는 곡괭이</b>가 됩니다.</div>
+    </div>
+    <div class="mart-mine-have" style="justify-content:center;">
+      <span>⛏️ <b>${n.toLocaleString()}</b>개</span>
+      <span>${goldPickIcon()} <b>${gold.toLocaleString()}</b>개</span>
+    </div>
+    <div class="gc-pulls" style="margin-top:10px;">
+      ${martPullBtn('gc-pull-gold', '⚒️ 강화하기', `⛏️ 1 · 성공 ${pct}%`, n >= 1, 'doPickaxeUpgrade()')}
+    </div>
+    <div class="smith-warn">
+      ⚠ <b>실패하면 걸었던 곡괭이는 파괴되어 사라집니다.</b> 돌려받는 것은 없습니다.
+      여러 개를 걸면 <b>1개씩 따로</b> 굴립니다 — "10개 걸면 하나는 나온다" 같은 보정은 없습니다.
+    </div>`;
+}
+
+/* [Ver 15.4] 채굴 확률 — 광산 화면에 깔려 있던 표를 창 안으로 옮겼다.
+   ⚠ 숫자를 여기 다시 적지 않는다. 실제 표를 그대로 읽는다. */
+function showMineRateInfo(){
+  const one = (r)=>{
+    const cnt = ARTIFACT_DEFS.filter(d=> d.rarity === r.key).length;
+    return cnt ? (r.rate / cnt) : 0;
+  };
+  const fillRows = (T)=>{
+    const sum = T.reduce((s,t)=> s + t.w, 0);
+    return T.map(t=> `<div class="mri-row"><span>${t.ic} ${escapeHtml(t.name)}</span>
+      <b>${(t.w / sum * 100).toFixed(1)}%</b></div>`).join('');
+  };
+  showModal('ℹ️ 채굴 확률', `<div class="mri">
+      <div class="mri-t">돌 안에 든 것 <small>빈 돌이 아닌 ${MROCK_SPAWN - MROCK_BLANKS}개가 이 표로 정해집니다</small></div>
+      <div class="mri-note">돌 <b>${MROCK_SPAWN}개</b> 중 <b>${MROCK_BLANKS}개</b>는 <b>반드시 빈 돌</b>입니다.
+        어느 것인지는 알 수 없습니다. 캘 수 있는 것은 <b>${MROCK_PICKS}개</b>입니다.</div>
+      <div class="mri-two">
+        <div><div class="mri-h">⛏️ 일반 곡괭이</div>${fillRows(MROCK_FILL)}</div>
+        <div><div class="mri-h">${goldPickIcon()} 개쩌는 곡괭이</div>${fillRows(MROCK_FILL_GOLD)}</div>
+      </div>
+
+      <div class="mri-t" style="margin-top:16px;">유물이 나왔을 때의 등급</div>
+      <div class="mri-two">
+        <div><div class="mri-h">⛏️ 일반</div>
+          ${ARTIFACT_RARITIES.map(r=>`<div class="mri-row"><span class="${r.cls}">${r.label}</span><b>${r.rate}%</b></div>`).join('')}</div>
+        <div><div class="mri-h">${goldPickIcon()} 개쩌는</div>
+          ${ARTIFACT_RARITIES.map(r=>`<div class="mri-row"><span class="${r.cls}">${r.label}</span><b>${GOLD_MINE_RATES[r.key]||0}%</b></div>`).join('')}</div>
+      </div>
+
+      <div class="mri-t" style="margin-top:16px;">유물 <b>하나</b>를 콕 집어 노릴 때</div>
+      <div class="mri-note">등급 확률을 그 등급의 종류 수로 나눈 값입니다.</div>
+      ${ARTIFACT_RARITIES.map(r=>{
+        const cnt = ARTIFACT_DEFS.filter(d=> d.rarity === r.key).length;
+        return `<div class="mri-row"><span class="${r.cls}">${r.label} <em>${cnt}종</em></span><b>${one(r).toFixed(2)}%</b></div>`;
+      }).join('')}
+    </div>`, [{ label:'닫기', solid:true }]);
+}
+
 function buildRaptorMartBodyHtml(){
   const t = RAPTOR_MART_TABS.find(x=> x.key===raptorMartTab) || RAPTOR_MART_TABS[0];
   // [Ver 9.10.2] 지후펫 탭이 실제 상점이고, [Ver 13.1] 재화 탭이 칭호 탭을 대신한다.
   if(t.key === 'pet') return buildPetShopHtml();
   if(t.key === 'gacha') return buildMartGachaHtml();   // [Ver 15.1]
+  if(t.key === 'mine') return buildMartMineHtml();       // [Ver 15.4]
+  if(t.key === 'smith') return buildMartSmithHtml();     // [Ver 15.4]
   if(t.key === 'resource') return buildResourceShopHtml();
   return `<div class="rm-soon">
     <div class="rm-soon-ic">${t.icon}</div>
@@ -21271,7 +21549,9 @@ function spendTeeth(n){
   n = n || 1;
   walletSyncFromStorage();   // [Ver 13.15.2] 복사 방지 — spendGoldPickaxe 주석 참고
   if(raptorTeeth < n) return false;
+  const __before = raptorTeeth;
   raptorTeeth -= n; saveTeeth();
+  try{ ggSpendFx('🦷', '#pwTeethNum', __before, raptorTeeth, Math.min(4, n)); }catch(e){}   // [Ver 15.4]
   bumpSpendOdo('teeth', n);   // [Ver 13.17] 소비 계기판
   try{ logActivity(`랩터이빨 -${n} (남은 ${raptorTeeth})`); }catch(e){}   // [Ver 14.9]
   /* [Ver 13.1] 이빨을 쓰는 순간이 곧 **되돌릴 수 없는 진행도 변화**다(재단 뽑기).
@@ -21300,7 +21580,27 @@ function backupAfterTeethSpend(){
   }catch(e){}
 }
 /* 우비나이트로 이빨을 산다. n개를 한 번에 살 수 있다. */
+/* [Ver 15.4] 재화 탭도 한 번 묻는다 */
 function buyTeeth(n){
+  n = Math.max(1, n|0);
+  const cost = TEETH_PRICE_UBINITE * n;   // ⚠ 실제 계산은 doBuyTeeth 와 같아야 한다
+  if(ubinite < cost){
+    showModal('🦷 랩터의 이빨', `우비나이트가 부족합니다.<br><br>
+      <span style="font-size:12px;color:var(--fg-dim);">필요 <b>💎 ${cost.toLocaleString()}</b> · 보유 <b>💎 ${ubinite.toLocaleString()}</b></span>`,
+      [{label:'확인', solid:true}]);
+    return;
+  }
+  showModal('구매하시겠습니까?', `<div style="text-align:center;line-height:1.9;">
+      <div style="font-size:40px;line-height:1;">🦷</div>
+      <div style="font-size:15px;font-weight:800;margin-top:6px;">랩터의 이빨 ${n}개</div>
+      <div style="font-size:14px;margin-top:12px;">💎 <b>${cost.toLocaleString()}</b>
+        <span style="font-size:11.5px;color:var(--fg-dim);">(보유 ${ubinite.toLocaleString()} → ${(ubinite-cost).toLocaleString()})</span></div>
+    </div>`, [
+    { label:'취소' },
+    { label:'구매', solid:true, action: ()=> doBuyTeeth(n) }
+  ]);
+}
+function doBuyTeeth(n){
   n = Math.max(1, n|0);
   const cost = TEETH_PRICE_UBINITE * n;
   if(ubinite < cost){
@@ -26456,76 +26756,24 @@ function renderMineScreen(){
 
     <div class="gc-wallet">
       <span class="gc-pick">⛏️ 곡괭이 <b id="minePickCount">${n.toLocaleString()}</b> / ${pickaxeCap()}</span>
-      <span class="gc-goldpick">🪙 개쩌는 곡괭이 <b id="mineGoldCount">${gold.toLocaleString()}</b></span>
+      <span class="gc-goldpick">${goldPickIcon()} 개쩌는 곡괭이 <b id="mineGoldCount">${gold.toLocaleString()}</b></span>
       <span class="gc-claw" id="mineRegen">${waitMs==null ? '가득 찼습니다' : `다음 곡괭이까지 ${fmtPickaxeWait(waitMs)}`}</span>
     </div>
 
+    ${/* [Ver 15.4] 캐기·강화는 랩터마트24 로 옮겼다. 여기는 도감이다. */''}
     <div class="gc-pulls mine-pulls">
-      <button class="gc-pull gc-pull-mine" ${n < 1 ? 'disabled' : ''} onclick="doMine(1)">
-        <b>1회 채굴</b><small>⛏️ 1</small>
+      <button class="gc-pull gc-pull-mine" onclick="openRaptorMart('mine')">
+        <b>⛏️ 캐러 가기</b><small>랩터마트24 · 채굴</small>
       </button>
-      <button class="gc-pull gc-pull-mine" ${n < 5 ? 'disabled' : ''} onclick="doMine(5)">
-        <b>5회 채굴</b><small>⛏️ 5</small>
+      <button class="gc-pull gc-pull-gold" onclick="openRaptorMart('smith')">
+        <b>⚒️ 대장장이</b><small>곡괭이 강화</small>
       </button>
-      <button class="gc-pull gc-pull-mine" ${n < 1 ? 'disabled' : ''} onclick="openMineCountPicker()">
-        <b>원하는 만큼</b><small>⛏️ 직접 고르기</small>
-      </button>
-      <button class="gc-pull gc-pull-mine" ${n < 10 ? 'disabled' : ''} onclick="doMine(10)">
-        <b>10회 채굴</b><small>⛏️ 10</small>
+      <button class="gc-pull gc-pull-mine" onclick="showMineRateInfo()">
+        <b>ℹ️ 확률 보기</b><small>유물 등급별 확률</small>
       </button>
     </div>
 
-    <div class="gc-rates">
-      ${ARTIFACT_RARITIES.map(r=>`<span class="gc-rate ${r.cls}">${r.label} <i>${r.rate}%</i></span>`).join('')}
-    </div>
-    ${/* [Ver 13.4] "등급 4%"만 적어두면 실제 체감과 어긋난다 — 그 등급 안에서 또
-          여러 종을 나눠 갖기 때문이다. **특정 유물 하나를 노릴 때의 확률**을 같이 적는다.
-          13.1 환급이 어긋났던 것도 이 차이를 아무도 눈여겨보지 않아서였다. */''}
-    <div class="gc-rates gc-rates-one">
-      <span class="gc-rate-lbl">유물 <b>하나</b>를 콕 집어 노릴 때</span>
-      ${ARTIFACT_RARITIES.map(r=>{
-        const cnt = ARTIFACT_DEFS.filter(d=> d.rarity === r.key).length;
-        const one = cnt ? (r.rate / cnt) : 0;
-        return `<span class="gc-rate ${r.cls}">${r.label} <i>${one.toFixed(2)}%</i><em>${cnt}종</em></span>`;
-      }).join('')}
-    </div>
 
-    ${/* [Ver 9.16] 개쩌는 곡괭이 — 강화(도박)와 전용 채굴을 한 상자 안에 묶어둔다.
-          일반 채굴과 확률표가 아예 다르므로 시각적으로도 확실히 구분한다. */''}
-    <div class="gp-panel">
-      <div class="gp-head">
-        <span class="gp-ic">🪙</span>
-        <div class="gp-h-tx">
-          <b>개쩌는 곡괭이</b>
-          <small>Epic·Legendary만 나오는 상위 곡괭이</small>
-        </div>
-        <span class="gp-have">보유 <b id="mineGoldCount2">${gold.toLocaleString()}</b>개</span>
-      </div>
-
-      <div class="gc-rates gp-rates">
-        ${ARTIFACT_RARITIES.map(r=>`<span class="gc-rate ${r.cls}${GOLD_MINE_RATES[r.key] ? '' : ' off'}">${r.label} <i>${GOLD_MINE_RATES[r.key]||0}%</i></span>`).join('')}
-      </div>
-
-      <div class="gc-pulls gp-pulls">
-        <button class="gc-pull gc-pull-gold" ${n < 1 ? 'disabled' : ''} onclick="doPickaxeUpgrade()">
-          <b>⚒️ 곡괭이 강화</b><small>⛏️ 1 · 성공 ${Math.round(goldPickaxeUpChance()*100)}%</small>
-        </button>
-        <button class="gc-pull gc-pull-gold" ${gold < 1 ? 'disabled' : ''} onclick="doGoldMine(1)">
-          <b>1회 채굴</b><small>🪙 1</small>
-        </button>
-        <button class="gc-pull gc-pull-gold" ${gold < 1 ? 'disabled' : ''} onclick="openGoldMineCountPicker()">
-          <b>원하는 만큼</b><small>🪙 직접 고르기</small>
-        </button>
-        <button class="gc-pull gc-pull-gold" ${gold < 5 ? 'disabled' : ''} onclick="doGoldMine(5)">
-          <b>5회 채굴</b><small>🪙 5</small>
-        </button>
-      </div>
-
-      <div class="gp-warn">
-        ⚠ 강화는 곡괭이 <b>1개를 걸고</b> 굴립니다. <b>${Math.round(goldPickaxeUpChance()*100)}%</b>로 개쩌는 곡괭이가 되고,
-        실패하면 걸었던 곡괭이는 <b>파괴되어 사라집니다.</b> (돌려받는 것은 없습니다)
-      </div>
-    </div>
 
     <div class="mine-note">
       곡괭이는 <b>${pickaxeCap()}개</b>까지 <b>10분에 1개씩</b> 저절로 찹니다.
@@ -26657,7 +26905,7 @@ function openMineCountPicker(){
     desc:`돌이 <b>${MROCK_SPAWN}개</b> 나타나고 그중 <b>${MROCK_PICKS}개</b>를 캡니다. 판은 <b>한 번</b>입니다.<br>
       곡괭이를 <b>여러 개 걸면</b> 돌 안의 보상이 <b>건 개수만큼 배</b>가 됩니다.
       전설 유물이 든 돌을 캤다면 <b>랜덤 전설 유물이 그만큼</b> 쏟아집니다.<br>
-      <span style="font-size:11.5px;color:var(--fg-faint);">대부분 유물이지만 재화가 들어 있기도, <b>비어 있기도</b> 합니다 —
+      <span style="font-size:11.5px;color:var(--fg-faint);">다섯 중 <b>${MROCK_BLANKS}개는 반드시 빈 돌</b>입니다 — 어느 것인지는 알 수 없습니다.
       빈 돌을 캐면 건 곡괭이는 그대로 사라집니다. 다 캐면 <b>고르지 않은 돌</b>도 보여드립니다.</span>`,
     max: Math.min(have, 50), have:`보유 ⛏️ <b>${have}</b>개`,
     exp:(n)=>`곡괭이 <b>${n}</b>개를 겁니다 · 보상 <b>×${n}</b> (남음 ${have-n})`,
@@ -26719,6 +26967,9 @@ function doMine(count){
 function mineRockDone(got, missed, gold){
   mineBusy = false;
   renderMineScreen();
+  /* [Ver 15.4] 캐기 버튼이 마트로 옮겨갔다 — 거기 있는 보유 수치도 같이 갱신한다.
+     ⚠ raptorMartSwitch 는 마트 밖이면 스스로 빠져나가므로 그냥 불러도 안전하다. */
+  try{ if(getComputedScreen() === 'screen-mart') renderRaptorMart(); }catch(e){}
   if(!got || !got.length) return;                   // 하나도 못 캐고 그만뒀다
   /* ⚠ 배율이 붙으면 돌 하나에 유물이 여러 개다(arts). 전부 지급한다. */
   const keys = [];
@@ -26905,7 +27156,8 @@ function runPickaxeUpgrade(n){
    ⚠ 곡괭이는 **돌이 깨질 때** 하나씩 쓴다. 그만두면 남은 건 그대로 남는다.
    ########################################################################## */
 const MROCK_SPAWN     = 5;         // 한 판에 나타나는 돌
-const MROCK_GOLD_BLANKS = 2;       // 개쩌는 곡괭이 판에 **반드시** 섞이는 빈 돌
+const MROCK_BLANKS      = 2;       // [Ver 15.4] 어느 곡괭이든 **반드시** 섞이는 빈 돌
+const MROCK_GOLD_BLANKS = MROCK_BLANKS;   // [구버전 호환] 옛 이름
 const MROCK_PICKS     = 3;         // 그중 깰 수 있는 돌
 const MROCK_HITS      = [5, 9];    // 일반 곡괭이 — 돌 하나를 깨는 데 필요한 타수
 const MROCK_HITS_GOLD = [8, 12];   // 개쩌는 곡괭이 — 더 깊고 단단하다
@@ -26921,26 +27173,30 @@ let __mrock = null;
    ⚠ 확률은 여기 한 곳에만 적는다. 안내 문구도 이 표를 읽어서 쓴다 —
      두 군데에 적으면 반드시 어긋난다.
    ########################################################################## */
+/* ⚠ [Ver 15.4] 이 표에는 **'none'(빈 돌)이 없다.**
+   빈 돌은 확률이 아니라 **배치**다 — 다섯 중 정확히 둘이 빈 돌이고(MROCK_BLANKS),
+   이 표는 "빈 돌이 아닌 나머지 셋"이 무엇이 될지만 정한다.
+   여기에 'none' 을 도로 넣으면 고정 2개와 겹쳐 다섯이 전부 빌 수 있다. */
 const MROCK_FILL = [
-  /* [Ver 15.3.2] 꽝 50% → **42%** 로 소폭 되돌렸다. 절반은 너무 박했다.
-     돌 3개를 캐면 하나라도 비어 있을 확률 약 80%, 셋 다 빌 확률 약 7%. */
-  { key:'artifact', w:38,  ic:'\u{1F3FA}', name:'유물' },
-  /* [Ver 15.3.1] 개수 소폭 하향 (300~1200 → 250~900). 확률은 그대로. */
-  { key:'ubinite',  w:9,   ic:'\u{1F48E}', name:'우비나이트', min:250, max:900 },
-  /* [Ver 15.3.1] 곡괭이(⛏️)를 뺐다 — 곡괭이로 캐서 곡괭이가 나오면
+  { key:'artifact', w:62,  ic:'\u{1F3FA}', name:'유물' },
+  /* [Ver 15.4] 개수 절반(250~900 → 125~450) · 대신 확률 두 배(9 → 18).
+     총량은 비슷하되 **더 자주** 보이게 한다. */
+  { key:'ubinite',  w:18,  ic:'\u{1F48E}', name:'우비나이트', min:125, max:450 },
+  /* [Ver 15.3.1] 곡괭이(⛏️)는 뺐다 — 곡괭이로 캐서 곡괭이가 나오면
      채굴이 스스로 굴러간다. 그 자리는 우빈랩터의 발톱이 받는다. */
-  { key:'claws',    w:6,   ic:'\u{1F9B4}', name:'우빈랩터의 발톱', min:5, max:20 },
-  { key:'teeth',    w:3,   ic:'\u{1F9B7}', name:'랩터의 이빨', min:1, max:3 },
-  { key:'gold',     w:1.5, ic:'\u{1FA99}', name:'개쩌는 곡괭이', min:1, max:1 },
-  { key:'stone',    w:0.5, ic:'\u{1F537}', name:'권능석', min:1, max:1 },
-  { key:'none',     w:42,  ic:'\u{1F32B}️', name:'아무것도 없음' },
+  { key:'claws',    w:10,  ic:'\u{1F9B4}', name:'우빈랩터의 발톱', min:5, max:20 },
+  { key:'teeth',    w:5,   ic:'\u{1F9B7}', name:'랩터의 이빨', min:1, max:3 },
+  { key:'gold',     w:3,   ic:'\u{1FA99}', name:'개쩌는 곡괭이', min:1, max:1 },
+  { key:'stone',    w:2,   ic:'\u{1F537}', name:'권능석', min:1, max:1 },
 ];
+/* 빈 돌을 그릴 때 쓰는 생김새. 표에서 뺐으므로 따로 들고 있는다. */
+const MROCK_NONE = { key:'none', ic:'\u{1F32B}️', name:'아무것도 없음' };
 /* 개쩌는 곡괭이로 캔 돌 — 꽝이 없고 유물이 더 자주 나온다 */
 const MROCK_FILL_GOLD = [
-  { key:'artifact', w:90,  ic:'\u{1F3FA}', name:'유물' },
+  { key:'artifact', w:88.5, ic:'\u{1F3FA}', name:'유물' },
   { key:'teeth',    w:4,   ic:'\u{1F9B7}', name:'랩터의 이빨', min:2, max:5 },
-  /* [Ver 15.3.1] 우비나이트 개수·확률 소폭 하향, 그만큼을 발톱이 받는다 */
-  { key:'ubinite',  w:1.5, ic:'\u{1F48E}', name:'우비나이트', min:600, max:1800 },
+  /* [Ver 15.4] 우비나이트 개수 절반(600~1800 → 300~900) · 확률 두 배(1.5 → 3) */
+  { key:'ubinite',  w:3,   ic:'\u{1F48E}', name:'우비나이트', min:300, max:900 },
   { key:'claws',    w:1,   ic:'\u{1F9B4}', name:'우빈랩터의 발톱', min:20, max:60 },
   { key:'gold',     w:2,   ic:'\u{1FA99}', name:'개쩌는 곡괭이', min:1, max:1 },
   { key:'stone',    w:1.5, ic:'\u{1F537}', name:'권능석', min:1, max:1 },
@@ -26973,8 +27229,7 @@ function mrockMakeFill(gold, rollArtifact, mult){
    ⚠ 표에 'none' 을 넣어 확률로 맡기면 0개일 때도 5개일 때도 있다.
      "고정 2개"는 확률이 아니라 배치다. */
 function mrockBlankFill(mult){
-  const t = MROCK_FILL.find(x=> x.key === 'none') || { ic:'\u{1F32B}️', name:'아무것도 없음' };
-  return { key:'none', ic:t.ic, name:t.name, n:0, art:null, arts:[], mult: Math.max(1, mult | 0) };
+  return { key:'none', ic:MROCK_NONE.ic, name:MROCK_NONE.name, n:0, art:null, arts:[], mult: Math.max(1, mult | 0) };
 }
 /* 실제 지급. ⚠ 깬 돌에만 부른다 — 안 깬 돌은 보여주기만 하고 주지 않는다. */
 function mrockGive(f){
@@ -27053,16 +27308,17 @@ function mineRockRun(o){
       hit: 0, broken: false, busy: false, el: null
     }))
   };
-  /* ★ [Ver 15.3.2] 개쩌는 곡괭이 판은 **정확히 두 개**가 빈 돌이다.
+  /* ★ [Ver 15.4] **어느 곡괭이로 캐든** 정확히 두 개가 빈 돌이다.
      확률이 아니라 배치다 — 표에 맡기면 0개일 때도 5개일 때도 있다.
-     어느 둘인지는 무작위이므로, 고를 때는 여전히 알 수 없다. */
-  if(o.gold){
+     어느 둘인지는 무작위이므로, 고를 때는 여전히 알 수 없다.
+     ⚠ 그래서 MROCK_FILL 에는 'none' 이 없다. 도로 넣으면 겹쳐서 다섯이 전부 빌 수 있다. */
+  {
     const idx = __mrock.rocks.map(r=> r.i);
     for(let i = idx.length - 1; i > 0; i--){
       const j = Math.floor(Math.random() * (i + 1));
       const t = idx[i]; idx[i] = idx[j]; idx[j] = t;
     }
-    idx.slice(0, MROCK_GOLD_BLANKS).forEach(k=>{ __mrock.rocks[k].fill = mrockBlankFill(__mult); });
+    idx.slice(0, MROCK_BLANKS).forEach(k=>{ __mrock.rocks[k].fill = mrockBlankFill(__mult); });
   }
   ov.classList.add('on');
   try{ scheduleOverlayCheck(); }catch(e){}
@@ -42280,14 +42536,30 @@ let draftDrawOwner = null; // [Ver 6.9] 지금 카드를 뽑는 주체 — 드�
 let __dpLastSig = '';           // 미리보기가 바뀔 때만 연출을 주기 위한 직전 값
 const DRAW_PREVIEW_N = 1;       // [Ver 15.2] 앞을 한 장만 본다 (3장은 다 보여서 심심했다)
 const DRAW_BLUFF_N = 3;         // 그 한 장의 등급 + 가짜 둘
-/* 가짜 등급을 고를 사다리. 위아래로 가까운 것부터 고른다 — 그래야 진짜 고민이 된다. */
-const DRAW_BLUFF_LADDER = ['E','D','C','B','A','S','SR','SSR','UR','LR'];
+/* 가짜 등급을 고를 사다리. 위아래로 가까운 것부터 고른다 — 그래야 진짜 고민이 된다.
+   ⚠ [Ver 15.4] **UR 부터는 뺀다.** 그리고 실제로 그 등급의 카드가 있을 때만 쓴다 —
+     없는 등급을 후보로 내밀면 "저건 가짜"라고 바로 들킨다. */
+const DRAW_BLUFF_MAX = ['E','D','C','B','A','S','SR','SSR'];
+let __drawLadder = null;
+function drawBluffLadder(){
+  if(__drawLadder) return __drawLadder;
+  let have = null;
+  try{
+    const pool = (typeof getBaseEditorCards === 'function') ? getBaseEditorCards() : [];
+    if(pool && pool.length){
+      const set = new Set(pool.map(c=> c && c.grade).filter(Boolean));
+      have = DRAW_BLUFF_MAX.filter(g=> set.has(g));
+    }
+  }catch(e){}
+  __drawLadder = (have && have.length >= 3) ? have : DRAW_BLUFF_MAX.slice();
+  return __drawLadder;
+}
 let __drawQ = {};      // { [playerId]: { sig, list:[] } }
 /* 진짜 등급 하나에 가짜 둘을 섞어 셋을 만든다.
    ⚠ 이 함수는 **담을 때 한 번만** 부른다. 그릴 때마다 부르면 후보가 계속 바뀌고,
      여러 번 본 뒤 겹치는 하나를 고르면 진짜가 드러난다. */
 function drawBluffGrades(real){
-  const L = DRAW_BLUFF_LADDER;
+  const L = drawBluffLadder();
   const idx = L.indexOf(real);
   let pool = L.filter(g=> g !== real);
   if(idx >= 0){
@@ -45412,6 +45684,10 @@ function tickProphetCheck(){
 
 function advanceTurn(){
   if(!gameActive) return;
+  /* ★ [Ver 15.4] 드로우로 나올 카드를 **턴마다 다시 뽑는다.**
+     한 번 본 등급 후보가 내 차례가 올 때까지 그대로면, 남의 턴 내내 답을 들고 있는 셈이다.
+     ⚠ 대기열을 버리면 다음에 볼 때 새로 굴린다 — 미리보기도 자동으로 새 값이 된다. */
+  try{ drawQReset(); }catch(e){}
   try{ brFinalizeMove(); }catch(e){} // [Ver 9.9] 이 턴의 마지막 수를 확정한다 (변화 = 카드 이후 턴 종료까지)
   // [Ver 6.8] 딱지남 러시안룰렛 잠금 정리 — 방금 차례를 마친 사람의 잠금을 푼다.
   //   또한 어떤 이유로든 그 카드가 손패에서 사라졌다면(빼앗김·버려짐 등) 잠금이 영구히 남지 않도록 함께 해제한다.
