@@ -3941,16 +3941,49 @@ body.mobile-mode .rv-card-nm{ font-size:19px; }
   72% { opacity:1; transform:translate(-50%,-78%) scale(1); }
   100%{ opacity:0; transform:translate(-50%,-96%) scale(.95); }
 }
+/* [Ver 15.11] 돌에서 나온 것의 색 — 유물은 등급 색을 쓴다.
+   ⚠ 글자색만 바꾼다. 배경까지 칠하면 글씨가 안 읽힌다. */
+.mrock-pop.mp-common   { color:#c9d3e4; }
+.mrock-pop.mp-rare     { color:#74C0FC; }
+.mrock-pop.mp-epic     { color:#B794F6; }
+.mrock-pop.mp-legendary{ color:#FFD43B; text-shadow:0 0 14px rgba(255,212,59,.6); }
+.mrock-pop.mp-ubinite  { color:#7ad0ff; }
+.mrock-pop.mp-claws    { color:#f0e0c0; }
+.mrock-pop.mp-teeth    { color:#ffd9b0; }
+.mrock-pop.mp-gold     { color:#ffcf5c; text-shadow:0 0 14px rgba(255,200,60,.55); }
+.mrock-pop.mp-stone    { color:#8ab4ff; text-shadow:0 0 14px rgba(120,160,255,.5); }
+.mrock-pop.mp-none     { color:#8d8377; }
+/* 전설·개쩌는 곡괭이는 한 번 더 뛴다 — 캔 보람이 있어야 한다 */
+.mrock-pop.mp-legendary, .mrock-pop.mp-gold, .mrock-pop.mp-stone{ font-size:15px; }
+
+/* [Ver 15.11] 안 캔 돌은 **열린 채로 남는다.** 예전엔 부서져 사라져서
+   무엇을 놓쳤는지 볼 시간이 없었다. */
+.mrock.opened{
+  animation:none; opacity:.72; pointer-events:none;
+  filter:grayscale(.5) brightness(.8);
+}
+.mrock.opened .mrock-em{ transform:scale(.88) rotate(-8deg); transition:transform .3s var(--ease); }
+.mrock.opened::after{
+  content:'놓침'; position:absolute; left:50%; top:-6px; transform:translateX(-50%);
+  padding:2px 8px; border-radius:999px; white-space:nowrap;
+  background:rgba(0,0,0,.72); color:#8d8377;
+  font-size:10px; font-weight:800; letter-spacing:.5px;
+}
+
 /* 고르지 않은 돌 — 보여주기만 한다. 색을 죽여 "못 받은 것"임을 드러낸다. */
+/* ⚠ miss 는 색을 죽이지 않는다 — 무엇을 놓쳤는지가 **핵심 정보**다.
+   대신 테두리를 둘러 "받은 것"과 구분한다. */
 .mrock-pop.miss{
-  background:rgba(12,10,8,.78); color:#8d8377; font-weight:700;
-  animation:mrockPopMiss 2.6s var(--ease) forwards;
+  background:rgba(12,10,8,.9); font-weight:800;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);
+  animation:mrockPopMiss 3.6s var(--ease) forwards;
 }
 @keyframes mrockPopMiss{
-  0%  { opacity:0; transform:translate(-50%,-50%) scale(.7); }
-  12% { opacity:1; transform:translate(-50%,-64%) scale(1); }
-  82% { opacity:1; transform:translate(-50%,-64%) scale(1); }
-  100%{ opacity:0; transform:translate(-50%,-72%) scale(.96); }
+  0%  { opacity:0; transform:translate(-50%,-50%) scale(.6); }
+  10% { opacity:1; transform:translate(-50%,-72%) scale(1.12); }
+  18% { opacity:1; transform:translate(-50%,-70%) scale(1); }
+  88% { opacity:1; transform:translate(-50%,-70%) scale(1); }
+  100%{ opacity:0; transform:translate(-50%,-78%) scale(.96); }
 }
 /* 첫 돌에만 뜨는 안내 */
 .mrock-hint{
@@ -28153,6 +28186,10 @@ function mrockPaint(){
 }
 function mrockTap(i){
   const m = __mrock; if(!m || m.revealing) return;
+  /* ⚠ [Ver 15.11] 한도를 다 쓴 뒤의 두드림은 여기서 끊는다.
+     오토마우스는 한 프레임에 여러 돌을 때린다 — 돌마다 자기 검사만 하면
+     여럿이 동시에 통과해 3개 한도를 넘긴다(실제로 4개까지 캐졌다). */
+  if(m.done >= m.picks) return;
   const rk = m.rocks[i];
   if(!rk || rk.broken || rk.busy || !rk.el) return;
   rk.hit++;
@@ -28167,6 +28204,9 @@ function mrockTap(i){
 }
 function mrockBreak(i){
   const m = __mrock; if(!m) return;
+  /* ★ [Ver 15.11] 판 전체 한도를 **먼저** 본다.
+     이 검사가 없으면 동시에 깨진 돌들이 각자 자기 검사만 통과해 한도를 넘는다. */
+  if(m.done >= m.picks) return;
   const rk = m.rocks[i];
   if(!rk || rk.broken || rk.busy) return;
   rk.busy = true;
@@ -28181,7 +28221,7 @@ function mrockBreak(i){
     const el = rk.el;
     el.classList.add('broke');
     /* 깨진 자리에 무엇이 있었는지 잠깐 띄운다 */
-    mrockPop(rk, mrockFillText(rk.fill), 'got');
+    mrockPop(rk, mrockFillText(rk.fill), 'got ' + mrockPopClass(rk.fill));
     setTimeout(()=>{ try{ el.remove(); }catch(e){} }, 360);
     rk.el = null;
   }
@@ -28205,6 +28245,16 @@ function mrockBits(rk, gold){
     }
   }catch(e){}
 }
+/* [Ver 15.11] 이 돌에서 나온 것의 색 — 유물이면 **등급 색**을 쓴다.
+   전설을 캤는데 일반과 같은 색이면 캔 보람이 없다. */
+function mrockPopClass(f){
+  try{
+    if(!f) return '';
+    if(f.key === 'none') return 'mp-none';
+    if(f.key === 'artifact' && f.art) return 'mp-' + (artDefOf(f.art).rarity || 'common');
+    return 'mp-' + f.key;     // ubinite · claws · teeth · gold · stone
+  }catch(e){ return ''; }
+}
 function mrockPop(rk, text, cls){
   try{
     const field = document.getElementById('mrockField'); if(!field) return;
@@ -28226,17 +28276,22 @@ function mineRockReveal(){
   const left = m.rocks.filter(r=> !r.broken);
   if(!left.length){ mineRockFinish(); return; }
   const tip = document.querySelector('.mrock-tip');
-  if(tip) tip.innerHTML = '<b>고르지 않은 돌</b>에는 이것들이 들어 있었습니다';
+  if(tip) tip.innerHTML = '<b style="color:#ffd79a;">고르지 않은 돌</b>에는 이것이 들어 있었습니다';
+  /* [Ver 15.11] 예전엔 작은 글씨가 2.6초 떴다 사라질 뿐이라 놓친 것을 못 봤다.
+     이제 **돌을 열어 둔 채** 그 자리에 크게 붙여두고, 넉넉히 기다린다. */
   left.forEach((rk, k)=>{
     setTimeout(()=>{
       try{
-        if(rk.el){ rk.el.classList.add('broke'); setTimeout(()=>{ try{ rk.el.remove(); }catch(e){} }, 360); }
+        if(rk.el){
+          rk.el.classList.add('opened');           // 부서지지 않고 **열린 채로** 남는다
+          const bar = rk.el.querySelector('.mrock-hp'); if(bar) bar.remove();
+        }
         mrockBits(rk, m.opts.gold);
-        mrockPop(rk, mrockFillText(rk.fill), 'miss');
+        mrockPop(rk, mrockFillText(rk.fill), 'miss ' + mrockPopClass(rk.fill));
       }catch(e){}
-    }, k * 260);
+    }, k * 420);
   });
-  setTimeout(mineRockFinish, left.length * 260 + 2100);
+  setTimeout(mineRockFinish, left.length * 420 + 3400);
 }
 /* 그만두기
    ⚠ 건 곡괭이는 시작할 때 이미 나갔다. 하나라도 캤으면 돌려주지 않는다(베팅이므로).
