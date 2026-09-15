@@ -9203,7 +9203,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.2</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.2.1</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -16229,7 +16229,7 @@ const BOT_EMO_SITU = {
   // 판이 시작될 때 — 여유 · 기선제압
   hello:   [0.70, ['art_03','art_12','art_01','gif_06','art_07','art_06','art_20']],
   // 크게 맞았다 — 으악 · 울음 · 침울
-  bigHit:  [0.80, ['art_17','art_14','gif_07','art_18','gif_08','gif_04','art_15','art_13']],
+  bigHit:  [0.80, ['art_17','art_14','gif_07','art_18','gif_08','gif_04','art_15','art_13','art_08']],
   // 처치했다 — 저격 · 환호 · 잘난척
   kill:    [0.85, ['art_05','art_20','gif_02','art_04','gif_06','art_15','art_06','art_10']],
   // 죽었다 — 절망 · 울음 · 항복
@@ -16241,20 +16241,22 @@ const BOT_EMO_SITU = {
   // 막혔다·무효화당했다 — 어림도없지 · 멈춰 · 분노
   blocked: [0.75, ['art_02','art_19','art_13','art_09','gif_04','art_17','gif_05']],
   // 그냥, 가끔 — 도발 쪽으로 몰아둔다
-  taunt:   [0.45, ['gif_01','art_20','gif_05','art_07','art_11','art_16','art_06','gif_03','art_04']],
+  taunt:   [0.45, ['gif_01','gif_05','art_07','art_11','art_16','art_06','gif_03','art_04','art_01','art_05']],
   /* [Ver 16.1] 새로 생긴 상황들 */
   // 공격 카드를 냈다 — 저격 · 선언 · 협박
-  played:  [0.70, ['art_05','art_04','art_19','art_02','gif_01','art_06']],
+  played:  [0.70, ['art_05','art_04','art_19','art_02','gif_01','art_06','gif_02']],
   // 돈을 벌었다 — 여유 · 행복 · 음흉
   gold:    [0.60, ['art_03','art_12','art_20','gif_06','art_10']],
   // 남이 크게 맞거나 죽는 걸 봤다 — 구경 · 어이없음 · 박수
-  watch:   [0.65, ['gif_03','gif_04','art_10','art_11','art_09','gif_05','art_20']],
+  /* ⚠ [Ver 16.2.1] 여기가 분당 14회로 **제일 붐비는 자리**다. 박수·음흉을 여기 두면
+     그 둘만 계속 보인다(측정: 16배 차이). 둘을 빼고 구경에 어울리는 것들로 넓혔다. */
+  watch:   [0.65, ['gif_03','gif_04','art_11','art_09','gif_05','art_03','art_01','art_17']],
   // 둘만 남았다 — 차가움 · 저격 · 협박
   duel:    [0.75, ['art_01','art_05','gif_01','art_07','art_19','art_06','gif_02']],
   /* [Ver 16.1.4] 이걸 맞으면 죽는다 — 체념 */
   doomed:  [0.85, ['art_08','gif_08','art_18','art_14','gif_07','art_09','art_11']],
   /* [Ver 16.1.4] 인성질 — 남을 크게 때려놓고 약을 올린다 */
-  rude:    [0.80, ['gif_05','art_20','art_16','art_09','gif_03','art_07','art_04','art_11','art_10']],
+  rude:    [0.80, ['gif_05','art_16','art_09','gif_03','art_07','art_04','art_11','gif_02','art_05']],
   /* [Ver 16.1.2] 회복했다 — 살아났으니 여유롭거나 잘난척하거나 */
   heal:    [0.70, ['art_03','art_12','art_04','art_10','gif_06','art_20','art_11']],
   // 누가 고자가 됐다 — 남 일이라고 실컷 놀린다
@@ -16262,7 +16264,7 @@ const BOT_EMO_SITU = {
   // 반사로 막아냈다 — 어림도 없지
   reflect: [0.80, ['art_02','art_20','art_04','gif_06','art_10','art_19']],
   // 손패가 시원찮다 — 한숨 · 거지 · 제발
-  badHand: [0.45, ['art_09','art_16','art_11','art_18','art_14','gif_07']],
+  badHand: [0.45, ['art_09','art_16','art_11','art_18','art_14','gif_07','art_08','gif_08']],
   // 좋은 카드가 들어왔다 — 잘난척 · 행복 · 음흉
   goodCard:[0.75, ['art_04','art_12','art_20','gif_06','art_06','art_10']],
 
@@ -16272,7 +16274,7 @@ const BOT_EMO_SITU = {
 
   /* ── 자주 있는 소소한 순간 ── */
   // 내 공격이 빗나갔다 — 분노 · 망했네 · 한숨
-  missed:  [0.55, ['art_13','art_15','art_09','art_17','art_01']],
+  missed:  [0.55, ['art_13','art_15','art_09','art_17','art_01','gif_08']],
   // 남이 빗나간 걸 봤다 — 비웃음
   sawMiss: [0.45, ['gif_05','gif_04','art_10','gif_03','art_11']],
   // 몸놀림으로 피했다 — 어림도없지 · 차가움
@@ -31216,6 +31218,12 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 16.2.1', date: '2026-09-15',
+    items: [
+      '🎭 <b>[수정] 봇이 일부 이모티콘만 계속 쓰던 문제.</b> 28종이 표에는 다 들어 있었지만, 실제로 뜨는 빈도가 <b>16배</b>까지 벌어져 있었습니다.<br>가장 자주 일어나는 상황인 <b>"남이 카드를 낼 때 구경"</b>(전체 사건의 절반 가까이)에 <b>박수·음흉</b>이 들어 있어서 그 둘만 계속 보였고, <b>몽둥이·항복할게·차가움</b> 같은 것은 드문 상황에만 걸려 있어 좀처럼 나오지 않았습니다.<br>거기다 <b>배신·아군 사망</b>은 <b>팀전에서만</b> 일어나는데, 몇몇 이모티콘이 그 자리에 슬롯을 묶어두고 있었습니다.<br>붐비는 자리에서 자주 나오던 것을 덜어내고, 덜 나오던 것을 뜻이 맞는 자리로 옮겼습니다.<br><span style="font-size:11.5px;color:var(--fg-dim);">측정: 빈도 격차 16배 → 4.6배. 이제 어떤 이모티콘이든 <b>5분에 한 번</b>은 뜹니다. 전체 사용량은 그대로입니다(분당 13회).</span>',
+    ]
+  },
   {
     version: 'Ver 16.2', date: '2026-09-15',
     items: [
