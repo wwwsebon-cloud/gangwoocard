@@ -5698,6 +5698,32 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 .vip-tx small{ display:block; margin-top:2px; font-size:11.5px; color:var(--fg-dim); line-height:1.6; }
 
 /* ==========================================================================
+   [Ver 16.4] 중복 접속 차단 — 화면을 덮는다
+   ⚠ **무엇보다 위**여야 한다. 처음엔 9800 으로 뒀는데 부팅 인트로(#bootIntro)가
+     99999 라 로그인 화면 뒤에 깔렸다 — 아무것도 못 보고 로그인부터 하게 됐다.
+     하던 일을 멈추라는 화면이라 어떤 창으로도 덮이면 안 된다.
+   ========================================================================== */
+.sesblk{
+  position:fixed; inset:0; z-index:100000; display:none;
+  align-items:center; justify-content:center; padding:24px;
+  background:rgba(8,9,12,.94); backdrop-filter:blur(6px);
+}
+.sesblk.on{ display:flex; }
+.sesblk-box{
+  width:min(460px, 92vw); text-align:center;
+  background:#14161c; border-radius:18px; padding:30px 26px;
+  box-shadow:0 24px 60px -18px rgba(0,0,0,.9), inset 0 0 0 1px rgba(255,255,255,.08);
+}
+.sesblk-ic{ font-size:44px; line-height:1; margin-bottom:14px; }
+.sesblk-t{ font-size:19px; font-weight:800; color:#fff; margin-bottom:10px; }
+.sesblk-d{ font-size:13.5px; line-height:1.8; color:#aeb6c4; }
+.sesblk-d b{ color:#fff; }
+.sesblk-btn{
+  margin-top:20px; padding:11px 20px; border-radius:10px; border:0; cursor:pointer;
+  font-size:13.5px; font-weight:700; color:#0b0c10; background:#e8ecf4;
+}
+
+/* ==========================================================================
    [Ver 16.0] 이모티콘 — 상태창 위 팝업 · 인게임 바
    ⚠ 팝업은 pointer-events:none. 상태창은 눌러서 지목하는 자리라 가리면 안 된다.
    ========================================================================== */
@@ -9201,9 +9227,19 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
   <button class="bi-skip" id="biSkip" onclick="biSkip()">건너뛰기 ›</button>
 </div>
 
+<!-- [Ver 16.4] 중복 접속 차단 -->
+<div class="sesblk" id="sesBlk">
+  <div class="sesblk-box">
+    <div class="sesblk-ic">🔒</div>
+    <div class="sesblk-t" id="sesBlkT">다른 창에서 이미 열려 있습니다</div>
+    <div class="sesblk-d" id="sesBlkD"></div>
+    <button class="sesblk-btn" onclick="sesRecheck()">다시 확인</button>
+  </div>
+</div>
+
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.3</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.4</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -16086,6 +16122,21 @@ function emoSend(key){
   __emoCool = Date.now() + EMO_COOL_MS;
   const me = (typeof viewerIdNow === 'function') ? viewerIdNow() : null;
   if(me) emoPop(me, key);
+  /* ★ [Ver 16.4] 판이 막 시작했을 때 보낸 것은 **인사로 받아들인다.** 봇 몇이 답한다.
+     ⚠ 한 바퀴가 다 돌기 전까지만이다 — 그 뒤에 보내는 건 인사가 아니다.
+     ⚠ 전원이 답하면 기계다. 누가 답할지는 botEmote 의 확률·쿨타임이 정한다.
+     ⚠ 답이 한꺼번에 터지지 않게 폭을 넓게 준다. */
+  try{
+    if(typeof gameActive !== 'undefined' && gameActive
+       && typeof turnCount !== 'undefined' && turnCount < 1){
+      /* ⚠ 전부 곱게 받아주면 심심하다. **아주 일부**만 역따봉 같은 걸로 받아친다.
+         비율이 핵심이다 — 너무 높이면 인사한 사람만 민망해진다. */
+      (players||[]).forEach(p=>{
+        if(!p || !p.isBot || !p.alive) return;
+        botEmote(p, Math.random() < 0.18 ? 'greetRude' : 'greet', 4500);
+      });
+    }
+  }catch(e){}
   /* 랜서버 — 남의 화면에도 띄운다. 호스트든 참가자든 같은 통로를 쓴다. */
   try{
     if(typeof LAN !== 'undefined' && LAN && LAN.connected && typeof lanSend === 'function'){
@@ -16318,6 +16369,12 @@ const BOT_EMO_SITU = {
   teamLoss:[0.80, ['art_14','gif_08','art_13','gif_07','art_08']],
   // 체력이 20% 밑으로 떨어졌다 (래치로 한 번만)
   lowHp:   [0.70, ['art_18','art_08','gif_07','art_14','art_09','gif_11']],
+  /* [Ver 16.4] 사람이 판 초반에 이모티콘을 보냈다 — 인사로 받아준다 */
+  greet:   [0.60, ['art_12','art_08','art_03','gif_06','art_10','art_06','art_21']],
+  /* [Ver 16.4] …인데 개중에는 곱게 안 받는 놈도 있다 */
+  greetRude:[0.60, ['gif_13','gif_05','art_11','art_09','art_01','gif_03']],
+  /* [Ver 16.4] NO U 로 공격을 통째로 되돌려보냈다 */
+  nou:     [0.85, ['art_02','art_20','art_04','gif_13','art_19','gif_09','art_10']],
 };
 
 /* [Ver 16.1.3] 누가 카드를 내는 걸 구경하는 봇들.
@@ -24848,11 +24905,60 @@ function autoBackupAfterGame(){
    클라이언트 상한이 더 높아서, 그 사이 크기의 진행도는 "너무 큽니다" 안내 대신
    "Missing or insufficient permissions." 로 튕겨나갔다. 규칙과 같은 숫자로 맞춘다. */
 const FB_DOC_SAFE_BYTES = 700000;   // ⚠ firestore.rules 의 payload 상한과 반드시 같은 숫자여야 한다
+/* [Ver 16.4] 백업 본문에서 **진행도**를 뽑는다. 클래스 > 레벨 > 판 수 순으로 무겁게 센다.
+   ⚠ 이 값은 "어느 백업이 더 나아간 것인가"를 가리는 데만 쓴다. 되돌아가지 않는 값들이라
+     odo 보다 훨씬 나은 기준이다 — odo 는 곡괭이류를 얼마나 썼나만 센다. */
+function bkProgressOf(data){
+  try{
+    if(!data) return 0;
+    const rd = (k)=>{ try{ const v = data[STORAGE_KEYS[k]]; return v ? JSON.parse(v) : null; }catch(e){ return null; } };
+    const cls  = rd('classState') || {};
+    const expS = rd('exp') || {};
+    const st   = rd('stats') || {};
+    const c = Math.max(0, cls.cls | 0);
+    const l = Math.max(0, expS.level | 0);
+    const g = Math.max(0, st.games | 0);
+    return c * 1000000 + l * 1000 + Math.min(999, g);
+  }catch(e){ return 0; }
+}
+/* 백업 문서(payload 가 문자열)에서 바로 진행도를 뽑는다 */
+function bkProgressOfDoc(d){
+  try{ return bkProgressOf(JSON.parse(String((d && d.payload) || '{}'))); }catch(e){ return 0; }
+}
+
+/* [Ver 16.4] odo 가 세는 재화 넷. 계기판이 낮은 기기가 올릴 때 이것들만 깎는다.
+   ⚠ 늘리지 않는다. min 만 쓴다 — 늘리는 순간 '곡괭이 복사'가 되살아난다. */
+const BK_ODO_FIELDS = ['pickaxe','goldPickaxe','teeth','pwStones'];
+function bkClampSpentFields(mine, cloudData){
+  try{
+    if(!cloudData) return mine;
+    BK_ODO_FIELDS.forEach(k=>{
+      const key = STORAGE_KEYS[k];
+      if(!key || mine[key] == null || cloudData[key] == null) return;
+      /* 곡괭이는 {n, at}, 나머지는 숫자 문자열이다 — 모양을 보고 갈라 센다. */
+      try{
+        const a = JSON.parse(mine[key]), b = JSON.parse(cloudData[key]);
+        if(typeof a === 'number' && typeof b === 'number'){
+          if(b < a) mine[key] = JSON.stringify(b);
+        } else if(a && b && typeof a === 'object' && typeof a.n === 'number' && typeof b.n === 'number'){
+          if(b.n < a.n){ a.n = b.n; mine[key] = JSON.stringify(a); }
+        }
+      }catch(e){
+        const a = parseFloat(mine[key]), b = parseFloat(cloudData[key]);
+        if(Number.isFinite(a) && Number.isFinite(b) && b < a) mine[key] = String(b);
+      }
+    });
+  }catch(e){}
+  return mine;
+}
+
 async function fbBackupNow(){
   await fbInit();
   const { doc, setDoc } = FB.mod;
   const payload = buildBackupPayload();
-  const body = JSON.stringify(payload.data);   // 통째로 문자열 한 칸에 담는다
+  /* ⚠ [Ver 16.4] 본문은 아래 계기판 검사에서 **깎일 수 있다.** 그래서 문자열로 굳히는 것은
+     검사가 끝난 뒤다(JSON.stringify 를 여기서 하면 깎기 전 값이 올라간다). */
+  const body = JSON.stringify(payload.data);
   if(body.length > FB_DOC_SAFE_BYTES){
     throw new Error(
       `진행도가 너무 커서 백업할 수 없습니다. (${(body.length/1024).toFixed(0)}KB / 한도 ${(FB_DOC_SAFE_BYTES/1024).toFixed(0)}KB)\n` +
@@ -24880,21 +24986,29 @@ async function fbBackupNow(){
      ⚠ 여기 검사는 **안내용**이다. 진짜 자물쇠는 firestore.rules 쪽이다
        (규칙이 odo 가 줄어드는 쓰기를 거부한다 — 클라이언트를 고쳐도 안 통한다).
      ========================================================================== */
-  const myOdo = (typeof loadSpendOdo === 'function') ? Math.max(0, loadSpendOdo()) : 0;
+  let myOdo = (typeof loadSpendOdo === 'function') ? Math.max(0, loadSpendOdo()) : 0;
+  /* ★ [Ver 16.4] 계기판이 낮다고 **통째로 거부하지 않는다.**
+     예전엔 여기서 __STALE__ 을 던져 업로드를 막았다. 그런데 odo 는 곡괭이류를
+     얼마나 썼나만 센다 — 클래스·레벨과는 무관하다. 그래서 "많이 진행했지만
+     적게 쓴 기기"(PC 에서 클래스 6까지 갔지만 곡괭이는 안 쓴 경우)가 영영
+     백업을 못 했고, 다른 기기에서 불러오면 한참 옛날 것이 왔다.
+     → 이제 **재화 넷만 클라우드 쪽 적은 값으로 깎고** 나머지 진행도는 그대로 올린다.
+       계기판은 클라우드 값을 물려받는다(내려가지 않는다).
+     ⚠ 재화를 늘리지는 않는다. 늘리는 순간 '곡괭이 복사'가 되살아난다. */
   try{
     const { getDoc } = FB.mod;
     const cur = await getDoc(doc(FB.db, 'backups', FB.uid));
-    if(cur.exists() && myOdo < Number(cur.data().odo || 0)){
-      throw new Error('__STALE__');
+    if(cur.exists()){
+      const cloudOdo = Number(cur.data().odo || 0);
+      if(myOdo < cloudOdo){
+        let cloudData = null;
+        try{ cloudData = JSON.parse(String(cur.data().payload || '{}')); }catch(e){ cloudData = null; }
+        bkClampSpentFields(payload.data, cloudData);
+        myOdo = cloudOdo;                      // 계기판은 앞선 쪽을 따른다
+        console.info('[백업] 계기판이 낮아 재화만 클라우드 값으로 맞추고 올립니다.');
+      }
     }
   }catch(e){
-    if(String(e && e.message) === '__STALE__'){
-      throw new Error(
-        '이 기기의 진행도가 클라우드보다 오래되었습니다.\n' +
-        '다른 기기에서 더 진행한 기록이 있어서, 지금 올리면 그게 지워집니다.\n\n' +
-        '먼저 [불러오기]로 최신 상태를 받은 뒤 다시 시도해주세요.'
-      );
-    }
     /* 조회 자체가 실패한 경우(오프라인 등)는 그냥 진행한다 — 규칙이 뒤에서 한 번 더 막는다 */
   }
   await setDoc(doc(FB.db, 'backups', FB.uid), {
@@ -24902,7 +25016,8 @@ async function fbBackupNow(){
     /* [Ver 13.17] 소비 계기판. ⚠ 규칙의 hasOnly 목록에도 'odo' 를 넣어야 한다 —
        한쪽만 고치면 백업이 통째로 거부된다(10.5에서 겪은 그대로다). */
     odo: myOdo,
-    payload: body
+    /* [Ver 16.4] 깎기가 끝난 뒤의 본문을 올린다 */
+    payload: JSON.stringify(payload.data)
   });
   return payload;
 }
@@ -24928,8 +25043,15 @@ async function fbFindBackupByCode(code){
        이제 **소비 계기판(odo)이 가장 높은 것**을 먼저 고른다. 계기판은 되돌아가지 않으므로
        "가장 많이 쓴 기록" = "가장 앞서 나간 기록"이다. 계기판이 같을 때만 at 으로 가른다
        (13.17 이전 백업은 odo 가 없어 0으로 취급되고, 그때는 예전처럼 at 으로 갈린다). */
-    const ao = Number(x.odo || 0), bo = Number(found.odo || 0);
-    if(ao > bo || (ao === bo && (x.at||0) > (found.at||0))) found = x;
+    /* ★ [Ver 16.4] **진행도**를 먼저 본다. odo 만 보던 것이 제보된 문제의 원인이었다 —
+       odo 는 곡괭이류 소비만 세므로, 클래스 6까지 간 기기보다 곡괭이를 많이 쓴
+       옛날 기기가 이겨서 "불러오면 클래스 5가 온다"가 됐다.
+       진행도(클래스>레벨>판 수)는 되돌아가지 않으므로 이쪽이 올바른 기준이다.
+       진행도가 같을 때만 계기판 → 저장 시각 순으로 가른다. */
+    const ap = bkProgressOfDoc(x),   bp = bkProgressOfDoc(found);
+    const ao = Number(x.odo || 0),   bo = Number(found.odo || 0);
+    if(ap > bp) found = x;
+    else if(ap === bp && (ao > bo || (ao === bo && (x.at||0) > (found.at||0)))) found = x;
   });
   return found;
 }
@@ -31229,6 +31351,15 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 16.4', date: '2026-09-16',
+    items: [
+      '💾 <b>[수정] 다른 기기에서 불러오면 한참 옛날 진행도가 오던 문제.</b> (제보: PC에서 클래스 6인데 태블릿에서 불러오면 클래스 5)<br>백업이 <b>"어느 쪽이 최신인가"를 소비 계기판으로</b> 재고 있었습니다. 그 값은 <b>곡괭이·이빨·권능석을 얼마나 썼나</b>만 세는 값이라 클래스·레벨과는 아무 상관이 없습니다. 그래서 <b>많이 진행했지만 적게 쓴 기기</b>는 백업이 <b>통째로 거부</b>됐고, 클라우드에는 옛날 것만 남아 있었습니다.<br>이제 <b>진행도(클래스 → 레벨 → 판 수)</b>로 가릅니다. 계기판이 낮은 기기도 <b>재화만 맞춰서</b> 올라가고, 클래스·카드·업적은 그대로 저장됩니다.<br><span style="font-size:11.5px;color:var(--fg-dim);">재화를 되살리는 길은 여전히 막혀 있습니다 — 줄이기만 하고 늘리지 않습니다.</span>',
+      '🔒 <b>[신규] 같은 계정을 여러 창·여러 기기에서 열면 게임을 막습니다.</b> 두 곳에서 굴리면 저장소가 갈라져, 나중에 백업이 서로를 덮어쓰며 진행도가 뒤바뀝니다 — 위 문제의 뿌리입니다.<br><b>먼저 열어둔 창이 주인</b>이고 나중에 연 창이 막힙니다. 주인 창을 닫으면 <b>스스로 풀립니다.</b>',
+      '👋 <b>[신규 상황] 인사 받아주기.</b> 판이 막 시작했을 때 이모티콘을 보내면 봇들이 <b>인사로 받아들이고 답합니다.</b> 다만 <b>개중에는 곱게 안 받는 놈</b>도 있어서, 가끔 역따봉이 날아옵니다.',
+      '🪞 <b>[신규 상황] NO U 반사.</b> 권능으로 공격을 통째로 되돌려보냈을 때, 되돌린 쪽·맞은 쪽·구경하던 봇이 각각 반응합니다.',
+    ]
+  },
   {
     version: 'Ver 16.3', date: '2026-09-15',
     items: [
@@ -43054,6 +43185,13 @@ function actuallyStartGame(){
      예전에는 openGameModePicker 에만 검사가 있었다. 그 창이 이미 열려 있었거나
      다시하기·아케이드 같은 다른 경로로 들어오면 그대로 판이 시작됐다. */
   if(isBanned()){ showBanScreen(); return; }
+  /* ★ [Ver 16.4] 같은 계정이 다른 창·다른 기기에서 열려 있으면 판을 시작하지 않는다.
+     두 곳에서 굴리면 저장소가 갈라져 나중에 백업/복원이 서로를 덮어쓴다.
+     ⚠ 검사가 실패한 경우에는 막히지 않는다(sesBlocked 가 false 다) — 못 놀게 하는 쪽이 더 나쁘다. */
+  if(typeof sesBlocked === 'function' && sesBlocked()){
+    try{ const el = document.getElementById('sesBlk'); if(el) el.classList.add('on'); }catch(e){}
+    return;
+  }
   bumpStat('games'); STATS.lastPlayedAt = Date.now(); saveStats(); // [Ver 5.6] 통계
   window.__lanDeathmatchAnnounced = false; window.__lanDeathmatchTicks = 0; // [Ver 7.1.8] LAN 데스매치 리셋
   window.__ubiniteAwardedThisGame = false; // [Ver 8.4] 판마다 우비나이트 1회 지급 가드 리셋
@@ -66689,6 +66827,9 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
         window.__pwReflecting = true;
         try{
           log('highlight', `🪞 <b>NO U</b> — ${J(target.name,'이','가')} ${J(atk.name,'에게','에게')} 그대로 되돌려보냅니다!`);
+          /* [Ver 16.4] 되돌려보낸 쪽은 통쾌하고, 맞은 쪽은 황당하다.
+             ⚠ 보여주기 카드 반사(reflect)와는 다른 길이라 따로 건다. */
+          try{ botEmote(target, 'nou', 3000); botEmote(atk, 'blocked', 3000); botsMock(target, 'watch'); }catch(e){}
           applyDamageToPlayer(atk, amount, pierce, true);
         } finally { window.__pwReflecting = false; }
         return false;
@@ -78125,6 +78266,140 @@ function biSfx(k){
   }catch(e){}
 }
 
+/* ##########################################################################
+   [Ver 16.4] 중복 접속 차단
+   --------------------------------------------------------------------------
+   ▶ 왜 — 같은 계정을 두 곳에서 굴리면 저장소가 둘로 갈라진다. 한쪽에서 쓴 재화가
+     다른 쪽에는 없고, 나중에 백업/복원이 서로를 덮어써 진행도가 통째로 뒤바뀐다.
+     (제보: PC 에서 클래스 6인데 태블릿에서 불러오면 클래스 5)
+   ▶ 같은 브라우저의 다른 탭은 BroadcastChannel 로 **즉시** 잡는다. 오탐이 없다.
+   ▶ 다른 기기는 presence(접속 신호)의 **친구 코드**로 잡는다. 친구 코드는 백업에
+     들어 있어 복원한 기기끼리는 같은 값이다.
+     ⚠ presence 에 유저 코드를 더하려면 규칙을 다시 게시해야 해서 쓰지 않았다.
+   ########################################################################## */
+const SES_CHAN = 'gg_session_v1';
+const SES_TAB_ID = Math.random().toString(36).slice(2) + Date.now().toString(36);
+let __sesChan = null, __sesBlocked = false, __sesReason = '';
+
+function sesBlocked(){ return !!__sesBlocked; }
+function sesShow(reason, title, desc){
+  __sesBlocked = true; __sesReason = reason;
+  try{
+    const el = document.getElementById('sesBlk');
+    const t  = document.getElementById('sesBlkT');
+    const d  = document.getElementById('sesBlkD');
+    if(t) t.textContent = title;
+    if(d) d.innerHTML = desc;
+    if(el) el.classList.add('on');
+  }catch(e){}
+}
+function sesHide(){
+  __sesBlocked = false; __sesReason = '';
+  try{ const el = document.getElementById('sesBlk'); if(el) el.classList.remove('on'); }catch(e){}
+}
+/* 같은 브라우저의 다른 탭 찾기.
+   ⚠ **먼저 열린 창이 주인이다.** 나중에 연 창이 막힌다 — 반대로 하면 하던 판이 끊긴다. */
+function sesTabInit(){
+  try{
+    if(typeof BroadcastChannel === 'undefined') return;   // 오래된 브라우저 — 조용히 포기
+    __sesChan = new BroadcastChannel(SES_CHAN);
+    __sesChan.onmessage = (e)=>{
+      const m = (e && e.data) || {};
+      if(!m || m.from === SES_TAB_ID) return;
+      if(m.t === 'hello'){
+        /* 내가 이미 살아 있다고 알린다 — 단, 나 자신이 막혀 있으면 주인 행세를 하지 않는다 */
+        if(!__sesBlocked){ try{ __sesChan.postMessage({ t:'here', from:SES_TAB_ID }); }catch(e2){} }
+      } else if(m.t === 'here'){
+        sesShow('tab', '다른 창에서 이미 열려 있습니다',
+          '같은 계정을 <b>두 곳에서</b> 열면 진행도가 서로를 덮어써 <b>기록이 뒤바뀝니다.</b><br><br>' +
+          '먼저 열어둔 창에서 계속 하시고, <b>이 창은 닫아주세요.</b><br>' +
+          '<span style="font-size:12px;opacity:.75;">먼저 열린 창을 닫으면 여기서 [다시 확인]을 누를 수 있습니다.</span>');
+      } else if(m.t === 'bye'){
+        /* 주인이 닫혔다 — 막혀 있었다면 다시 물어본다 */
+        if(__sesBlocked && __sesReason === 'tab') setTimeout(sesAsk, 250);
+      }
+    };
+    sesAsk();
+    /* 닫힐 때 알린다. pagehide 가 unload 보다 믿을 만하다(모바일 복귀 캐시). */
+    window.addEventListener('pagehide', ()=>{
+      try{ __sesChan.postMessage({ t:'bye', from:SES_TAB_ID }); }catch(e){}
+      try{ fbPresenceClear(); }catch(e){}
+    });
+  }catch(e){}
+}
+/* "거기 누구 있나요" — 아무도 대답 없으면 내가 주인이다 */
+function sesAsk(){
+  try{
+    if(!__sesChan) return;
+    const before = __sesBlocked;
+    __sesBlocked = false;                       // 대답을 받으면 다시 켜진다
+    __sesChan.postMessage({ t:'hello', from:SES_TAB_ID });
+    setTimeout(()=>{ if(!__sesBlocked && before) sesHide(); }, 700);
+  }catch(e){}
+}
+/* [다시 확인] 버튼 */
+function sesRecheck(){
+  if(__sesReason === 'device'){ sesHide(); sesCheckDevice(); return; }
+  sesAsk();
+}
+
+/* 다른 기기 찾기 — 친구 코드가 같고 최근에 신호를 보낸 기기가 있나.
+   ⚠ 내 신호를 먼저 올린 뒤에 찾는다. 안 그러면 방금 켠 내 기기가 목록에 없다. */
+async function sesCheckDevice(){
+  try{
+    if(typeof fbAvailable !== 'function' || !fbAvailable()) return false;
+    const my = String((typeof getFriendCode === 'function' ? getFriendCode() : '') || '').trim();
+    if(!my) return false;
+    await fbPresenceBeat(true);
+    await fbInit();
+    const { collection, query, where, limit, getDocs } = FB.mod;
+    const snap = await getDocs(query(collection(FB.db,'presence'), where('fcode','==', my), limit(10)));
+    const now = Date.now();
+    let other = null;
+    snap.forEach(d=>{
+      if(d.id === FB.uid) return;
+      const at = Number((d.data()||{}).at || 0);
+      if(now - at < PRESENCE_ONLINE_MS) other = d.data();
+    });
+    if(other){
+      sesShow('device', '다른 기기에서 접속 중입니다',
+        '같은 계정이 <b>다른 기기</b>에서 열려 있습니다.<br><br>' +
+        '두 곳에서 같이 하면 <b>진행도가 서로를 덮어써</b> 클래스·재화가 옛날 것으로 되돌아갑니다.<br><br>' +
+        '<b>다른 기기를 먼저 닫아주세요.</b><br>' +
+        '<span style="font-size:12px;opacity:.75;">닫은 직후에는 잠시(최대 5분) 신호가 남아 있을 수 있습니다.</span>');
+      return true;
+    }
+  }catch(e){ /* 조회 실패(오프라인·권한)는 막지 않는다 — 못 놀게 하는 것이 더 나쁘다 */ }
+  return false;
+}
+/* 창을 닫을 때 신호를 지운다. 안 지우면 방금 끈 기기 때문에 5분간 못 들어간다. */
+async function fbPresenceClear(){
+  try{
+    if(typeof fbAvailable !== 'function' || !fbAvailable()) return;
+    if(!FB || !FB.db || !FB.uid) return;
+    const { doc, setDoc } = FB.mod;
+    await setDoc(doc(FB.db, 'presence', FB.uid), {
+      nick:  String(getPlayerNickname() || '이름없음').slice(0, 16),
+      fcode: String(getFriendCode() || '').slice(0, 12),
+      at:    0
+    });
+  }catch(e){}
+}
+
+/* 켜기 — 탭 잠금은 바로, 기기 검사는 인증이 끝날 틈을 주고 나서. */
+(function sesBoot(){
+  const go = ()=>{
+    try{ sesTabInit(); }catch(e){}
+    /* ⚠ 기기 검사는 로그인·익명 인증이 끝나야 FB.uid 가 생긴다. 넉넉히 기다린다. */
+    setTimeout(()=>{ try{ sesCheckDevice(); }catch(e){} }, 6000);
+    setInterval(()=>{ try{ if(!sesBlocked()) sesCheckDevice(); }catch(e){} }, 3 * 60 * 1000);
+  };
+  try{
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
+    else go();
+  }catch(e){}
+})();
+
 function biOwnsSkip(){ try{ return localStorage.getItem(BI_SKIP_KEY) === '1'; }catch(e){ return false; } }
 function biGrantSkip(){ try{ localStorage.setItem(BI_SKIP_KEY, '1'); }catch(e){} }
 function biLoginDone(){ try{ return localStorage.getItem(BI_LOGIN_KEY) === '1'; }catch(e){ return true; } }
@@ -78996,7 +79271,8 @@ var OVERLAY_SEL = '.modal-bg.show, .gwin-bg.show, .shop-bg.show, .gm-bg.show, .l
                 + '.devauth-bg.show, .nm-drawer-bg.show, .fdn-bg.show,'
                 + '.match-intro.show, .qm-intro.show,'
                 + '.auction-overlay, .cm-overlay, .clsup-ov, .re-overlay,'
-                + '.roulette-overlay, .victory-overlay, .blackmarket-alert-overlay, .mine-dig-ov, .mrock-ov.on';
+                + '.roulette-overlay, .victory-overlay, .blackmarket-alert-overlay, .mine-dig-ov, .mrock-ov.on,'
+                + '.sesblk.on';   // [Ver 16.4] 중복 접속 차단 — 단축키·입력도 같이 막는다
 var ovTimer = null;
 function scheduleOverlayCheck(){
   if(ovTimer) return;
