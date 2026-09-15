@@ -5698,7 +5698,7 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 .vip-tx small{ display:block; margin-top:2px; font-size:11.5px; color:var(--fg-dim); line-height:1.6; }
 
 /* ==========================================================================
-   [Ver 16.4] 중복 접속 차단 — 화면을 덮는다
+   [Ver 16.3.1] 중복 접속 차단 — 화면을 덮는다
    ⚠ **무엇보다 위**여야 한다. 처음엔 9800 으로 뒀는데 부팅 인트로(#bootIntro)가
      99999 라 로그인 화면 뒤에 깔렸다 — 아무것도 못 보고 로그인부터 하게 됐다.
      하던 일을 멈추라는 화면이라 어떤 창으로도 덮이면 안 된다.
@@ -9227,7 +9227,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
   <button class="bi-skip" id="biSkip" onclick="biSkip()">건너뛰기 ›</button>
 </div>
 
-<!-- [Ver 16.4] 중복 접속 차단 -->
+<!-- [Ver 16.3.1] 중복 접속 차단 -->
 <div class="sesblk" id="sesBlk">
   <div class="sesblk-box">
     <div class="sesblk-ic">🔒</div>
@@ -9239,7 +9239,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.4</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.3.1</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -16122,7 +16122,7 @@ function emoSend(key){
   __emoCool = Date.now() + EMO_COOL_MS;
   const me = (typeof viewerIdNow === 'function') ? viewerIdNow() : null;
   if(me) emoPop(me, key);
-  /* ★ [Ver 16.4] 판이 막 시작했을 때 보낸 것은 **인사로 받아들인다.** 봇 몇이 답한다.
+  /* ★ [Ver 16.3.1] 판이 막 시작했을 때 보낸 것은 **인사로 받아들인다.** 봇 몇이 답한다.
      ⚠ 한 바퀴가 다 돌기 전까지만이다 — 그 뒤에 보내는 건 인사가 아니다.
      ⚠ 전원이 답하면 기계다. 누가 답할지는 botEmote 의 확률·쿨타임이 정한다.
      ⚠ 답이 한꺼번에 터지지 않게 폭을 넓게 준다. */
@@ -16369,11 +16369,11 @@ const BOT_EMO_SITU = {
   teamLoss:[0.80, ['art_14','gif_08','art_13','gif_07','art_08']],
   // 체력이 20% 밑으로 떨어졌다 (래치로 한 번만)
   lowHp:   [0.70, ['art_18','art_08','gif_07','art_14','art_09','gif_11']],
-  /* [Ver 16.4] 사람이 판 초반에 이모티콘을 보냈다 — 인사로 받아준다 */
+  /* [Ver 16.3.1] 사람이 판 초반에 이모티콘을 보냈다 — 인사로 받아준다 */
   greet:   [0.60, ['art_12','art_08','art_03','gif_06','art_10','art_06','art_21']],
-  /* [Ver 16.4] …인데 개중에는 곱게 안 받는 놈도 있다 */
+  /* [Ver 16.3.1] …인데 개중에는 곱게 안 받는 놈도 있다 */
   greetRude:[0.60, ['gif_13','gif_05','art_11','art_09','art_01','gif_03']],
-  /* [Ver 16.4] NO U 로 공격을 통째로 되돌려보냈다 */
+  /* [Ver 16.3.1] NO U 로 공격을 통째로 되돌려보냈다 */
   nou:     [0.85, ['art_02','art_20','art_04','gif_13','art_19','gif_09','art_10']],
 };
 
@@ -24905,7 +24905,7 @@ function autoBackupAfterGame(){
    클라이언트 상한이 더 높아서, 그 사이 크기의 진행도는 "너무 큽니다" 안내 대신
    "Missing or insufficient permissions." 로 튕겨나갔다. 규칙과 같은 숫자로 맞춘다. */
 const FB_DOC_SAFE_BYTES = 700000;   // ⚠ firestore.rules 의 payload 상한과 반드시 같은 숫자여야 한다
-/* [Ver 16.4] 백업 본문에서 **진행도**를 뽑는다. 클래스 > 레벨 > 판 수 순으로 무겁게 센다.
+/* [Ver 16.3.1] 백업 본문에서 **진행도**를 뽑는다. 클래스 > 레벨 > 판 수 순으로 무겁게 센다.
    ⚠ 이 값은 "어느 백업이 더 나아간 것인가"를 가리는 데만 쓴다. 되돌아가지 않는 값들이라
      odo 보다 훨씬 나은 기준이다 — odo 는 곡괭이류를 얼마나 썼나만 센다. */
 function bkProgressOf(data){
@@ -24926,7 +24926,7 @@ function bkProgressOfDoc(d){
   try{ return bkProgressOf(JSON.parse(String((d && d.payload) || '{}'))); }catch(e){ return 0; }
 }
 
-/* [Ver 16.4] odo 가 세는 재화 넷. 계기판이 낮은 기기가 올릴 때 이것들만 깎는다.
+/* [Ver 16.3.1] odo 가 세는 재화 넷. 계기판이 낮은 기기가 올릴 때 이것들만 깎는다.
    ⚠ 늘리지 않는다. min 만 쓴다 — 늘리는 순간 '곡괭이 복사'가 되살아난다. */
 const BK_ODO_FIELDS = ['pickaxe','goldPickaxe','teeth','pwStones'];
 function bkClampSpentFields(mine, cloudData){
@@ -24956,7 +24956,7 @@ async function fbBackupNow(){
   await fbInit();
   const { doc, setDoc } = FB.mod;
   const payload = buildBackupPayload();
-  /* ⚠ [Ver 16.4] 본문은 아래 계기판 검사에서 **깎일 수 있다.** 그래서 문자열로 굳히는 것은
+  /* ⚠ [Ver 16.3.1] 본문은 아래 계기판 검사에서 **깎일 수 있다.** 그래서 문자열로 굳히는 것은
      검사가 끝난 뒤다(JSON.stringify 를 여기서 하면 깎기 전 값이 올라간다). */
   const body = JSON.stringify(payload.data);
   if(body.length > FB_DOC_SAFE_BYTES){
@@ -24987,7 +24987,7 @@ async function fbBackupNow(){
        (규칙이 odo 가 줄어드는 쓰기를 거부한다 — 클라이언트를 고쳐도 안 통한다).
      ========================================================================== */
   let myOdo = (typeof loadSpendOdo === 'function') ? Math.max(0, loadSpendOdo()) : 0;
-  /* ★ [Ver 16.4] 계기판이 낮다고 **통째로 거부하지 않는다.**
+  /* ★ [Ver 16.3.1] 계기판이 낮다고 **통째로 거부하지 않는다.**
      예전엔 여기서 __STALE__ 을 던져 업로드를 막았다. 그런데 odo 는 곡괭이류를
      얼마나 썼나만 센다 — 클래스·레벨과는 무관하다. 그래서 "많이 진행했지만
      적게 쓴 기기"(PC 에서 클래스 6까지 갔지만 곡괭이는 안 쓴 경우)가 영영
@@ -25016,7 +25016,7 @@ async function fbBackupNow(){
     /* [Ver 13.17] 소비 계기판. ⚠ 규칙의 hasOnly 목록에도 'odo' 를 넣어야 한다 —
        한쪽만 고치면 백업이 통째로 거부된다(10.5에서 겪은 그대로다). */
     odo: myOdo,
-    /* [Ver 16.4] 깎기가 끝난 뒤의 본문을 올린다 */
+    /* [Ver 16.3.1] 깎기가 끝난 뒤의 본문을 올린다 */
     payload: JSON.stringify(payload.data)
   });
   return payload;
@@ -25043,7 +25043,7 @@ async function fbFindBackupByCode(code){
        이제 **소비 계기판(odo)이 가장 높은 것**을 먼저 고른다. 계기판은 되돌아가지 않으므로
        "가장 많이 쓴 기록" = "가장 앞서 나간 기록"이다. 계기판이 같을 때만 at 으로 가른다
        (13.17 이전 백업은 odo 가 없어 0으로 취급되고, 그때는 예전처럼 at 으로 갈린다). */
-    /* ★ [Ver 16.4] **진행도**를 먼저 본다. odo 만 보던 것이 제보된 문제의 원인이었다 —
+    /* ★ [Ver 16.3.1] **진행도**를 먼저 본다. odo 만 보던 것이 제보된 문제의 원인이었다 —
        odo 는 곡괭이류 소비만 세므로, 클래스 6까지 간 기기보다 곡괭이를 많이 쓴
        옛날 기기가 이겨서 "불러오면 클래스 5가 온다"가 됐다.
        진행도(클래스>레벨>판 수)는 되돌아가지 않으므로 이쪽이 올바른 기준이다.
@@ -31352,7 +31352,7 @@ function exitPlaygroundBar(){
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
   {
-    version: 'Ver 16.4', date: '2026-09-16',
+    version: 'Ver 16.3.1', date: '2026-09-16',
     items: [
       '💾 <b>[수정] 다른 기기에서 불러오면 한참 옛날 진행도가 오던 문제.</b> (제보: PC에서 클래스 6인데 태블릿에서 불러오면 클래스 5)<br>백업이 <b>"어느 쪽이 최신인가"를 소비 계기판으로</b> 재고 있었습니다. 그 값은 <b>곡괭이·이빨·권능석을 얼마나 썼나</b>만 세는 값이라 클래스·레벨과는 아무 상관이 없습니다. 그래서 <b>많이 진행했지만 적게 쓴 기기</b>는 백업이 <b>통째로 거부</b>됐고, 클라우드에는 옛날 것만 남아 있었습니다.<br>이제 <b>진행도(클래스 → 레벨 → 판 수)</b>로 가릅니다. 계기판이 낮은 기기도 <b>재화만 맞춰서</b> 올라가고, 클래스·카드·업적은 그대로 저장됩니다.<br><span style="font-size:11.5px;color:var(--fg-dim);">재화를 되살리는 길은 여전히 막혀 있습니다 — 줄이기만 하고 늘리지 않습니다.</span>',
       '🔒 <b>[신규] 같은 계정을 여러 창·여러 기기에서 열면 게임을 막습니다.</b> 두 곳에서 굴리면 저장소가 갈라져, 나중에 백업이 서로를 덮어쓰며 진행도가 뒤바뀝니다 — 위 문제의 뿌리입니다.<br><b>먼저 열어둔 창이 주인</b>이고 나중에 연 창이 막힙니다. 주인 창을 닫으면 <b>스스로 풀립니다.</b>',
@@ -43185,7 +43185,7 @@ function actuallyStartGame(){
      예전에는 openGameModePicker 에만 검사가 있었다. 그 창이 이미 열려 있었거나
      다시하기·아케이드 같은 다른 경로로 들어오면 그대로 판이 시작됐다. */
   if(isBanned()){ showBanScreen(); return; }
-  /* ★ [Ver 16.4] 같은 계정이 다른 창·다른 기기에서 열려 있으면 판을 시작하지 않는다.
+  /* ★ [Ver 16.3.1] 같은 계정이 다른 창·다른 기기에서 열려 있으면 판을 시작하지 않는다.
      두 곳에서 굴리면 저장소가 갈라져 나중에 백업/복원이 서로를 덮어쓴다.
      ⚠ 검사가 실패한 경우에는 막히지 않는다(sesBlocked 가 false 다) — 못 놀게 하는 쪽이 더 나쁘다. */
   if(typeof sesBlocked === 'function' && sesBlocked()){
@@ -66827,7 +66827,7 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
         window.__pwReflecting = true;
         try{
           log('highlight', `🪞 <b>NO U</b> — ${J(target.name,'이','가')} ${J(atk.name,'에게','에게')} 그대로 되돌려보냅니다!`);
-          /* [Ver 16.4] 되돌려보낸 쪽은 통쾌하고, 맞은 쪽은 황당하다.
+          /* [Ver 16.3.1] 되돌려보낸 쪽은 통쾌하고, 맞은 쪽은 황당하다.
              ⚠ 보여주기 카드 반사(reflect)와는 다른 길이라 따로 건다. */
           try{ botEmote(target, 'nou', 3000); botEmote(atk, 'blocked', 3000); botsMock(target, 'watch'); }catch(e){}
           applyDamageToPlayer(atk, amount, pierce, true);
@@ -78267,7 +78267,7 @@ function biSfx(k){
 }
 
 /* ##########################################################################
-   [Ver 16.4] 중복 접속 차단
+   [Ver 16.3.1] 중복 접속 차단
    --------------------------------------------------------------------------
    ▶ 왜 — 같은 계정을 두 곳에서 굴리면 저장소가 둘로 갈라진다. 한쪽에서 쓴 재화가
      다른 쪽에는 없고, 나중에 백업/복원이 서로를 덮어써 진행도가 통째로 뒤바뀐다.
@@ -79272,7 +79272,7 @@ var OVERLAY_SEL = '.modal-bg.show, .gwin-bg.show, .shop-bg.show, .gm-bg.show, .l
                 + '.match-intro.show, .qm-intro.show,'
                 + '.auction-overlay, .cm-overlay, .clsup-ov, .re-overlay,'
                 + '.roulette-overlay, .victory-overlay, .blackmarket-alert-overlay, .mine-dig-ov, .mrock-ov.on,'
-                + '.sesblk.on';   // [Ver 16.4] 중복 접속 차단 — 단축키·입력도 같이 막는다
+                + '.sesblk.on';   // [Ver 16.3.1] 중복 접속 차단 — 단축키·입력도 같이 막는다
 var ovTimer = null;
 function scheduleOverlayCheck(){
   if(ovTimer) return;
