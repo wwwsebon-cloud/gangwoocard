@@ -9154,7 +9154,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.1</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.1.1</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -23969,9 +23969,17 @@ function winRateOf(d){
    나중에 Cloud Functions로 옮길 때 여기만 바꾸면 된다) */
 /* [Ver 13.15] 새 필드(lv·pfp)를 서버가 받아주는가.
    ⚠ firestore.rules 의 hasOnly 목록에 없는 키가 **하나라도** 섞이면 쓰기가 통째로 거부된다.
-     규칙을 아직 안 올린 기기에서도 리더보드가 죽지 않도록, 거부되면 이 값을 내리고
-     **새 필드를 뺀 채 한 번 더** 보낸다(fbSubmitScore 참고). 규칙을 올리면 저절로 살아난다. */
-let __fbExtraFieldsOk = true;
+     규칙을 아직 안 올린 기기에서도 리더보드가 죽지 않도록, 거부되면 잠시 껐다가
+     **새 필드를 뺀 채 한 번 더** 보낸다(fbSubmitScore 참고).
+
+   ★ [Ver 16.1.1] 예전엔 한 번 거부되면 **그 탭이 살아있는 내내** 꺼져 있었다.
+     setDoc 은 문서를 통째로 덮어쓰므로 그동안 올라가 있던 pfp 까지 지워진다.
+     그래서 콘솔에 규칙을 게시해도 **새로고침 전까지** 프사가 리더보드에 안 붙었다.
+     → 영구히 끄지 않고 5분 뒤 다시 시도한다. 사용자가 프로필을 직접 바꾼 순간에는
+       fbPushProfileSoon 이 기다리지 않고 바로 다시 시도한다. */
+const FB_EXTRA_RETRY_MS = 300000;   // 5분
+let __fbExtraRetryAt = 0;           // 이 시각 전까지는 새 필드를 빼고 보낸다
+function fbExtraFieldsOk(){ return Date.now() >= __fbExtraRetryAt; }
 function fbBuildMyDoc(withExtra){
   const s = (typeof STATS === 'object' && STATS) ? STATS : {};
   const extra = (withExtra === false) ? {} : {
@@ -24057,6 +24065,9 @@ function fbPushProfileSoon(){
     if(typeof isBanned === 'function' && isBanned()) return;
     if(typeof fbAvailable === 'function' && !fbAvailable()) return;
     clearTimeout(__fbProfilePushT);
+    /* ★ [Ver 16.1.1] 사용자가 직접 프로필을 바꾼 순간이다 — 5분을 기다리지 않고
+       새 필드를 붙여 바로 시도한다. 규칙이 올라가 있으면 그 자리에서 붙는다. */
+    __fbExtraRetryAt = 0;
     __fbProfilePushT = setTimeout(()=>{
       try{
         fbRetryIfHidden(()=> fbSubmitScore())
@@ -24080,14 +24091,15 @@ async function fbSubmitScore(){
   const { doc, setDoc } = FB.mod;
   const ref = doc(FB.db, 'players', FB.uid);
   try{
-    await setDoc(ref, fbBuildMyDoc(__fbExtraFieldsOk));
+    await setDoc(ref, fbBuildMyDoc(fbExtraFieldsOk()));
   }catch(e){
     /* [Ver 13.15] 규칙을 아직 안 올린 서버는 새 필드(lv·pfp) 때문에 쓰기를 통째로 거부한다.
        그 경우 **한 번만** 새 필드를 빼고 다시 보낸다 — 리더보드가 죽는 것보다 낫다.
-       (규칙을 올리면 다음 실행부터 저절로 다시 붙는다) */
-    if(__fbExtraFieldsOk && e && e.code === 'permission-denied'){
-      __fbExtraFieldsOk = false;
-      console.warn('[리더보드] 새 필드(lv·pfp·fp)가 거부되어 빼고 다시 보냅니다 — firestore.rules 를 올려주세요.');
+       ★ [Ver 16.1.1] 여기서 영구히 끄면 규칙을 올려도 새로고침 전까지 안 붙는다.
+         5분만 쉬었다가 저절로 다시 시도한다. */
+    if(fbExtraFieldsOk() && e && e.code === 'permission-denied'){
+      __fbExtraRetryAt = Date.now() + FB_EXTRA_RETRY_MS;
+      console.warn('[리더보드] 새 필드(lv·pfp·fp)가 거부되어 빼고 다시 보냅니다 — firestore.rules 를 올려주세요. 5분 뒤 다시 시도합니다.');
       await setDoc(ref, fbBuildMyDoc(false));
     } else throw e;
   }
@@ -30828,6 +30840,12 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 16.1.1', date: '2026-09-15',
+    items: [
+      '\u{1F5BC}\ufe0f <b>[수정] 프로필 사진을 바꿔도 리더보드의 내 얼굴이 안 바뀌던 문제.</b> 기록 올리기가 한 번 거부되면 <b>그 탭이 켜져 있는 내내</b> 프사·레벨을 빼고 보냈습니다. 기록 문서는 통째로 덮어쓰기 때문에 <b>전에 올라가 있던 프사까지 지워졌습니다.</b><br>이제 <b>5분 뒤 저절로 다시 시도</b>하고, 프사·닉네임·상태메시지를 직접 바꾼 순간에는 <b>기다리지 않고 바로</b> 다시 올립니다.',
+    ]
+  },
   {
     version: 'Ver 16.1', date: '2026-09-15',
     items: [
