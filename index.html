@@ -9203,7 +9203,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.1.4</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.2</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -12492,6 +12492,8 @@ function teamBattleDefect(caster){
   if(from !== TEAM_RED && from !== TEAM_BLUE) return false;
   const to = from === TEAM_RED ? TEAM_BLUE : TEAM_RED;
   caster.team = to;
+  /* [Ver 16.2] 배신류 카드가 전부 이 관문을 지난다 */
+  try{ botEmote(caster, 'betray', 3500); botsMock(caster, 'watch'); }catch(e){}
   log('highlight', `🔁 ${J(caster.name,'이','가')} ${teamBattleLabel(from)}${Jp(teamBattleLabel(from),'을','를')} 배신하고 ${teamBattleLabel(to)}으로 전향했습니다! (${teamAliveCount(TEAM_RED)} : ${teamAliveCount(TEAM_BLUE)})`);
   renderBoard();
   return true;
@@ -13739,6 +13741,7 @@ const STORAGE_KEYS = {
   equippedPowers: 'gang_card_powers_eq_v1',  // [Ver 13.1] 장착 권능 3슬롯 [key|null x3]
   artifacts: 'gang_card_artifacts_v1',    // [Ver 9.11] 유물 보유량 { key: 조각수 }
   pickaxe: 'gang_card_pickaxe_v1',        // [Ver 9.11] 곡괭이 { n, at } — at은 마지막 충전 시각
+  pickDay: 'gang_card_pickday_v1',        // [Ver 16.2] 오늘 쓴 곡괭이 { day, n }
   goldPickaxe: 'gang_card_gold_pickaxe_v1', // [Ver 9.16] 개쩌는 곡괭이 (강화 성공분 · 상자 드롭)
   boxKeys: 'gang_card_box_keys_v1',       // [Ver 9.16] 우빈이의 수상한 상자 열쇠
   /* [Ver 14.5] 랩터의 권능 '특성' — 권능석으로 뽑는다.
@@ -15154,7 +15157,7 @@ function awardUbiniteForPlacement(placement){
   return n;
 }
 /* [Ver 9.11] 1등·2등을 하면 30% 확률로 곡괭이 1개를 준다.
-   (곡괭이는 평소 10분에 1개씩 차오르므로, 이건 잘한 판에 붙는 덤이다) */
+   (곡괭이는 평소 PICKAXE_REGEN_MS 마다 1개씩 차오르므로, 이건 잘한 판에 붙는 덤이다) */
 /* [Ver 15.4] 1~2등 30% → **1등만 25%**. "승리하면" 주는 것으로 좁혔다. */
 const PICKAXE_WIN_CHANCE = 0.25;
 function awardPickaxeForPlacement(placement){
@@ -16211,8 +16214,8 @@ const BOT_EMO_COOL_MS = 7000;
 /* ★ [Ver 16.1.3] 전체 빈도 손잡이. 아래 상황별 확률에 **곱해진다.**
    ⚠ 시끄럽다/조용하다는 말이 나오면 **이 값 하나만** 만질 것.
      상황별 확률을 일일이 깎으면 애써 맞춘 균형이 무너진다.
-     1.00 = 16.1.2 그대로 · 0.65 = 약 30% 적게(측정값) */
-const BOT_EMO_RATE = 0.65;
+     [Ver 16.2] 상황이 19개 → 34개가 되면서 0.65 → 0.80. 측정: 분당 약 13회(봇 3명 합) */
+const BOT_EMO_RATE = 0.80;
 /* 말풍선이 뜨기까지의 기본 지연(ms). 사람처럼 조금 늦게 반응한다.
    ⚠ 여럿이 같은 순간에 불리면 이 폭 안에서 흩어진다 — 좁으면 우르르 몰린다. */
 const BOT_EMO_SPREAD_MS = 1400;
@@ -16262,6 +16265,46 @@ const BOT_EMO_SITU = {
   badHand: [0.45, ['art_09','art_16','art_11','art_18','art_14','gif_07']],
   // 좋은 카드가 들어왔다 — 잘난척 · 행복 · 음흉
   goodCard:[0.75, ['art_04','art_12','art_20','gif_06','art_06','art_10']],
+
+  /* ══════ [Ver 16.2] 여기서부터 새로 생긴 자리 ══════
+     ⚠ 후보는 **덜 쓰이던 이모티콘부터** 넣었다(몽둥이·차가움·분노·절망·저격·항복할게).
+       음흉/박수/AURA 로만 채우면 늘 같은 얼굴만 보인다. */
+
+  /* ── 자주 있는 소소한 순간 ── */
+  // 내 공격이 빗나갔다 — 분노 · 망했네 · 한숨
+  missed:  [0.55, ['art_13','art_15','art_09','art_17','art_01']],
+  // 남이 빗나간 걸 봤다 — 비웃음
+  sawMiss: [0.45, ['gif_05','gif_04','art_10','gif_03','art_11']],
+  // 몸놀림으로 피했다 — 어림도없지 · 차가움
+  evaded:  [0.70, ['art_02','art_01','art_20','art_10','art_04']],
+  // 연회장 퀘스트를 달성했다 — 박수 · 행복
+  quest:   [0.70, ['art_10','art_12','art_04','gif_06']],
+
+  /* ── 드물고 극적인 순간 ── */
+  // 연인이 나 대신 죽었다 — 판에서 제일 슬픈 순간
+  heartbreak:[0.90, ['art_14','gif_08','gif_07','art_15','art_18']],
+  // 맺어졌다 (프러포즈 · 결혼식)
+  lover:   [0.85, ['art_12','art_10','gif_06','art_20','art_03']],
+  // 되살아났다 / 남이 살아나는 걸 봤다
+  revived: [0.85, ['gif_06','art_12','art_04','art_10','art_06']],
+  // 배신했다 · 전향했다 — 협박 · 저격 · 몽둥이
+  betray:  [0.85, ['gif_01','art_20','art_05','gif_02','art_13']],
+  // 탄핵 당첨 — 하필 나다
+  impeached:[0.80, ['art_09','art_13','art_18','art_16','gif_07']],
+  // 스턴·경직으로 굳었다
+  stunned: [0.55, ['art_09','art_17','art_13','art_11','gif_04']],
+  // 격리에 갇혔다 / 돌아왔다
+  voided:  [0.70, ['gif_03','art_17','art_09','art_11','gif_08']],
+
+  /* ── 남을 건드리는 순간 ── */
+  // 내가 빼앗았다 — 음흉 · 잘난척
+  rob:     [0.80, ['art_20','art_04','gif_05','art_03','gif_02']],
+  // 내가 빼앗겼다 — 거지 · 분노
+  robbed:  [0.75, ['art_16','art_13','art_18','art_14','gif_02']],
+  // 같은 편이 죽었다
+  teamLoss:[0.80, ['art_14','gif_08','art_13','gif_07','art_08']],
+  // 체력이 20% 밑으로 떨어졌다 (래치로 한 번만)
+  lowHp:   [0.70, ['art_18','art_08','gif_07','art_14','art_09']],
 };
 
 /* [Ver 16.1.3] 누가 카드를 내는 걸 구경하는 봇들.
@@ -22299,7 +22342,8 @@ function artUbiniteMult(){ return 1 + artMine('ring')/100; }
 /* ==========================================================================
    [Ver 9.11] 곡괭이 — 유물 광산의 입장료
    --------------------------------------------------------------------------
-   ▶ 평소에는 최대 5개까지만 갖고, 5개 미만이면 **10분에 1개씩** 저절로 찬다.
+   ▶ 평소에는 최대 5개까지만 갖고, 5개 미만이면 **PICKAXE_REGEN_MS 마다 1개씩** 저절로 찬다.
+     [Ver 16.2] 여기에 더해 **하루 PICKAXE_DAILY_MAX(15)개**까지만 쓸 수 있다.
    ▶ 게임 보상 등으로 받은 곡괭이는 5개를 넘겨서도 쌓인다. 다만 5개를 넘긴 동안에는
      자동 충전이 멈춘다(넘치는 만큼은 "덤"이지 저장고가 커지는 게 아니다).
    ▶ 저장 형식: { n: 보유수, at: 마지막 충전 기준 시각 }
@@ -22370,8 +22414,38 @@ function pickaxeCap(){
 }
 /* [구버전 호환] 옛 이름을 읽는 코드가 남아 있어도 기본값은 보이게 둔다. */
 const PICKAXE_CAP = PICKAXE_CAP_BASE;        // 자동 충전이 차오르는 상한(기본값)
-/* [Ver 15.4] 10분 → 30분. 돌 채굴로 보상이 크게 올라 공급을 조인다. */
-const PICKAXE_REGEN_MS = 30 * 60 * 1000;     // 30분에 1개
+/* [Ver 15.4] 10분 → 30분. 돌 채굴로 보상이 크게 올라 공급을 조인다.
+   [Ver 16.2] 30분 → 60분. 하루 한도(PICKAXE_DAILY_MAX)와 같이 들어간 조정이다.
+   ⚠ 이 숫자를 안내 문구에 **그대로 적지 말 것.** 상수를 읽어서 찍는다 —
+     15.4 에서 한 군데를 놓쳐 "10분에 1개씩"이 한참 남아 있었다. */
+const PICKAXE_REGEN_MS = 60 * 60 * 1000;     // 1시간에 1개
+
+/* ★ [Ver 16.2] 하루에 쓸 수 있는 곡괭이 수.
+   ⚠ 날짜는 **서버 보정 시각**(todayKey)으로 센다. PC 시계로 세면 날짜를 돌려
+     하루에 몇 번이고 다시 캘 수 있다.
+   ⚠ 개쩌는 곡괭이는 여기 넣지 않는다 — 별개 자원이고 만드는 비용이 따로 든다. */
+const PICKAXE_DAILY_MAX = 15;
+let __pickDay = null;
+function loadPickDay(){
+  if(__pickDay && __pickDay.day === todayKey()) return __pickDay;
+  let o = null;
+  try{ o = JSON.parse(localStorage.getItem(STORAGE_KEYS.pickDay) || 'null'); }catch(e){ o = null; }
+  if(!o || o.day !== todayKey()) o = { day: todayKey(), n: 0 };
+  __pickDay = o;
+  return o;
+}
+function savePickDay(){ try{ localStorage.setItem(STORAGE_KEYS.pickDay, JSON.stringify(loadPickDay())); }catch(e){} }
+function pickaxeUsedToday(){ return Math.max(0, loadPickDay().n | 0); }
+function pickaxeLeftToday(){ return Math.max(0, PICKAXE_DAILY_MAX - pickaxeUsedToday()); }
+/* 이만큼 쓸 수 있나 — 못 쓰면 **왜 못 쓰는지** 글로 돌려준다. 쓸 수 있으면 null. */
+function pickaxeDailyBlock(n){
+  n = Math.max(1, n | 0);
+  const left = pickaxeLeftToday();
+  if(n <= left) return null;
+  return `오늘 쓸 수 있는 곡괭이를 다 썼습니다.<br><br>
+    하루 <b>${PICKAXE_DAILY_MAX}개</b> · 오늘 사용 <b>${pickaxeUsedToday()}개</b> · 남은 <b>${left}개</b><br><br>
+    <span style="font-size:12px;color:var(--fg-dim);">자정(서버 시각)에 다시 채워집니다. 곡괭이는 사라지지 않으니 내일 그대로 쓸 수 있습니다.</span>`;
+}
 let PICKAXE = null;
 function loadPickaxe(){
   if(PICKAXE) return PICKAXE;
@@ -22505,6 +22579,10 @@ function spendPickaxe(n){
   tickPickaxeRegen();
   const s = loadPickaxe();
   if(s.n < n) return false;
+  /* ★ [Ver 16.2] 하루 한도. 곡괭이를 쓰는 모든 길이 이 함수를 지나므로 여기서 한 번만 센다.
+     ⚠ 부르는 쪽은 pickaxeDailyBlock() 으로 **미리** 물어보고 이유를 보여줄 것 —
+       여기서 그냥 false 면 버튼이 먹통처럼 보인다. */
+  if(pickaxeDailyBlock(n)) return false;
   const wasFull = s.n >= pickaxeCap();
   const __before = s.n;
   s.n -= n;
@@ -22513,6 +22591,8 @@ function spendPickaxe(n){
   // 가득 찬 상태에서 처음 쓴 순간부터 충전 시계가 다시 돈다
   if(wasFull) s.at = ggNow();
   savePickaxe();
+  /* [Ver 16.2] 오늘 쓴 만큼 적어둔다 */
+  try{ const d = loadPickDay(); d.n = (d.n | 0) + n; savePickDay(); }catch(e){}
   bumpSpendOdo('pickaxe', n);   // [Ver 13.17] 소비 계기판
   return true;
 }
@@ -25493,6 +25573,39 @@ async function fbLookupRemoteCode(code){
    ########################################################################## */
 const BALANCE_PATCHES = [
   {
+    version: 'Ver 16.2', date: '2026-09-15',
+    groups: [
+      { title:'채굴 — 수도꼭지를 조이고, 대신 맨 위를 열었습니다', kind:'econ',
+        note:'돌에서 <b>카드 뽑기 10+1권 · 랜덤 전설 권능 · Ephemeral 확정 진화석</b>이 나오기 시작합니다. ' +
+             '그만큼 <b>공급을 같이 줄이지 않으면</b> 최상위 자원이 무한정 쌓입니다.<br><br>' +
+             '그래서 충전을 <b>30분 → 1시간</b>으로, 여기에 더해 <b>하루 15개</b> 한도를 뒀습니다. ' +
+             '한도는 곡괭이를 <b>없애는 것이 아니라 미루는 것</b>입니다 — 안 쓴 곡괭이는 그대로 남습니다.<br><br>' +
+             '<b>권능석은 오히려 더 귀해졌습니다.</b> 새 보상 셋이 권능석보다 흔하도록 잡았고, ' +
+             '권능석은 <b>와일드 진화석과 함께 게임에서 가장 희귀한 자원</b> 자리를 지킵니다.',
+        rows:[
+          { name:'곡괭이', icon:'⛏️', rows:[
+            { label:'자동 충전',        from:'30분에 1개', to:'<b>1시간</b>에 1개', dir:'down' },
+            { label:'하루 사용 한도',    from:'없음',       to:'<b>15개</b>',        dir:'down' },
+          ]},
+          { name:'돌 내용물 — 일반 곡괭이', icon:'🪨', rows:[
+            { label:'권능석',              from:'2%',   to:'<b>0.5%</b>', dir:'down' },
+            { label:'카드 뽑기 10+1권',     from:'없음', to:'<b>1.5%</b>', dir:'up' },
+            { label:'랜덤 전설 권능',       from:'없음', to:'<b>1.2%</b>', dir:'up' },
+            { label:'Ephemeral 확정 진화석', from:'없음', to:'<b>0.8%</b>', dir:'up' },
+            { label:'유물',                from:'62%',  to:'60%',        dir:'down' },
+          ]},
+          { name:'돌 내용물 — 개쩌는 곡괭이', icon:'🪙', rows:[
+            { label:'권능석',              from:'1.5%', to:'<b>0.4%</b>', dir:'down' },
+            { label:'카드 뽑기 10+1권',     from:'없음', to:'<b>1.5%</b>', dir:'up' },
+            { label:'랜덤 전설 권능',       from:'없음', to:'<b>1.0%</b>', dir:'up' },
+            { label:'Ephemeral 확정 진화석', from:'없음', to:'<b>0.7%</b>', dir:'up' },
+            { label:'유물',                from:'88.5%', to:'86.4%',      dir:'down' },
+          ]},
+        ]
+      },
+    ]
+  },
+  {
     version: 'Ver 15.10', date: '2026-09-13',
     groups: [
       { title:'곡괭이 — 개수는 줄었지만, 한 개가 하는 일이 커졌습니다', kind:'econ',
@@ -27852,7 +27965,7 @@ try{ window.addEventListener('pagehide', ()=>{ try{ actFlush(true); }catch(e){} 
      전부 **판을 끝내면** 나온다. 그런데 settleTierForHuman 은 튜토리얼·놀이터만
      거르고, 판이 얼마나 걸렸는지도 카드를 몇 장 냈는지도 보지 않는다.
      그래서 "봇전을 무한히 돌리는 매크로"가 그대로 수도꼭지가 됐다.
-     (곡괭이 자연 충전은 10분에 1개로 묶여 있는데, 판 보상만 상한이 없었다)
+     (곡괭이 자연 충전은 PICKAXE_REGEN_MS 로 묶여 있는데, 판 보상만 상한이 없었다)
 
    ▶ 왜 확률·상한을 건드리지 않았나
      판수 점감이나 하루 상한은 매크로보다 **많이 노는 사람**을 먼저 때린다.
@@ -28111,7 +28224,7 @@ function hgMineMetronome(){
 }
 
 /* ★ [Ver 15.1] 쿨타임 추종 — 이번에 새로 넣은, 가장 사람답지 않은 신호.
-   곡괭이는 10분에 하나씩 찬다. **차오르자마자 오는 것**이 매크로의 본질이다.
+   곡괭이는 PICKAXE_REGEN_MS 마다 하나씩 찬다. **차오르자마자 오는 것**이 매크로의 본질이다.
    간격의 중앙값이 충전 주기의 배수(1배~상한배)에 들어맞으면 잡는다.
    ⚠ 사람은 쌓인 걸 몰아서 캔다 — 간격이 주기와 무관하게 흩어진다. */
 function hgMineFollowsCooldown(){
@@ -28218,7 +28331,7 @@ function hgMaybeChallenge(where){
    [Ver 13.17] 백업·복원 연타 제한
    --------------------------------------------------------------------------
    ▶ 왜 — 세이브 롤백은 "백업 → 잃음 → 복원"을 **빠르게 반복**해야 이득이 난다.
-     한 번 도는 데 24시간이 걸리면 곡괭이 자연 충전(10분에 1개)보다 훨씬 손해라,
+     한 번 도는 데 24시간이 걸리면 곡괭이 자연 충전(PICKAXE_REGEN_MS 마다 1개)보다 훨씬 손해라,
      수법 자체가 의미를 잃는다.
    ▶ 정상 사용에는 걸리지 않는다. 백업·복원은 기기를 옮길 때 한두 번 쓰는 기능이다.
    ⚠ 자동 백업은 제한하지 않는다. 그건 사람이 누르는 게 아니라 진행도를 지키는 장치라,
@@ -28705,7 +28818,8 @@ function renderMineScreen(){
 
 
     <div class="mine-note">
-      곡괭이는 <b>${pickaxeCap()}개</b>까지 <b>10분에 1개씩</b> 저절로 찹니다.
+      곡괭이는 <b>${pickaxeCap()}개</b>까지 <b>${Math.round(PICKAXE_REGEN_MS/60000)}분에 1개씩</b> 저절로 찹니다.
+      오늘 쓴 곡괭이 <b>${pickaxeUsedToday()}</b> / ${PICKAXE_DAILY_MAX}개 — 남은 <b>${pickaxeLeftToday()}개</b>.
       게임에서 <b>1등·2등</b>을 하면 30% 확률로 1개를 더 받습니다.
       (보상으로 받은 곡괭이는 ${pickaxeCap()}개를 넘겨서도 쌓이지만, 넘긴 동안에는 저절로 차지 않습니다)
     </div>
@@ -28874,9 +28988,16 @@ function doMine(count){
   if(mineBusy) return;
   count = Math.max(1, count|0);
   if(pickaxeCount() < count){
+    /* ⚠ [Ver 16.2] 충전 시간을 **글자로 박지 않는다.** 여기 "10분에 1개씩"이
+       상수가 30분으로 바뀐 뒤에도 한참 남아 있었다. */
     showModal('⛏️ 곡괭이 부족', `곡괭이가 <b>${count}개</b> 필요합니다. (보유 ${pickaxeCount()}개)<br><br>
-      <span style="font-size:12px;color:var(--fg-dim);">곡괭이는 10분에 1개씩 차오릅니다. 게임에서 1등·2등을 하면 30% 확률로 1개를 더 받습니다.</span>`, [{label:'확인', solid:true}]);
+      <span style="font-size:12px;color:var(--fg-dim);">곡괭이는 ${Math.round(PICKAXE_REGEN_MS/60000)}분에 1개씩 차오릅니다. 게임에서 1등·2등을 하면 30% 확률로 1개를 더 받습니다.</span>`, [{label:'확인', solid:true}]);
     return;
+  }
+  /* ★ [Ver 16.2] 하루 한도 */
+  {
+    const __blk = pickaxeDailyBlock(count);
+    if(__blk){ showModal('⛏️ 오늘 채굴 한도', __blk, [{label:'확인', solid:true}]); return; }
   }
   if(!hgMineGate()) return;   // [Ver 14.14] 매크로 잠금 · 사람 확인
   /* ★ [Ver 15.3] 베팅 — 곡괭이를 몇 개 걸든 판은 **한 번**이다.
@@ -29046,6 +29167,11 @@ function runPickaxeUpgrade(n){
   /* ⚠ [Ver 14.14] 여기가 **모아둔 곡괭이를 한꺼번에 바꾸는** 자리다.
      제보된 수법의 마지막 단계라 반드시 막아야 한다. */
   if(!hgMineGate()) return;
+  /* ★ [Ver 16.2] 강화도 곡괭이를 **쓰는** 것이라 하루 한도에 들어간다 */
+  {
+    const __blk = pickaxeDailyBlock(n);
+    if(__blk){ showModal('⛏️ 오늘 한도', __blk, [{label:'확인', solid:true}]); return; }
+  }
   if(!spendPickaxe(n)) return;
   mineBusy = true;
   let ok = 0;
@@ -29106,8 +29232,13 @@ let __mrock = null;
    빈 돌은 확률이 아니라 **배치**다 — 다섯 중 정확히 둘이 빈 돌이고(MROCK_BLANKS),
    이 표는 "빈 돌이 아닌 나머지 셋"이 무엇이 될지만 정한다.
    여기에 'none' 을 도로 넣으면 고정 2개와 겹쳐 다섯이 전부 빌 수 있다. */
+/* ⚠ [Ver 16.2] 맨 아래 넷은 **최상위 보상**이다. 희귀도 순서가 정해져 있다 —
+     권능석(가장 낮음) < 에피메랄 확정권 < 랜덤 전설 권능 < 10+1 뽑기권.
+     와일드 진화석과 함께 권능석이 게임에서 가장 희귀한 자원이다.
+   ⚠ 넷 다 `noMult:true` — 곡괭이를 여러 개 걸어도 **1개만** 나온다.
+     안 그러면 곡괭이 10개로 전설 권능 10개가 나와 희귀하다는 말이 무의미해진다. */
 const MROCK_FILL = [
-  { key:'artifact', w:62,  ic:'\u{1F3FA}', name:'유물' },
+  { key:'artifact', w:60,  ic:'\u{1F3FA}', name:'유물' },
   /* [Ver 15.4] 개수 절반(250~900 → 125~450) · 대신 확률 두 배(9 → 18).
      총량은 비슷하되 **더 자주** 보이게 한다. */
   { key:'ubinite',  w:18,  ic:'\u{1F48E}', name:'우비나이트', min:125, max:450 },
@@ -29116,19 +29247,27 @@ const MROCK_FILL = [
   { key:'claws',    w:10,  ic:'\u{1F9B4}', name:'우빈랩터의 발톱', min:5, max:20 },
   { key:'teeth',    w:5,   ic:'\u{1F9B7}', name:'랩터의 이빨', min:1, max:3 },
   { key:'gold',     w:3,   ic:'\u{1FA99}', name:'개쩌는 곡괭이', min:1, max:1 },
-  { key:'stone',    w:2,   ic:'\u{1F537}', name:'권능석', min:1, max:1 },
+  /* ---- 최상위 (아래로 갈수록 귀하다) ---- */
+  { key:'ticket',   w:1.5, ic:'\u{1F39F}️', name:'카드 뽑기 10+1권', min:1, max:1, noMult:true },
+  { key:'legend',   w:1.2, ic:'\u{1F451}', name:'랜덤 전설 권능', min:1, max:1, noMult:true },
+  { key:'eph',      w:0.8, ic:'\u{1F3AB}', name:'Ephemeral 확정 진화석', min:1, max:1, noMult:true },
+  { key:'stone',    w:0.5, ic:'\u{1F537}', name:'권능석', min:1, max:1, noMult:true },
 ];
 /* 빈 돌을 그릴 때 쓰는 생김새. 표에서 뺐으므로 따로 들고 있는다. */
 const MROCK_NONE = { key:'none', ic:'\u{1F32B}️', name:'아무것도 없음' };
 /* 개쩌는 곡괭이로 캔 돌 — 꽝이 없고 유물이 더 자주 나온다 */
 const MROCK_FILL_GOLD = [
-  { key:'artifact', w:88.5, ic:'\u{1F3FA}', name:'유물' },
+  { key:'artifact', w:86.4, ic:'\u{1F3FA}', name:'유물' },
   { key:'teeth',    w:4,   ic:'\u{1F9B7}', name:'랩터의 이빨', min:2, max:5 },
   /* [Ver 15.4] 우비나이트 개수 절반(600~1800 → 300~900) · 확률 두 배(1.5 → 3) */
   { key:'ubinite',  w:3,   ic:'\u{1F48E}', name:'우비나이트', min:300, max:900 },
   { key:'claws',    w:1,   ic:'\u{1F9B4}', name:'우빈랩터의 발톱', min:20, max:60 },
   { key:'gold',     w:2,   ic:'\u{1FA99}', name:'개쩌는 곡괭이', min:1, max:1 },
-  { key:'stone',    w:1.5, ic:'\u{1F537}', name:'권능석', min:1, max:1 },
+  /* ---- 최상위 (일반 돌과 같은 순서, 조금씩 더 잘 나온다) ---- */
+  { key:'ticket',   w:1.5, ic:'\u{1F39F}️', name:'카드 뽑기 10+1권', min:1, max:1, noMult:true },
+  { key:'legend',   w:1.0, ic:'\u{1F451}', name:'랜덤 전설 권능', min:1, max:1, noMult:true },
+  { key:'eph',      w:0.7, ic:'\u{1F3AB}', name:'Ephemeral 확정 진화석', min:1, max:1, noMult:true },
+  { key:'stone',    w:0.4, ic:'\u{1F537}', name:'권능석', min:1, max:1, noMult:true },
 ];
 function mrockRand(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
 function mrockRollFill(gold){
@@ -29142,6 +29281,11 @@ function mrockRollFill(gold){
 function mrockMakeFill(gold, rollArtifact, mult){
   mult = Math.max(1, mult | 0);
   const t = mrockRollFill(gold);
+  /* ★ [Ver 16.2] 최상위 보상(권능석·에피메랄·전설권능·뽑기권)은 **배율을 받지 않는다.**
+     곡괭이 10개를 걸었다고 전설 권능 10개가 나오면 '가장 희귀한 자원'이라는 말이 무의미해진다.
+     ⚠ o.mult 는 화면에도 쓰인다 — 여기서 같이 1 로 낮춰야 "×10" 이라 써놓고
+       1개만 주는 거짓말이 안 된다. */
+  if(t.noMult) mult = 1;
   const o = { key:t.key, ic:t.ic, name:t.name, n:0, art:null, arts:[], mult };
   if(t.key === 'artifact'){
     try{
@@ -29171,6 +29315,11 @@ function mrockGive(f){
       case 'teeth':   grantTeeth(f.n); break;
       case 'gold':    grantGoldPickaxe(f.n); break;
       case 'stone':   grantPwStones(f.n); break;
+      /* [Ver 16.2] 최상위 보상 셋. 팝업 스토어 블랙마켓이 쓰던 함수를 그대로 쓴다.
+         ⚠ 여기 빠뜨리면 default 로 떨어져 **나왔는데 안 들어온다.** */
+      case 'ticket':  grantGachaTickets(11); break;
+      case 'legend':  popGrantUnownedLegend(); break;
+      case 'eph':     grantEvoPick('Ephemeral', 1); break;
       default: break;   // 'none' — 아무것도 없다
     }
   }catch(e){ console.error('[채굴] 지급 실패', e); }
@@ -31067,6 +31216,15 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 16.2', date: '2026-09-15',
+    items: [
+      '⛏️ <b>[조정] 곡괭이 충전이 <b>30분 → 1시간</b>, 하루에 <b>15개</b>까지만 쓸 수 있습니다.</b> 돌에서 나오는 것이 세지는 만큼 수도꼭지를 같이 조입니다.<br><span style="font-size:11.5px;color:var(--fg-dim);">한도는 자정(서버 시각)에 풀리고, 곡괭이 자체는 사라지지 않으니 내일 그대로 쓸 수 있습니다. 개쩌는 곡괭이는 한도에 들어가지 않습니다.</span>',
+      '🔷 <b>[신규] 돌에서 나오는 최상위 보상 3종.</b> <b>카드 뽑기 10+1권</b> · <b>랜덤 전설 권능</b> · <b>Ephemeral 확정 진화석</b>이 아주 낮은 확률로 나옵니다.<br>대신 <b>권능석 확률을 크게 낮췄습니다</b> — 일반 <b>2% → 0.5%</b>, 개쩌는 <b>1.5% → 0.4%</b>. 권능석은 <b>와일드 진화석과 함께 게임에서 가장 희귀한 자원</b>입니다.<br><span style="font-size:11.5px;color:var(--fg-dim);">이 넷은 곡괭이를 여러 개 걸어도 <b>1개만</b> 나옵니다. 배율까지 받으면 희귀하다는 말이 무의미해집니다.</span>',
+      '🗣️ <b>[개선] 봇이 말하는 상황이 <b>19개 → 34개</b>로 늘었습니다.</b><br>• 공격이 <b>빗나갔을 때</b>, 그걸 <b>구경한 봇들</b> • <b>회피</b>했을 때 • <b>무효화</b>하거나 당했을 때<br>• <b>상점</b>에서 사고 팔 때 • <b>연회장 퀘스트</b>를 달성했을 때 • 체력이 <b>바닥</b>일 때<br>• <b>연인</b>이 되거나 <b>대신 죽었을 때</b> • <b>부활</b>·<b>배신</b>·<b>탄핵</b>·<b>스턴</b>·<b>격리</b>·<b>강탈</b> • <b>같은 편</b>이 죽었을 때',
+      '🐛 <b>[수정] 한 번도 뜬 적 없던 이모티콘 상황 3개.</b> <b>막혔을 때 · 돈이 바닥났을 때 · 좋은 것을 얻었을 때</b>가 표에만 있고 실제로는 어디서도 불리지 않고 있었습니다(16.0부터). 이제 제대로 뜹니다.',
+    ]
+  },
   {
     version: 'Ver 16.1.4', date: '2026-09-15',
     items: [
@@ -38250,6 +38408,7 @@ function hallOnProgress(p){
       grantGold(p, q.gold);
       if(isMyPlayer(p)) showHallToast('quest', `${q.icon} ${q.name}`, `+${q.gold}골드`);
       log('gold', `📋 연회장 퀘스트 — ${J(p.name,'이','가')} "${q.name}"을(를) 달성해 ${fmtWon(q.gold)}를 받았습니다.`);
+      try{ botEmote(p, 'quest', 3000); }catch(e){}   // [Ver 16.2]
     });
   }catch(e){}
   /* ② 현상금 — 먼저 채운 사람이 가져간다 */
@@ -48015,6 +48174,8 @@ function syncDeathScreenWithLife(){
 function forceReviveIfPossible(p){
   const ok = forceReviveIfPossibleCore(p);
   if(ok){
+    /* [Ver 16.2] 부활 수단 6종이 전부 이 래퍼를 지난다 — 한 줄로 다 걸린다 */
+    try{ botEmote(p, 'revived', 3500); botsMock(p, 'watch'); }catch(e){}
     /* 되살아났으니 탈락 순번에서 빼준다 (사망 시 onPlayerDeath가 넣어둔 기록) */
     try{
       const eoIdx = eliminationOrder.indexOf(p.id);
@@ -58169,6 +58330,7 @@ function resolveCardEffect(caster, card, targetId, onDone){
             actualTarget.rigidTurns = Math.max(actualTarget.rigidTurns, rigidTurns);
           });
           log('sys', `${J(target.name,'이','가')} ${card.name}에 적중당해 ${stunTurns}턴간 스턴 및 경직 상태가 되었습니다!`);
+          try{ botEmote(target, 'stunned', 3000); }catch(e){}   // [Ver 16.2]
           renderBoard();
         }
       }
@@ -60243,6 +60405,7 @@ function resolveCardEffect(caster, card, targetId, onDone){
       if(caster.loverId || target.loverId){ log('sys', `이미 연인이 있어 "${card.name}" 효과가 무산되었습니다.`); onDone({}); return; }
       makeAllyWithCaster(caster, target);
       caster.loverId = target.id; target.loverId = caster.id;
+      try{ botEmote(caster, 'lover', 3500); botEmote(target, 'lover', 3500); botsMock(caster, 'watch'); }catch(e){}   // [Ver 16.2]
       log('highlight', `💒 ${J(caster.name,'이','가')} ${target.name}과(와) 강제로 식을 올렸습니다! 둘은 아군이 되었고 <b>[연인]</b> 관계가 되었습니다.`);
       try{ syncLoverFx(); }catch(e){}
       /* 하객(신랑·신부를 뺀 생존자) — 축의금을 내거나, 못 내면 매를 맞는다. */
@@ -60417,6 +60580,7 @@ function resolveCardEffect(caster, card, targetId, onDone){
       picked.impeached = true;
       picked.impeachDueRound = turnCount + 2;
       try{ cardAudioTriggerKey('bgm', 'impeached', picked.id); }catch(e){} // [Ver 8.1.3] 탄핵 디버프 발동 시 BGM
+      try{ botEmote(picked, 'impeached', 3500); botsMock(picked, 'goja'); }catch(e){}   // [Ver 16.2] 하필 나다 / 남 일이라 웃는다
       log('sys', `랜덤 추첨 결과, ${J(picked.name,'이','가')} 탄핵 디버프를 받았습니다! (2바퀴간 지속) 이제 모두가 ${picked.name}에게만 카드를 쓸 수 있습니다.`);
       renderBoard();
       onDone({});
@@ -61064,6 +61228,7 @@ function resolveCardEffect(caster, card, targetId, onDone){
       if(tryNullify(target)){ onDone({}); return; }
       makeAllyWithCaster(caster, target);
       caster.loverId = target.id; target.loverId = caster.id;
+      try{ botEmote(caster, 'lover', 3500); botEmote(target, 'lover', 3500); botsMock(caster, 'watch'); }catch(e){}   // [Ver 16.2]
       log('highlight', `💍 ${J(caster.name,'이','가')} ${target.name}에게 프러포즈했습니다! 둘은 아군이 되었고 <b>[연인]</b> 관계가 되었습니다. 한쪽이 죽을 만한 공격을 받으면 다른 쪽이 대신 희생합니다.`);
       try{ syncLoverFx(); }catch(e){}
       renderBoard(); onDone({}); break;
@@ -64314,6 +64479,9 @@ function tryNullify(target){
     target.nullifyNext = false;
     if(isMyPlayer(target)) bumpStat('nullified'); // [Ver 5.7.1] 통계
     log('sys', `${J(target.name,'이','가')} 효과를 무효화했습니다!`);
+    /* [Ver 16.2] 카드 case 60여 곳이 전부 이 함수를 지난다 — 한 줄로 다 걸린다.
+       ⚠ 여기엔 시전자 객체가 없다. 막은 쪽만 반응한다. */
+    try{ botEmote(target, 'reflect', 3000); }catch(e){}
     renderBoard();
     return true;
   }
@@ -64538,7 +64706,12 @@ function onPlayerDeath(deadPlayer, cause, cardName){
     (players||[]).forEach(p=>{
       if(!p || !p.isBot) return;           // [Ver 16.1.4] 이미 죽은 봇도 구경한다
       if(p === deadPlayer || p.id === kid) return;
-      botEmote(p, 'watch', 4000);
+      /* [Ver 16.2] 같은 편이면 구경이 아니라 상심이다.
+         아군 = 같은 팀이거나 연인. 팀이 없는 판에서는 열리지 않는다
+         (같은 파일의 teamKill 업적이 쓰는 판정과 같은 식). */
+      const __ally = (p.team && deadPlayer && p.team === deadPlayer.team)
+                  || (deadPlayer && p.loverId === deadPlayer.id);
+      botEmote(p, __ally ? 'teamLoss' : 'watch', 4000);
     });
   }catch(e){}
   /* [Ver 10.5] 죽은 사람이 걸어둔 판 전체 효과를 정리한다. */
@@ -64885,6 +65058,9 @@ function forceKillWithRevive(target, cause, cardName){
       target.loverId = null; __lover.loverId = null;
       if(target.hp <= 0) target.hp = 1;
       log('highlight', `💔 ${J(__lover.name,'이','가')} 연인 ${target.name}을 살리기 위해 대신 희생했습니다!`);
+      /* ⚠ [Ver 16.2] forceKillAbsolute **앞**에서 부른다 — 그 안에서 onPlayerDeath 가
+         돌며 died/kill/watch 가 먼저 나가면 이게 쿨타임에 먹힌다. */
+      try{ botEmote(target, 'heartbreak', 3500); botsMock(__lover, 'heartbreak'); }catch(e){}
       forceKillAbsolute(__lover, `연인 ${target.name}을 대신한 희생`, '프러포즈');
       renderBoard();
       { __markRevive(); return true; }
@@ -65316,6 +65492,9 @@ function resolveMultiHitAttack(caster, target, hitAmount, hitCount, pierce){
     if(target.nullifyNext){
       target.nullifyNext = false;
       log('sys', `${J(target.name,'이','가')} 공격을 무효화했습니다!`);
+      /* [Ver 16.2] 막은 쪽은 으스대고, 막힌 쪽은 분해한다.
+         ⚠ 'blocked' 는 16.0 부터 표에만 있고 한 번도 불린 적이 없던 키다. */
+      try{ botEmote(target, 'reflect', 3000); botEmote(caster, 'blocked', 3000); }catch(e){}
       renderBoard();
       return false;
     }
@@ -65619,6 +65798,8 @@ function dealDamage(caster, target, amount, pierce, isAoe, deathChance, onHitRes
   if(evaded){
     try{ if(caster.curseDollTarget===target.id){ caster.curseDollStreak=0; caster.curseDollTarget=null; } }catch(e){} // [Ver 8.3.1] 저주인형 초기화
     log('sys', `${J(target.name,'이','가')} 뛰어난 몸놀림으로 ${caster.name}의 공격을 회피했습니다! (회피율 ${targetEvasion}%)`);
+    /* [Ver 16.2] 피한 쪽은 여유롭고, 헛친 쪽은 분하다 */
+    try{ botEmote(target, 'evaded', 3000); botEmote(caster, 'missed', 3000); }catch(e){}
     playMissSfx(caster); // [Ver 8.9.2] 회피로 빗나간 경우에도 소리를 낸다
     if(onHitResult) onHitResult(false);
     return false;
@@ -65632,6 +65813,8 @@ function dealDamage(caster, target, amount, pierce, isAoe, deathChance, onHitRes
     } else {
     log('sys', `${caster.name}의 공격이 빗나갔습니다! (명중률 ${Math.max(0,100+(caster.accuracyMod||0))}%)`);
     }
+    /* [Ver 16.2] 헛친 사람은 분해하고, 보던 사람들은 비웃는다 */
+    try{ botEmote(caster, 'missed', 3000); botsMock(caster, 'sawMiss'); }catch(e){}
     if(onHitResult) onHitResult(false);
     return false;
   }
@@ -65898,6 +66081,8 @@ function dealDamage(caster, target, amount, pierce, isAoe, deathChance, onHitRes
       target.gold -= take;
       caster.gold = (caster.gold||0) + take;
       log('gold', `${caster.name}의 "골드샷" 효과로 ${target.name}의 골드 ${fmtWon(take)}을(를) 빼앗았습니다.`);
+      /* [Ver 16.2] 가져간 쪽은 음흉하고, 털린 쪽은 분하다 */
+      try{ botEmote(caster, 'rob', 3000); botEmote(target, 'robbed', 3000); }catch(e){}
     }
   }
   if(onHitResult) onHitResult(true); // 실제로 대상에게 피해가 들어간, 진짜 "명중"이 확정된 시점
@@ -66078,6 +66263,8 @@ function beginExclusion(p, turns, label, fx){
   p.exclusionDueTurn = totalIndividualTurns + turns;
   p.exclusionLabel = label;
   p.exclusionReturnFx = fx;
+  /* [Ver 16.2] 격리 카드 11종이 전부 이 함수를 지난다 */
+  try{ botEmote(p, 'voided', 3000); }catch(e){}
 }
 
 /* 매 개인턴 시작마다(누구 턴이든) 전원을 검사해, 복귀 시점이 된 사람은 즉시 격리를 풀고 예약된 효과를 발동시킨다. */
@@ -66248,6 +66435,7 @@ function tickExclusionReturns(){
         log('sys', `🏃 ${J(p.name,'이','가')} "도주"에서 돌아왔지만, 최대체력이 1로 줄어든 상태입니다.`);
       }
       log('sys', `${J(p.name,'이','가')} 원래 있던 자리로 돌아왔습니다.`);
+      try{ botEmote(p, 'voided', 3000); }catch(e){}   // [Ver 16.2] 돌아왔다
       renderBoard();
       if(fx) fireExclusionReturn(p, fx);
     }
@@ -66832,6 +67020,18 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
     // [Ver 9.14] 우빈 리커버리 — "이번 바퀴에 입은 피해"를 재려면 사람별 누적 피해가 필요하다
     target.dmgTakenTotal = (target.dmgTakenTotal||0) + remaining;
     log('dmg', `${J(target.name,'이','가')} ${remaining.toLocaleString()} 피해 (HP ${Math.max(0,target.hp)}/${target.maxHp})`);
+    /* ★ [Ver 16.2] 체력이 20% 밑으로 떨어진 **그 순간** 한 번만.
+       ⚠ 이 자리는 연타·광역·독까지 전부 지난다 — 20타 카드 한 장에 20번 불린다.
+         래치가 없으면 같은 봇이 스무 번 떠든다. (구미호랩터의 nineTailedRaptorUsed 와 같은 방식)
+       ⚠ 회복해서 다시 올라가면 래치를 푼다. 안 그러면 판당 한 번뿐이다. */
+    try{
+      const __lim = Math.max(1, (target.maxHp || 2000) * 0.2);
+      if(target.alive && target.hp > 0 && target.hp <= __lim){
+        if(!target.__lowHpSaid){ target.__lowHpSaid = true; botEmote(target, 'lowHp', 3000); }
+      } else if(target.hp > __lim){
+        target.__lowHpSaid = false;
+      }
+    }catch(e){}
     // [Ver 5.8] 역학적에너지 보존의 법칙: 가장 최근 HP 감소량을 기록해둔다.
     lastHpLossAmount = remaining;
     // [Ver 5.8] 마조히스트: 피격당할 때마다 회복 + 영구 공격력 증가. 연속 공격은 타격마다 개별 적용된다.
@@ -66917,6 +67117,8 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
       target.hp = Math.max(1, target._hpPreHit || 1);
       target.loverId = null; __lover.loverId = null;
       log('highlight', `💔 ${J(__lover.name,'이','가')} 연인 ${target.name}을 살리기 위해 대신 희생했습니다! ${target.name}이 받을 치명적인 공격이 무효화됩니다.`);
+      /* ⚠ [Ver 16.2] forceKillAbsolute 앞에서 (위 주석과 같은 이유) */
+      try{ botEmote(target, 'heartbreak', 3500); botsMock(__lover, 'heartbreak'); }catch(e){}
       forceKillAbsolute(__lover, `연인 ${target.name}을 대신한 희생`, '프러포즈');
       renderBoard();
       return;
@@ -67380,6 +67582,8 @@ function botShopBuyStep(bot){
     else bot.freePurchase = false;
   }
   grantCardToPlayer(bot, mkUidCard(slot.card), '봇 상점 구매');
+  /* [Ver 16.2] 'lucky' 는 16.0 부터 표에만 있고 한 번도 불린 적이 없던 키다 — 여기서 되살린다 */
+  try{ botEmote(bot, 'lucky', 3000); }catch(e){}
   log('gold', `${J(bot.name,'이','가')} 상점에서 ${J(slot.card.name,'을','를')} ${wasFree?(raptorFree?'"랩터 팬클럽" 효과로 무료로':'무료로'):fmtWon(price)+'에'} 구매했습니다.`);
   /* [Ver 12.7] 무정부 — 봇도 사람과 똑같이 값을 몸으로 치른다. */
   if(anarchyActive && bot.alive){
@@ -67440,6 +67644,8 @@ function botMaybeRerollShop(bot){
     initShopSlots(bot);
     refreshFoundationShopSlots(bot);
     log('gold', `${J(bot.name,'이','가')} 살 만한 게 없어 ${rrCost>0?`${fmtWon(rrCost)}을 내고 `:''}상점을 리롤했습니다.`);
+    /* [Ver 16.2] 'broke' 도 죽어 있던 키다 — 살 게 없어 한숨 쉬는 자리에 맞다 */
+    try{ botEmote(bot, 'broke', 3000); }catch(e){}
     try{ renderBoard(); }catch(e){}
     return true;
   }catch(e){ return false; }
@@ -67904,6 +68110,7 @@ function botAutoSellJunk(bot){
   });
   grantGold(bot, total);
   log('gold', `${J(bot.name,'이','가')} 쓸모없어진 카드를 상점에 판매했습니다: ${names.join(', ')} → 총 ${fmtWon(total)}`);
+  try{ botEmote(bot, 'broke', 3000); }catch(e){}   // [Ver 16.2]
   renderHand(); renderBoard();
 }
 /* [버그수정] 봇이 자기 턴 도중(상점구매/도박/트릭 등 자유행동) 사망하면, 예전에는 그냥 return만 해서
