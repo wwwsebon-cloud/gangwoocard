@@ -833,6 +833,80 @@ input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border:0; border
   pointer-events:none;
 }
 
+/* ---------- [Ver 16.0] 랩터마트 / 팝업 스토어 반반 ---------- */
+.nm-mart-split{ display:flex; gap:var(--sp-2); flex:1 1 0; min-width:0; }
+.nm-mart-split > .nm-mart{ flex:1 1 0; min-width:0; }
+/* 팝업 스토어 — 늘 통통 튀어 눈에 띈다 */
+.nm-pop{ position:relative; animation:popBob 1.8s var(--ease-in-out) infinite; }
+@keyframes popBob{
+  0%,100%{ transform:translateY(0) scale(1); }
+  40%    { transform:translateY(-5px) scale(1.03); }
+  60%    { transform:translateY(-2px) scale(1.01); }
+}
+.nm-pop::after{
+  content:''; position:absolute; inset:0; border-radius:var(--r); pointer-events:none;
+  box-shadow:0 0 0 1.5px rgba(255,190,80,.65), 0 0 18px -2px rgba(255,180,60,.55);
+  animation:popGlow 1.8s var(--ease-in-out) infinite;
+}
+@keyframes popGlow{ 0%,100%{ opacity:.45; } 50%{ opacity:1; } }
+/* ⚠ 블랙마켓 — 색만 다르다. 글자로 알리지 않는다. */
+.nm-pop.black::after{
+  box-shadow:0 0 0 1.5px rgba(186,120,255,.8), 0 0 22px 0 rgba(150,70,255,.6);
+}
+.nm-pop.black{ animation:popBob 1.2s var(--ease-in-out) infinite; }
+@media (prefers-reduced-motion: reduce){ .nm-pop{ animation:none; } }
+
+/* ---------- [Ver 16.0] 팝업 스토어 창 ---------- */
+.pop-head{
+  display:flex; align-items:center; gap:12px; margin-bottom:14px;
+  padding:12px 14px; border-radius:13px;
+  background:linear-gradient(135deg, rgba(255,190,80,.14), rgba(255,140,40,.07));
+  box-shadow:inset 0 0 0 1px rgba(255,190,80,.35);
+}
+.pop-head.black{
+  background:linear-gradient(135deg, rgba(150,70,255,.18), rgba(80,30,140,.10));
+  box-shadow:inset 0 0 0 1px rgba(186,120,255,.45);
+}
+.pop-clerk{
+  width:66px; height:66px; object-fit:contain; flex:0 0 auto;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.35));
+  animation:rmBob 2.6s var(--ease-in-out) infinite; transform-origin:50% 100%;
+}
+.pop-head-tx b{ display:block; font-size:13.5px; font-weight:800; }
+.pop-head-tx small{ display:block; margin-top:3px; font-size:11.5px; color:var(--fg-dim); }
+.pop-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(146px, 1fr)); gap:10px; }
+.pop-card{
+  position:relative; display:flex; flex-direction:column; align-items:center; gap:7px;
+  padding:14px 10px 12px; cursor:pointer;
+  border:none; border-radius:14px; background:var(--bg-panel);
+  box-shadow:inset 0 0 0 1px var(--line);
+  transition:transform .12s var(--ease), box-shadow .12s var(--ease), background .12s var(--ease);
+}
+.pop-card:hover:not(:disabled){ transform:translateY(-3px); background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--accent), 0 8px 20px -10px rgba(0,0,0,.6); }
+.pop-card.done{ opacity:.42; cursor:not-allowed; }
+.pop-card.rare{ box-shadow:inset 0 0 0 1.5px rgba(186,120,255,.6); }
+.pop-card.free{ box-shadow:inset 0 0 0 1.5px rgba(120,220,150,.5); }
+.pop-ic{ font-size:38px; line-height:1; }
+.pop-art{ width:74px; height:74px; display:flex; align-items:center; justify-content:center; }
+.pop-art img{ max-width:100%; max-height:100%; object-fit:contain; }
+.pop-nm{ font-size:12px; font-weight:700; text-align:center; line-height:1.45; color:var(--fg); }
+.pop-price{ font-family:var(--font-mono); font-size:12px; font-weight:800; color:var(--tone-yellow,#f0b429); }
+.pop-card.free .pop-price{ color:#7ddc9a; }
+.pop-tag{
+  position:absolute; left:8px; top:8px; padding:1px 7px; border-radius:999px;
+  font-size:9.5px; font-weight:800; letter-spacing:.3px;
+}
+.pop-tag.free{ background:rgba(120,220,150,.2); color:#7ddc9a; }
+.pop-tag.rare{ background:rgba(186,120,255,.22); color:#c79bff; }
+.pop-off{
+  position:absolute; right:8px; top:8px; padding:1px 7px; border-radius:999px;
+  background:#d64545; color:#fff; font-size:9.5px; font-weight:800;
+}
+.pop-note{
+  margin-top:14px; padding:11px 13px; border-radius:11px; background:var(--bg-soft);
+  font-size:11.5px; line-height:1.8; color:var(--fg-dim);
+}
+
 /* ---------- B열 : 랩터마트24 + 일러스트 자리 ---------- */
 .nm-mart{
   display:flex; align-items:center; justify-content:center; gap:9px;
@@ -5604,6 +5678,114 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 .vip-tx b{ display:block; font-size:14px; font-weight:800; }
 .vip-tx small{ display:block; margin-top:2px; font-size:11.5px; color:var(--fg-dim); line-height:1.6; }
 
+/* ==========================================================================
+   [Ver 16.0] 이모티콘 — 상태창 위 팝업 · 인게임 바
+   ⚠ 팝업은 pointer-events:none. 상태창은 눌러서 지목하는 자리라 가리면 안 된다.
+   ========================================================================== */
+.emo-pop{
+  position:absolute; left:50%; top:-8px; z-index:12;
+  transform:translate(-50%,-100%);
+  pointer-events:none;
+  animation:emoIn .34s var(--ease-spring) both;
+}
+.emo-pop img{
+  display:block; width:86px; height:86px; object-fit:contain;
+  border-radius:12px; background:rgba(12,12,14,.82);
+  box-shadow:0 8px 22px -8px rgba(0,0,0,.7), inset 0 0 0 1px rgba(255,255,255,.12);
+  padding:5px;
+}
+/* 말풍선 꼬리 — 상태창을 가리킨다 */
+.emo-pop::after{
+  content:''; position:absolute; left:50%; bottom:-6px; transform:translateX(-50%);
+  border:7px solid transparent; border-top-color:rgba(12,12,14,.82);
+}
+@keyframes emoIn{
+  0%  { opacity:0; transform:translate(-50%,-70%) scale(.5) rotate(-8deg); }
+  60% { opacity:1; transform:translate(-50%,-106%) scale(1.08) rotate(3deg); }
+  100%{ opacity:1; transform:translate(-50%,-100%) scale(1) rotate(0deg); }
+}
+.emo-pop.out{ animation:emoOut .26s var(--ease) forwards; }
+@keyframes emoOut{ to{ opacity:0; transform:translate(-50%,-118%) scale(.86); } }
+@media (max-width:860px){ .emo-pop img{ width:62px; height:62px; } }
+
+/* ---- 이모티콘 창 (장착 5칸 + 가진 것) ---- */
+.emoq-t{ font-size:12px; font-weight:800; color:var(--fg); margin-bottom:8px; }
+.emoq-t small{ margin-left:7px; font-weight:600; color:var(--fg-faint); font-size:11px; }
+.emoq-slots{ display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; }
+.emoq-slot{
+  position:relative; aspect-ratio:1/1; padding:5px; cursor:pointer;
+  border:none; border-radius:12px; background:var(--bg-2);
+  box-shadow:inset 0 0 0 1px var(--line);
+  display:flex; align-items:center; justify-content:center;
+  transition:box-shadow .12s var(--ease), background .12s var(--ease);
+}
+.emoq-slot:hover{ background:var(--bg-3); }
+.emoq-slot.has{ box-shadow:inset 0 0 0 1.5px var(--accent); }
+/* 지금 채우려고 고른 칸 */
+.emoq-slot.sel{ box-shadow:inset 0 0 0 2px #ffd35c; background:rgba(255,211,92,.1); }
+.emoq-slot img{ width:100%; height:100%; object-fit:contain; pointer-events:none; }
+.emoq-n{ font-family:var(--font-mono); font-size:15px; font-weight:800; color:var(--fg-faint); }
+.emoq-x{
+  position:absolute; right:3px; top:3px; width:16px; height:16px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.6); color:#fff; font-size:9px; font-weight:800;
+}
+.emoq-list{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(62px, 1fr)); gap:7px;
+  max-height:min(42vh, 320px); overflow-y:auto;
+}
+.emoq-cell{
+  position:relative; aspect-ratio:1/1; padding:4px; cursor:pointer;
+  border:none; border-radius:10px; background:var(--bg-2);
+  box-shadow:inset 0 0 0 1px var(--line);
+  transition:transform .12s var(--ease), background .12s var(--ease);
+}
+.emoq-cell:hover{ transform:translateY(-2px); background:var(--bg-3); }
+.emoq-cell.on{ box-shadow:inset 0 0 0 1.5px var(--accent); }
+.emoq-cell img{ width:100%; height:100%; object-fit:contain; pointer-events:none; }
+.emoq-tick{
+  position:absolute; right:3px; top:3px;
+  width:15px; height:15px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--accent); color:var(--accent-fg); font-size:9px; font-weight:800;
+}
+/* 인게임 트레이의 빈 칸 */
+.emo-cell-empty{
+  aspect-ratio:1/1; border-radius:10px;
+  background:transparent; box-shadow:inset 0 0 0 1px var(--line); opacity:.45;
+}
+
+/* ---- 인게임 바 ---- */
+.emo-btn{
+  position:relative; font-weight:800;
+}
+.emo-tray{
+  position:fixed; z-index:9410; left:50%; bottom:96px; transform:translateX(-50%);
+  display:none; grid-template-columns:repeat(auto-fill, minmax(62px, 1fr));
+  gap:7px; padding:12px;
+  width:min(520px, 92vw); max-height:min(46vh, 340px); overflow-y:auto;
+  border-radius:16px; background:var(--bg-panel);
+  box-shadow:inset 0 0 0 1px var(--line), 0 16px 40px -14px rgba(0,0,0,.7);
+}
+.emo-tray.on{ display:grid; animation:riseInSm .2s var(--ease-spring) both; }
+.emo-cell{
+  aspect-ratio:1/1; padding:4px; border:none; border-radius:10px; cursor:pointer;
+  background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--line);
+  transition:transform .12s var(--ease), background .12s var(--ease);
+}
+.emo-cell:hover{ transform:translateY(-2px) scale(1.05); background:var(--bg-3); }
+.emo-cell img{ width:100%; height:100%; object-fit:contain; pointer-events:none; }
+.emo-cell:disabled{ opacity:.4; cursor:not-allowed; transform:none; }
+.emo-empty{
+  grid-column:1/-1; padding:22px 10px; text-align:center;
+  font-size:12.5px; line-height:1.85; color:var(--fg-dim);
+}
+.emo-cool{
+  position:absolute; right:-4px; top:-5px; min-width:17px; padding:1px 4px;
+  border-radius:999px; background:var(--tone-red,#d64545); color:#fff;
+  font-family:var(--font-mono); font-size:9px; font-weight:800; text-align:center;
+}
+
 /* [Ver 15.9] VIP 2배속 토글 */
 .vip-speed{
   background:linear-gradient(135deg,#3a3350,#241f33) !important;
@@ -8953,7 +9135,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 15.10.1</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.0</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -9092,9 +9274,16 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
                ⚠ #nmBoxKeys 는 renderBoxKeyBadge(14874)가 이미 찾는 id 다 —
                  열쇠가 충분하면 저절로 .ready 가 붙어 금색이 된다. -->
           <div class="nm-mart-row">
-            <button class="nm-mart" data-art="mart" onclick="openRaptorMart()">
-              <span class="ic">🏪</span><span class="tx">랩터마트24</span>
-            </button>
+            <!-- [Ver 16.0] 랩터마트 칸을 둘로 쪼갰다 — 오른쪽이 팝업 스토어.
+                 ⚠ 블랙마켓이면 .black 이 붙어 글로우 색이 달라진다(renderPopBtn). -->
+            <div class="nm-mart-split">
+              <button class="nm-mart" data-art="mart" onclick="openRaptorMart()">
+                <span class="ic">🏪</span><span class="tx">마트</span>
+              </button>
+              <button class="nm-mart nm-pop" id="nmPopBtn" onclick="openPopStore()">
+                <span class="ic">🎪</span><span class="tx">팝업</span>
+              </button>
+            </div>
             <button class="nm-mart nm-mart-box" data-art="box" onclick="openBoxScreen()">
               <span class="ic">🎁</span><span class="tx">상자</span>
               <span class="nm-mart-keys" id="nmBoxKeys">🔑 0</span>
@@ -9182,6 +9371,10 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
         <a class="nm-drawer-item" href="https://discord.gg/WyRyNk4G2Y" target="_blank" rel="noopener" onclick="closeMenuDrawer();">
           <span class="ic">💬</span><span class="tx"><b>디스코드</b><small>공식 커뮤니티</small></span>
         </a>
+        <!-- [Ver 16.0] 이모티콘 — 5칸에 넣어두면 인게임에서 쓸 수 있다 -->
+        <button class="nm-drawer-item" onclick="closeMenuDrawer(); openEmoWin();">
+          <span class="ic">😀</span><span class="tx"><b>이모티콘</b><small id="emoMenuSub">5칸에 넣어두고 게임에서 쓰기</small></span>
+        </button>
         <!-- [Ver 15.1] 개발자한테 항의하기 — 버그·문의를 메신저처럼 주고받는다 -->
         <button class="nm-drawer-item" onclick="closeMenuDrawer(); openSupportWin();">
           <span class="ic">📮</span><span class="tx"><b>개발자한테 항의하기</b><small id="supMenuSub">버그 제보 · 문의</small></span>
@@ -9706,6 +9899,8 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
                  ⚠ 시작 화면 메뉴에만 두면 "게임이 진행 중일 때만 예약 가능"이라 영영 못 쓴다.
                     실제로 쓰는 자리는 인게임이므로 여기 눈에 띄게 둔다. -->
             <button class="btn btn-sm" id="devEventBtnGame" onclick="openDevEventForce()" style="display:none;background:#7c3aed;color:#fff;font-weight:800;">🎲 이벤트 강제</button>
+            <!-- [Ver 16.0] 이모티콘 — 언제든(내 턴이 아니어도) 보낼 수 있다 -->
+            <button class="btn btn-sm emo-btn" id="emoBtn" onclick="emoToggleTray()">😀</button>
             <!-- [Ver 15.9] VIP 전용 2배속 토글 — VIP 가 아니면 숨는다 -->
             <button class="btn btn-sm vip-speed" id="vipSpeedBtn" style="display:none;" onclick="vipToggleX2()">⏩ 2배속</button>
             <button class="btn btn-sm btn-ghost" id="surrenderBtn" onclick="confirmSurrender()">항복</button>
@@ -9721,6 +9916,9 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
           <div class="reaction-actions" id="reactionActions"></div>
         </div>
       </div>
+
+      <!-- [Ver 16.0] 이모티콘 고르는 판 — 보드 밖(fixed)이라 손패에 가리지 않는다 -->
+      <div class="emo-tray" id="emoTray"></div>
 
       <svg id="attackOverlay">
         <defs>
@@ -13379,6 +13577,9 @@ const STORAGE_KEYS = {
   newsRead: 'gang_card_news_read_v1',// [Ver 15.4] 새 소식 읽기 보상 { ver:'Ver 15.4', got:['rank',...] }
   payTotal: 'gang_card_pay_total_v1',// [Ver 15.4] 누적 현질액 { won:0, got:[300,1000,...] }
   vip: 'gang_card_vip_v1',           // [Ver 15.9] VIP { until:ts, daily:'YYYY-MM-DD', x2:true }
+  emos: 'gang_card_emos_v1',         // [Ver 16.0] 보유 이모티콘 ['gif_01', ...]
+  emoSlots: 'gang_card_emoslots_v1', // [Ver 16.0] 장착 5칸 [key|null x5]
+  pop:  'gang_card_pop_v1',          // [Ver 16.0] 팝업 스토어 { hour, black, slots, taken }
   bio: 'gang_card_bio_v1', // [Ver 10.5] 상태메시지 — 리더보드 프로필에 함께 표시된다
   friendCode: 'gang_card_friend_code_v1', // [Ver 10.5] 친구 코드 (공개용 · 사용자가 마음대로 바꾼다)
   friends: 'gang_card_friends_v1',        // [Ver 10.5] 친구 목록 (이 기기에만 저장)
@@ -15233,6 +15434,509 @@ async function supDoResolve(id){
   }catch(e){
     showModal('처리 실패', `<div style="line-height:1.9;color:#d64545;">${escapeHtml(fbErrText(e))}</div>`, [{label:'확인', solid:true}]);
   }
+}
+
+/* ##########################################################################
+   [Ver 16.0] 팝업 스토어
+   --------------------------------------------------------------------------
+   · 매 시 **정각**에 매물이 바뀐다.
+   · 평소 4칸 — 무료 보상 1 + 이모티콘 3.
+   · 리롤 때 **3%** 로 블랙마켓이 열린다 — 희귀템 1 + 이모티콘 1(40% 할인).
+   ⚠ 시각은 서버 보정(ggNow)을 쓴다. PC 시계로 세면 시간을 돌려
+     원하는 매물이 나올 때까지 돌릴 수 있다.
+   ⚠ 매물은 뽑은 그대로 저장한다. 그릴 때마다 뽑으면 새로고침이 곧 리롤이 된다.
+   ########################################################################## */
+const POP_BLACK_PCT   = 3;     // 리롤 때 블랙마켓이 열릴 확률(%)
+const POP_EMO_SLOTS   = 3;     // 평소 이모티콘 칸
+const POP_BLACK_OFF   = 0.40;  // 블랙마켓 이모티콘 할인율
+
+/* 무료 칸 — 아주 소소한 것들 */
+const POP_FREE = [
+  { k:'pick',  ic:'⛏️', name:'곡괭이 1개',        n:1,  give:()=> grantPickaxe(1) },
+  { k:'ubi',   ic:'💎', name:'우비나이트 30개',    n:30, give:()=> grantUbinite(30) },
+  { k:'key',   ic:'🔑', name:'상자 열쇠 10개',     n:10, give:()=> grantBoxKeys(10) },
+  { k:'teeth', ic:'🦷', name:'랩터의 이빨 1개',    n:1,  give:()=> grantTeeth(1) },
+  { k:'claws', ic:'🦴', name:'우빈랩터의 발톱 5개', n:5,  give:()=> grantEvoClaws(5) },
+  { k:'ubi2',  ic:'💎', name:'우비나이트 50개',    n:50, give:()=> grantUbinite(50) },
+  { k:'key2',  ic:'🔑', name:'상자 열쇠 5개',      n:5,  give:()=> grantBoxKeys(5) },
+];
+/* 블랙마켓 — 희귀템 한 칸 */
+const POP_BLACK_ITEMS = [
+  { k:'stone',  ic:'🔷', name:'권능석 1개',              give:()=> grantPwStones(1) },
+  { k:'gpick',  ic:'⛏️', name:'개쩌는 곡괭이 5개',        give:()=> grantGoldPickaxe(5) },
+  { k:'wild',   ic:'🌈', name:'와일드 진화석 1개',        give:()=> grantWildStone(1) },
+  { k:'eph',    ic:'🎫', name:'Ephemeral 확정 진화석 뽑기권', give:()=> grantEvoPick('Ephemeral', 1) },
+  { k:'ticket', ic:'🎟️', name:'카드 뽑기 10+1권',         give:()=> grantGachaTickets(11) },
+  { k:'legend', ic:'👑', name:'미보유 전설 권능 확정 획득권', give:()=> popGrantUnownedLegend() },
+  { k:'teeth',  ic:'🦷', name:'랩터의 이빨 25개',          give:()=> grantTeeth(25) },
+  { k:'key',    ic:'🔑', name:'상자 열쇠 100개',           give:()=> grantBoxKeys(100) },
+  { k:'pick',   ic:'⛏️', name:'곡괭이 10개',              give:()=> grantPickaxe(10) },
+  { k:'claws',  ic:'🦴', name:'우빈랩터의 발톱 69개',      give:()=> grantEvoClaws(69) },
+];
+/* 아직 없는 전설 권능 하나. 다 가졌으면 아무 전설이나 하나 더 준다(중복은 강화가 된다). */
+function popGrantUnownedLegend(){
+  try{
+    const all = powersOfRarity('legend');
+    const un = all.filter(d=> !ownsPower(d.key));
+    const pick = (un.length ? un : all)[Math.floor(Math.random() * (un.length ? un.length : all.length))];
+    if(pick) grantPower(pick.key);
+  }catch(e){ console.error('[팝업] 전설 권능 지급 실패', e); }
+}
+
+function popHourKey(){
+  const t = new Date(ggNow());
+  return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}-${String(t.getHours()).padStart(2,'0')}`;
+}
+function popLoad(){
+  let o = null;
+  try{ o = JSON.parse(localStorage.getItem(STORAGE_KEYS.pop) || 'null'); }catch(e){ o = null; }
+  const hk = popHourKey();
+  if(o && o.hour === hk && Array.isArray(o.slots)) return o;
+  o = popRoll(hk);
+  popSave(o);
+  return o;
+}
+function popSave(o){ try{ localStorage.setItem(STORAGE_KEYS.pop, JSON.stringify(o)); }catch(e){} }
+/* 끝 두 자리가 00 이 아닌 값 — 2,500 ~ 7,500 */
+function popBlackPrice(){
+  for(let i = 0; i < 40; i++){
+    const v = 2500 + Math.floor(Math.random() * 5001);
+    if(v % 100 !== 0) return v;
+  }
+  return 4237;
+}
+function popRoll(hk){
+  const black = Math.random() * 100 < POP_BLACK_PCT;
+  const slots = [];
+  /* 이모티콘은 겹치지 않게 뽑는다 */
+  const pool = EMOTICONS.slice();
+  const pickEmo = ()=>{
+    if(!pool.length) return null;
+    return pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+  };
+  if(black){
+    const it = POP_BLACK_ITEMS[Math.floor(Math.random() * POP_BLACK_ITEMS.length)];
+    slots.push({ t:'rare', k:it.k, price: popBlackPrice() });
+    const e = pickEmo();
+    if(e) slots.push({ t:'emo', k:e.k, price: Math.round(emoPrice(e.k) * (1 - POP_BLACK_OFF)) });
+  } else {
+    const f = POP_FREE[Math.floor(Math.random() * POP_FREE.length)];
+    slots.push({ t:'free', k:f.k });
+    for(let i = 0; i < POP_EMO_SLOTS; i++){
+      const e = pickEmo();
+      if(e) slots.push({ t:'emo', k:e.k, price: emoPrice(e.k) });
+    }
+  }
+  return { hour: hk, black, slots, taken: [] };
+}
+function popIsBlack(){ try{ return !!popLoad().black; }catch(e){ return false; } }
+
+/* ---- 창 ---- */
+function openPopStore(){
+  openGWin({ key:'pop',
+    title: popIsBlack() ? '🕶️ ???' : '🎪 팝업 스토어',
+    render: popWinHtml, onClose: ()=>{ try{ renderPopBtn(); }catch(e){} } });
+}
+function popSlotHtml(s, i, o){
+  const taken = (o.taken || []).indexOf(i) !== -1;
+  if(s.t === 'free'){
+    const f = POP_FREE.find(x=> x.k === s.k) || POP_FREE[0];
+    return `<button class="pop-card free${taken?' done':''}" ${taken?'disabled':''} onclick="popTake(${i})">
+      <span class="pop-tag free">무료</span>
+      <span class="pop-ic">${f.ic}</span>
+      <span class="pop-nm">${escapeHtml(f.name)}</span>
+      <span class="pop-price">${taken ? '받음' : '받기'}</span>
+    </button>`;
+  }
+  if(s.t === 'rare'){
+    const it = POP_BLACK_ITEMS.find(x=> x.k === s.k) || POP_BLACK_ITEMS[0];
+    return `<button class="pop-card rare${taken?' done':''}" ${taken?'disabled':''} onclick="popBuy(${i})">
+      <span class="pop-tag rare">희귀</span>
+      <span class="pop-ic">${it.ic}</span>
+      <span class="pop-nm">${escapeHtml(it.name)}</span>
+      <span class="pop-price">${taken ? '구매함' : '💎 ' + s.price.toLocaleString()}</span>
+    </button>`;
+  }
+  const d = emoDefOf(s.k);
+  if(!d) return '';
+  const own = hasEmo(s.k);
+  const off = o.black ? `<span class="pop-off">-${Math.round(POP_BLACK_OFF*100)}%</span>` : '';
+  return `<button class="pop-card emo${(taken||own)?' done':''}" ${(taken||own)?'disabled':''} onclick="popBuy(${i})">
+    ${off}
+    <span class="pop-art"><img src="${emoSrc(s.k)}" alt="" draggable="false"></span>
+    <span class="pop-nm">${escapeHtml(d.name)}</span>
+    <span class="pop-price">${own ? '보유 중' : (taken ? '구매함' : '💎 ' + s.price.toLocaleString())}</span>
+  </button>`;
+}
+function popWinHtml(){
+  const o = popLoad();
+  const cards = o.slots.map((s, i)=> popSlotHtml(s, i, o)).join('');
+  const head = o.black
+    ? `<div class="pop-head black">
+         <img class="pop-clerk" src="art/rm25.png" alt="" draggable="false" onerror="this.remove()">
+         <div class="pop-head-tx"><b>…오늘은 특별한 게 들어왔어.</b>
+           <small>딱 하나뿐이야. ${escapeHtml(popLeftText())}</small></div>
+       </div>`
+    : `<div class="pop-head">
+         <img class="pop-clerk" src="art/rm25.png" alt="" draggable="false" onerror="this.remove()">
+         <div class="pop-head-tx"><b>오늘의 매대야. 천천히 봐~</b>
+           <small>매 시 정각에 물건이 바뀝니다 · ${escapeHtml(popLeftText())}</small></div>
+       </div>`;
+  return head + `<div class="pop-grid">${cards}</div>
+    <div class="pop-note">이모티콘은 <b>메뉴 → 😀 이모티콘</b>에서 <b>5칸</b>에 넣어두면 게임 중에 쓸 수 있습니다.</div>`;
+}
+/* ⚠ 칸 번호를 인자로 받는다 — 확인창이 본문을 덮으면 화면에서 읽을 수 없다. */
+function popTake(i){
+  const o = popLoad();
+  const s = o.slots[i];
+  if(!s || s.t !== 'free' || (o.taken||[]).indexOf(i) !== -1) return;
+  const f = POP_FREE.find(x=> x.k === s.k);
+  if(!f) return;
+  try{ f.give(); }catch(e){ console.error('[팝업] 지급 실패', e); }
+  o.taken.push(i); popSave(o);
+  try{ renderUbiniteBadge(); renderTopResources(); }catch(e){}
+  try{ gwinRender(); }catch(e){}
+  showModal('🎁 받았습니다', `<div style="line-height:1.9;">${f.ic} <b>${escapeHtml(f.name)}</b></div>`, [{label:'확인', solid:true}]);
+}
+function popBuy(i){
+  const o = popLoad();
+  const s = o.slots[i];
+  if(!s || (o.taken||[]).indexOf(i) !== -1) return;
+  let nm = '', ic = '';
+  if(s.t === 'rare'){ const it = POP_BLACK_ITEMS.find(x=> x.k === s.k); if(!it) return; nm = it.name; ic = it.ic; }
+  else { const d = emoDefOf(s.k); if(!d) return; if(hasEmo(s.k)) return; nm = d.name; ic = '😀'; }
+  showModal('구매하시겠습니까?', `<div style="line-height:1.9;">
+      ${ic} <b>${escapeHtml(nm)}</b><br><br>
+      가격 — <b>💎 ${s.price.toLocaleString()}</b><br>
+      보유 — ${ubinite.toLocaleString()}<br><br>
+      <span style="font-size:12px;color:var(--fg-dim);">매물은 <b>매 시 정각</b>에 바뀝니다.</span>
+    </div>`, [
+    { label:'취소' },
+    { label:'구매', solid:true, action: ()=> popDoBuy(i) }
+  ]);
+}
+function popDoBuy(i){
+  const o = popLoad();
+  const s = o.slots[i];
+  if(!s || (o.taken||[]).indexOf(i) !== -1) return;
+  if(!spendUbinite(s.price)){
+    showModal('우비나이트 부족', `<b>💎 ${s.price.toLocaleString()}</b>가 필요합니다. (보유 ${ubinite.toLocaleString()})`,
+      [{label:'확인', solid:true}]);
+    return;
+  }
+  let nm = '';
+  if(s.t === 'rare'){
+    const it = POP_BLACK_ITEMS.find(x=> x.k === s.k);
+    nm = it ? it.name : '?';
+    try{ if(it) it.give(); }catch(e){ console.error('[팝업] 지급 실패', e); }
+  } else {
+    const d = emoDefOf(s.k);
+    nm = d ? d.name : '?';
+    grantEmo(s.k);
+  }
+  o.taken.push(i); popSave(o);
+  try{ renderUbiniteBadge(); renderTopResources(); }catch(e){}
+  try{ gwinRender(); }catch(e){}
+  try{ autoBackupAfterGame(); }catch(e){}
+  showModal('✅ 구매 완료', `<div style="line-height:1.9;"><b>${escapeHtml(nm)}</b>을(를) 받았습니다.<br>
+    <span style="font-size:12px;color:var(--fg-dim);">남은 우비나이트 ${ubinite.toLocaleString()}</span></div>`,
+    [{label:'확인', solid:true}]);
+}
+/* 메뉴 버튼 — 블랙마켓이면 글로우 색이 다르다. ⚠ 알림창으로 설명하지 않는다. */
+function renderPopBtn(){
+  try{
+    const b = document.getElementById('nmPopBtn');
+    if(!b) return;
+    b.classList.toggle('black', popIsBlack());
+  }catch(e){}
+}
+/* 다음 정각까지 */
+function popLeftText(){
+  const t = new Date(ggNow());
+  const ms = (60 - t.getMinutes()) * 60000 - t.getSeconds() * 1000;
+  const m = Math.max(0, Math.floor(ms / 60000));
+  return m >= 1 ? `${m}분 뒤 새 매물` : '곧 새 매물';
+}
+
+/* ##########################################################################
+   [Ver 16.0] 이모티콘
+   --------------------------------------------------------------------------
+   · GIF/밈 7종 = 1,500 · 직접 그린 20종 = 500
+   · 그림은 emo/ 에 있다. 파일이 없으면 onerror 로 조용히 지운다.
+   ⚠ 인게임에서는 **보유한 것만** 쓸 수 있다. 봇은 예외 — 지갑이 없다.
+   ########################################################################## */
+const EMO_PRICE_GIF = 2000;   // 고급(GIF·밈)
+const EMO_PRICE_ART = 1000;   // 기본(직접 그린 것)
+const EMOTICONS = [
+  /* 밈 · GIF */
+  { k:'gif_01', t:'gif', name:'정장' },
+  { k:'gif_02', t:'gif', name:'배트' },
+  { k:'gif_03', t:'gif', name:'페이데이' },
+  { k:'gif_04', t:'gif', name:'그 정보에 대한 내 반응' },
+  { k:'gif_05', t:'gif', name:'오백원' },
+  { k:'gif_06', t:'gif', name:'오징어게임' },
+  { k:'gif_07', t:'gif', name:'빗속의 베지터' },
+  { k:'gif_08', t:'gif', name:'노트북 타이렁' },   // 원본이 mp4 라 gif 로 변환했다
+  /* 직접 그린 것 */
+  { k:'art_01', t:'art', name:'차가운 도시남자' },
+  { k:'art_02', t:'art', name:'방패' },
+  { k:'art_03', t:'art', name:'돈다발' },
+  { k:'art_04', t:'art', name:'사망' },
+  { k:'art_05', t:'art', name:'저격' },
+  { k:'art_06', t:'art', name:'빨간 낙서' },
+  { k:'art_07', t:'art', name:'억울' },
+  { k:'art_08', t:'art', name:'이리 와' },
+  { k:'art_09', t:'art', name:'지목' },
+  { k:'art_10', t:'art', name:'제발' },
+  { k:'art_11', t:'art', name:'여유' },
+  { k:'art_12', t:'art', name:'반가움' },
+  { k:'art_13', t:'art', name:'빡침' },
+  { k:'art_14', t:'art', name:'눈물' },
+  { k:'art_15', t:'art', name:'폭발' },
+  { k:'art_16', t:'art', name:'들었다' },
+  { k:'art_17', t:'art', name:'당황' },
+  { k:'art_18', t:'art', name:'기도' },
+  { k:'art_19', t:'art', name:'STOP' },
+  { k:'art_20', t:'art', name:'음흉' },
+];
+function emoDefOf(k){ return EMOTICONS.find(e=> e.k === k) || null; }
+function emoSrc(k){ const d = emoDefOf(k); return d ? ('emo/' + d.k + (d.t === 'gif' ? '.gif' : '.png')) : ''; }
+function emoPrice(k){ const d = emoDefOf(k); return d ? (d.t === 'gif' ? EMO_PRICE_GIF : EMO_PRICE_ART) : 0; }
+
+let OWNED_EMOS = null;
+function loadEmos(){
+  if(OWNED_EMOS) return OWNED_EMOS;
+  try{ const a = JSON.parse(localStorage.getItem(STORAGE_KEYS.emos) || '[]'); OWNED_EMOS = Array.isArray(a) ? a : []; }
+  catch(e){ OWNED_EMOS = []; }
+  return OWNED_EMOS;
+}
+function saveEmos(){ try{ localStorage.setItem(STORAGE_KEYS.emos, JSON.stringify(loadEmos())); }catch(e){} }
+function hasEmo(k){ return loadEmos().indexOf(k) !== -1; }
+function grantEmo(k){
+  if(!emoDefOf(k) || hasEmo(k)) return false;
+  loadEmos().push(k); saveEmos();
+  return true;
+}
+
+/* [Ver 16.0] 장착 5칸.
+   ⚠ 빈 칸은 null 로 자리를 지킨다 — 당겨 채우면 "3번 칸"이라는 개념이 사라진다. */
+const EMO_SLOT_N = 5;
+let EMO_SLOTS = null;
+function loadEmoSlots(){
+  if(EMO_SLOTS) return EMO_SLOTS;
+  try{
+    const a = JSON.parse(localStorage.getItem(STORAGE_KEYS.emoSlots) || 'null');
+    EMO_SLOTS = Array.isArray(a) ? a.slice(0, EMO_SLOT_N) : [];
+  }catch(e){ EMO_SLOTS = []; }
+  while(EMO_SLOTS.length < EMO_SLOT_N) EMO_SLOTS.push(null);
+  return EMO_SLOTS;
+}
+function saveEmoSlots(){ try{ localStorage.setItem(STORAGE_KEYS.emoSlots, JSON.stringify(loadEmoSlots())); }catch(e){} }
+/* 실제로 쓸 수 있는 것만. ⚠ 안 가진 것이 슬롯에 남아 있을 수 있다(복원·초기화). */
+function emoEquipped(){ return loadEmoSlots().map(k=> (k && hasEmo(k)) ? k : null); }
+function emoSlotSet(i, key){
+  const s = loadEmoSlots();
+  if(i < 0 || i >= EMO_SLOT_N) return;
+  /* 같은 것을 두 칸에 넣지 않는다 — 칸만 낭비된다 */
+  if(key) s.forEach((v, j)=>{ if(v === key && j !== i) s[j] = null; });
+  s[i] = key || null;
+  saveEmoSlots();
+}
+
+/* ##########################################################################
+   [Ver 16.0] 인게임 이모티콘 — 상태창 위에 3초, 쿨타임 7초
+   --------------------------------------------------------------------------
+   ⚠ 사람은 쿨타임을 지킨다. 봇은 각자 따로 센다(서로 막지 않게).
+   ⚠ 상태창(#pcard-<id>)이 없으면 아무 일도 하지 않는다 — 판 밖이거나 죽은 자리다.
+   ########################################################################## */
+const EMO_SHOW_MS = 3000;
+const EMO_COOL_MS = 7000;
+let __emoCool = 0;           // 사람용
+function emoCanSend(){ return Date.now() >= __emoCool; }
+function emoCoolLeft(){ return Math.max(0, __emoCool - Date.now()); }
+
+/* 화면에 띄우기만 한다. 누가 보냈는지·쓸 수 있는지는 부르는 쪽이 정한다. */
+function emoPop(pid, key){
+  try{
+    const host = document.getElementById('pcard-' + pid);
+    const d = emoDefOf(key);
+    if(!host || !d) return;
+    /* 한 사람이 연달아 보내면 앞의 것은 지운다 — 겹쳐 쌓이면 지저분하다 */
+    host.querySelectorAll('.emo-pop').forEach(e=> e.remove());
+    const el = document.createElement('div');
+    el.className = 'emo-pop';
+    el.innerHTML = `<img src="${emoSrc(key)}" alt="" draggable="false" onerror="this.closest('.emo-pop').remove()">`;
+    host.appendChild(el);
+    setTimeout(()=>{ try{ el.classList.add('out'); }catch(e){} }, EMO_SHOW_MS - 260);
+    setTimeout(()=>{ try{ el.remove(); }catch(e){} }, EMO_SHOW_MS);
+  }catch(e){}
+}
+/* 내가 보낸다. 쿨타임·보유를 여기서 본다. */
+function emoSend(key){
+  if(!hasEmo(key)) return false;
+  if(!emoCanSend()) return false;
+  __emoCool = Date.now() + EMO_COOL_MS;
+  const me = (typeof viewerIdNow === 'function') ? viewerIdNow() : null;
+  if(me) emoPop(me, key);
+  /* 랜서버 — 남의 화면에도 띄운다. 호스트든 참가자든 같은 통로를 쓴다. */
+  try{
+    if(typeof LAN !== 'undefined' && LAN && LAN.connected && typeof lanSend === 'function'){
+      lanSend({ t:'emote', payload:{ pid: me, key } });
+    }
+  }catch(e){}
+  try{ renderEmoBar(); }catch(e){}
+  return true;
+}
+
+/* ##########################################################################
+   [Ver 16.0] 이모티콘 창 — 5칸에 넣어두고 인게임에서 쓴다
+   ⚠ 공용 창(gwin)을 쓴다. showModal 로 만들면 확인창이 본문을 덮어써
+     한 번 넣고 나면 목록이 사라진다(14.10 에서 겪은 그 자리다).
+   ########################################################################## */
+let __emoPickSlot = -1;          // 지금 채우려는 칸. -1 이면 빈 칸을 알아서 찾는다.
+function openEmoWin(){
+  __emoPickSlot = -1;
+  openGWin({ key:'emo', title:'😀 이모티콘', render: emoWinHtml });
+}
+function emoWinHtml(){
+  const slots = loadEmoSlots();
+  const owned = loadEmos().filter(k=> emoDefOf(k));
+  const slotHtml = slots.map((k, i)=>{
+    const d = k ? emoDefOf(k) : null;
+    const sel = (__emoPickSlot === i) ? ' sel' : '';
+    return `<button class="emoq-slot${d?' has':''}${sel}" onclick="emoSlotClick(${i})"
+              title="${d ? escapeHtml(d.name) : (i+1) + '번 칸 (비어 있음)'}">
+      ${d ? `<img src="${emoSrc(k)}" alt="" draggable="false">` : `<span class="emoq-n">${i+1}</span>`}
+      ${d ? `<span class="emoq-x">✕</span>` : ''}
+    </button>`;
+  }).join('');
+  const list = owned.length ? owned.map(k=>{
+    const d = emoDefOf(k);
+    const on = slots.indexOf(k) !== -1;
+    return `<button class="emoq-cell${on?' on':''}" onclick="emoEquip('${k}')" title="${escapeHtml(d.name)}">
+      <img src="${emoSrc(k)}" alt="" draggable="false">
+      ${on ? '<span class="emoq-tick">✓</span>' : ''}
+    </button>`;
+  }).join('') : `<div class="emo-empty">아직 가진 이모티콘이 없습니다.<br>
+      <b>팝업 스토어</b>에서 살 수 있습니다.</div>`;
+  return `<div class="emoq-wrap">
+    <div class="emoq-t">장착 <small>${EMO_SLOT_N}칸 · 인게임에서는 여기 넣은 것만 쓸 수 있습니다</small></div>
+    <div class="emoq-slots">${slotHtml}</div>
+    <div class="emoq-t" style="margin-top:16px;">가진 것 <small>${owned.length}개 · 눌러서 넣기</small></div>
+    <div class="emoq-list">${list}</div>
+  </div>`;
+}
+/* 칸을 누르면 — 차 있으면 비우고, 비어 있으면 "여기에 넣겠다"로 고른다 */
+function emoSlotClick(i){
+  const s = loadEmoSlots();
+  if(s[i]){ emoSlotSet(i, null); __emoPickSlot = i; }
+  else { __emoPickSlot = (__emoPickSlot === i) ? -1 : i; }
+  try{ gwinRender(); }catch(e){}
+}
+function emoEquip(k){
+  const s = loadEmoSlots();
+  const at = s.indexOf(k);
+  if(at !== -1){ emoSlotSet(at, null); }              // 이미 있으면 뺀다
+  else {
+    let i = (__emoPickSlot >= 0) ? __emoPickSlot : s.indexOf(null);
+    if(i === -1) i = EMO_SLOT_N - 1;                  // 다 찼으면 마지막 칸을 바꾼다
+    emoSlotSet(i, k);
+    __emoPickSlot = -1;
+  }
+  try{ gwinRender(); }catch(e){}
+  try{ renderEmoTray(); }catch(e){}
+}
+
+/* 인게임 바 — 열고 닫고, 장착한 것만 그린다 */
+function emoToggleTray(){
+  const t = document.getElementById('emoTray');
+  if(!t) return;
+  if(t.classList.contains('on')){ t.classList.remove('on'); return; }
+  renderEmoTray();
+  t.classList.add('on');
+}
+function emoCloseTray(){ const t = document.getElementById('emoTray'); if(t) t.classList.remove('on'); }
+function renderEmoTray(){
+  const t = document.getElementById('emoTray');
+  if(!t) return;
+  /* [Ver 16.0] 보유 전부가 아니라 **장착한 5칸**을 그린다. */
+  const eq = emoEquipped();
+  if(!eq.some(Boolean)){
+    t.innerHTML = `<div class="emo-empty">장착한 이모티콘이 없습니다.<br>
+      메뉴의 <b>😀 이모티콘</b>에서 <b>5칸</b>에 넣어두면 여기서 쓸 수 있습니다.<br>
+      <span style="font-size:11.5px;color:var(--fg-faint);">이모티콘은 <b>팝업 스토어</b>에서 삽니다.</span></div>`;
+    return;
+  }
+  t.innerHTML = eq.map(k=>{
+    if(!k) return `<div class="emo-cell emo-cell-empty"></div>`;
+    const d = emoDefOf(k);
+    return `<button class="emo-cell" title="${escapeHtml(d.name)}" onclick="emoPick('${k}')">
+      <img src="${emoSrc(k)}" alt="${escapeHtml(d.name)}" draggable="false">
+    </button>`;
+  }).join('');
+}
+function emoPick(k){
+  if(!emoCanSend()){
+    try{ renderEmoBar(); }catch(e){}
+    return;
+  }
+  emoSend(k);
+  emoCloseTray();
+}
+/* 쿨타임 숫자 — 남은 동안만 돈다 */
+let __emoTick = null;
+function renderEmoBar(){
+  try{
+    const b = document.getElementById('emoBtn');
+    if(!b) return;
+    b.querySelectorAll('.emo-cool').forEach(e=> e.remove());
+    const left = emoCoolLeft();
+    if(left > 0){
+      const s = document.createElement('span');
+      s.className = 'emo-cool';
+      s.textContent = Math.ceil(left / 1000);
+      b.appendChild(s);
+      clearTimeout(__emoTick);
+      __emoTick = setTimeout(renderEmoBar, 250);
+    }
+  }catch(e){}
+}
+
+/* ##########################################################################
+   [Ver 16.0] 봇도 이모티콘을 쓴다
+   --------------------------------------------------------------------------
+   ▶ 왜 — 일반전이 조용해서 심심했다. 봇이 상황에 반응하면 판이 살아난다.
+   ⚠ 100% 로 쓰면 기계처럼 보인다. 상황마다 확률을 다르게 두고,
+     같은 봇이 연달아 쓰지 않게 각자 쿨타임을 따로 센다.
+   ⚠ 봇은 **보유를 따지지 않는다** — 봇에게 지갑이 없다.
+   ########################################################################## */
+const BOT_EMO_COOL_MS = 12000;
+/* 상황 → [확률, 후보 이모티콘들] */
+const BOT_EMO_SITU = {
+  hello:   [0.35, ['art_12','art_11','gif_03','art_02']],              // 판이 시작될 때
+  bigHit:  [0.55, ['art_07','art_14','art_04','gif_07','art_17']],     // 큰 공격을 맞았다
+  kill:    [0.60, ['art_20','art_13','gif_06','art_03','art_05']],     // 누군가를 처치했다
+  died:    [0.70, ['art_04','art_14','gif_07','art_07']],              // 죽었다
+  broke:   [0.40, ['art_10','art_07','gif_02','art_18']],              // 돈이 바닥났다
+  lucky:   [0.45, ['art_03','art_11','art_12','gif_05']],              // 좋은 것을 얻었다
+  blocked: [0.50, ['art_13','art_19','art_06','gif_04']],              // 막혔다·무효화당했다
+  taunt:   [0.18, ['art_20','art_09','art_08','gif_01','art_16']],     // 그냥, 가끔
+};
+function botEmote(bot, situ){
+  try{
+    if(!bot || !bot.isBot || !bot.alive) return;
+    if(typeof gameActive !== 'undefined' && !gameActive) return;
+    const s = BOT_EMO_SITU[situ];
+    if(!s) return;
+    const now = Date.now();
+    if((bot.__emoCool || 0) > now) return;          // 이 봇은 아직 쉬는 중
+    if(Math.random() >= s[0]) return;               // ⚠ 늘 쓰면 기계다
+    bot.__emoCool = now + BOT_EMO_COOL_MS;
+    const pool = s[1];
+    const key = pool[Math.floor(Math.random() * pool.length)];
+    /* 사람처럼 조금 늦게 반응한다 */
+    setTimeout(()=>{ try{ emoPop(bot.id, key); }catch(e){} }, 250 + Math.random() * 900);
+  }catch(e){}
 }
 
 /* ##########################################################################
@@ -17612,6 +18316,13 @@ function loadSavedGame(){
   pendingCard = null;
   awaitingReaction = false;
   try{ renderVipSpeedBtn(); }catch(e){}   // [Ver 15.9] VIP 2배속 버튼
+  /* [Ver 16.0] 봇들이 판 시작에 인사한다 — 다 같이 하면 어색하니 확률로 갈린다.
+     ⚠ 화면이 자리를 잡은 뒤에 띄운다(상태창이 아직 없으면 아무 일도 안 일어난다). */
+  try{
+    setTimeout(()=>{
+      try{ (players||[]).forEach((p, i)=>{ if(p && p.isBot) setTimeout(()=> botEmote(p, 'hello'), i * 420); }); }catch(e){}
+    }, 1800);
+  }catch(e){}
   try{ rxHudHide(); }catch(e){}   // [Ver 15.2] 반응 HUD가 새 판까지 따라오지 않게
   try{ drawQReset(); }catch(e){}  // [Ver 15.2] 지난 판의 대기열을 물려받지 않게
   pendingDealAnimation = false;
@@ -18059,6 +18770,7 @@ function newsClaimRankIf(tab){ try{ if(tab === 'rank') newsClaim('rank'); }catch
 function renderMenuNote(){
   try{ newsPaintDots(); }catch(e){}   // [Ver 15.4] 새 소식 딱지
   try{ vipDailyCheck(); }catch(e){}   // [Ver 15.9] VIP 오늘의 우비나이트
+  try{ renderPopBtn(); }catch(e){}    // [Ver 16.0] 팝업 스토어 — 블랙마켓이면 글로우가 다르다
   try{ renderPassBar(); }catch(e){}   // [Ver 11.8] 시즌 패스 막대도 함께 갱신
   const el = document.getElementById('nmNote');
   if(!el) return;
@@ -21745,7 +22457,7 @@ const RAPTOR_MART_TABS = [
   /* ⚠ soon 을 명시한다. 예전에는 "알아볼 수 없는 키 = 준비중" 이라,
      탭을 추가하고 렌더 분기를 깜빡하면 **말이 되는 듯한 잘못된 화면**이 떴다. */
   { key:'kill',    icon:'💥', label:'킬 이펙트', desc:'상대를 처치했을 때 터지는 연출을 바꿉니다.', soon:true },
-  { key:'emote',   icon:'😀', label:'이모티콘',  desc:'게임 중 상대에게 보낼 이모티콘입니다.', soon:true },
+  /* [Ver 16.0] 이모티콘 탭은 뺐다 — 사는 곳은 팝업 스토어, 쓰는 곳은 인게임 바다. */
 ];
 let raptorMartTab = 'pet';
 /* [Ver 9.10.5] 랩터마트24는 들어올 때마다 세 곡 중 하나가 랜덤으로 흐른다.
@@ -29965,6 +30677,17 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 16.0', date: '2026-09-15',
+    items: [
+      '\u{1F3AA} <b>[신규] 팝업 스토어.</b> 랩터마트 옆에 새 버튼이 생겼습니다. <b>매 시 정각</b>에 매물이 통째로 바뀝니다.<br>\u2460 <b>무료 칸</b> — 곡괭이·우비나이트·열쇠 같은 것을 하나 그냥 드립니다.<br>\u2461\u2462\u2463 <b>이모티콘 3칸</b> — 기본 <b>1,000</b> · 고급(GIF·밈) <b>2,000</b>.',
+      '\u{1F600} <b>[신규] 이모티콘 <b>28종</b>.</b> 게임 중에 <b>😀</b> 버튼으로 보냅니다. 상대 <b>상태창 위에 3초</b> 동안 뜨고, 쿨타임은 <b>7초</b>입니다. 내 턴이 아니어도 언제든 쓸 수 있습니다.',
+      '\u{1F5C3}️ <b>이모티콘은 5칸에 넣어두고 씁니다.</b> 메뉴 → <b>😀 이모티콘</b>에서 미리 넣어두세요. 산 것 전부를 늘어놓으면 고르다 턴이 끝납니다.',
+      '\u{1F916} <b>[신규] 봇도 이모티콘을 씁니다.</b> 크게 맞았을 때, 누군가를 처치했을 때, 죽을 때, 판이 시작될 때… 그리고 가끔은 그냥.<br><span style="font-size:11.5px;color:var(--fg-dim);">항상 쓰지는 않습니다 — 상황마다 확률이 다르고, 한 번 쓰면 잠시 쉽니다. 기계처럼 보이지 않게요.</span>',
+      '\u{1FAA8} <b>[수정] 아주 빠르게 클릭하면 돌을 4개까지 캘 수 있던 문제.</b> 한도 검사를 돌 하나가 아니라 <b>판 전체</b>로 옮겼습니다.',
+      '\u{1F440} <b>[개선] 고르지 않은 돌이 잘 보입니다.</b> 부서져 사라지는 대신 <b>열린 채로 남고</b> 표시도 길어졌습니다. 그리고 돌에서 나온 것의 <b>글씨색이 등급에 따라</b> 달라집니다 — 전설은 금색으로 빛납니다.',
+    ]
+  },
   {
     version: 'Ver 15.10.1', date: '2026-09-13',
     items: [
@@ -63321,6 +64044,17 @@ function releaseGuardianAngel(dead){
   mate.__gaCardSnapshot = null; dead.__gaCardSnapshot = null;
 }
 function onPlayerDeath(deadPlayer, cause, cardName){
+  /* [Ver 16.0] 죽은 봇은 한마디, 죽인 쪽이 봇이면 또 한마디.
+     ⚠ 확률·쿨타임은 botEmote 안에서 본다 — 여기서 또 따지지 않는다.
+     ⚠ 죽은 봇은 곧 alive=false 가 되므로 **지금** 불러야 한다. */
+  try{
+    botEmote(deadPlayer, 'died');
+    const kid = currentAttackContext && currentAttackContext.attackerId;
+    if(kid && kid !== (deadPlayer && deadPlayer.id)){
+      const killer = (players||[]).find(p=> p && p.id === kid);
+      if(killer) botEmote(killer, 'kill');
+    }
+  }catch(e){}
   /* [Ver 10.5] 죽은 사람이 걸어둔 판 전체 효과를 정리한다. */
   try{ releaseGuardianAngel(deadPlayer); }catch(e){ console.error('[10.5] 수호천사 정리', e); }
   try{
@@ -65173,6 +65907,10 @@ function checkHpBugDeaths(){
 
 function applyDamageToPlayer(target, amount, pierce, skipRedirect){
   if(target) target._hpPreHit = target.hp; // [5.2.1] 트릭 "죽기 직전 피해 무효화"용: 이 피격 직전 HP 스냅샷
+  /* [Ver 16.0] 크게 맞은 봇은 반응한다 — 최대 체력의 4분의 1 이상일 때만. */
+  try{
+    if(target && target.isBot && amount > 0 && amount >= (target.maxHp || 2000) * 0.25) botEmote(target, 'bigHit');
+  }catch(e){}
   /* ══════════════════════════════════════════════════════════════
      [Ver 14.7.4] 때린 **카드의 성질**을 보는 둘. 무적·반사보다 먼저 본다.
      ⚠ 피해 함수는 카드를 인자로 받지 않는다 — 이름으로 정의를 되찾아 쓴다.
@@ -66445,6 +67183,8 @@ function botPickSharedCard(bot){
 
 function botTurnAction(bot){
   if(!gameActive) return;
+  /* [Ver 16.0] 아무 일 없어도 가끔 한마디 — 확률이 낮아 수다스럽지 않다. */
+  try{ botEmote(bot, 'taunt'); }catch(e){}
   // [Ver 11.4] 파밍 모드 — 봇도 여유 골드가 있으면 드로우 레벨을 올린다 (턴을 소모하지 않는 자유 행동).
   if(farmingMode && bot.alive){
     try{
@@ -74764,6 +75504,9 @@ function lanOnMessage(m){
     case 'state': lanClientApplyState(m.payload); break;      // 클라이언트: 호스트가 보낸 공개 상태 적용
     case 'input': lanHostHandleInput(m.slot, m.payload); break; // 호스트: 클라이언트 입력 수신
     case 'private': lanClientApplyPrivate(m.payload); break;    // 클라이언트: 호스트가 보낸 개인 메시지(반응 프롬프트 등)
+    /* [Ver 16.0] 남이 보낸 이모티콘 — 그 사람 상태창 위에 띄운다.
+       ⚠ 보유 여부를 따지지 않는다. 보낸 쪽에서 이미 확인했다. */
+    case 'emote': try{ if(m.payload && m.payload.pid) emoPop(m.payload.pid, m.payload.key); }catch(e){} break;
     case 'left': LAN.room=null; lanRenderLobby(); break;
   }
 }
