@@ -9203,7 +9203,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.2.1</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.3</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -15871,8 +15871,12 @@ function popLeftText(){
    · 그림은 emo/ 에 있다. 파일이 없으면 onerror 로 조용히 지운다.
    ⚠ 인게임에서는 **보유한 것만** 쓸 수 있다. 봇은 예외 — 지갑이 없다.
    ########################################################################## */
-const EMO_PRICE_GIF = 2000;   // 고급(GIF·밈)
-const EMO_PRICE_ART = 1000;   // 기본(직접 그린 것)
+/* [Ver 16.3] 값은 "직접 그렸나"가 아니라 **움직이나**로 매긴다.
+   ⚠ 판정은 t 필드를 그대로 쓴다 — 확인 결과 gif_* 는 전부 2프레임 이상,
+     art_* 는 전부 1프레임이라 지금은 둘이 정확히 일치한다.
+     앞으로 **정지된 .gif** 를 넣게 되면 t:'art' 로 적을 것. */
+const EMO_PRICE_GIF = 1500;   // 움직이는 것
+const EMO_PRICE_ART = 750;    // 움직이지 않는 것
 /* [Ver 16.1] 뒤 주석은 **그 이모티콘을 쓰는 상황**이다 — 사용자가 직접 정해 알려줬다.
    ⚠ BOT_EMO_SITU 후보를 손볼 때는 반드시 이 줄을 보고 고른다.
      예전엔 키만 보고 골라서 죽을 때 AURA(잘난척)가 뜨고 인사할 때 협박이 떴다.
@@ -15890,6 +15894,12 @@ const EMOTICONS = [
   { k:'gif_06', t:'gif', name:'한판 더', fit:'cover', pos:'50% 45%' },   // 한판 더 · 환호할 때
   { k:'gif_07', t:'gif', name:'비옴' },            // 비옴 (침울)
   { k:'gif_08', t:'gif', name:'절망' },            // 절망   ← 원본이 mp4 라 gif 로 변환했다
+  /* [Ver 16.3] 새로 들어온 것들 */
+  { k:'gif_09', t:'gif', name:'AURA 2' },          // 잘난척 · 레전드 상황
+  { k:'gif_10', t:'gif', name:'난 여기서 빠질게' },  // 방관 · 관조
+  { k:'gif_11', t:'gif', name:'식은땀' },           // 초조 · 불안
+  { k:'gif_12', t:'gif', name:'안녕히계세요 여러분' },// 떠날 때 · 끝났을 때
+  { k:'gif_13', t:'gif', name:'역따봉' },           // 조롱 · 불만
   /* 직접 그린 것 */
   { k:'art_01', t:'art', name:'차가움' },          // 차가움
   { k:'art_02', t:'art', name:'어림도없지' },      // 어림도 없지 (막아냈을 때)
@@ -15911,6 +15921,7 @@ const EMOTICONS = [
   { k:'art_18', t:'art', name:'제발요' },          // 제발요
   { k:'art_19', t:'art', name:'멈춰' },            // 멈춰
   { k:'art_20', t:'art', name:'음흉' },            // 음흉
+  { k:'art_21', t:'art', name:'Peak' },            // [Ver 16.3] 최고 · 정점
 ];
 function emoDefOf(k){ return EMOTICONS.find(e=> e.k === k) || null; }
 function emoSrc(k){ const d = emoDefOf(k); return d ? ('emo/' + d.k + (d.t === 'gif' ? '.gif' : '.png')) : ''; }
@@ -16229,19 +16240,19 @@ const BOT_EMO_SITU = {
   // 판이 시작될 때 — 여유 · 기선제압
   hello:   [0.70, ['art_03','art_12','art_01','gif_06','art_07','art_06','art_20']],
   // 크게 맞았다 — 으악 · 울음 · 침울
-  bigHit:  [0.80, ['art_17','art_14','gif_07','art_18','gif_08','gif_04','art_15','art_13','art_08']],
+  bigHit:  [0.80, ['art_17','art_14','gif_07','art_18','gif_08','gif_04','art_15','art_13','art_08','gif_12','gif_11']],
   // 처치했다 — 저격 · 환호 · 잘난척
-  kill:    [0.85, ['art_05','art_20','gif_02','art_04','gif_06','art_15','art_06','art_10']],
+  kill:    [0.85, ['art_05','art_20','gif_02','art_04','gif_06','art_15','art_06','art_10','gif_09','art_21']],
   // 죽었다 — 절망 · 울음 · 항복
-  died:    [0.90, ['art_14','gif_08','gif_07','art_15','art_08','art_17','art_18']],
+  died:    [0.90, ['art_14','gif_08','gif_07','art_15','art_08','art_17','art_18','gif_12']],
   // 돈이 바닥났다 — 거지 · 한숨 · 구걸
   broke:   [0.65, ['art_16','art_09','gif_07','art_08','art_18','art_14']],
   // 좋은 것을 얻었다 — 행복 · 잘난척 · 박수
-  lucky:   [0.70, ['art_12','art_04','art_03','gif_06','art_10','art_20']],
+  lucky:   [0.70, ['art_12','art_04','art_03','gif_06','art_10','art_20','art_21']],
   // 막혔다·무효화당했다 — 어림도없지 · 멈춰 · 분노
-  blocked: [0.75, ['art_02','art_19','art_13','art_09','gif_04','art_17','gif_05']],
+  blocked: [0.75, ['art_02','art_19','art_13','art_09','gif_04','art_17','gif_05','gif_13']],
   // 그냥, 가끔 — 도발 쪽으로 몰아둔다
-  taunt:   [0.45, ['gif_01','gif_05','art_07','art_11','art_16','art_06','gif_03','art_04','art_01','art_05']],
+  taunt:   [0.45, ['gif_01','gif_05','art_07','art_11','art_16','art_06','gif_03','art_04','art_01','art_05','gif_09','gif_13']],
   /* [Ver 16.1] 새로 생긴 상황들 */
   // 공격 카드를 냈다 — 저격 · 선언 · 협박
   played:  [0.70, ['art_05','art_04','art_19','art_02','gif_01','art_06','gif_02']],
@@ -16250,23 +16261,23 @@ const BOT_EMO_SITU = {
   // 남이 크게 맞거나 죽는 걸 봤다 — 구경 · 어이없음 · 박수
   /* ⚠ [Ver 16.2.1] 여기가 분당 14회로 **제일 붐비는 자리**다. 박수·음흉을 여기 두면
      그 둘만 계속 보인다(측정: 16배 차이). 둘을 빼고 구경에 어울리는 것들로 넓혔다. */
-  watch:   [0.65, ['gif_03','gif_04','art_11','art_09','gif_05','art_03','art_01','art_17']],
+  watch:   [0.65, ['gif_03','gif_04','art_11','art_09','gif_05','art_03','art_01','art_17','gif_10']],
   // 둘만 남았다 — 차가움 · 저격 · 협박
   duel:    [0.75, ['art_01','art_05','gif_01','art_07','art_19','art_06','gif_02']],
   /* [Ver 16.1.4] 이걸 맞으면 죽는다 — 체념 */
-  doomed:  [0.85, ['art_08','gif_08','art_18','art_14','gif_07','art_09','art_11']],
+  doomed:  [0.85, ['art_08','gif_08','art_18','art_14','gif_07','art_09','art_11','gif_11']],
   /* [Ver 16.1.4] 인성질 — 남을 크게 때려놓고 약을 올린다 */
-  rude:    [0.80, ['gif_05','art_16','art_09','gif_03','art_07','art_04','art_11','gif_02','art_05']],
+  rude:    [0.80, ['gif_05','art_16','art_09','gif_03','art_07','art_04','art_11','gif_02','art_05','gif_13','art_21']],
   /* [Ver 16.1.2] 회복했다 — 살아났으니 여유롭거나 잘난척하거나 */
   heal:    [0.70, ['art_03','art_12','art_04','art_10','gif_06','art_20','art_11']],
   // 누가 고자가 됐다 — 남 일이라고 실컷 놀린다
-  goja:    [0.80, ['gif_05','art_20','art_09','gif_03','art_10','art_11','gif_04']],
+  goja:    [0.80, ['gif_05','art_20','art_09','gif_03','art_10','art_11','gif_04','gif_13']],
   // 반사로 막아냈다 — 어림도 없지
   reflect: [0.80, ['art_02','art_20','art_04','gif_06','art_10','art_19']],
   // 손패가 시원찮다 — 한숨 · 거지 · 제발
-  badHand: [0.45, ['art_09','art_16','art_11','art_18','art_14','gif_07','art_08','gif_08']],
+  badHand: [0.45, ['art_09','art_16','art_11','art_18','art_14','gif_07','art_08','gif_08','gif_11']],
   // 좋은 카드가 들어왔다 — 잘난척 · 행복 · 음흉
-  goodCard:[0.75, ['art_04','art_12','art_20','gif_06','art_06','art_10']],
+  goodCard:[0.75, ['art_04','art_12','art_20','gif_06','art_06','art_10','art_21','gif_09']],
 
   /* ══════ [Ver 16.2] 여기서부터 새로 생긴 자리 ══════
      ⚠ 후보는 **덜 쓰이던 이모티콘부터** 넣었다(몽둥이·차가움·분노·절망·저격·항복할게).
@@ -16276,7 +16287,7 @@ const BOT_EMO_SITU = {
   // 내 공격이 빗나갔다 — 분노 · 망했네 · 한숨
   missed:  [0.55, ['art_13','art_15','art_09','art_17','art_01','gif_08']],
   // 남이 빗나간 걸 봤다 — 비웃음
-  sawMiss: [0.45, ['gif_05','gif_04','art_10','gif_03','art_11']],
+  sawMiss: [0.45, ['gif_05','gif_04','art_10','gif_03','art_11','gif_13']],
   // 몸놀림으로 피했다 — 어림도없지 · 차가움
   evaded:  [0.70, ['art_02','art_01','art_20','art_10','art_04']],
   // 연회장 퀘스트를 달성했다 — 박수 · 행복
@@ -16296,7 +16307,7 @@ const BOT_EMO_SITU = {
   // 스턴·경직으로 굳었다
   stunned: [0.55, ['art_09','art_17','art_13','art_11','gif_04']],
   // 격리에 갇혔다 / 돌아왔다
-  voided:  [0.70, ['gif_03','art_17','art_09','art_11','gif_08']],
+  voided:  [0.70, ['gif_03','art_17','art_09','art_11','gif_08','gif_12']],
 
   /* ── 남을 건드리는 순간 ── */
   // 내가 빼앗았다 — 음흉 · 잘난척
@@ -16306,7 +16317,7 @@ const BOT_EMO_SITU = {
   // 같은 편이 죽었다
   teamLoss:[0.80, ['art_14','gif_08','art_13','gif_07','art_08']],
   // 체력이 20% 밑으로 떨어졌다 (래치로 한 번만)
-  lowHp:   [0.70, ['art_18','art_08','gif_07','art_14','art_09']],
+  lowHp:   [0.70, ['art_18','art_08','gif_07','art_14','art_09','gif_11']],
 };
 
 /* [Ver 16.1.3] 누가 카드를 내는 걸 구경하는 봇들.
@@ -31218,6 +31229,14 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 16.3', date: '2026-09-15',
+    items: [
+      '😀 <b>[신규] 이모티콘 6종 추가 — 이제 <b>34종</b>입니다.</b><br>🅰️ <b>AURA 2</b>(잘난척·레전드) · 🫠 <b>식은땀</b>(초조) · 👋 <b>안녕히계세요 여러분</b>(떠날 때) · 👎 <b>역따봉</b>(조롱) · 🙈 <b>난 여기서 빠질게</b>(방관) · 🔝 <b>Peak</b>(최고)',
+      '💸 <b>[인하] 이모티콘 값이 내렸습니다.</b> 기준도 바뀌었습니다 — <b>직접 그렸는지</b>가 아니라 <b>움직이는지</b>로 매깁니다.<br>움직이지 않는 것 <b>1,000 → 750</b> · 움직이는 것 <b>2,000 → 1,500</b>',
+      '🎭 <b>[조정] 새 6종을 봇 상황에도 섞었습니다.</b> 넣기만 하면 드문 상황에만 걸려 좀처럼 안 나옵니다(16.2.1에서 고친 그 문제) — 뜻이 맞는 <b>자주 일어나는 상황</b>에도 하나씩 넣었습니다.<br><span style="font-size:11.5px;color:var(--fg-dim);">측정: 34종의 빈도 격차 18.1배 → 6.9배. 가장 드문 것도 9분에 한 번은 뜹니다.</span>',
+    ]
+  },
   {
     version: 'Ver 16.2.1', date: '2026-09-15',
     items: [
