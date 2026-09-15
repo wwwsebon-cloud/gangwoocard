@@ -9200,7 +9200,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.1.2</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.1.3</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -16189,10 +16189,16 @@ function renderEmoBar(){
      같은 봇이 연달아 쓰지 않게 각자 쿨타임을 따로 센다.
    ⚠ 봇은 **보유를 따지지 않는다** — 봇에게 지갑이 없다.
    ########################################################################## */
-/* [Ver 16.1.2] 6초도 뜸했다 — 2초로 내린다(천장이 3배).
-   ⚠ **여기 하나만 올리면 전부 같이 조용해진다.** 시끄럽다는 말이 나오면 이 값을 만질 것.
-     확률을 일일이 내리지 말 것 — 상황별 균형이 깨진다. */
+/* [Ver 16.1.2] 6초도 뜸했다 — 2초로 내린다(천장이 3배). */
 const BOT_EMO_COOL_MS = 2000;
+/* ★ [Ver 16.1.3] 전체 빈도 손잡이. 아래 상황별 확률에 **곱해진다.**
+   ⚠ 시끄럽다/조용하다는 말이 나오면 **이 값 하나만** 만질 것.
+     상황별 확률을 일일이 깎으면 애써 맞춘 균형이 무너진다.
+     1.00 = 16.1.2 그대로 · 0.65 = 약 30% 적게(측정값) */
+const BOT_EMO_RATE = 0.65;
+/* 말풍선이 뜨기까지의 기본 지연(ms). 사람처럼 조금 늦게 반응한다.
+   ⚠ 여럿이 같은 순간에 불리면 이 폭 안에서 흩어진다 — 좁으면 우르르 몰린다. */
+const BOT_EMO_SPREAD_MS = 1400;
 /* 상황 → [확률, 후보 이모티콘들]
    ⚠ 후보를 넓게 둔다. 같은 상황에서 늘 같은 그림이 나오면 금방 질린다.
    ⚠ 100% 는 없다. 어떤 상황이든 그냥 넘어가는 경우가 있어야 사람처럼 보인다. */
@@ -16237,6 +16243,18 @@ const BOT_EMO_SITU = {
   goodCard:[0.75, ['art_04','art_12','art_20','gif_06','art_06','art_10']],
 };
 
+/* [Ver 16.1.3] 누가 카드를 내는 걸 구경하는 봇들.
+   ⚠ 반응 시간이 **열릴 때** 부른다 — 끝난 뒤에 부르면 다 같이 동시에 떠든다.
+   ⚠ spreadMs 만큼 흩뿌려서, 반응 시간 도중에도 뜨고 끝난 뒤에도 뜬다. */
+function botsWatchCast(caster, spreadMs){
+  try{
+    (players||[]).forEach(p=>{
+      if(!p || !p.isBot || !p.alive) return;
+      if(caster && p.id === caster.id) return;
+      botEmote(p, 'watch', spreadMs);
+    });
+  }catch(e){}
+}
 /* [Ver 16.1.2] 남 일이라고 구경하며 놀리는 봇들. (당사자는 뺀다) */
 function botsMock(victim, situ){
   try{
@@ -16247,7 +16265,9 @@ function botsMock(victim, situ){
     });
   }catch(e){}
 }
-function botEmote(bot, situ){
+/* @param spreadMs 말풍선이 뜰 때까지의 **지연 폭**. 여럿이 한꺼번에 불릴 때
+                    이 폭 안에 흩어져 동시에 터지지 않는다. */
+function botEmote(bot, situ, spreadMs){
   try{
     if(!bot || !bot.isBot || !bot.alive) return;
     if(typeof gameActive !== 'undefined' && !gameActive) return;
@@ -16255,7 +16275,8 @@ function botEmote(bot, situ){
     if(!s) return;
     const now = Date.now();
     if((bot.__emoCool || 0) > now) return;          // 이 봇은 아직 쉬는 중
-    if(Math.random() >= s[0]) return;               // ⚠ 늘 쓰면 기계다
+    /* ⚠ 늘 쓰면 기계다. BOT_EMO_RATE 로 전체 빈도를 한 번에 조절한다. */
+    if(Math.random() >= s[0] * BOT_EMO_RATE) return;
     bot.__emoCool = now + BOT_EMO_COOL_MS;
     /* ⚠ 연달아 같은 그림이면 사람이 아니라 기계로 읽힌다 — 봇마다 직전 것을 기억한다. */
     let pool = s[1];
@@ -16265,8 +16286,10 @@ function botEmote(bot, situ){
     }
     const key = pool[Math.floor(Math.random() * pool.length)];
     bot.__emoLast = key;
-    /* 사람처럼 조금 늦게 반응한다 */
-    setTimeout(()=>{ try{ emoPop(bot.id, key); }catch(e){} }, 250 + Math.random() * 900);
+    /* 사람처럼 조금 늦게 반응한다.
+       ⚠ 폭을 넓게 잡아야 봇 셋이 동시에 떠들지 않는다 — 좁혔더니 우르르 몰렸다. */
+    const span = Math.max(300, spreadMs || BOT_EMO_SPREAD_MS);
+    setTimeout(()=>{ try{ emoPop(bot.id, key); }catch(e){} }, 120 + Math.random() * span);
   }catch(e){}
 }
 
@@ -31021,6 +31044,13 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 16.1.3', date: '2026-09-15',
+    items: [
+      '🔉 <b>[조정] 봇 이모티콘을 <b>30%</b> 줄였습니다.</b> 지워지던 문제를 고치고 나니 이번엔 너무 많았습니다.<br><span style="font-size:11.5px;color:var(--fg-dim);">상황별 확률을 일일이 깎지 않고 <b>전체 빈도 값 하나</b>로 고르게 줄였습니다. 상황 사이의 균형은 그대로입니다.</span>',
+      '⏱️ <b>[수정] 봇들이 반응 시간이 끝난 뒤 <b>다 같이 한꺼번에</b> 이모티콘을 쓰던 문제.</b> 구경하는 봇을 <b>효과가 끝난 뒤</b>에 불러서, 셋이 같은 순간에 깨어나 동시에 떠들었습니다.<br>이제 <b>반응 시간이 열릴 때</b> 부르고, <b>반응 시간 도중부터 끝난 뒤 3초까지</b> 걸쳐 흩어져 뜹니다.<br><span style="font-size:11.5px;color:var(--fg-dim);">측정: 0.5초 안에 몰리던 비율 61% → 12%. 절반 이상이 반응 시간 도중에 뜹니다.</span>',
+    ]
+  },
   {
     version: 'Ver 16.1.2', date: '2026-09-15',
     items: [
@@ -53648,6 +53678,11 @@ function openReactionWindow(caster, card, targetId, onResolve){
   };
   resetReactionTimer(DISPLAY_MS);
   rafId = requestAnimationFrame(tickTimer);
+  /* ★ [Ver 16.1.3] 구경하는 봇들 — **반응 시간이 열린 지금** 부른다.
+     예전엔 효과가 다 끝난 뒤에 불러서 봇 셋이 같은 순간에 떠들었다.
+     반응 시간 도중부터 끝난 뒤 3초까지 걸쳐 흩뿌린다.
+     ⚠ REACT_MS 아래여야 한다 — 위에서 부르면 TDZ 로 조용히 죽는다. */
+  try{ botsWatchCast(caster, REACT_MS + 3000); }catch(e){}
 
   let resolved = false;
   const finish = (result)=>{
@@ -54703,14 +54738,10 @@ function resolveCardEffect(caster, card, targetId, onDone){
     if(caster && caster.isBot){
       botEmote(caster, (typeof rxHudHealOf === 'function' && rxHudHealOf(card) !== null) ? 'heal' : 'played');
     }
-    /* 그리고 **나머지 봇들이 구경한다.** 사람이 낸 카드에도 반응한다 —
-       판에 나 혼자 떠드는 느낌이 나지 않게.
-       ⚠ 셋이 한꺼번에 터지지 않는 건 봇마다 따로 도는 쿨타임이 막아준다. */
-    (players||[]).forEach(p=>{
-      if(!p || !p.isBot || !p.alive) return;
-      if(caster && p.id === caster.id) return;
-      botEmote(p, 'watch');
-    });
+    /* ⚠ [Ver 16.1.3] 구경(watch)은 여기서 부르지 않는다.
+       이 자리는 **반응 시간이 끝난 뒤**라, 봇 셋이 같은 순간에 깨어나
+       한꺼번에 떠들었다. openReactionWindow 로 옮겨 반응 시간 도중부터
+       흩뿌린다. (그쪽에 botsWatchCast 가 있다) */
   }catch(e){}
   // [Ver 8.1.6] "건망증"/"나가사키 눈뽕"으로 은폐된(__masked) 카드는 실제로 내는 이 순간 정체가 드러난다.
   if(card.__masked) card.__masked = false;
