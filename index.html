@@ -5733,6 +5733,9 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
   60% { opacity:1; transform:translate(-50%,-106%) scale(1.08) rotate(3deg); }
   100%{ opacity:1; transform:translate(-50%,-100%) scale(1) rotate(0deg); }
 }
+/* [Ver 16.1.4] 죽은 사람의 말풍선 — 쓸 수는 있되 산 사람과 구별되게 흐리다.
+   ⚠ opacity 를 keyframes 가 both 로 붙들고 있어 !important 가 필요하다. */
+.emo-pop.dead{ opacity:.3 !important; }
 .emo-pop.out{ animation:emoOut .26s var(--ease) forwards; }
 @keyframes emoOut{ to{ opacity:0; transform:translate(-50%,-118%) scale(.86); } }
 @media (max-width:860px){ .emo-pop img{ width:62px; height:62px; } }
@@ -9200,7 +9203,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.1.3</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.1.4</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -16022,11 +16025,23 @@ function syncEmoPops(){
       if(!host) return;                                   // 판 밖이거나 자리가 없다
       const layer = emoLayer();
       let el = layer.querySelector('.emo-pop[data-pid="' + pid + '"]');
-      if(el){ emoPlace(el, host); return; }                // 이미 있다 — 자리만 다시 맞춘다
+      if(el){
+        /* [Ver 16.1.4] 말풍선이 떠 있는 동안 죽는 경우가 있다 — 그때 흐려진다 */
+        try{
+          const who = (players||[]).find(p=> p && p.id === pid);
+          el.classList.toggle('dead', !!(who && who.alive === false));
+        }catch(e){}
+        emoPlace(el, host); return;                        // 이미 있다 — 자리만 다시 맞춘다
+      }
       el = document.createElement('div');
       el.className = 'emo-pop';
       el.dataset.pid = pid;
       el.dataset.k = v.key;
+      /* [Ver 16.1.4] 죽은 사람도 쓴다 — 대신 흐리게 띄워 산 사람과 구별한다 */
+      try{
+        const who = (players||[]).find(p=> p && p.id === pid);
+        if(who && who.alive === false) el.classList.add('dead');
+      }catch(e){}
       /* ⚠ 렌더에 지워졌다 다시 붙는 경우가 있다. 그때 팝 애니메이션을 처음부터
          재생하면 같은 그림이 여러 번 튀어나온 것처럼 보인다 —
          이미 지난 만큼 음수 지연을 줘서 '이어서' 보이게 한다. */
@@ -16189,8 +16204,10 @@ function renderEmoBar(){
      같은 봇이 연달아 쓰지 않게 각자 쿨타임을 따로 센다.
    ⚠ 봇은 **보유를 따지지 않는다** — 봇에게 지갑이 없다.
    ########################################################################## */
-/* [Ver 16.1.2] 6초도 뜸했다 — 2초로 내린다(천장이 3배). */
-const BOT_EMO_COOL_MS = 2000;
+/* [Ver 16.1.4] 사람과 같은 규칙으로 맞춘다 — 사람은 EMO_COOL_MS(7초)를 지킨다.
+   ⚠ 이 값은 "한 봇이 연달아 떠드는 것"만 막는다. 판 전체가 조용해지면
+     이걸 내리지 말고 BOT_EMO_RATE 를 올릴 것. */
+const BOT_EMO_COOL_MS = 7000;
 /* ★ [Ver 16.1.3] 전체 빈도 손잡이. 아래 상황별 확률에 **곱해진다.**
    ⚠ 시끄럽다/조용하다는 말이 나오면 **이 값 하나만** 만질 것.
      상황별 확률을 일일이 깎으면 애써 맞춘 균형이 무너진다.
@@ -16231,6 +16248,10 @@ const BOT_EMO_SITU = {
   watch:   [0.65, ['gif_03','gif_04','art_10','art_11','art_09','gif_05','art_20']],
   // 둘만 남았다 — 차가움 · 저격 · 협박
   duel:    [0.75, ['art_01','art_05','gif_01','art_07','art_19','art_06','gif_02']],
+  /* [Ver 16.1.4] 이걸 맞으면 죽는다 — 체념 */
+  doomed:  [0.85, ['art_08','gif_08','art_18','art_14','gif_07','art_09','art_11']],
+  /* [Ver 16.1.4] 인성질 — 남을 크게 때려놓고 약을 올린다 */
+  rude:    [0.80, ['gif_05','art_20','art_16','art_09','gif_03','art_07','art_04','art_11','art_10']],
   /* [Ver 16.1.2] 회복했다 — 살아났으니 여유롭거나 잘난척하거나 */
   heal:    [0.70, ['art_03','art_12','art_04','art_10','gif_06','art_20','art_11']],
   // 누가 고자가 됐다 — 남 일이라고 실컷 놀린다
@@ -16249,7 +16270,7 @@ const BOT_EMO_SITU = {
 function botsWatchCast(caster, spreadMs){
   try{
     (players||[]).forEach(p=>{
-      if(!p || !p.isBot || !p.alive) return;
+      if(!p || !p.isBot) return;           // [Ver 16.1.4] 죽은 봇도 구경한다
       if(caster && p.id === caster.id) return;
       botEmote(p, 'watch', spreadMs);
     });
@@ -16259,9 +16280,9 @@ function botsWatchCast(caster, spreadMs){
 function botsMock(victim, situ){
   try{
     (players||[]).forEach(p=>{
-      if(!p || !p.isBot || !p.alive) return;
+      if(!p || !p.isBot) return;           // [Ver 16.1.4] 죽은 봇도 놀린다
       if(victim && p.id === victim.id) return;
-      botEmote(p, situ || 'goja');
+      botEmote(p, situ || 'goja', 4000);
     });
   }catch(e){}
 }
@@ -16269,7 +16290,9 @@ function botsMock(victim, situ){
                     이 폭 안에 흩어져 동시에 터지지 않는다. */
 function botEmote(bot, situ, spreadMs){
   try{
-    if(!bot || !bot.isBot || !bot.alive) return;
+    /* ⚠ [Ver 16.1.4] 죽었다고 막지 않는다 — 사망자도 쓴다(흐리게 뜬다).
+       사람은 원래 죽어도 보낼 수 있었다. 봇만 막혀 있었다. */
+    if(!bot || !bot.isBot) return;
     if(typeof gameActive !== 'undefined' && !gameActive) return;
     const s = BOT_EMO_SITU[situ];
     if(!s) return;
@@ -31044,6 +31067,15 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 16.1.4', date: '2026-09-15',
+    items: [
+      '⏳ <b>[조정] 봇도 사람과 같은 <b>7초 쿨타임</b>을 지킵니다.</b> 사람은 7초를 기다리는데 봇만 2초였습니다. 한 봇이 연달아 떠드는 일이 없어집니다.',
+      '👻 <b>[신규] 죽어도 이모티콘을 쓸 수 있습니다.</b> 죽었다고 입까지 막을 건 없으니까요. 대신 <b>흐리게(30%)</b> 떠서 살아있는 사람과 구별됩니다. 봇도 죽은 뒤에 구경하고 놀립니다.',
+      '😵 <b>[신규 상황] 체념.</b> 이 공격을 맞으면 죽는다는 걸 안 봇은 <b>반응 시간 도중에</b> 체념합니다.<br><span style="font-size:11.5px;color:var(--fg-dim);">반응 알림창에 뜨는 그 피해 예측을 그대로 씁니다 — 숫자와 표정이 어긋나지 않습니다.</span>',
+      '😈 <b>[신규 상황] 인성질.</b> 봇이 남을 크게 때려놓고 <b>약을 올립니다.</b> 지금까지 봇은 자기 일에만 반응했습니다 — 맞았다, 죽었다, 좋은 걸 얻었다. 남에게 한 짓을 두고 깐죽대는 자리가 없었습니다.',
+    ]
+  },
   {
     version: 'Ver 16.1.3', date: '2026-09-15',
     items: [
@@ -53683,6 +53715,17 @@ function openReactionWindow(caster, card, targetId, onResolve){
      반응 시간 도중부터 끝난 뒤 3초까지 걸쳐 흩뿌린다.
      ⚠ REACT_MS 아래여야 한다 — 위에서 부르면 TDZ 로 조용히 죽는다. */
   try{ botsWatchCast(caster, REACT_MS + 3000); }catch(e){}
+  /* ★ [Ver 16.1.4] 맞으면 죽는다는 걸 안 봇은 **체념한다.** 반응 시간 도중에 뜬다.
+     ⚠ 피해는 rxHudPredict 를 그대로 쓴다 — 반응창에 뜨는 숫자와 어긋나면 안 된다. */
+  try{
+    const __vic = (players||[]).find(p=> p && p.id === targetId);
+    if(__vic && __vic.isBot && __vic.alive){
+      const __pr = rxHudPredict(__vic, card);
+      if(__pr && __pr.dmg !== null && __pr.dmg > 0 && __pr.hpAfter <= 0){
+        botEmote(__vic, 'doomed', Math.max(600, REACT_MS - 600));
+      }
+    }
+  }catch(e){}
 
   let resolved = false;
   const finish = (result)=>{
@@ -64493,9 +64536,9 @@ function onPlayerDeath(deadPlayer, cause, cardName){
     /* [Ver 16.1.2] 죽은 것도 죽인 것도 아닌 **구경꾼**들. 판에서 제일 큰 사건인데
        아무도 반응하지 않으면 심심하다. ⚠ 확률·쿨타임은 botEmote 가 본다. */
     (players||[]).forEach(p=>{
-      if(!p || !p.isBot || !p.alive) return;
+      if(!p || !p.isBot) return;           // [Ver 16.1.4] 이미 죽은 봇도 구경한다
       if(p === deadPlayer || p.id === kid) return;
-      botEmote(p, 'watch');
+      botEmote(p, 'watch', 4000);
     });
   }catch(e){}
   /* [Ver 10.5] 죽은 사람이 걸어둔 판 전체 효과를 정리한다. */
@@ -66353,10 +66396,21 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
   /* [Ver 16.0] 크게 맞은 봇은 반응한다 — 최대 체력의 4분의 1 이상일 때만. */
   try{
     if(target && amount > 0 && amount >= (target.maxHp || 2000) * 0.25){
-      if(target.isBot) botEmote(target, 'bigHit');
+      if(target.isBot) botEmote(target, 'bigHit', 3500);
+      /* ★ [Ver 16.1.4] 때린 쪽이 봇이면 **약을 올린다.** 지금까지 봇은 자기 일에만
+         반응했다(맞았다·죽었다·얻었다) — 남에게 한 짓을 두고 깐죽대는 자리가 없었다. */
+      try{
+        const __atkId = (typeof currentAttackContext === 'object' && currentAttackContext)
+          ? currentAttackContext.attackerId : null;
+        if(__atkId && __atkId !== target.id){
+          const __atk = (players||[]).find(p=> p && p.id === __atkId);
+          if(__atk && __atk.isBot) botEmote(__atk, 'rude', 3500);
+        }
+      }catch(e){}
       /* [Ver 16.1] 구경하던 봇들도 한마디 — 각자 확률·쿨타임을 따로 보므로
-         전부 동시에 터지지는 않는다. */
-      (players||[]).forEach(p=>{ if(p && p.isBot && p !== target) botEmote(p, 'watch'); });
+         전부 동시에 터지지는 않는다.
+         ⚠ 폭을 넉넉히 줘야 맞은 쪽·때린 쪽과 한꺼번에 터지지 않는다. */
+      (players||[]).forEach(p=>{ if(p && p.isBot && p !== target) botEmote(p, 'watch', 4500); });
     }
   }catch(e){}
   /* ══════════════════════════════════════════════════════════════
