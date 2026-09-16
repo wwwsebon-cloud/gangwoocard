@@ -3063,12 +3063,40 @@ body.mobile-mode .zone-bots .status-icons{ flex-wrap:nowrap; overflow:hidden; }
 .bp-art-img{ width:100%; border-radius:var(--r-xs); }
 .bp-body,.nc-body{ flex:1; min-width:0; display:flex; flex-direction:column; gap:5px; }
 .bp-name,.nc-name{ font-size:13px; font-weight:700; }
+/* [Ver 16.4] 큰 버전 고르는 줄 */
+/* ⚠ #bpVers 가 flex 라 이 줄도 플렉스 아이템이 된다 — 100% 를 줘야 제 줄을 차지한다. */
+.lg-majors{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; flex:0 0 100%; width:100%; }
+.lg-major{
+  padding:5px 12px; border-radius:999px; border:0; cursor:pointer;
+  font-family:var(--font-mono); font-size:11.5px; font-weight:700;
+  color:var(--fg-dim); background:var(--bg-3);
+}
+/* ⚠ --bg-1 은 **없는 토큰**이다(정의된 것은 --bg). 없는 변수는 조용히 상속값으로
+   떨어져 글자가 배경과 같은 색이 된다 — 실제로 탭 글자가 사라졌었다. */
+.lg-major.on{ color:var(--bg); background:var(--fg); }
+.lg-major:hover{ color:var(--fg); }
+.lg-major.on:hover{ color:var(--bg); }
 .bp-rows{ display:flex; flex-direction:column; gap:4px; }
 .bp-row{ display:flex; align-items:center; gap:8px; font-size:11.5px; }
 .bp-row-l{ min-width:62px; color:var(--fg-faint); }
 .bp-from{ color:var(--fg-faint); text-decoration:line-through; font-family:var(--font-mono); }
 .bp-arrow{ color:var(--fg-faint); }
-.bp-to{ font-family:var(--font-mono); font-weight:600; color:var(--tone-green); }
+.bp-to{ font-family:var(--font-mono); font-weight:600; color:var(--fg); }
+/* ⚠ [Ver 16.4] 행에 up/down 클래스는 **예전부터 붙어 있었는데** 받는 CSS 가 없어서
+   .bp-to 가 언제나 초록이었다 — 너프도 초록으로 보였다.
+   유리한 쪽은 초록, 불리한 쪽은 빨강. 화살표까지 같이 물들여야 한 줄이 한 덩어리로 읽힌다. */
+.bp-row.up   .bp-to{ color:var(--tone-green); }
+.bp-row.up   .bp-arrow{ color:var(--tone-green); opacity:.75; }
+.bp-row.down .bp-to{ color:var(--tone-red); }
+.bp-row.down .bp-arrow{ color:var(--tone-red); opacity:.75; }
+.bp-row.neu  .bp-to{ color:var(--fg); }
+/* 방향을 글자로도 한 번 더 — 색만으로는 색각 이상에서 구별되지 않는다 */
+.bp-row.up   .bp-to::after{ content:' ▲'; font-size:9px; vertical-align:1px; }
+.bp-row.down .bp-to::after{ content:' ▼'; font-size:9px; vertical-align:1px; }
+/* 밸런스 탭의 권능·유물 아이콘 */
+.bp-art-pw{ display:flex; align-items:center; justify-content:center; }
+.bp-art-pw .pw-img{ width:72px; height:72px; border-radius:var(--r-xs); object-fit:cover; }
+.bp-art-pw .pw-img-fb{ font-size:34px; }
 .bp-foot,.nc-desc{ font-size:11.5px; color:var(--fg-dim); line-height:1.75; }
 .nc-flavor{ font-size:11px; color:var(--fg-faint); font-style:italic; line-height:1.7; padding-left:10px; border-left:2px solid var(--line); }
 .nc-grade,.bp-card-grade{ font-family:var(--font-mono); font-size:10px; color:var(--fg-faint); letter-spacing:0.06em; }
@@ -4967,6 +4995,11 @@ body.dragging-card-no-target .p-card{ opacity:0.5; }
   touch-action:pan-x;   /* 세로로 끄는 동작은 브라우저에 넘기지 않는다 — 롱프레스 보호 */
 }
 .hand-area::-webkit-scrollbar{ display:none; }
+/* [Ver 16.4] 마우스로 끌어서 넘기기 */
+.hand-area.can-drag{ cursor:grab; }
+.hand-area.dragging{ cursor:grabbing; scroll-behavior:auto; }
+/* 끄는 동안에는 카드 위 호버 효과가 따라붙지 않게 */
+.hand-area.dragging .hand-card{ pointer-events:none; }
 /* 카드는 설명 길이와 무관하게 언제나 같은 크기다.
    [Ver 12.3] 대신 **설명 칸만 세로로 스크롤**한다 — 아무리 긴 설명이라도
    카드를 키우거나 글씨를 자르지 않고 끝까지 읽을 수 있다.
@@ -5862,6 +5895,14 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
   box-shadow:inset 0 0 0 1px var(--line), 0 16px 40px -14px rgba(0,0,0,.7);
 }
 .emo-tray.on{ display:grid; animation:riseInSm .2s var(--ease-spring) both; }
+/* [Ver 16.4] 칸 번호 — G 뒤에 누를 숫자 */
+.emo-cell{ position:relative; }
+.emo-num{
+  position:absolute; left:3px; top:2px; z-index:2;
+  font-family:var(--font-mono); font-size:10px; font-weight:800;
+  color:#fff; background:rgba(0,0,0,.55); border-radius:5px; padding:0 4px;
+  pointer-events:none;
+}
 .emo-cell{
   aspect-ratio:1/1; padding:4px; border:none; border-radius:10px; cursor:pointer;
   background:var(--bg-2); box-shadow:inset 0 0 0 1px var(--line);
@@ -9239,7 +9280,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.3.1</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.4</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -13822,6 +13863,7 @@ const STORAGE_KEYS = {
   emos: 'gang_card_emos_v1',         // [Ver 16.0] 보유 이모티콘 ['gif_01', ...]
   emoSlots: 'gang_card_emoslots_v1', // [Ver 16.0] 장착 5칸 [key|null x5]
   pop:  'gang_card_pop_v1',          // [Ver 16.0] 팝업 스토어 { hour, black, slots, taken }
+  kioskAt: 'gang_card_kiosk_v1',     // [Ver 16.4] 키오스크 유물을 마지막으로 받은 시간대
   bio: 'gang_card_bio_v1', // [Ver 10.5] 상태메시지 — 리더보드 프로필에 함께 표시된다
   friendCode: 'gang_card_friend_code_v1', // [Ver 10.5] 친구 코드 (공개용 · 사용자가 마음대로 바꾼다)
   friends: 'gang_card_friends_v1',        // [Ver 10.5] 친구 목록 (이 기기에만 저장)
@@ -14168,6 +14210,17 @@ function legacyGenesisExp(){
 }
 
 function grantClassExp(delta){
+  /* [Ver 16.4] 유물 — 열정(얻는 쪽 +%) · 냉정(잃는 쪽 -%).
+     ⚠ 판 밖 값이라 artMine 을 쓴다. 0 이면 곱셈이 1 이라 아무 일도 없다. */
+  try{
+    if(delta > 0){
+      const up = Number(artMine('passion') || 0);
+      if(up > 0) delta = Math.round(delta * (1 + up / 100));
+    } else if(delta < 0){
+      const cut = Math.min(90, Number(artMine('calm') || 0));
+      if(cut > 0) delta = -Math.round(Math.abs(delta) * (1 - cut / 100));
+    }
+  }catch(e){}
   const beforeCls = classState.cls, beforeExp = classState.exp;
   classState.exp = Math.max(0, classState.exp + delta);
   let promoted = 0, demoted = 0;
@@ -14314,6 +14367,12 @@ function seasonDateRangeText(){
    ########################################################################## */
 const ARCADE_COIN_REWARD = { 1:5, 2:2, 3:1 };   // 등수별 랩터코인
 const ARCADE_COIN_DAILY_CAP = 30;               // 하루에 얻을 수 있는 상한
+/* [Ver 16.4] 유물 '우빈이의 조이스틱'이 상한을 늘린다. */
+function arcadeCoinDailyCap(){
+  let add = 0;
+  try{ add = Math.floor(artMine('joystick') || 0); }catch(e){}
+  return ARCADE_COIN_DAILY_CAP + Math.max(0, add);
+}
 let ARCADE = null;
 /* [Ver 14.16] 출석·일일 퀘스트·상점 한도가 전부 이 한 줄을 본다.
    ⚠ 예전에는 PC 시계를 그대로 믿어서, 시간을 앞으로 돌리면 **하루가 새로 시작**됐다.
@@ -14361,7 +14420,7 @@ function arcadeRoll(){
 function arcadeCoins(){ return loadArcade().coin || 0; }
 function grantArcadeCoins(n){
   const A = loadArcade();
-  const room = Math.max(0, ARCADE_COIN_DAILY_CAP - (A.earned || 0));
+  const room = Math.max(0, arcadeCoinDailyCap() - (A.earned || 0));
   const give = Math.max(0, Math.min(n | 0, room));
   if(give > 0){ A.coin += give; A.earned = (A.earned || 0) + give; saveArcade(); }
   return { given: give, capped: (n | 0) - give };
@@ -14419,8 +14478,9 @@ const PASS_CREAM_PER_LV = 100;   // 레벨 하나에 필요한 썬크림
 /* [Ver 11.8] 등수별 썬크림.
    1등만 주면 "졌으면 0"이라 패스가 사실상 승률 좋은 사람 전용이 된다.
    2·3등에도 조금 얹어 "졌지만 조금은 쌓였다"를 만들되, 1등의 가치는 그대로 둔다. */
-const PASS_CREAM_REWARD = { 1:50, 2:20, 3:10 };
-const PASS_WIN_CREAM = 50;       // 1등 1회당 지급량 (표시·안내용)
+/* [Ver 16.4] 50/20/10 → 150/100/50. 레벨 하나가 100 이므로 1등 한 번이 1.5레벨이다. */
+const PASS_CREAM_REWARD = { 1:150, 2:100, 3:50 };
+const PASS_WIN_CREAM = 150;      // 1등 1회당 지급량 (표시·안내용)
 let PASSDATA = null;
 function loadPass(){
   if(PASSDATA){ passRoll(); return PASSDATA; }
@@ -15774,7 +15834,24 @@ function popRoll(hk){
 function popIsBlack(){ try{ return !!popLoad().black; }catch(e){ return false; } }
 
 /* ---- 창 ---- */
+/* [Ver 16.4] 유물 '우빈이의 키오스크' — 매물이 바뀐 뒤 **처음 열었을 때만** 준다.
+   ⚠ 같은 시간대에 여러 번 들락거려도 한 번뿐이다. 안 그러면 버튼만 계속 누르면 된다.
+     시간대 열쇠는 이미 있는 popHourKey() 를 그대로 쓴다. */
+function popKioskReward(){
+  try{
+    const n = Math.floor(Number(artMine('kiosk') || 0));
+    if(!(n > 0)) return;
+    const hk = popHourKey();
+    let last = '';
+    try{ last = localStorage.getItem(STORAGE_KEYS.kioskAt) || ''; }catch(e){}
+    if(last === hk) return;
+    try{ localStorage.setItem(STORAGE_KEYS.kioskAt, hk); }catch(e){}
+    grantUbinite(n);
+    try{ addMail('🖥️ 우빈이의 키오스크', `새 매물을 확인하고 우비나이트 <b>${n.toLocaleString()}</b>개를 받았습니다.`); }catch(e){}
+  }catch(e){}
+}
 function openPopStore(){
+  try{ popKioskReward(); }catch(e){}
   openGWin({ key:'pop',
     title: popIsBlack() ? '🕶️ ???' : '🎪 팝업 스토어',
     render: popWinHtml, onClose: ()=>{ try{ renderPopBtn(); }catch(e){} } });
@@ -16012,6 +16089,12 @@ function emoSlotSet(i, key){
 const EMO_SHOW_MS = 3000;
 const EMO_COOL_MS = 7000;
 let __emoCool = 0;           // 사람용
+/* [Ver 16.4] 유물 '우빈이의 말빨' — 쿨타임을 초 단위로 깎는다. 최소 1초는 남긴다. */
+function emoCoolMs(){
+  let cut = 0;
+  try{ cut = Number(artMine('tongue') || 0); }catch(e){}
+  return Math.max(1000, EMO_COOL_MS - Math.round(cut * 1000));
+}
 function emoCanSend(){ return Date.now() >= __emoCool; }
 function emoCoolLeft(){ return Math.max(0, __emoCool - Date.now()); }
 
@@ -16119,7 +16202,16 @@ function syncEmoPops(){
 function emoSend(key){
   if(!hasEmo(key)) return false;
   if(!emoCanSend()) return false;
-  __emoCool = Date.now() + EMO_COOL_MS;
+  __emoCool = Date.now() + emoCoolMs();      // [Ver 16.4] 말빨
+  /* [Ver 16.4] 유물 '우빈이의 정치' — 이모티콘을 쓸 때마다 골드.
+     ⚠ 판 안에서만 준다. 메뉴에서 미리보기로 눌러도 돈이 나오면 안 된다. */
+  try{
+    const __pol = Number(artMine('politics') || 0);
+    if(__pol > 0 && typeof gameActive !== 'undefined' && gameActive){
+      const __me = (typeof viewer === 'function') ? viewer() : null;
+      if(__me && __me.alive) grantGold(__me, Math.max(1, Math.floor(__pol)));
+    }
+  }catch(e){}
   const me = (typeof viewerIdNow === 'function') ? viewerIdNow() : null;
   if(me) emoPop(me, key);
   /* ★ [Ver 16.3.1] 판이 막 시작했을 때 보낸 것은 **인사로 받아들인다.** 봇 몇이 답한다.
@@ -16207,12 +16299,19 @@ function emoEquip(k){
 }
 
 /* 인게임 바 — 열고 닫고, 장착한 것만 그린다 */
+/* [Ver 16.4] 열기 전용 — 단축키(G)는 토글이 아니라 **열기**여야 한다.
+   G 를 두 번 누르면 닫히는 게 아니라 시간만 다시 늘어나는 쪽이 자연스럽다. */
+function emoOpenTray(){
+  const t = document.getElementById('emoTray');
+  if(!t) return;
+  renderEmoTray();
+  t.classList.add('on');
+}
 function emoToggleTray(){
   const t = document.getElementById('emoTray');
   if(!t) return;
   if(t.classList.contains('on')){ t.classList.remove('on'); return; }
-  renderEmoTray();
-  t.classList.add('on');
+  emoOpenTray();
 }
 function emoCloseTray(){ const t = document.getElementById('emoTray'); if(t) t.classList.remove('on'); }
 function renderEmoTray(){
@@ -16226,14 +16325,66 @@ function renderEmoTray(){
       <span style="font-size:11.5px;color:var(--fg-faint);">이모티콘은 <b>팝업 스토어</b>에서 삽니다.</span></div>`;
     return;
   }
-  t.innerHTML = eq.map(k=>{
-    if(!k) return `<div class="emo-cell emo-cell-empty"></div>`;
+  /* [Ver 16.4] 칸마다 번호를 적는다 — G 뒤에 누를 숫자를 모르면 단축키가 쓸모없다. */
+  t.innerHTML = eq.map((k,i)=>{
+    if(!k) return `<div class="emo-cell emo-cell-empty"><span class="emo-num">${i+1}</span></div>`;
     const d = emoDefOf(k);
-    return `<button class="emo-cell" title="${escapeHtml(d.name)}" onclick="emoPick('${k}')">
+    return `<button class="emo-cell" title="${escapeHtml(d.name)} (G → ${i+1})" onclick="emoPick('${k}')">
       <img src="${emoSrc(k)}" alt="${escapeHtml(d.name)}" draggable="false">
+      <span class="emo-num">${i+1}</span>
     </button>`;
   }).join('');
 }
+/* ##########################################################################
+   [Ver 16.4] 단축키 — G 를 누른 뒤 1~5
+   ⚠ 숫자만으로 보내면 오타 한 번에 날아간다. G 로 한 번 연 뒤에만 받는다.
+   ########################################################################## */
+const EMO_HOTKEY_MS = 3000;          // G 를 누르고 이 시간 안에 숫자를 눌러야 한다
+let __emoArmedUntil = 0;
+function emoHotkeyArmed(){ return Date.now() < __emoArmedUntil; }
+function emoArmHotkey(){
+  __emoArmedUntil = Date.now() + EMO_HOTKEY_MS;
+  try{ emoOpenTray(); }catch(e){}     // 무엇이 몇 번인지 보고 누르게
+  try{ renderEmoBar(); }catch(e){}
+}
+/* 1~5 로 보낸다. 빈 칸이면 아무 일도 없다. */
+function emoSendSlot(i){
+  try{
+    const eq = emoEquipped();
+    const k = eq[i];
+    if(!k) return false;
+    emoPick(k);
+    return true;
+  }catch(e){ return false; }
+}
+document.addEventListener('keydown', (e)=>{
+  try{
+    if(e.ctrlKey || e.altKey || e.metaKey) return;
+    /* 입력칸에서는 절대 잡지 않는다 — 닉네임 치다가 이모티콘이 나간다 */
+    const ae = document.activeElement;
+    if(ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+    /* 창이 떠 있으면 잡지 않는다. 다른 단축키가 쓰는 기준을 그대로 쓴다. */
+    try{ if(typeof OVERLAY_SEL === 'string' && document.querySelector(OVERLAY_SEL)) return; }catch(e2){}
+    if(typeof gameActive === 'undefined' || !gameActive) return;
+
+    const k = String(e.key || '');
+    if(k === 'g' || k === 'G' || k === 'ㅎ'){    // 한글 자판에서 G 자리는 ㅎ 다
+      e.preventDefault();
+      emoArmHotkey();
+      return;
+    }
+    if(!emoHotkeyArmed()) return;
+    if(k >= '1' && k <= '5'){
+      e.preventDefault();
+      __emoArmedUntil = 0;
+      emoSendSlot(parseInt(k, 10) - 1);
+    } else if(k === 'Escape'){
+      __emoArmedUntil = 0;
+      try{ emoCloseTray(); }catch(e2){}
+    }
+  }catch(err){}
+});
+
 function emoPick(k){
   if(!emoCanSend()){
     try{ renderEmoBar(); }catch(e){}
@@ -19638,13 +19789,13 @@ const POWER_DEFS = [
   { key:'claw', rarity:'normal', icon:'🐾', name:'할퀴기', target:'enemy', cd:70, amt:300, up:{k:'amt',per:10},
     desc:v=>`지목 대상에게 <b>${v}</b> 피해를 입힙니다.`,
     run:(me,t,v)=>{ dealDamage(me, t, v, 'NONE', false); } },
-  { key:'mend', rarity:'normal', icon:'💚', name:'회복', target:'self', cd:70, amt:250, up:{k:'amt',per:10},
+  { key:'mend', rarity:'normal', icon:'💚', name:'회복', target:'self', cd:70, amt:400, up:{k:'amt',per:10},
     desc:v=>`자신의 HP를 <b>${v}</b> 회복합니다.`,
     run:(me,t,v)=>{ const n = pwHeal(me, v); pwLog(`💚 ${J(me.name,'이','가')} 권능 <b>회복</b>으로 HP ${n.toLocaleString()}을(를) 되찾았습니다.`); } },
   { key:'cleave', rarity:'normal', icon:'🗡️', name:'베기', target:'none', cd:70, amt:180, up:{k:'amt',per:10},
     desc:v=>`모든 상대에게 <b>${v}</b> 피해를 입힙니다. (전체 공격)`,
     run:(me,t,v)=>{ pwEnemies(me).forEach(e=> dealDamage(me, e, v, 'NONE', true)); } },
-  { key:'startle', rarity:'normal', icon:'😱', name:'놀래키기', target:'enemy', cd:70, amt:1, up:{k:'cd',per:3},
+  { key:'startle', rarity:'normal', icon:'😱', name:'놀래키기', target:'enemy', cd:110, amt:1, up:{k:'cd',per:3},
     desc:v=>`지목 대상을 <b>1턴</b> 스턴시킵니다.`,
     run:(me,t,v)=>{ pwStun(t, 1, '놀래키기'); pwLog(`😱 ${J(me.name,'이','가')} ${J(t.name,'을','를')} 놀래켜 1턴 스턴시켰습니다.`); } },
 
@@ -19656,7 +19807,7 @@ const POWER_DEFS = [
     run:(me,t,v)=>{ const dmg = Math.max(1, Math.floor((t.hp||0) * v / 100));
       const heal = Math.max(1, Math.floor((me.hp||0) * 0.25));
       dealDamage(me, t, dmg, 'NONE', false); pwHeal(me, heal); } },
-  { key:'earn', rarity:'rare', icon:'💰', name:'돈벌기', target:'self', cd:56, amt:10, up:{k:'amt',per:1},
+  { key:'earn', rarity:'rare', icon:'💰', name:'돈벌기', target:'self', cd:56, amt:25, up:{k:'amt',per:1},
     desc:v=>`현재 보유 골드의 <b>${v}%</b>를 추가로 얻습니다.`,
     run:(me,t,v)=>{ const g = Math.floor((me.gold||0) * v / 100); if(g>0){ grantGold(me, g); pwLog(`💰 ${J(me.name,'이','가')} 권능 <b>돈벌기</b>로 ${fmtWon(g)}을(를) 벌었습니다.`); } } },
   { key:'corrode', rarity:'rare', icon:'🧪', name:'부식', target:'enemy', cd:52, amt:20, up:{k:'amt',per:2},
@@ -19692,9 +19843,9 @@ const POWER_DEFS = [
       pwLog(`🦁 ${J(me.name,'의','의')} 포효! 2바퀴 동안 모든 상대의 공격력이 ${v}% 떨어집니다.`); } },
   /* quiet:true — 쿨이 3초라 쓸 때마다 로그를 남기면 로그창이 노가다로만 가득 찬다.
      판마다 처음 한 번만 알린다(pwFire 참고). */
-  { key:'grind', rarity:'rare', icon:'⛏️', name:'노가다', target:'self', cd:3, amt:2, up:{k:'cd',per:0.1}, quiet:true,
-    desc:v=>`골드 <b>2</b>를 얻습니다. 쿨타임이 아주 짧습니다.`,
-    run:(me,t,v)=>{ grantGold(me, 2); } },
+  { key:'grind', rarity:'rare', icon:'⛏️', name:'노가다', target:'self', cd:1, amt:1, up:{k:'cd',per:0.1}, quiet:true,
+    desc:v=>`골드 <b>1</b>을 얻습니다. 쿨타임이 아주 짧습니다.`,
+    run:(me,t,v)=>{ grantGold(me, 1); } },
   /* [Ver 13.6] 리워크 — 예전엔 카드마다 따로 굴려서 "반은 오르고 반은 내리는" 밍밍한 결과가
      대부분이었다. 이제 **방향을 한 번만 정하고**(오름/내림), 몇 장이 걸릴지를 1~전부에서 굴린다.
      크게 먹거나 크게 잃는다. */
@@ -19999,9 +20150,15 @@ const POWER_DEFS = [
   /* [Ver 13.6 너프] ① 최대 체력 → **현재 체력** 기준. 이미 깎인 상대에게는 그만큼 덜 들어간다.
      ② startOnCd — 판이 열리자마자 쓸 수 없다. 다른 권능은 전부 준비된 채 시작하지만
         이것만은 쿨타임을 한 번 기다려야 한다(초반에 그냥 반토막을 내버렸다). */
-  { key:'salmi', rarity:'legend', icon:'🖤', name:'살미야키', target:'enemy', cd:133, amt:44, up:{k:'amt',per:1}, startOnCd:true,
-    desc:v=>`지목 대상 <b>현재 체력의 ${v}%</b>에 해당하는 피해를 입힙니다. <span style="opacity:.7">(판이 시작되면 쿨타임을 한 번 기다려야 합니다)</span>`,
-    run:(me,t,v)=>{ const dmg = Math.floor((t.hp||0) * v / 100); dealDamage(me, t, dmg, 'NONE', false); } },
+  { key:'salmi', rarity:'legend', icon:'🖤', name:'살미야키', target:'enemy', cd:160, amt:44, up:{k:'amt',per:1}, startOnCd:true,
+    desc:v=>`지목 대상 <b>현재 체력의 ${v}%</b>에 해당하는 피해를 입힙니다. <span style="opacity:.7">(공격력 증가 버프가 적용되지 않습니다 · 판이 시작되면 쿨타임을 한 번 기다려야 합니다)</span>`,
+    /* ⚠ [Ver 16.4] 공격력 증가 버프를 타지 않는다. 현재 체력 %로 때리는 권능이라
+       버프까지 얹히면 두 배로 불어난다. APEX 소드가 쓰던 장치를 그대로 쓴다
+       (applyTotalAtkPct 의 __skipAtkPctOnce — 한 번 쓰고 스스로 꺼진다). */
+    run:(me,t,v)=>{ const dmg = Math.floor((t.hp||0) * v / 100);
+      try{ window.__skipAtkPctOnce = true; }catch(e){}
+      dealDamage(me, t, dmg, 'NONE', false);
+      try{ window.__skipAtkPctOnce = false; }catch(e){} } },
   { key:'godmode', rarity:'legend', icon:'✨', name:'무적', target:'self', cd:168, amt:7, up:{k:'amt',per:0.5},
     desc:v=>`<b>${v}초</b> 동안 받는 피해가 <b>99%</b> 감소합니다.`,
     run:(me,t,v)=>{ me.pwGodUntil = Date.now() + v*1000; pwLog(`✨ ${J(me.name,'이','가')} ${v}초간 거의 모든 피해를 흘립니다.`); } },
@@ -20059,7 +20216,7 @@ const POWER_DEFS = [
 
   /* [Ver 14.12 리워크] 시전자만 쏙 빠지던 것을 없앴다. 이제 **자기도 같이** 1초다.
      남만 조이는 권능이라 쓰는 쪽이 아무 대가도 치르지 않았다. */
-  { key:'newton', rarity:'epic', icon:'🍎', name:'만유인력', target:'none', cd:110, amt:3, up:{k:'cd',per:1},
+  { key:'newton', rarity:'epic', icon:'🍎', name:'만유인력', target:'none', cd:110, amt:1, up:{k:'cd',per:1},
     desc:v=>`<b>${v}바퀴</b> 동안 <b>모두가</b> 내는 카드의 반응 시간이 <b>1초로 고정</b>됩니다. <b>자신도 포함</b>됩니다. <span style="opacity:.7">(고유 반응시간이 정해진 카드는 제외)</span>`,
     run:(me,t,v)=>{
       pwNewtonZone = { by: me.id, until: turnCount + v };
@@ -20084,10 +20241,12 @@ const POWER_DEFS = [
       : `지목한 상대에게 걸린 <b>효과 하나</b>를 무작위로 <b>가져옵니다.</b> 좋은 것일 수도, 나쁜 것일 수도 있습니다.`,
     run:(me,t,v)=>{ pwTraceSteal(me, t); } },
 
-  { key:'blizzard', rarity:'legend', icon:'❄️', name:'눈보라', target:'none', cd:70, amt:1, up:{k:'cd',per:5},
+  /* ⚠ [Ver 16.4] up 이 cd 에서 **amt** 로 바뀌었다 — 업그레이드가 쿨타임을 깎지 않고
+     스턴 확률만 1%p 씩 올린다. (확정 스턴이 너무 강해 확률제로 바꿨다) */
+  { key:'blizzard', rarity:'legend', icon:'❄️', name:'눈보라', target:'none', cd:95, amt:60, up:{k:'amt',per:1},
     desc:v=> pwTraitOf('blizzard')==='polar'
       ? `<b>5바퀴</b> 동안 빙결지대를 만듭니다. 카드를 낼 때 <b>25%</b>로 1바퀴 스턴 — <b>자신은 예외</b>입니다. <small>(특성 · 극지방)</small>`
-      : `<b>모두</b>를 1바퀴 스턴시킵니다.`,
+      : `<b>모든 상대</b>를 각각 <b>${v}%</b> 확률로 1바퀴 스턴시킵니다.`,
     run:(me,t,v)=>{
       /* 특성 · 극지방 — 한 번 얼리는 대신 5바퀴 동안 판을 얼려둔다. */
       if(pwIs('polar')){
@@ -20103,8 +20262,13 @@ const POWER_DEFS = [
         pwLog(`🌨️ <b>한파주의보</b> — ${hit.length}명에게 <b>[한파]</b>가 한 겹씩 내려앉았습니다.`);
         return;
       }
-      pwEnemies(me).forEach(e=> pwStun(e, 1, '눈보라'));
-      pwLog(`❄️ 눈보라가 몰아쳐 모두가 1바퀴 얼어붙었습니다.`); } },
+      /* [Ver 16.4] 전원 확정 → **각자 따로 굴린다.** 아무도 안 얼 수도 있다. */
+      const __all = pwEnemies(me);
+      const __hit = __all.filter(e=> Math.random() * 100 < v);
+      __hit.forEach(e=> pwStun(e, 1, '눈보라'));
+      pwLog(__hit.length
+        ? `❄️ 눈보라가 몰아쳐 <b>${__hit.map(e=>escapeHtml(e.name)).join(', ')}</b>${__hit.length===__all.length?' (전원)':''}이(가) 1바퀴 얼어붙었습니다. <small>(각 ${v}%)</small>`
+        : `❄️ 눈보라가 몰아쳤지만 <b>아무도 얼지 않았습니다.</b> <small>(각 ${v}%)</small>`); } },
   { key:'assassin', rarity:'legend', icon:'🔪', name:'암살', target:'enemy', cd:28, amt:0, up:{k:'cd',per:0.5},
     desc:v=>{ const tr = pwTraitOf('assassin');
       if(tr === 'elite')  return `지목 대상의 카드 한 장을 <b>없애버립니다.</b> <small>(특성 · ELITE — 쿨타임 2배)</small>`;
@@ -20272,9 +20436,9 @@ const POWER_DEFS = [
      ⚠ pwWarp 는 모양만 남기고 cut/add 는 더 이상 읽지 않는다(cardReactionMs 참고).
        dueRound 만 쓴다 — 옛 세이브에 남아 있어도 탈이 없다. */
   { key:'timewarp', rarity:'legend', icon:'⏳', name:'시간 왜곡', target:'self', cd:110, amt:3, up:{k:'cd',per:3},
-    desc:v=>`<b>3바퀴</b>간 <b>자신이</b> 내는 카드의 반응시간이 <b>2초로 고정</b>됩니다. <span style="opacity:.7">(고유 반응시간이 정해진 카드는 제외)</span>`,
+    desc:v=>`<b>3바퀴</b>간 <b>자신이</b> 내는 카드의 반응시간이 <b>2.75초로 고정</b>됩니다. <span style="opacity:.7">(고유 반응시간이 정해진 카드는 제외)</span>`,
     run:(me,t,v)=>{ me.pwWarp = { dueRound: turnCount + 3 };
-      pwLog(`⏳ ${J(me.name,'의','의')} 주변 시간이 뒤틀립니다. — <b>3바퀴</b>간 자신의 카드가 <b>2초</b>로 고정됩니다.`); } },
+      pwLog(`⏳ ${J(me.name,'의','의')} 주변 시간이 뒤틀립니다. — <b>3바퀴</b>간 자신의 카드가 <b>2.75초</b>로 고정됩니다.`); } },
   { key:'nightmare', rarity:'legend', icon:'😱', name:'악몽', target:'enemy', cd:130, amt:66, up:{k:'cd',per:5},
     desc:v=>`<b>1바퀴</b>간 지목 대상의 <b>최대 체력과 현재 체력이 66%</b>가 됩니다. 끝나면 원래대로 돌아옵니다.`,
     run:(me,t,v)=>{
@@ -20458,7 +20622,7 @@ let pwFrostZone = null;   // 눈보라·극지방 { by, until } — 시전자 �
    ⚠ **전역**이라 랜서버 스냅샷에 직접 실어야 한다. 플레이어 객체와 달리 저절로 동기화되지 않는다. */
 let pwNewtonZone = null;
 const PW_NEWTON_MS = 1000;   // [Ver 14.12] 0.8 → 1초 고정
-const PW_WARP_MS   = 2000;   // [Ver 14.12] 시간 왜곡 — 자신이 내는 카드 2초 고정
+const PW_WARP_MS   = 2750;   // [Ver 16.4] 시간 왜곡 — 2초 → 2.75초
 
 /* ══════════════════════════════════════════════════════════════════
    [Ver 14.7] 눈보라 · 한파주의보 — [한파] 중첩
@@ -20706,7 +20870,16 @@ function upgradePower(key){
 }
 
 /* ---------- 장착 3슬롯 ---------- */
+/* ⚠ [Ver 16.4] 3 은 이제 **칸의 최대치**다(배열 길이). 실제로 쓸 수 있는 칸은
+   기본 2칸이고, 유물 '우빈이의 보조가방'이 있어야 3번째가 열린다.
+   저장 배열은 계속 3칸이라 예전 저장본도 그대로 읽힌다. */
 const POWER_SLOTS = 3;
+const POWER_SLOTS_BASE = 2;
+function powerSlotCount(){
+  let add = 0;
+  try{ add = Math.floor(artMine('satchel') || 0); }catch(e){}
+  return Math.max(1, Math.min(POWER_SLOTS, POWER_SLOTS_BASE + Math.max(0, add)));
+}
 let EQUIPPED_POWERS = null;
 function loadEquippedPowers(){
   if(EQUIPPED_POWERS) return EQUIPPED_POWERS;
@@ -20721,13 +20894,36 @@ function saveEquippedPowers(){ try{ localStorage.setItem(STORAGE_KEYS.equippedPo
 /* 이미 다른 칸에 낀 권능을 또 끼면 그 칸에서 빠진다 (같은 권능 두 칸 방지) */
 function equipPower(slot, key){
   const eq = loadEquippedPowers();
-  if(slot < 0 || slot >= POWER_SLOTS) return;
+  /* [Ver 16.4] 잠긴 칸에는 끼울 수 없다 */
+  if(slot < 0 || slot >= powerSlotCount()) return;
   if(key && !ownsPower(key)) return;
   if(key){ eq.forEach((k,i)=>{ if(k === key && i !== slot) eq[i] = null; }); }
   eq[slot] = key || null;
   saveEquippedPowers();
 }
 function equippedPowerCount(){ return loadEquippedPowers().filter(Boolean).length; }
+/* [Ver 16.4] 유물 '우빈이의 캐시백' — 랩터마트에서 쓴 값의 %를 돌려준다.
+   ⚠ spendUbinite 전체에 걸면 팝업 스토어·인트로 건너뛰기까지 환급된다.
+     **랩터마트 구매 자리에서만** 부를 것. */
+function martCashback(cost){
+  try{
+    const pct = Number(artMine('cashback') || 0);
+    if(!(pct > 0) || !(cost > 0)) return 0;
+    const back = Math.floor(cost * pct / 100);
+    if(back > 0){
+      grantUbinite(back);
+      try{ addMail('💳 우빈이의 캐시백', `랩터마트 구매액의 <b>${pct}%</b>인 우비나이트 <b>${back.toLocaleString()}</b>개를 돌려받았습니다.`); }catch(e){}
+    }
+    return back;
+  }catch(e){ return 0; }
+}
+/* [Ver 16.4] 잠긴 칸을 눌렀을 때 — 왜 못 쓰는지 알려준다. 조용히 무시하면 고장으로 보인다. */
+function pwSlotLocked(){
+  showModal('🔒 잠긴 칸', `권능은 기본 <b>${POWER_SLOTS_BASE}칸</b>까지 장착할 수 있습니다.<br><br>` +
+    `<b>3번째 칸</b>은 유물 <b>🎒 우빈이의 보조가방</b>(Legendary)을 얻어야 열립니다.<br>` +
+    `<span style="font-size:12px;color:var(--fg-dim);">유물은 광산에서 캘 수 있습니다.</span>`,
+    [{label:'확인', solid:true}]);
+}
 
 /* ==========================================================================
    랩터의 재단 — 이빨을 제물로 바쳐 권능을 얻는다
@@ -20903,10 +21099,19 @@ function renderPowerScreen(){
     const eq = loadEquippedPowers();
     const KEYS = ['Q','W','E'];
     su.innerHTML = `
-      <div class="pw-sec-t">🎛️ 장착 <small>3칸까지 · 인게임에서 Q · W · E</small></div>
+      <div class="pw-sec-t">🎛️ 장착 <small>${powerSlotCount()}칸 · 인게임에서 ${['Q','W','E'].slice(0,powerSlotCount()).join(' · ')}</small></div>
       <div class="pw-slot-row">${eq.map((k,i)=>{
         const d = k ? powerDefOf(k) : null;
         const picking = pwPickingSlot === i;
+        /* [Ver 16.4] 기본 2칸. 3번째는 유물 '우빈이의 보조가방'으로 열린다. */
+        if(i >= powerSlotCount()){
+          return `<button class="pw-slot empty" onclick="pwSlotLocked()" title="잠긴 칸">
+            <span class="pw-slot-key">${['Q','W','E'][i]}</span>
+            <span class="pw-slot-plus">🔒</span>
+            <span class="pw-slot-nm">잠김</span>
+            <span class="pw-slot-sub">유물 · 우빈이의 보조가방</span>
+          </button>`;
+        }
         if(!d){
           return `<button class="pw-slot empty${picking?' picking':''}" onclick="pwSlotClick(${i})">
             <span class="pw-slot-key">${KEYS[i]}</span>
@@ -22133,6 +22338,13 @@ const ARTIFACT_DEFS = [
   { key:'examslip',  rarity:'common', icon:'📝', name:'우빈이의 수능수험표',    base:2,  per:2,
     fmt:v=>`카드 10+1뽑기 필요 우비나이트 <b>-${v}</b>`,
     flavor:'수험표가 있으면 할인해준다는 사실 알고 계셨나요?' },
+  /* ---------- [Ver 16.4] 신규 ---------- */
+  { key:'calm',      rarity:'common', icon:'🧊', name:'우빈이의 냉정',          base:3,   per:0.1,
+    fmt:v=>`패배 시 잃는 클래스 경험치 <b>-${v}%</b>`,
+    flavor:'졌지만 흔들리진 않았습니다.' },
+  { key:'passion',   rarity:'common', icon:'🔥', name:'우빈이의 열정',          base:3,   per:0.1,
+    fmt:v=>`승리 시 얻는 클래스 경험치 <b>+${v}%</b>`,
+    flavor:'이기면 더 신나는 법이죠.' },
   { key:'clover',    rarity:'common', icon:'🍀', name:'우빈이의 네잎클로버',    base:0.5, per:0.5,
     fmt:v=>`카드 뽑기에서 우빈랩터 발톱이 나올 확률 <b>-${v}%</b>`,
     flavor:'행운이 찾아올것만 같습니다' },
@@ -22144,6 +22356,16 @@ const ARTIFACT_DEFS = [
   { key:'wallet',    rarity:'rare', icon:'👛', name:'우빈이의 지갑',        base:5,   per:5,
     fmt:v=>`게임 시작 골드 <b>+${v}</b>`,
     flavor:'두둑 하네요.' },
+  /* ---------- [Ver 16.4] 신규 ---------- */
+  { key:'tongue',    rarity:'rare', icon:'👅', name:'우빈이의 말빨',        base:1,   per:0.1,
+    fmt:v=>`이모티콘 쿨타임 <b>-${v}초</b>`,
+    flavor:'말이 빠르면 손도 빨라집니다.' },
+  { key:'politics',  rarity:'rare', icon:'🤝', name:'우빈이의 정치',        base:1,   per:0.1,
+    fmt:v=>`이모티콘을 쓸 때마다 골드 <b>+${v}</b>`,
+    flavor:'인사가 곧 돈입니다.' },
+  { key:'wristband', rarity:'rare', icon:'🩹', name:'우빈이의 손목보호대',  base:1,   per:1,
+    fmt:v=>`하루에 쓸 수 있는 곡괭이 <b>+${Math.floor(v)}개</b>`,
+    flavor:'많이 캐면 손목이 나갑니다.' },
   { key:'schoolbag', rarity:'rare', icon:'🎒', name:'우빈이가 정자에 두고온 책가방', base:1, per:0.25,
     fmt:v=>`곡괭이 최대 보유 개수 <b>+${Math.floor(v)}</b>`,
     flavor:'정자에 그대로 있더라고요.' },
@@ -22158,6 +22380,16 @@ const ARTIFACT_DEFS = [
   { key:'demonsword',rarity:'epic', icon:'🗡️', name:'우빈이의 마검',        base:10, per:5,
     fmt:v=>`입히는 크리티컬 데미지 <b>+${v}%</b>`,
     flavor:'전부 베어버릴 수 있다네요' },
+  /* ---------- [Ver 16.4] 신규 ---------- */
+  { key:'trophy',    rarity:'epic', icon:'🏆', name:'우빈이의 트로피',      base:500, per:10,
+    fmt:v=>`업적을 달성할 때마다 우비나이트 <b>+${Math.floor(v)}</b>`,
+    flavor:'먼지 쌓이게 두지 마세요.' },
+  { key:'kiosk',     rarity:'epic', icon:'🖥️', name:'우빈이의 키오스크',    base:10,  per:10,
+    fmt:v=>`팝업 스토어가 바뀐 뒤 처음 들어가면 우비나이트 <b>+${Math.floor(v)}</b>`,
+    flavor:'신상 들어왔나 보러 가는 맛.' },
+  { key:'joystick',  rarity:'epic', icon:'🕹️', name:'우빈이의 조이스틱',    base:1,   per:1,
+    fmt:v=>`하루에 얻을 수 있는 랩터코인 <b>+${Math.floor(v)}개</b>`,
+    flavor:'한 판만 더.' },
   { key:'whetstone', rarity:'epic', icon:'🪨', name:'우빈이의 숫돌',        base:5,  per:1,
     fmt:v=>`곡괭이 강화 성공 확률 <b>+${v}%p</b>`,
     flavor:'쓱, 쓱. 날이 서네요.' },
@@ -22172,9 +22404,18 @@ const ARTIFACT_DEFS = [
   { key:'regular',   rarity:'legendary', icon:'🎫', name:'우빈이의 단골카드',      base:1,   per:1,
     fmt:v=>`턴마다 리롤 가능 횟수 <b>+${v}</b>`,
     flavor:'또 오세요 손님!' },
-  { key:'aegis',     rarity:'legendary', icon:'🛡️', name:'우빈이의 방어막',        base:500, per:100,
-    fmt:v=>`판마다 <b>처음 죽을 때</b> HP 1로 버티고 쉴드 <b>${v}</b> 획득`,
+  /* [Ver 16.4] 쉴드를 빼고 골드로 바꿨다. 버티는 것만으로도 충분히 센데
+     쉴드까지 얹으니 한 번 살아난 쪽이 그대로 굳어졌다. */
+  { key:'aegis',     rarity:'legendary', icon:'🛡️', name:'우빈이의 방어막',        base:100, per:10,
+    fmt:v=>`판마다 <b>처음 죽을 때</b> HP 1로 버티고 골드 <b>${Math.floor(v)}</b> 획득`,
     flavor:'한 번은 봐준다는 뜻입니다.' },
+  /* ---------- [Ver 16.4] 신규 ---------- */
+  { key:'satchel',   rarity:'legendary', icon:'🎒', name:'우빈이의 보조가방',      base:1,   per:0.1,
+    fmt:v=>`장착할 수 있는 <b>권능 칸 +${Math.floor(v)}</b>`,
+    flavor:'하나 더 들어가네요.' },
+  { key:'cashback',  rarity:'legendary', icon:'💳', name:'우빈이의 캐시백',        base:10,  per:1,
+    fmt:v=>`랩터마트에서 산 값의 <b>${v}%</b>를 우비나이트로 돌려받음`,
+    flavor:'쓸수록 돌아옵니다. 쓰긴 써야 하지만요.' },
   /* ===== [Ver 13.1] 이름을 되살린 2종 =====
      13.1에서 지운 '잠재력'·'객기'와 **이름만 같고 효과는 완전히 다르다.**
      ⚠ 그래서 **키를 새로 팠다**(evoluck · winpick). 옛 키(potential · guts)를 그대로 쓰면
@@ -22495,6 +22736,14 @@ const PICKAXE_REGEN_MS = 60 * 60 * 1000;     // 1시간에 1개
      하루에 몇 번이고 다시 캘 수 있다.
    ⚠ 개쩌는 곡괭이는 여기 넣지 않는다 — 별개 자원이고 만드는 비용이 따로 든다. */
 const PICKAXE_DAILY_MAX = 15;
+/* [Ver 16.4] 유물 '우빈이의 손목보호대'가 한도를 늘린다.
+   ⚠ 상수를 직접 읽던 자리를 전부 이 함수로 바꿨다 — 한 군데라도 상수를 읽으면
+     "표시는 16개인데 15개에서 막히는" 어긋남이 생긴다(곡괭이 상한에서 겪은 그대로다). */
+function pickaxeDailyMax(){
+  let add = 0;
+  try{ add = Math.floor(artMine('wristband') || 0); }catch(e){}
+  return PICKAXE_DAILY_MAX + Math.max(0, add);
+}
 let __pickDay = null;
 function loadPickDay(){
   if(__pickDay && __pickDay.day === todayKey()) return __pickDay;
@@ -22506,14 +22755,14 @@ function loadPickDay(){
 }
 function savePickDay(){ try{ localStorage.setItem(STORAGE_KEYS.pickDay, JSON.stringify(loadPickDay())); }catch(e){} }
 function pickaxeUsedToday(){ return Math.max(0, loadPickDay().n | 0); }
-function pickaxeLeftToday(){ return Math.max(0, PICKAXE_DAILY_MAX - pickaxeUsedToday()); }
+function pickaxeLeftToday(){ return Math.max(0, pickaxeDailyMax() - pickaxeUsedToday()); }
 /* 이만큼 쓸 수 있나 — 못 쓰면 **왜 못 쓰는지** 글로 돌려준다. 쓸 수 있으면 null. */
 function pickaxeDailyBlock(n){
   n = Math.max(1, n | 0);
   const left = pickaxeLeftToday();
   if(n <= left) return null;
   return `오늘 쓸 수 있는 곡괭이를 다 썼습니다.<br><br>
-    하루 <b>${PICKAXE_DAILY_MAX}개</b> · 오늘 사용 <b>${pickaxeUsedToday()}개</b> · 남은 <b>${left}개</b><br><br>
+    하루 <b>${pickaxeDailyMax()}개</b> · 오늘 사용 <b>${pickaxeUsedToday()}개</b> · 남은 <b>${left}개</b><br><br>
     <span style="font-size:12px;color:var(--fg-dim);">자정(서버 시각)에 다시 채워집니다. 곡괭이는 사라지지 않으니 내일 그대로 쓸 수 있습니다.</span>`;
 }
 let PICKAXE = null;
@@ -22929,6 +23178,7 @@ function doBuyPet(key){
     return;
   }
   loadPets()[key] = true; savePets();
+  try{ martCashback(cost); }catch(e){}       // [Ver 16.4] 캐시백
   try{ mqBump('pet', 1); }catch(e){}         // [Ver 15.0] 메인 퀘스트
   setEquippedPet(key);                       // 사면 바로 장착해준다
   try{ renderUbiniteBadge(); }catch(e){}
@@ -23582,6 +23832,7 @@ function doBuyTeeth(n){
   }
   spendUbinite(cost);
   grantTeeth(n);
+  try{ martCashback(cost); }catch(e){}   // [Ver 16.4] 캐시백
   try{ mqBump('teeth', n); }catch(e){}   // [Ver 15.0] 메인 퀘스트
   try{ renderUbiniteBadge(); renderTopResources(); }catch(e){}
   raptorMartSwitch('resource');
@@ -25707,6 +25958,75 @@ async function fbLookupRemoteCode(code){
    새 패치를 넣을 땐 BALANCE_PATCHES 맨 앞에 한 덩어리를 추가하면 된다.
    ########################################################################## */
 const BALANCE_PATCHES = [
+  {
+    version: 'Ver 16.4', date: '2026-09-16',
+    groups: [
+      { title:'랩터의 권능 — 쓰는 맛이 나게', kind:'power',
+        note:'오래 안 쓰이던 것을 올리고, 판을 혼자 끌고 가던 것을 내렸습니다. ' +
+             '<b>눈보라</b>는 확정 스턴이라 한 번만 터져도 판이 굳었습니다 — <b>확률</b>로 바꾸는 대신 ' +
+             '업그레이드가 쿨타임이 아니라 <b>확률</b>을 올립니다.<br>' +
+             '<b>살미야키</b>는 현재 체력 %로 때리는데 공격력 버프까지 얹혀 두 배로 불어나고 있었습니다.',
+        rows:[
+          { key:'mend',     rows:[{ label:'회복량',   from:'250', to:'<b>400</b>', dir:'up' }]},
+          { key:'earn',     rows:[{ label:'획득 골드', from:'10%', to:'<b>25%</b>', dir:'up' }]},
+          { key:'grind',    rows:[
+            { label:'쿨타임', from:'3초', to:'<b>1초</b>', dir:'up' },
+            { label:'골드',   from:'2',   to:'1',          dir:'down' },
+          ]},
+          { key:'startle',  rows:[{ label:'쿨타임', from:'70초', to:'110초', dir:'down' }]},
+          { key:'blizzard', rows:[
+            { label:'스턴',       from:'전원 확정', to:'각 <b>60%</b>', dir:'down' },
+            { label:'쿨타임',     from:'70초',      to:'95초',          dir:'down' },
+            { label:'업그레이드', from:'쿨타임 -5초', to:'<b>확률 +1%p</b>', dir:'up' },
+          ]},
+          { key:'salmi',    rows:[
+            { label:'공격력 버프', from:'적용됨', to:'<b>적용 안 됨</b>', dir:'down' },
+            { label:'쿨타임',     from:'133초',  to:'160초',            dir:'down' },
+          ]},
+          { key:'newton',   rows:[{ label:'지속',     from:'3바퀴', to:'1바퀴',   dir:'down' }]},
+          { key:'timewarp', rows:[{ label:'반응시간', from:'2초',   to:'2.75초', dir:'up' }]},
+        ]
+      },
+      { title:'유물 — 판 밖을 채우는 10종', kind:'artifact',
+        note:'남은 유물이 경험치·우비나이트 쪽에 몰려 있었습니다. ' +
+             '이모티콘·업적·하루 한도처럼 <b>다른 결의 자리</b>를 채웁니다.<br>' +
+             '<b>방어막</b>은 버티는 것만으로도 충분히 센데 쉴드까지 주니 한 번 살아난 쪽이 그대로 굳어졌습니다.',
+        rows:[
+          { key:'satchel',   rows:[{ label:'신규', from:'—', to:'<b>권능 칸 +1</b>', dir:'up' }]},
+          { key:'cashback',  rows:[{ label:'신규', from:'—', to:'<b>마트 구매액 10% 환급</b>', dir:'up' }]},
+          { key:'trophy',    rows:[{ label:'신규', from:'—', to:'<b>업적 달성마다 500</b>', dir:'up' }]},
+          { key:'kiosk',     rows:[{ label:'신규', from:'—', to:'<b>팝업 스토어 갱신 확인 시 10</b>', dir:'up' }]},
+          { key:'joystick',  rows:[{ label:'신규', from:'—', to:'<b>하루 랩터코인 +1</b>', dir:'up' }]},
+          { key:'tongue',    rows:[{ label:'신규', from:'—', to:'<b>이모티콘 쿨 -1초</b>', dir:'up' }]},
+          { key:'politics',  rows:[{ label:'신규', from:'—', to:'<b>이모티콘마다 +1골드</b>', dir:'up' }]},
+          { key:'wristband', rows:[{ label:'신규', from:'—', to:'<b>하루 곡괭이 +1</b>', dir:'up' }]},
+          { key:'passion',   rows:[{ label:'신규', from:'—', to:'<b>승리 클래스 경험치 +3%</b>', dir:'up' }]},
+          { key:'calm',      rows:[{ label:'신규', from:'—', to:'<b>패배 클래스 경험치 -3%</b>', dir:'up' }]},
+          { key:'aegis',     rows:[
+            { label:'쉴드', from:'500', to:'<b>삭제</b>',   dir:'down' },
+            { label:'골드', from:'—',   to:'<b>100</b>',    dir:'up' },
+          ]},
+        ]
+      },
+      { title:'그 밖에',
+        rows:[
+          { name:'시즌 패스 썬크림', icon:'☀️', rows:[
+            { label:'1등', from:'50', to:'<b>150</b>', dir:'up' },
+            { label:'2등', from:'20', to:'<b>100</b>', dir:'up' },
+            { label:'3등', from:'10', to:'<b>50</b>',  dir:'up' },
+          ]},
+          { name:'돌 — 우비나이트', icon:'🪨', rows:[
+            { label:'일반',   from:'125~450', to:'88~315',  dir:'down' },
+            { label:'개쩌는', from:'300~900', to:'210~630', dir:'down' },
+          ]},
+          { name:'권능 장착 칸', icon:'🎛️', rows:[
+            { label:'기본', from:'3칸', to:'<b>2칸</b>', dir:'down' },
+            { label:'3번째', from:'—',  to:'유물로 해금',  dir:'neu' },
+          ]},
+        ]
+      },
+    ]
+  },
   {
     version: 'Ver 16.2', date: '2026-09-15',
     groups: [
@@ -28622,6 +28942,25 @@ function renderOnlineNotice(){
   }).catch(olError);
 }
 
+/* ##########################################################################
+   [Ver 16.4] 로그 세 탭을 큰 버전별로 나눈다
+   ⚠ 큰 버전은 문자열에서 뽑는다 — 목록으로 따로 들고 있으면 새 버전마다 빠뜨린다.
+   ########################################################################## */
+function logMajorOf(v){
+  const m = /(\d+)/.exec(String(v || ''));
+  return m ? m[1] : '?';
+}
+/* 목록에 들어 있는 큰 버전들 — 최신이 앞이다 */
+function logMajorsOf(list){
+  const seen = [];
+  (list || []).forEach(x=>{ const m = logMajorOf(x && x.version); if(seen.indexOf(m) === -1) seen.push(m); });
+  return seen;
+}
+function logMajorBar(majors, cur, fnName){
+  return `<div class="lg-majors">${majors.map(m=>
+    `<button class="lg-major${m === cur ? ' on' : ''}" onclick="${fnName}('${m}')">Ver ${m}.x</button>`).join('')}</div>`;
+}
+
 let balancePatchIdx = 0;
 /* ##########################################################################
    [Ver 10.5 신규] 신규 카드 탭
@@ -28740,13 +29079,25 @@ function openNewCards(){
   renderNewCards();
 }
 function setNewCards(i){ newCardsIdx = i|0; renderNewCards(); }
+let newCardsMajor = null;
+function setNewCardsMajor(m){
+  newCardsMajor = String(m);
+  const i = NEW_CARDS.findIndex(p=> logMajorOf(p.version) === newCardsMajor);
+  newCardsIdx = i >= 0 ? i : 0;
+  renderNewCards();
+}
 function renderNewCards(){
   const vers = document.getElementById('ncVers');
   const wrap = document.getElementById('newCardsWrap');
   if(!wrap) return;
   if(vers){
-    vers.innerHTML = NEW_CARDS.map((p,i)=>
-      `<button class="bp-ver${i===newCardsIdx?' on':''}" onclick="setNewCards(${i})">${escapeHtml(p.version)}</button>`).join('');
+    /* [Ver 16.4] 큰 버전 먼저 */
+    const majors = logMajorsOf(NEW_CARDS);
+    if(newCardsMajor === null) newCardsMajor = logMajorOf((NEW_CARDS[newCardsIdx]||NEW_CARDS[0]||{}).version);
+    vers.innerHTML = logMajorBar(majors, newCardsMajor, 'setNewCardsMajor')
+      + NEW_CARDS.map((p,i)=> ({p,i}))
+          .filter(o=> logMajorOf(o.p.version) === newCardsMajor)
+          .map(o=> `<button class="bp-ver${o.i===newCardsIdx?' on':''}" onclick="setNewCards(${o.i})">${escapeHtml(o.p.version)}</button>`).join('');
   }
   const set = NEW_CARDS[newCardsIdx] || NEW_CARDS[0];
   if(!set){ wrap.innerHTML = '<div class="gc-inv-empty">기록된 신규 카드가 없습니다.</div>'; return; }
@@ -28798,14 +29149,27 @@ function openBalancePatch(){
   showScreen('screen-balance');
   renderBalancePatch();
 }
+let balanceMajor = null;
+function setBalanceMajor(m){
+  balanceMajor = String(m);
+  /* 큰 버전을 바꾸면 그 안의 **첫 항목**으로 옮긴다 — 안 그러면 엉뚱한 버전이 남는다 */
+  const i = BALANCE_PATCHES.findIndex(p=> logMajorOf(p.version) === balanceMajor);
+  balancePatchIdx = i >= 0 ? i : 0;
+  renderBalancePatch();
+}
 function setBalancePatch(i){ balancePatchIdx = i|0; renderBalancePatch(); }
 function renderBalancePatch(){
   const vers = document.getElementById('bpVers');
   const wrap = document.getElementById('balanceWrap');
   if(!wrap) return;
   if(vers){
-    vers.innerHTML = BALANCE_PATCHES.map((p,i)=>
-      `<button class="bp-ver${i===balancePatchIdx?' on':''}" onclick="setBalancePatch(${i})">${escapeHtml(p.version)}</button>`).join('');
+    /* [Ver 16.4] 큰 버전을 먼저 고르고, 그 안의 것만 보여준다 */
+    const majors = logMajorsOf(BALANCE_PATCHES);
+    if(balanceMajor === null) balanceMajor = logMajorOf((BALANCE_PATCHES[balancePatchIdx]||BALANCE_PATCHES[0]||{}).version);
+    vers.innerHTML = logMajorBar(majors, balanceMajor, 'setBalanceMajor')
+      + BALANCE_PATCHES.map((p,i)=> ({p,i}))
+          .filter(o=> logMajorOf(o.p.version) === balanceMajor)
+          .map(o=> `<button class="bp-ver${o.i===balancePatchIdx?' on':''}" onclick="setBalancePatch(${o.i})">${escapeHtml(o.p.version)}</button>`).join('');
   }
   const patch = BALANCE_PATCHES[balancePatchIdx] || BALANCE_PATCHES[0];
   if(!patch){ wrap.innerHTML = '<div class="gc-inv-empty">기록된 밸런스 패치가 없습니다.</div>'; return; }
@@ -28840,6 +29204,19 @@ function renderBalancePatch(){
         <span class="bp-card-name"${(c&&c.nameColor)?` style="color:${c.nameColor};"`:''}>${escapeHtml(name)}</span>
         ${(c&&c.power)?`<span class="bp-card-pw">${c.power.toLocaleString()}</span>`:''}
       </div>`;
+    } else if(kind === 'power'){
+      /* [Ver 16.4] 권능은 pw/<key>.jpg 일러스트가 있다. 이모지로 때우지 않는다.
+         ⚠ powerIconHtml 은 그림이 없으면 스스로 이모지로 떨어진다(onerror). */
+      const d = (typeof powerDefOf === 'function') ? powerDefOf(e.key) : null;
+      name = e.name || (d ? d.name : e.key);
+      sub  = d ? (powerRarityDef(d.rarity) || {}).name || '' : '';
+      art  = d ? `<div class="bp-art-pw">${powerIconHtml(d)}</div>`
+               : `<span class="bp-art-emoji">${e.icon || '👑'}</span>`;
+    } else if(kind === 'artifact'){
+      const d = (typeof ARTIFACT_DEFS !== 'undefined') ? ARTIFACT_DEFS.find(x=> x.key === e.key) : null;
+      name = e.name || (d ? d.name : e.key);
+      sub  = d ? d.rarity : '';
+      art  = `<span class="bp-art-emoji">${(d && d.icon) || e.icon || '🏺'}</span>`;
     } else {
       art = `<span class="bp-art-emoji">${e.icon || '⚙️'}</span>`;
     }
@@ -28954,7 +29331,7 @@ function renderMineScreen(){
 
     <div class="mine-note">
       곡괭이는 <b>${pickaxeCap()}개</b>까지 <b>${Math.round(PICKAXE_REGEN_MS/60000)}분에 1개씩</b> 저절로 찹니다.
-      오늘 쓴 곡괭이 <b>${pickaxeUsedToday()}</b> / ${PICKAXE_DAILY_MAX}개 — 남은 <b>${pickaxeLeftToday()}개</b>.
+      오늘 쓴 곡괭이 <b>${pickaxeUsedToday()}</b> / ${pickaxeDailyMax()}개 — 남은 <b>${pickaxeLeftToday()}개</b>.
       게임에서 <b>1등·2등</b>을 하면 30% 확률로 1개를 더 받습니다.
       (보상으로 받은 곡괭이는 ${pickaxeCap()}개를 넘겨서도 쌓이지만, 넘긴 동안에는 저절로 차지 않습니다)
     </div>
@@ -29376,7 +29753,8 @@ const MROCK_FILL = [
   { key:'artifact', w:60,  ic:'\u{1F3FA}', name:'유물' },
   /* [Ver 15.4] 개수 절반(250~900 → 125~450) · 대신 확률 두 배(9 → 18).
      총량은 비슷하되 **더 자주** 보이게 한다. */
-  { key:'ubinite',  w:18,  ic:'\u{1F48E}', name:'우비나이트', min:125, max:450 },
+  /* [Ver 16.4] 30% 하향 (125~450 → 88~315) */
+  { key:'ubinite',  w:18,  ic:'\u{1F48E}', name:'우비나이트', min:88, max:315 },
   /* [Ver 15.3.1] 곡괭이(⛏️)는 뺐다 — 곡괭이로 캐서 곡괭이가 나오면
      채굴이 스스로 굴러간다. 그 자리는 우빈랩터의 발톱이 받는다. */
   { key:'claws',    w:10,  ic:'\u{1F9B4}', name:'우빈랩터의 발톱', min:5, max:20 },
@@ -29395,7 +29773,8 @@ const MROCK_FILL_GOLD = [
   { key:'artifact', w:86.4, ic:'\u{1F3FA}', name:'유물' },
   { key:'teeth',    w:4,   ic:'\u{1F9B7}', name:'랩터의 이빨', min:2, max:5 },
   /* [Ver 15.4] 우비나이트 개수 절반(600~1800 → 300~900) · 확률 두 배(1.5 → 3) */
-  { key:'ubinite',  w:3,   ic:'\u{1F48E}', name:'우비나이트', min:300, max:900 },
+  /* [Ver 16.4] 30% 하향 (300~900 → 210~630) */
+  { key:'ubinite',  w:3,   ic:'\u{1F48E}', name:'우비나이트', min:210, max:630 },
   { key:'claws',    w:1,   ic:'\u{1F9B4}', name:'우빈랩터의 발톱', min:20, max:60 },
   { key:'gold',     w:2,   ic:'\u{1FA99}', name:'개쩌는 곡괭이', min:1, max:1 },
   /* ---- 최상위 (일반 돌과 같은 순서, 조금씩 더 잘 나온다) ---- */
@@ -30592,6 +30971,76 @@ document.addEventListener('keydown', (e)=>{
   pickGameMode('normal');
 });
 
+/* ##########################################################################
+   [Ver 16.4] 손패 좌우 끌기
+   --------------------------------------------------------------------------
+   ⚠ 10px 은 attachLongPress 의 취소 기준과 **같은 값**이다. 다르게 두면
+     끄는 도중에 상세보기가 떠버린다.
+   ⚠ 끌고 난 뒤의 click 을 캡처 단계에서 한 번 잡아먹는다 —
+     안 그러면 손을 떼는 순간 그 카드가 그대로 나간다.
+   ########################################################################## */
+const HAND_DRAG_SLOP = 10;
+function handDragInit(){
+  try{
+    const el = document.getElementById('handArea');
+    if(!el || el.__dragBound) return;
+    el.__dragBound = true;
+
+    let down = false, dragging = false, startX = 0, startLeft = 0, pid = null;
+
+    const canScroll = ()=> el.scrollWidth > el.clientWidth + 2;
+    const refresh = ()=> el.classList.toggle('can-drag', canScroll());
+
+    el.addEventListener('pointerdown', (e)=>{
+      /* 손가락은 브라우저에 맡긴다 — 직접 굴리면 관성이 죽는다 */
+      if(e.pointerType === 'touch') return;
+      if(e.button !== 0) return;
+      if(!canScroll()) return;
+      down = true; dragging = false;
+      startX = e.clientX; startLeft = el.scrollLeft; pid = e.pointerId;
+    });
+
+    el.addEventListener('pointermove', (e)=>{
+      if(!down || e.pointerType === 'touch') return;
+      const dx = e.clientX - startX;
+      if(!dragging){
+        if(Math.abs(dx) < HAND_DRAG_SLOP) return;   // 아직은 평범한 클릭이다
+        dragging = true;
+        el.classList.add('dragging');
+        try{ el.setPointerCapture(pid); }catch(err){}
+      }
+      el.scrollLeft = startLeft - dx;
+      e.preventDefault();
+    });
+
+    const end = ()=>{
+      if(!down) return;
+      down = false;
+      try{ if(pid != null) el.releasePointerCapture(pid); }catch(err){}
+      pid = null;
+      if(!dragging) return;
+      dragging = false;
+      el.classList.remove('dragging');
+      /* ⚠ 끌고 난 뒤의 click 한 번만 잡아먹는다. 캡처 단계여야 카드까지 가기 전에 막힌다. */
+      const eat = (ev)=>{ ev.stopPropagation(); ev.preventDefault(); };
+      window.addEventListener('click', eat, { capture:true, once:true });
+      setTimeout(()=>{ try{ window.removeEventListener('click', eat, true); }catch(err){} }, 350);
+    };
+    el.addEventListener('pointerup', end);
+    el.addEventListener('pointercancel', end);
+    el.addEventListener('lostpointercapture', end);
+
+    refresh();
+    /* 손패 장수가 바뀌면 끌 수 있는지도 바뀐다 */
+    try{ new ResizeObserver(refresh).observe(el); }catch(err){}
+    try{ new MutationObserver(refresh).observe(el, { childList:true }); }catch(err){}
+  }catch(e){}
+}
+try{
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', handDragInit);
+  else handDragInit();
+}catch(e){}
+
 /* [Ver 13.0] 폴더는 **한 번에 하나만** 열린다. 여러 개를 펼쳐두면 접은 의미가 없다.
    ⚠ 컨테이너가 12.x의 #nmRight 에서 #nmFolders 로 바뀌었다. 둘 다 찾아본다. */
 function menuFolderHost(){
@@ -31351,6 +31800,21 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 16.4', date: '2026-09-16',
+    items: [
+      '🎒 <b>[변경] 랩터의 권능은 이제 <b>2칸</b>까지 장착합니다.</b> 3번째 칸은 잠겨 있고, 새 유물 <b>🎒 우빈이의 보조가방</b>(Legendary)을 얻어야 열립니다.',
+      '🏺 <b>[신규] 유물 10종.</b> 🧊 냉정 · 🔥 열정 · 👅 말빨 · 🤝 정치 · 🩹 손목보호대 · 🏆 트로피 · 🖥️ 키오스크 · 🕹️ 조이스틱 · 🎒 보조가방 · 💳 캐시백<br><span style="font-size:11.5px;color:var(--fg-dim);">이모티콘 쿨타임·업적 보상·하루 곡괭이 한도·랩터코인 한도·마트 캐시백 등 <b>판 밖</b>을 채우는 쪽입니다.</span>',
+      '⚖️ <b>[밸런스] 권능 8종을 손봤습니다.</b> 회복 <b>250 → 400</b> · 돈벌기 <b>10% → 25%</b> · 눈보라는 확정 스턴 대신 <b>각자 60%</b>(업그레이드 +1%p) · 살미야키는 <b>공격력 버프를 타지 않습니다</b> · 만유인력 <b>3바퀴 → 1바퀴</b> · 시간 왜곡 <b>2초 → 2.75초</b>. 자세한 수치는 <b>밸런스 패치</b> 탭에 있습니다.',
+      '📜 <b>[신규 규칙] 턴을 자신부터 다시 시작한 직후에는</b> <b>여러 번 쓰는 카드</b>와 <b>방금 그 카드</b>를 낼 수 없습니다. 둘을 번갈아 내면 턴을 영영 놓지 않을 수 있었습니다.',
+      '⌨️ <b>[신규] 이모티콘 단축키.</b> <b>G</b>를 누르면 칸이 열리고, 이어서 <b>1~5</b>를 누르면 그 칸이 나갑니다. 칸마다 번호가 적혀 있습니다.',
+      '🖐️ <b>[신규] 손패를 좌우로 끌 수 있습니다.</b> 카드가 많을 때 마우스로 그냥 끌면 넘어갑니다. <span style="font-size:11.5px;color:var(--fg-dim);">10px 넘게 움직여야 끌기로 칩니다 — 카드를 내거나 꾹 눌러 보는 동작은 그대로입니다.</span>',
+      '☀️ <b>[상향] 시즌 패스 썬크림</b> — 1등 <b>50 → 150</b> · 2등 <b>20 → 100</b> · 3등 <b>10 → 50</b>. 이제 1등 한 번이 <b>1.5레벨</b>입니다.',
+      '📚 <b>[편의] 업데이트 로그 · 밸런스 패치 · 신규 카드를 <b>큰 버전별</b>로 나눴습니다.</b> 한 화면에 전부 쏟지 않고 <b>Ver 16.x</b>처럼 골라서 봅니다.',
+      '🎨 <b>[편의] 밸런스 패치 탭에 색이 들어갔습니다.</b> 유리한 변경은 <b style="color:var(--tone-green)">초록 ▲</b>, 불리한 변경은 <b style="color:var(--tone-red)">빨강 ▼</b>. 권능은 이모지 대신 <b>일러스트</b>로 그립니다.',
+      '💎 <b>[하향] 돌에서 나오는 우비나이트가 30% 줄었습니다.</b> 최상위 보상이 들어간 만큼 공급을 같이 조입니다.',
+    ]
+  },
   {
     version: 'Ver 16.3.1', date: '2026-09-16',
     items: [
@@ -38325,6 +38789,11 @@ function evaluateAchievements(won){
       /* [Ver 15.10] 프사 말고 더 줄 것이 있는 업적을 위한 통로.
          ⚠ 없는 업적은 그냥 지나간다 — 기존 업적은 아무것도 달라지지 않는다. */
       if(typeof a.give === 'function'){ try{ a.give(); }catch(e){ console.error('[업적] 보상 지급 실패', a.id, e); } }
+      /* [Ver 16.4] 유물 '우빈이의 트로피' — 어떤 업적이든 달성하면 우비나이트. */
+      try{
+        const __tr = Math.floor(Number(artMine('trophy') || 0));
+        if(__tr > 0) grantUbinite(__tr);
+      }catch(e){}
       newly.push(a);
     }
   });
@@ -40237,9 +40706,19 @@ function resetStats(){
 function goToChangelog(){
   try{ newsClaim('log'); }catch(e){}   // [Ver 15.4]
   showScreen('screen-changelog');
+  renderChangelogList();
+}
+/* [Ver 16.4] 큰 버전 하나만 그린다. 예전에는 수십 개 버전을 한 화면에 쏟았다. */
+let changelogMajor = null;
+function setChangelogMajor(m){ changelogMajor = String(m); renderChangelogList(); }
+function renderChangelogList(){
   const wrap = document.getElementById('changelogWrap');
-  wrap.innerHTML = CHANGELOG.map((entry,i)=>`
-    <div style="display:flex; gap:16px; margin-bottom:${i===CHANGELOG.length-1?0:28}px;">
+  if(!wrap) return;
+  const majors = logMajorsOf(CHANGELOG);
+  if(changelogMajor === null || majors.indexOf(changelogMajor) === -1) changelogMajor = majors[0] || '?';
+  const list = CHANGELOG.filter(e=> logMajorOf(e.version) === changelogMajor);
+  wrap.innerHTML = logMajorBar(majors, changelogMajor, 'setChangelogMajor') + list.map((entry,i)=>`
+    <div style="display:flex; gap:16px; margin-bottom:${i===list.length-1?0:28}px;">
       <div style="flex-shrink:0; width:2px; background:var(--line); position:relative;">
         <div style="position:absolute; top:2px; left:50%; transform:translateX(-50%); width:8px; height:8px; border-radius:50%; background:var(--fg);"></div>
       </div>
@@ -48259,6 +48738,14 @@ function advanceTurn(){
   if(justFinished && justFinished.resumeToId){
     const resumeId = justFinished.resumeToId;
     justFinished.resumeToId = null;
+    /* ★ [Ver 16.4] **자신에게로** 되감는 경우에만 잠근다. 남에게 넘기는 축지법은 해당 없다.
+       ⚠ 카드 종류를 목록으로 들고 있지 않는다 — 새 카드가 생길 때마다 빠뜨리게 된다.
+         resumeToId 가 자기 자신을 가리키는 이 순간이 곧 '자신부터 재개'다. */
+    try{
+      if(resumeId === justFinished.id){
+        justFinished.__resumeLock = justFinished.__lastPlayedName || true;
+      }
+    }catch(e){}
     const resumeIdx = turnOrder.findIndex(i=> players[i] && players[i].id===resumeId && players[i].alive);
     if(resumeIdx !== -1){
       // [Ver 5.0 버그수정] 축지법으로 순번을 뒤로(또는 제자리로) 되감아 라운드 경계를 넘는 경우,
@@ -52161,6 +52648,17 @@ function cardUnusableReason(caster, card){
     return `파밍 시간(첫 3바퀴)에는 공격 카드를 낼 수 없습니다. (현재 ${turnCount+1}바퀴째)`;
   }
   if(isBlockedByFirstTurnRule(card, caster)) return '불문율: 첫 턴에는 강력한 공격/즉사 계열 카드를 사용할 수 없습니다.';
+  /* ★ [Ver 16.4] 턴을 자신부터 재개한 직후에는 '무한 고리'를 못 만든다.
+     다회 사용 카드와 방금 그 카드를 연달아 내면 턴을 영영 놓지 않는다
+     (33473 의 '양분 pro' 사고가 바로 이 조합이었다).
+     ⚠ 잠금은 재개된 그 턴 하나뿐이다. 다른 카드를 내면 곧바로 풀린다. */
+  if(caster.__resumeLock){
+    const multi = !!card.infinite || (card.maxUses|0) > 1 || (card.uses|0) > 1;
+    if(multi) return '턴을 다시 시작한 직후에는 여러 번 쓰는 카드를 낼 수 없습니다. (무한 반복 방지)';
+    if(caster.__resumeLock !== true && card.name === caster.__resumeLock){
+      return `턴을 다시 시작한 직후에는 "${card.name}"을(를) 연달아 낼 수 없습니다. (무한 반복 방지)`;
+    }
+  }
   if(caster.healBlocked && HEAL_CARD_TYPES.includes(card.type)) return '하드코어 상태라 회복 계열 카드를 사용할 수 없습니다.';
   if(caster.silencedDueTurn && totalIndividualTurns < caster.silencedDueTurn && isRevealCard(card)) return '침묵 상태라 보여주기(반응) 카드를 사용할 수 없습니다.';
   if(card.type === 'HOSTAGE_MARK' && caster.hostageMarkUsed) return '이미 인질을 지목했습니다. 다시 지목할 수 없습니다.';
@@ -55111,6 +55609,11 @@ function resolveCardEffect(caster, card, targetId, onDone){
        이 자리는 **반응 시간이 끝난 뒤**라, 봇 셋이 같은 순간에 깨어나
        한꺼번에 떠들었다. openReactionWindow 로 옮겨 반응 시간 도중부터
        흩뿌린다. (그쪽에 botsWatchCast 가 있다) */
+  }catch(e){}
+  /* [Ver 16.4] 방금 낸 카드 이름을 남긴다 — 턴 재개 잠금이 "그 카드"를 가리키는 데 쓴다.
+     그리고 카드를 한 장 냈으니 잠금은 여기서 풀린다(잠금은 한 턴짜리다). */
+  try{
+    if(caster){ caster.__lastPlayedName = card.name; caster.__resumeLock = null; }
   }catch(e){}
   // [Ver 8.1.6] "건망증"/"나가사키 눈뽕"으로 은폐된(__masked) 카드는 실제로 내는 이 순간 정체가 드러난다.
   if(card.__masked) card.__masked = false;
@@ -67397,9 +67900,11 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
       target.artAegisUsed = true;
       target.alive = true;
       target.hp = 1;
+      /* [Ver 16.4] 쉴드를 빼고 골드로 바꿨다 — 버티는 것만으로 충분히 센데
+         쉴드까지 주니 한 번 살아난 쪽이 그대로 굳어졌다. */
       const __aegis = artAegisShield(target);
-      try{ grantShield(target, __aegis, '우빈이의 방어막'); }catch(e){ target.shield = (target.shield||0) + __aegis; }
-      log('highlight', `🛡️ "우빈이의 방어막" — ${J(target.name,'이','가')} 쓰러지기 직전 HP 1로 버티고 쉴드 ${__aegis.toLocaleString()}을(를) 얻었습니다! (판당 1회)`);
+      try{ grantGold(target, __aegis); }catch(e){ target.gold = (target.gold||0) + __aegis; }
+      log('highlight', `🛡️ "우빈이의 방어막" — ${J(target.name,'이','가')} 쓰러지기 직전 HP 1로 버티고 ${fmtWon(__aegis)}을(를) 얻었습니다! (판당 1회)`);
     } else {
       noteKillForContract(currentAttackContext ? currentAttackContext.attackerId : null, target);
       const cause = currentAttackContext
