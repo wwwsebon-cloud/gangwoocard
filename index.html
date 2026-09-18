@@ -9630,7 +9630,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.7</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.8</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -17866,6 +17866,46 @@ function chuLoad(){
 function chuSave(){ try{ localStorage.setItem(STORAGE_KEYS.chuseok, JSON.stringify(chuLoad())); }catch(e){} }
 function chuSongpyeon(){ return chuLoad().songpyeon | 0; }
 function chuBoxes(){ return chuLoad().box | 0; }
+
+/* ##########################################################################
+   [Ver 16.7] 송편 티켓 — 하루 10장, 한 장으로 한 판
+   --------------------------------------------------------------------------
+   ⚠ 날짜는 반드시 todayKey()(서버 보정 시각). PC 시계로 세면 하루에 몇 번이고 받는다.
+   ⚠ 기간 밖에서는 지급하지 않는다 — 시작 전에 미리 쌓거나 끝난 뒤에도 들어오면 안 된다.
+   ⚠ 지급은 **쌓이는 쪽**이다. 매일 10으로 되돌리는 쪽이 좋으면 아래 += 를 = 로 바꾼다.
+   ########################################################################## */
+const CHU_TICKET_DAILY = 10;
+const CHU_TICKET_PRICE = 300;   // 랩터마트24 — 1장당 우비나이트
+function chuTickets(){ return chuLoad().ticket | 0; }
+function chuAddTickets(n){
+  const D = chuLoad();
+  D.ticket = Math.max(0, (D.ticket | 0) + (n | 0));
+  chuSave();
+  return D.ticket;
+}
+/* 하루가 바뀌었으면 오늘 몫을 넣는다. 여러 번 불려도 하루에 한 번만 들어간다. */
+function chuDailyTicketTick(){
+  try{
+    const ph = chuseokPhase();
+    if(ph !== 'open' && ph !== 'soon') return 0;   // 기간 안에서만
+    const D = chuLoad();
+    const day = todayKey();
+    if(D.tday === day) return 0;
+    D.tday = day;
+    D.ticket = Math.max(0, (D.ticket | 0) + CHU_TICKET_DAILY);
+    chuSave();
+    return CHU_TICKET_DAILY;
+  }catch(e){ return 0; }
+}
+/* 한 장 쓴다. 개발자는 쓰지 않는다 — 확인할 때마다 말라붙으면 못 본다. */
+function chuSpendTicket(){
+  if(chuIsDev()) return true;
+  const D = chuLoad();
+  if((D.ticket | 0) <= 0) return false;
+  D.ticket = (D.ticket | 0) - 1;
+  chuSave();
+  return true;
+}
 function chuSets(t){ return (chuLoad().sets && chuLoad().sets[t]) | 0; }
 function chuAddBoxes(n){
   const D = chuLoad();
@@ -18026,6 +18066,9 @@ function chuAddSongpyeon(n){
 /* ---------- 메뉴에 들어가는 길 ---------- */
 function renderChuBtn(){
   try{
+    /* 메뉴에 닿을 때마다 오늘 몫을 확인한다 — 하루에 한 번만 들어간다 */
+    const got = chuDailyTicketTick();
+    if(got > 0){ try{ log('sys', `🎟️ 추석 — 오늘의 <b>송편 티켓 ${got}장</b>이 도착했습니다. (보유 ${chuTickets()}장)`); }catch(e){} }
     const show = chuseokVisible();
     const tile = document.getElementById('nmChuTile');   /* 메뉴 왼쪽, 내 정보 옆 */
     const dr   = document.getElementById('nmChuDrawer'); /* 서랍 — 좁은 화면 대비 */
@@ -18087,7 +18130,7 @@ function renderChuseokHome(){
         <b>추석 이벤트</b>
         <small>${head}${chuLeftText() ? ` · <b>${chuLeftText()}</b>` : ''}</small>
       </div>
-      <div class="chu-pill">🥟 송편 <b>${chuSongpyeon().toLocaleString()}</b></div>
+      <div class="chu-pill">🎟️ <b>${chuTickets()}</b> · 🥟 <b>${chuSongpyeon().toLocaleString()}</b></div>
     </div>
 
     <div class="chu-grid">
@@ -18099,7 +18142,7 @@ function renderChuseokHome(){
       <button class="chu-card${lock}" onclick="chuOpenSongpyeon()">
         ${lockTag}
         <span class="ic">🥟</span><b>송편 만들기</b>
-        <small>${SP_TIME_MS/1000}초 안에 재료를 순서대로<br>최고 기록 <b>${(chuLoad().best|0).toLocaleString()}</b></small>
+        <small>${SP_TIME_MS/1000}초 안에 재료를 순서대로<br>🎟️ 티켓 <b>${chuTickets()}</b>장 · 최고 <b>${(chuLoad().best|0).toLocaleString()}</b></small>
       </button>
       <button class="chu-card${lock}" onclick="chuOpenShop()">
         ${lockTag}
@@ -18110,6 +18153,8 @@ function renderChuseokHome(){
 
     <div class="chu-note">
       <b>🥟 송편</b>은 <b>송편 만들기</b>로 모읍니다. 모은 송편은 <b>이벤트 상점</b>에서 재화로 바꿉니다.<br>
+      <b>🎟️ 송편 티켓</b>은 <b>매일 ${CHU_TICKET_DAILY}장</b> 들어오고, 송편 만들기 <b>한 판에 1장</b>을 씁니다.
+      모자라면 <b>랩터마트24</b>에서 💎 ${CHU_TICKET_PRICE}에 삽니다.<br>
       ${CHUSEOK.open ? '' : '아직 <b>준비중</b>입니다 — 문을 열면 공지로 알려드립니다.<br>'}
       이벤트가 끝나면 남은 송편은 사라집니다. 미리 바꿔두세요.
     </div>
@@ -18357,6 +18402,18 @@ function spStop(){
 }
 function chuOpenSongpyeon(){
   if(!chuseokCanPlay()){ chuLockNote('송편 만들기'); return; }
+  chuDailyTicketTick();
+  /* ⚠ 티켓을 먼저 확인하고 **깎은 뒤에** 판을 연다. 반대로 하면 티켓 없이 한 판이 돈다. */
+  if(!chuSpendTicket()){
+    showModal('🎟️ 송편 티켓', `<div style="line-height:1.9;">
+        송편 만들기는 <b>티켓 1장</b>이 필요합니다.<br>
+        티켓은 이벤트 기간 동안 <b>매일 ${CHU_TICKET_DAILY}장</b> 들어옵니다.<br><br>
+        <span style="font-size:12px;color:var(--fg-dim);">모자라면 <b>랩터마트24 · 재화</b> 탭에서
+        💎 ${CHU_TICKET_PRICE}에 한 장씩 살 수 있습니다.</span></div>`,
+      [{ label:'마트로 가기', solid:true, action: ()=>{ try{ openRaptorMart('resource'); }catch(e){} } },
+       { label:'닫기' }]);
+    return;
+  }
   chuEnsureScreen();
   spStop();
   try{ ambientBgmPlay('songpyeonbgm'); }catch(e){}
@@ -18616,7 +18673,7 @@ function renderSp(newBest){
       <div class="chu-head">
         <div class="chu-moon">🥟</div>
         <div class="chu-head-tx"><b>송편 만들기</b><small>끝났습니다</small></div>
-        <div class="chu-pill">🥟 송편 <b>${chuSongpyeon().toLocaleString()}</b></div>
+        <div class="chu-pill">🎟️ <b>${chuTickets()}</b> · 🥟 <b>${chuSongpyeon().toLocaleString()}</b></div>
       </div>
       <div class="sp-over">
         <div class="sp-over-t">${newBest ? '최고 기록!' : '수고하셨습니다'}</div>
@@ -18626,7 +18683,7 @@ function renderSp(newBest){
           최고 기록 <b>${(chuLoad().best|0).toLocaleString()}점</b>
         </div>
         <div style="display:flex;gap:8px;margin-top:6px;">
-          <button class="btn btn-solid" onclick="chuOpenSongpyeon()">한 판 더</button>
+          <button class="btn btn-solid" onclick="chuOpenSongpyeon()">한 판 더 <small style="opacity:.75;">🎟️ ${chuTickets()}</small></button>
           <button class="btn btn-ghost" onclick="chuBackHome()">그만하기</button>
         </div>
       </div>`;
@@ -18666,7 +18723,7 @@ function renderSp(newBest){
     <div class="chu-head">
       <div class="chu-moon">🥟</div>
       <div class="chu-head-tx"><b>송편 만들기</b><small>재료를 순서대로 · 빠를수록 점수가 큽니다</small></div>
-      <div class="chu-pill">🥟 <b>${chuSongpyeon().toLocaleString()}</b></div>
+      <div class="chu-pill">🎟️ <b>${chuTickets()}</b> · 🥟 <b>${chuSongpyeon().toLocaleString()}</b></div>
     </div>
     <div class="sp-wrap">
       <div class="sp-top">
@@ -25231,6 +25288,35 @@ function backupAfterTeethSpend(){
 }
 /* 우비나이트로 이빨을 산다. n개를 한 번에 살 수 있다. */
 /* [Ver 15.4] 재화 탭도 한 번 묻는다 */
+/* [Ver 16.7] 송편 티켓 구매 — 이빨과 같은 결로 묻고 산다 */
+function buyChuTicket(n){
+  n = Math.max(1, n|0);
+  const cost = CHU_TICKET_PRICE * n;
+  if(ubinite < cost){
+    showModal('🎟️ 송편 티켓', `우비나이트가 부족합니다.<br><br>
+      <span style="font-size:12px;color:var(--fg-dim);">필요 <b>💎 ${cost.toLocaleString()}</b> · 보유 <b>💎 ${ubinite.toLocaleString()}</b></span>`,
+      [{label:'확인', solid:true}]);
+    return;
+  }
+  showModal('구매하시겠습니까?', `<div style="text-align:center;line-height:1.9;">
+      <div style="font-size:40px;line-height:1;">🎟️</div>
+      <div style="font-size:15px;font-weight:800;margin-top:6px;">송편 티켓 ${n}장</div>
+      <div style="font-size:14px;margin-top:12px;">💎 <b>${cost.toLocaleString()}</b>
+        <span style="font-size:11.5px;color:var(--fg-dim);">(보유 ${ubinite.toLocaleString()} → ${(ubinite-cost).toLocaleString()})</span></div>
+    </div>`, [
+      { label:'구매', solid:true, action: ()=>{
+          /* ⚠ 여기서 한 번 더 확인한다 — 창이 떠 있는 동안 우비나이트가 줄었을 수 있다 */
+          if(ubinite < cost){ showModal('🎟️ 송편 티켓', '우비나이트가 부족합니다.', [{label:'확인', solid:true}]); return; }
+          spendUbinite(cost);
+          chuAddTickets(n);
+          try{ martCashback(cost); }catch(e){}
+          try{ renderUbiniteBadge(); renderTopResources(); }catch(e){}
+          raptorMartSwitch('resource');
+          try{ UISfx.buy && UISfx.buy(); }catch(e){}
+        } },
+      { label:'취소' }
+    ]);
+}
 function buyTeeth(n){
   n = Math.max(1, n|0);
   const cost = TEETH_PRICE_UBINITE * n;   // ⚠ 실제 계산은 doBuyTeeth 와 같아야 한다
@@ -25371,7 +25457,32 @@ function buildResourceShopHtml(){
              <span class="rm-res-cost">💎 ${INTRO_SKIP_PRICE.toLocaleString()}</span>
            </button>`}
     </div>`;
-  return devRow + skipRow + `<div class="rm-res-wrap">
+  /* [Ver 16.7] 추석 — 송편 티켓. 이벤트가 끝나면 자리도 사라진다. */
+  let chuRow = '';
+  try{
+    if(typeof chuseokVisible === 'function' && chuseokVisible()){
+      const tRows = [1, 5, 10].map(n=>{
+        const c = CHU_TICKET_PRICE * n;
+        const ok = ubinite >= c;
+        return `<button class="rm-res-buy${ok?'':' off'}" ${ok?'':'disabled'} onclick="buyChuTicket(${n})">
+          <span class="rm-res-n">🎟️ ×${n}</span>
+          <span class="rm-res-cost">💎 ${c.toLocaleString()}</span>
+        </button>`;
+      }).join('');
+      chuRow = `<div class="rm-res-wrap">
+        <div class="rm-res-head">
+          <b>🎟️ 송편 티켓</b>
+          <span>보유 <b>${chuTickets().toLocaleString()}</b>장</span>
+        </div>
+        <div class="rm-res-desc">
+          추석 이벤트의 <b>송편 만들기</b>를 한 판 하는 데 <b>1장</b>이 듭니다.
+          기간 동안 <b>매일 ${CHU_TICKET_DAILY}장</b>이 그냥 들어옵니다 — 여기서는 더 필요할 때만 사세요.
+        </div>
+        <div class="rm-res-row">${tRows}</div>
+      </div>`;
+    }
+  }catch(e){}
+  return devRow + skipRow + chuRow + `<div class="rm-res-wrap">
     <div class="rm-res-head">
       <b>🦷 랩터의 이빨</b>
       <span>보유 <b>${teethCount().toLocaleString()}</b>개</span>
@@ -33348,6 +33459,13 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 16.8', date: '2026-09-18',
+    items: [
+      '🎟️ <b>[신규] 송편 티켓.</b> 추석 기간 동안 <b>매일 10장</b>이 들어옵니다. <b>송편 만들기 한 판에 1장</b>을 씁니다.<br><span style="font-size:11.5px;color:var(--fg-dim);">안 쓴 티켓은 <b>사라지지 않고 쌓입니다.</b> 스토리와 이벤트 상점은 티켓 없이 들어갑니다.</span>',
+      '🏪 <b>[신규] 랩터마트24에서 송편 티켓을 삽니다.</b> <b>재화</b> 탭에서 <b>1장 💎 300</b>. 5장·10장 묶음도 있습니다.<br><span style="font-size:11.5px;color:var(--fg-dim);">이벤트가 끝나면 이 자리도 사라집니다.</span>',
+    ]
+  },
   {
     version: 'Ver 16.7', date: '2026-09-18',
     items: [
