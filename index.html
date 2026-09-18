@@ -6011,6 +6011,9 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 .sp-board.roll{ animation:spRoll 11s linear infinite; }
 .sp-board.roll.ccw{ animation-direction:reverse; }
 .sp-main:has(.sp-board.roll){ padding:54px 0; }
+/* [잠수함] 떡 씻기 — 등급 **글자만** 지운다. 색 면적은 그대로 둬야
+   "색으로 읽어라" 가 성립한다. display:none 으로 지우면 칩이 쪼그라든다. */
+.sp-board.wash .sp-cg{ color:transparent; }
 /* 떡훼이크 — 바뀌는 순간 번쩍 */
 @keyframes spFake{ 0%{ transform:scale(1); } 40%{ transform:scale(1.25) rotate(-6deg); } 100%{ transform:scale(1); } }
 .sp-card.faked{ animation:spFake .42s var(--ease); }
@@ -9672,7 +9675,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.9.1</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.9.2</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -18614,12 +18617,14 @@ const SP_POWERS = [
   { k:'moon',   ic:'📈', name:'존버하다 떡상함', when:'next', d:'다음 판의 재료가 <b>5개</b> 늘어납니다' },
   { k:'plus',   ic:'⏱️', name:'시간 추가',       when:'now',  d:'남은 시간 <b>+2.5초</b>' },
   { k:'minus',  ic:'⌛', name:'시간 감소',       when:'now',  d:'남은 시간 <b>-1초</b>' },
-  { k:'dark',   ic:'💡', name:'불끄기',          when:'now',  d:'<b>3초 뒤</b> 남은 재료의 절반이 가려집니다' },
+  { k:'dark',   ic:'💡', name:'불끄기',          when:'next', d:'다음 판 <b>3초 뒤</b> 재료의 절반이 가려집니다' },
   { k:'flip',   ic:'🍽️', name:'밥상엎기',        when:'next', d:'다음 판이 <b>180도</b> 뒤집힙니다' },
   { k:'steal',  ic:'🏃', name:'떡 절도',         when:'next', d:'다음 판의 재료가 <b>이리저리 움직입니다</b>' },
   { k:'fake',   ic:'🎭', name:'떡훼이크',        when:'next', d:'다음 판의 재료 하나가 <b>도중에 바뀝니다</b>' },
   /* [Ver 16.9] 밥상엎기는 한 번 뒤집고 마는데, 이건 **계속 돈다** */
   { k:'roll',   ic:'🌀', name:'송편굴러가유~',   when:'next', d:'다음 판이 <b>빙글빙글 돌아갑니다</b>' },
+  /* [잠수함] 씻어 놓으면 등급이 지워진다 — 색으로만 읽어야 한다 */
+  { k:'wash',   ic:'🫧', name:'떡 씻기',         when:'next', d:'다음 판은 <b>등급 색깔만</b> 보입니다' },
 ];
 function spPowerOf(k){ return SP_POWERS.find(p=> p.k === k) || null; }
 /* [Ver 16.9] 어느 것이 나올지 **매번 새로 굴리면** 몇 판을 해도 한 번을 못 보는 능력이
@@ -18732,6 +18737,8 @@ function spNewRound(){
   /* rAF 는 탭이 숨으면 멈춘다 — 실제 마감은 타이머가 한 번 더 본다 */
   if(SP.to) clearTimeout(SP.to);
   SP.to = setTimeout(()=>{ try{ if(SP && !SP.over && performance.now() >= SP.deadline) spFail('시간 초과'); }catch(e){} }, SP_TIME_MS + 150);
+  /* [잠수함] 불끄기는 판이 다 차려진 다음에 건다 */
+  if(SP.mods.dark) spDarkArm();
 }
 function spLoop(){
   if(!SP || SP.over) return;
@@ -18786,6 +18793,8 @@ function spFirePower(k){
     if(k === 'steal')  SP.nextMods.steal  = true;
     if(k === 'fake')   SP.nextMods.fake   = true;
     if(k === 'roll')   SP.nextMods.roll   = true;
+    if(k === 'dark')   SP.nextMods.dark   = true;
+    if(k === 'wash')   SP.nextMods.wash   = true;
     SP.msgKind = 'ok';
     SP.msg = `${p.ic} ${p.name} — 다음 판에 걸립니다`;
     return;
@@ -18803,24 +18812,29 @@ function spFirePower(k){
     SP.fx = 'cut';
     spRearmDeadline();
     SP.msgKind = 'bad'; SP.msg = `${p.ic} ${p.name} — -1초`;
-  } else if(k === 'dark'){
-    SP.msgKind = 'bad'; SP.msg = `${p.ic} ${p.name} — 3초 뒤 불이 꺼집니다`;
-    try{ cardAudioPlaySfxKey('lightsoff'); }catch(e){}   /* 불좀 꺼줄래 효과음 */
-    try{ if(SP.darkTo) clearTimeout(SP.darkTo); }catch(e){}
-    SP.darkTo = setTimeout(()=>{
-      try{
-        if(!SP || SP.over) return;
-        const rest = [];
-        for(let i = Math.max(0, SP.at); i < SP.seq.length; i++) rest.push(i);
-        /* 남은 것의 절반을 가린다 — 지금 눌러야 할 것은 남겨 둔다 */
-        const pick = rest.filter(i=> i !== SP.at);
-        const half = Math.floor(pick.length / 2);
-        for(let i = pick.length - 1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [pick[i],pick[j]]=[pick[j],pick[i]]; }
-        SP.hidden = new Set(pick.slice(0, half));
-        renderSp();
-      }catch(e){}
-    }, 3000);
   }
+}
+/* [잠수함] 불끄기 — **판이 시작되고 3초 뒤**에 꺼진다.
+   예전에는 누른 그 판에 걸려서, 이미 절반쯤 지나간 뒤라 꺼져도 남은 게 얼마 없었다.
+   ⚠ seq 와 deadline 이 정해진 **뒤에** 건다. 앞에 두면 아직 안 만들어진 판을 보고 가린다.
+   ⚠ 타이머 정리는 spNewRound 앞머리와 spStop 이 이미 한다 — 여기서 또 하지 않는다. */
+function spDarkArm(){
+  if(!SP || SP.over) return;
+  SP.darkTo = setTimeout(()=>{
+    try{
+      if(!SP || SP.over) return;
+      try{ cardAudioPlaySfxKey('lightsoff'); }catch(e){}   /* 불좀 꺼줄래 효과음 */
+      const rest = [];
+      for(let i = Math.max(0, SP.at); i < SP.seq.length; i++) rest.push(i);
+      /* 남은 것의 절반을 가린다 — 지금 눌러야 할 것은 남겨 둔다 */
+      const pick = rest.filter(i=> i !== SP.at);
+      const half = Math.floor(pick.length / 2);
+      for(let i = pick.length - 1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [pick[i],pick[j]]=[pick[j],pick[i]]; }
+      SP.hidden = new Set(pick.slice(0, half));
+      SP.msgKind = 'bad'; SP.msg = '💡 불끄기 — 불이 꺼졌습니다';
+      renderSp();
+    }catch(e){}
+  }, 3000);
 }
 /* [Ver 16.9] 마감이 바뀌면 예비 타이머도 다시 건다.
    ⚠ rAF 는 탭이 숨으면 멈춘다. 그때 마감을 보는 건 이 타이머뿐이라,
@@ -19073,6 +19087,8 @@ function renderSp(newBest){
   if(SP.mods.steal)  modTx.push('🏃 재료가 움직입니다');
   if(SP.mods.fake)   modTx.push('🎭 재료 하나가 바뀝니다');
   if(SP.mods.roll)   modTx.push(`🌀 판이 ${SP.rollCcw ? '반시계' : '시계'} 방향으로 돕니다`);
+  if(SP.mods.dark)   modTx.push('💡 3초 뒤 불이 꺼집니다');
+  if(SP.mods.wash)   modTx.push('🫧 등급 글자가 씻겨 나갔습니다');
   const pwNow = SP.pw ? spPowerOf(SP.pw.k) : null;
   const banner = (modTx.length || pwNow) ? `<div class="sp-banner">
       ${modTx.join(' · ')}${modTx.length && pwNow ? ' · ' : ''}
@@ -19089,7 +19105,8 @@ function renderSp(newBest){
   const tier = ch >= 82 ? '' : ch >= 68 ? 'mid' : ch >= 58 ? 'small' : 'tiny';
   /* ⚠ tier 가 정해진 **뒤에** 만든다 — 위에 두었다가 TDZ 로 터졌다 */
   const boardCls = [tier, SP.mods.flip ? 'flip' : '', SP.mods.steal ? 'steal' : '',
-                    SP.mods.roll ? 'roll' : '', (SP.mods.roll && SP.rollCcw) ? 'ccw' : ''].filter(Boolean).join(' ');
+                    SP.mods.roll ? 'roll' : '', (SP.mods.roll && SP.rollCcw) ? 'ccw' : '',
+                    SP.mods.wash ? 'wash' : ''].filter(Boolean).join(' ');
   const key = (k, cls)=> `<button class="sp-key ${cls||''}" data-k="${k}" onclick="spHit('${k}')">${k}</button>`;
   const fxNow = SP.fx || '';
   SP.fx = '';   /* 한 번만 번쩍인다 */
