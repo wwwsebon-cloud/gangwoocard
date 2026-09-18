@@ -5825,7 +5825,7 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 }
 .chu-pill b{ font-family:var(--font-mono); }
 
-.chu-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(230px,1fr)); gap:var(--sp-3); }
+.chu-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(205px,1fr)); gap:var(--sp-3); }
 .chu-card{
   position:relative; overflow:hidden;
   display:flex; flex-direction:column; align-items:center; gap:9px;
@@ -5903,6 +5903,16 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
   background:var(--bg-2); font-size:10.5px; color:var(--fg-dim);
 }
 .chu-soon{ color:var(--tone-yellow,#f0b429) !important; font-weight:700; }
+.chu-have.out{ color:var(--tone-red,#e5534b); }
+/* ---------- [Ver 16.9] 추석 리더보드 ---------- */
+.chu-lb{ display:flex; flex-direction:column; gap:6px; }
+.chu-lb .ol-row{ cursor:default; }
+.chu-lb-prize{ border-left:3px solid var(--tone-yellow,#E9B949); }
+.chu-lb-me{
+  padding:11px 14px; border-radius:var(--r-sm); text-align:center;
+  background:var(--bg-2); font-size:12.5px; line-height:1.7; color:var(--fg-dim);
+}
+.chu-lb-me b{ color:var(--fg); }
 
 /* ---------- 송편 만들기 ----------
    ⚠ 제시 칸이 **왼쪽**, 버튼이 **오른쪽**이다. 카드가 20장 넘게 깔리므로
@@ -5917,42 +5927,48 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 .sp-timer > i{ display:block; height:100%; width:100%; transform-origin:left center;
   background:linear-gradient(90deg,#7ddc9a,#f0b429); }
 .sp-timer.warn > i{ background:linear-gradient(90deg,#f0b429,#e0564a); }
+/* [Ver 16.9] ⏱️ · ⌛ 는 순식간에 끝나서 눈에 안 띄었다 — 막대를 한 번 번쩍인다 */
+@keyframes spBoost{ 0%{ box-shadow:0 0 0 0 rgba(125,220,154,.0); } 30%{ box-shadow:0 0 0 4px rgba(125,220,154,.75); } 100%{ box-shadow:0 0 0 0 rgba(125,220,154,0); } }
+@keyframes spCut  { 0%{ box-shadow:0 0 0 0 rgba(229,83,75,0); } 30%{ box-shadow:0 0 0 4px rgba(229,83,75,.8); } 100%{ box-shadow:0 0 0 0 rgba(229,83,75,0); } }
+.sp-timer.boost{ animation:spBoost .7s var(--ease); }
+.sp-timer.cut  { animation:spCut   .7s var(--ease); }
 
 .sp-main{ display:flex; align-items:flex-start; gap:var(--sp-3); }
 /* ⚠ 장수에 따라 칸 수(--sp-cols)와 카드 높이(--sp-ch)가 JS 에서 내려온다.
    49장이면 7×7 이라 카드가 확 작아진다. */
 .sp-board{
-  flex:1 1 auto; min-width:0; min-height:200px;
-  display:flex; flex-wrap:wrap; justify-content:center; align-content:flex-start; gap:6px;
-  padding:14px; border-radius:var(--r-lg);
+  flex:1 1 auto; min-width:0; min-height:160px;
+  display:flex; flex-wrap:wrap; justify-content:center; align-content:flex-start; gap:4px;
+  padding:10px; border-radius:var(--r-lg);
   background:var(--bg-panel); box-shadow:var(--sh-ring), var(--sh-1);
 }
 /* 재료 카드 — 인게임 카드와 같은 얼굴을 작게 */
 .sp-card{
   position:relative; flex:0 0 auto; box-sizing:border-box; overflow:hidden;
-  width:min(120px, calc((100% - (var(--sp-cols, 5) - 1) * 6px) / var(--sp-cols, 5)));
+  width:min(104px, calc((100% - (var(--sp-cols, 5) - 1) * 4px) / var(--sp-cols, 5)));
   height:var(--sp-ch, 96px);
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-  padding:5px 4px; border-radius:var(--r-sm);
-  border:1.5px solid rgba(20,23,28,0.16);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+  padding:2px 3px; border-radius:var(--r-sm);
+  border:1px solid rgba(20,23,28,0.16);
   background:var(--card-bg); color:var(--card-fg);
   transition:transform .12s var(--ease), opacity .12s var(--ease), filter .12s var(--ease);
 }
 .sp-cg{
-  flex:0 0 auto; padding:1px 6px; border-radius:999px; font-family:var(--font-mono);
-  font-size:10px; font-weight:800; color:#12141a; letter-spacing:.02em; line-height:1.45;
+  flex:0 0 auto; padding:0 5px; border-radius:999px; font-family:var(--font-mono);
+  font-size:10px; font-weight:800; color:#12141a; letter-spacing:.02em; line-height:1.35;
 }
 .sp-cn{
-  font-size:10.5px; font-weight:700; line-height:1.28; text-align:center;
+  font-size:10.5px; font-weight:700; line-height:1.18; text-align:center;
   overflow-wrap:anywhere; word-break:keep-all; overflow:hidden;
 }
-/* 카드가 작아질수록 글자도 같이 — 네 단계 */
-.sp-board.mid   .sp-cn{ font-size:9.5px; }
-.sp-board.small .sp-cn{ font-size:8.5px; line-height:1.24; }
-.sp-board.small .sp-cg{ font-size:9px; padding:0 5px; }
-.sp-board.tiny  .sp-cn{ font-size:7.6px; line-height:1.2; letter-spacing:-0.02em; }
-.sp-board.tiny  .sp-cg{ font-size:8px; padding:0 4px; }
-.sp-board.tiny  .sp-card{ gap:2px; padding:3px 2px; }
+/* [Ver 16.9] 카드가 작아져도 **글자는 그대로** 둔다 — 줄일 것은 네모뿐이다.
+   예전에는 49장이 되면 이름이 7.6px 까지 내려가 읽을 수가 없었다.
+   대신 여백·간격·테두리를 마지막 1px 까지 깎는다. */
+.sp-board.mid   .sp-card{ gap:0; padding:2px; }
+.sp-board.small .sp-card{ gap:0; padding:1px; }
+.sp-board.tiny  .sp-card{ gap:0; padding:1px 0; }
+.sp-board.small .sp-cg,
+.sp-board.tiny  .sp-cg{ padding:0 4px; line-height:1.25; }
 /* 이미 맞춘 것 · 지금 칠 것 · 틀린 뒤 */
 .sp-card.done{ opacity:.3; filter:grayscale(.75); transform:scale(.94); }
 .sp-card.cur{ transform:translateY(-4px) scale(1.06); z-index:2; }
@@ -5988,6 +6004,13 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
 .sp-board.steal .sp-card:not(.done){ animation:spWob 1.1s ease-in-out infinite; }
 .sp-board.steal .sp-card.cur{ animation-duration:.8s; }
 @media (prefers-reduced-motion: reduce){ .sp-board.steal .sp-card{ animation:none; } }
+/* [Ver 16.9] 송편굴러가유~ — 판이 통째로 계속 돈다.
+   ⚠ 돌면 모서리가 칸 밖으로 나간다. 작게 줄이고 위아래 여백을 준다 —
+     안 그러면 키패드를 덮어 누를 수가 없다. */
+@keyframes spRoll{ from{ transform:rotate(0deg) scale(.62); } to{ transform:rotate(360deg) scale(.62); } }
+.sp-board.roll{ animation:spRoll 11s linear infinite; }
+.sp-board.roll.ccw{ animation-direction:reverse; }
+.sp-main:has(.sp-board.roll){ padding:54px 0; }
 /* 떡훼이크 — 바뀌는 순간 번쩍 */
 @keyframes spFake{ 0%{ transform:scale(1); } 40%{ transform:scale(1.25) rotate(-6deg); } 100%{ transform:scale(1); } }
 .sp-card.faked{ animation:spFake .42s var(--ease); }
@@ -9649,7 +9672,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.8.3</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.9</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -15061,6 +15084,10 @@ const PFP_DEFS = [
   /* [Ver 16.6] 추석 이벤트 상점 — 전설의 송편셋트 2개.
      ⚠ 그림 파일(pfp/chuseok2026.jpg)은 아직 없다. 넣으면 그대로 붙는다. */
   { key:'chuseok2026', name:'2026 추석', how:'추석 이벤트 상점 · 전설의 송편셋트 2개' },
+  /* [Ver 16.9] 추석 리더보드 **1등 단 한 명**. 상점 것과 다른 그림이다.
+     ⚠ 파는 물건이 아니다 — 어디에서도 교환 목록에 넣지 않는다.
+     ⚠ 그림 파일(pfp/chuseok2026_1st.jpg)은 아직 없다. 넣으면 그대로 붙는다. */
+  { key:'chuseok2026_1st', name:'2026 추석 1등', how:'추석 이벤트 리더보드 1위' },
   { key:'vip',      name:'VIP',        how:'VIP 상품을 구매하면 영구히 남습니다.' },
   { key:'rank1',    name:'최강자',      how:'업적 · 최강자' },
   { key:'rank2',    name:'#2',          how:'업적 · #2' },
@@ -17949,9 +17976,9 @@ function chuAddSet(t, n){
    ########################################################################## */
 const CHU_BOX_PER_ROUNDS = 10;
 const CHU_SETS = [
-  { t:'low',    ic:'🎁', name:'하급 송편셋트',    bun:500,   box:1  },
-  { t:'mid',    ic:'🎀', name:'고급 송편셋트',    bun:3000,  box:3  },
-  { t:'legend', ic:'👑', name:'전설의 송편셋트',  bun:10000, box:10 },
+  { t:'low',    ic:'🎁', name:'하급 송편셋트',    bun:200,   box:1  },   /* [Ver 16.9] 500 → 200 */
+  { t:'mid',    ic:'🎀', name:'고급 송편셋트',    bun:1000,  box:3  },   /* [Ver 16.9] 3,000 → 1,000 */
+  { t:'legend', ic:'👑', name:'전설의 송편셋트',  bun:3000,  box:10 },   /* [Ver 16.9] 10,000 → 3,000 */
 ];
 function chuSetDef(t){ return CHU_SETS.find(x=> x.t === t) || null; }
 function chuCanMake(t){
@@ -17998,11 +18025,35 @@ const CHU_SHOP = [
     note:'공개 예정', give:()=> grantPfp('chuseok2026') },
 ];
 function chuBought(id){ const D = chuLoad(); return !!(D.bought && D.bought[id]); }
+/* ---------- [Ver 16.9] 하루 구매 한도 ----------
+   상품 **하나당** 하루 30개다. 상점 전체로 30개가 아니다 —
+   그러면 값싼 것 하나만 사고 하루가 끝나, 고를 이유가 사라진다.
+   ⚠ 날짜는 반드시 todayKey()(서버 보정 시각). PC 시계로 세면 하루에 몇 번이고 돌린다.
+   ⚠ 1회성 상품(it.once)은 이 한도와 무관하다 — 애초에 평생 1개다. */
+const CHU_BUY_DAILY = 30;
+function chuBuyTick(){
+  const D = chuLoad();
+  const k = (typeof todayKey === 'function') ? todayKey() : '';
+  if(!D.buy || typeof D.buy !== 'object' || D.buyDay !== k){ D.buyDay = k; D.buy = {}; chuSave(); }
+  return D;
+}
+function chuBoughtToday(id){ return chuBuyTick().buy[id] | 0; }
+function chuBuyLeft(id){
+  const it = CHU_SHOP.find(x=> x.id === id);
+  if(it && it.once) return chuBought(id) ? 0 : 1;
+  return Math.max(0, CHU_BUY_DAILY - chuBoughtToday(id));
+}
+function chuBuyCount(id){
+  const D = chuBuyTick();
+  D.buy[id] = (D.buy[id] | 0) + 1;
+  chuSave();
+}
 function chuCostText(c){
   return Object.keys(c).map(t=>{ const d = chuSetDef(t); return `${d.ic} ${d.name} ${c[t]}개`; }).join(' · ');
 }
 function chuCanBuy(it){
   if(it.once && chuBought(it.id)) return false;
+  if(chuBuyLeft(it.id) <= 0) return false;          /* [Ver 16.9] 오늘 몫을 다 썼다 */
   return Object.keys(it.cost).every(t=> chuSets(t) >= it.cost[t]);
 }
 function chuBuy(id){
@@ -18010,6 +18061,16 @@ function chuBuy(id){
   if(!it) return;
   if(it.once && chuBought(id)){
     showModal('🏮 이벤트 상점', '이미 가지고 있습니다.', [{ label:'확인', solid:true }]); return;
+  }
+  /* [Ver 16.9] 한도와 재료 부족은 **다른 이유**다. 한 문장으로 뭉치면
+     "셋트가 있는데 왜 안 사지냐"는 문의가 된다. */
+  if(chuBuyLeft(id) <= 0){
+    showModal('🏮 이벤트 상점', `<div style="line-height:1.9;">
+      <b>${it.ic} ${escapeHtml(it.name)}</b>${Jp(it.name,'은','는')} 오늘 몫을 다 썼습니다.<br>
+      상품 하나당 <b>하루 ${CHU_BUY_DAILY}개</b>까지 살 수 있습니다.<br>
+      <span style="font-size:12px;color:var(--fg-dim);">자정이 지나면 다시 채워집니다.</span></div>`,
+      [{ label:'확인', solid:true }]);
+    return;
   }
   if(!chuCanBuy(it)){
     showModal('🏮 이벤트 상점', `<div style="line-height:1.9;">송편셋트가 모자랍니다.<br>
@@ -18020,6 +18081,7 @@ function chuBuy(id){
   /* 먼저 깎는다 */
   Object.keys(it.cost).forEach(t=> chuAddSet(t, -it.cost[t]));
   if(it.once){ const D = chuLoad(); if(!D.bought) D.bought = {}; D.bought[id] = true; chuSave(); }
+  else chuBuyCount(id);   /* [Ver 16.9] 오늘 산 개수 */
   try{ it.give(); }catch(e){ console.error('[추석 상점] 지급 실패', id, e); }
   try{ renderTopResources(); renderUbiniteBadge(); }catch(e){}
   renderChuShop();
@@ -18048,12 +18110,17 @@ function renderChuShop(){
   const items = CHU_SHOP.map(it=>{
     const ok = chuCanBuy(it);
     const done = it.once && chuBought(it.id);
+    const left = chuBuyLeft(it.id);
+    /* [Ver 16.9] 1회성이 아닌 상품만 오늘 남은 개수를 적는다 */
+    const leftHtml = it.once ? ''
+      : `<span class="chu-have${left <= 0 ? ' out' : ''}">오늘 <b>${left}</b>/${CHU_BUY_DAILY}</span>`;
     return `<button class="chu-item${ok?'':' off'}" onclick="chuBuy('${it.id}')">
         ${done ? '<span class="chu-tag">보유</span>' : ''}
         <span class="ic">${it.ic}</span>
         <b>${escapeHtml(it.name)}</b>
         ${it.note ? `<small class="chu-soon">${escapeHtml(it.note)}</small>` : ''}
         <small>${escapeHtml(chuCostText(it.cost))}</small>
+        ${leftHtml}
       </button>`;
   }).join('');
   w.innerHTML = `
@@ -18071,6 +18138,7 @@ function renderChuShop(){
     </div>
     <div class="chu-sec">🏮 교환</div>
     <div class="chu-items">${items}</div>
+    <div class="chu-note">상품 하나당 <b>하루 ${CHU_BUY_DAILY}개</b>까지 살 수 있습니다. 자정에 다시 채워집니다.</div>
     <div style="display:flex;justify-content:center;">
       <button class="btn btn-ghost" onclick="chuBackHome()">뒤로</button>
     </div>`;
@@ -18085,6 +18153,8 @@ function chuAddSongpyeon(n){
 /* ---------- 메뉴에 들어가는 길 ---------- */
 function renderChuBtn(){
   try{
+    /* [Ver 16.9] 끝난 뒤 1등 프사 확정 — 자리가 사라져도 한 번은 돌아야 해서 맨 앞이다 */
+    try{ chuCheck1stAward(); }catch(e){}
     /* 메뉴에 닿을 때마다 오늘 몫을 확인한다 — 하루에 한 번만 들어간다 */
     const got = chuDailyTicketTick();
     if(got > 0){ try{ log('sys', `🎟️ 추석 — 오늘의 <b>송편 티켓 ${got}장</b>이 도착했습니다. (보유 ${chuTickets()}장)`); }catch(e){} }
@@ -18115,7 +18185,151 @@ function openChuseok(){
   showScreen('screen-chuseok');
   renderChuseokHome();
 }
+/* ##########################################################################
+   [Ver 16.9] 추석 리더보드 — 송편 만들기 최고 점수
+   --------------------------------------------------------------------------
+   players 문서의 **chuBest** 하나만 내림차순으로 읽는다.
+   ⚠ orderBy 를 두 개 걸면 Firestore 가 **복합 색인**을 요구한다(콘솔 작업).
+     동점 처리를 포기하는 대신 색인 없이 도는 쪽을 택했다.
+   ⚠ chuBest 는 새 필드다. 규칙(hasOnly)에 없는 서버에서는 아무도 안 올라와
+     순위표가 텅 빈다 — 그때는 "아직 기록이 없습니다" 로 보이고, 내 기록은
+     로컬 값으로 항상 보여준다. 게임이 죽지는 않는다.
+   ########################################################################## */
+const CHU_PFP_1ST = 'chuseok2026_1st';
+const CHU_LB_TOP  = 30;
+const CHU_LB_TTL  = 60000;   /* 1분 — 열 때마다 서버를 때리지 않는다 */
+let CHU_LB = { rows:null, err:null, at:0, busy:false };
+
+async function chuFetchTop(n){
+  await fbInit();
+  const { collection, query, orderBy, limit, getDocs } = FB.mod;
+  const want = n || CHU_LB_TOP;
+  /* 같은 사람의 옛 기기 문서를 걸러낼 몫까지 넉넉히 받아온다(dedupeLeaderboardRows) */
+  const q = query(collection(FB.db, 'players'), orderBy('chuBest', 'desc'), limit(Math.min(want * 3, 300)));
+  const snap = await getDocs(q);
+  const rows = [];
+  snap.forEach(d=> rows.push({ id:d.id, ...d.data() }));
+  return dedupeLeaderboardRows(rows.filter(r=> (r.chuBest | 0) > 0), want);
+}
+/* 이 목록에서 내가 몇 등인가. 0 이면 목록 안에 없다. */
+function chuMyRank(rows){
+  try{
+    const me = String(getUserCode() || '');
+    if(!me || !rows) return 0;
+    const i = rows.findIndex(r=> String(r.code || '') === me);
+    return i < 0 ? 0 : i + 1;
+  }catch(e){ return 0; }
+}
+/* 1등 프사 지급 — **이벤트가 끝난 뒤에만** 확정한다.
+   ⚠ 진행 중에 주면 나중에 뺏어야 한다. 뺏는 코드는 만들지 않는다. */
+function chuAward1st(rows){
+  try{
+    if(chuseokPhase() !== 'ended') return false;
+    if(hasPfp(CHU_PFP_1ST)) return false;
+    const top = rows && rows[0];
+    if(!top || !((top.chuBest | 0) > 0)) return false;
+    if(chuMyRank(rows) !== 1) return false;
+    if(!grantPfp(CHU_PFP_1ST, true)) return false;
+    try{ fbPushProfileSoon(); }catch(e){}
+    showModal('🏆 추석 이벤트 1위', `<div style="text-align:center;line-height:1.9;">
+        <div style="font-size:44px;">🖼️</div>
+        <b>2026 추석 1등</b> 프로필 사진을 받았습니다.<br>
+        <span style="font-size:12px;color:var(--fg-dim);">
+          최고 점수 <b>${(top.chuBest|0).toLocaleString()}점</b> · 단 한 명에게만 주어집니다.</span>
+      </div>`, [{ label:'확인', solid:true }]);
+    return true;
+  }catch(e){ return false; }
+}
+/* 끝난 뒤 한 번만 — 메뉴가 그려질 때 조용히 확인한다.
+   ⚠ 이벤트 자리는 끝나면 메뉴에서 사라진다. 그래서 renderChuBtn 의 맨 앞에서 부른다. */
+let __chuAwardChecked = false;
+function chuCheck1stAward(){
+  if(__chuAwardChecked) return;
+  if(chuseokPhase() !== 'ended') return;
+  __chuAwardChecked = true;
+  try{
+    if(hasPfp(CHU_PFP_1ST)) return;
+    if(!(chuLoad().best | 0)) return;      /* 한 판도 안 했으면 볼 것이 없다 */
+    if(!fbAvailable()) return;
+    chuFetchTop(5).then(rows=> chuAward1st(rows)).catch(()=>{});
+  }catch(e){}
+}
+
+function chuOpenBoard(){
+  chuEnsureScreen();
+  renderChuBoard();
+  chuLoadBoard();
+}
+async function chuLoadBoard(force){
+  if(CHU_LB.busy) return;
+  if(!force && CHU_LB.rows && Date.now() - CHU_LB.at < CHU_LB_TTL) return;
+  CHU_LB.busy = true; CHU_LB.err = null;
+  renderChuBoard();
+  try{
+    CHU_LB.rows = await chuFetchTop(CHU_LB_TOP);
+    CHU_LB.at = Date.now();
+    try{ chuAward1st(CHU_LB.rows); }catch(e){}
+  }catch(e){ CHU_LB.err = e; }
+  CHU_LB.busy = false;
+  renderChuBoard();
+}
+function renderChuBoard(){
+  const w = document.getElementById('chuWrap');
+  if(!w) return;
+  /* ⚠ 받아오는 사이에 다른 화면으로 갔을 수 있다. 처음 그릴 때가 아니면
+       리더보드가 아직 떠 있을 때만 다시 그린다 — 안 그러면 남의 화면을 덮는다. */
+  if(CHU_LB.__drawn && !document.getElementById('chuLbList')) return;
+  CHU_LB.__drawn = true;
+  const my   = chuLoad().best | 0;
+  const rows = CHU_LB.rows || [];
+  const rank = chuMyRank(rows);
+  const me   = (()=>{ try{ return String(getUserCode() || ''); }catch(e){ return ''; } })();
+
+  const body = CHU_LB.busy && !CHU_LB.rows
+    ? `<div class="ol-empty">불러오는 중…</div>`
+    : CHU_LB.err
+    ? `<div class="ol-empty">순위를 불러오지 못했습니다.<br><small>${escapeHtml(String(CHU_LB.err && CHU_LB.err.code || CHU_LB.err || '').slice(0,80))}</small></div>`
+    : !rows.length
+    ? `<div class="ol-empty">아직 올라온 기록이 없습니다.<br>송편 만들기를 한 판 하면 이 자리에 올라갑니다.</div>`
+    : rows.map((r,i)=>{
+        const mine = me && String(r.code || '') === me;
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+        return `<div class="ol-row${mine ? ' mine' : ''}">
+          <span class="ol-rank">${medal}</span>
+          <span class="ol-cls">${profilePicHtml({ size: 26, key: olPfpOf(r), cls: r.sCls || 1 })}</span>
+          <span class="ol-nick">${escapeHtml(r.nick || '이름없음')}${mine ? ' <i>나</i>' : ''}${r.lv ? ` <b class="ol-lv">Lv.${r.lv|0}</b>` : ''}</span>
+          <span class="ol-val">${(r.chuBest|0).toLocaleString()}점<small class="ol-when">${escapeHtml(olAgoText(r.updatedAt))}</small></span>
+        </div>`;
+      }).join('');
+
+  const ph = chuseokPhase();
+  const mineLine = rank === 1 && ph !== 'ended'
+      ? '🏆 <b>지금 1위입니다.</b> 이벤트가 끝날 때까지 지키면 한정판 프사를 받습니다.'
+    : rank > 0 ? `현재 <b>${rank}위</b>`
+    : my > 0 ? '아직 순위에 올라오지 않았습니다 — 잠시 뒤 다시 확인해 주세요.'
+    : '송편 만들기를 한 판 하면 순위에 올라갑니다.';
+
+  w.innerHTML = `
+    <div class="chu-head">
+      <div class="chu-moon">🏆</div>
+      <div class="chu-head-tx"><b>추석 리더보드</b><small>송편 만들기 <b>최고 점수</b> TOP ${CHU_LB_TOP}</small></div>
+      <div class="chu-pill">내 최고 <b>${my.toLocaleString()}</b></div>
+    </div>
+    <div class="chu-note chu-lb-prize">
+      🖼️ <b>1위 단 한 명</b>에게 한정판 프로필 사진 <b>‘2026 추석 1등’</b>을 드립니다.
+      상점의 <b>‘2026 추석’</b>과는 <b>다른 그림</b>입니다.<br>
+      <span style="color:var(--fg-faint);">이벤트가 끝난 뒤 순위가 확정되면 접속할 때 자동으로 지급됩니다.</span>
+    </div>
+    <div class="chu-lb-me">${mineLine}</div>
+    <div class="chu-lb" id="chuLbList">${body}</div>
+    <div style="display:flex;justify-content:center;gap:10px;">
+      <button class="btn btn-ghost" onclick="chuLoadBoard(true)"${CHU_LB.busy ? ' disabled' : ''}>새로고침</button>
+      <button class="btn btn-ghost" onclick="chuBackHome()">뒤로</button>
+    </div>`;
+}
+
 function chuBackHome(){
+  CHU_LB.__drawn = false;
   spStop();
   /* ⚠ 나가면 곡을 되돌린다 — 안 그러면 메뉴에서도 송편 곡이 계속 흐른다 */
   try{ ambientBgmPlay('loginbgm'); }catch(e){}
@@ -18168,12 +18382,18 @@ function renderChuseokHome(){
         <span class="ic">🏮</span><b>이벤트 상점</b>
         <small>송편셋트로 교환<br>📦 <b>${chuBoxes()}</b> · 셋트 <b>${CHU_SETS.reduce((a,d)=> a + chuSets(d.t), 0)}</b></small>
       </button>
+      <!-- [Ver 16.9] 리더보드는 잠그지 않는다 — 남의 점수를 보는 것으로 이벤트가 열리지는 않는다 -->
+      <button class="chu-card" onclick="chuOpenBoard()">
+        <span class="ic">🏆</span><b>리더보드</b>
+        <small>송편 만들기 최고 점수<br>1위는 🖼️ <b>한정판 프사</b></small>
+      </button>
     </div>
 
     <div class="chu-note">
       <b>🥟 송편</b>은 <b>송편 만들기</b>로 모읍니다. 모은 송편은 <b>이벤트 상점</b>에서 재화로 바꿉니다.<br>
       <b>🎟️ 송편 티켓</b>은 <b>매일 ${CHU_TICKET_DAILY}장</b> 들어오고, 송편 만들기 <b>한 판에 1장</b>을 씁니다.
       모자라면 <b>랩터마트24</b>에서 💎 ${CHU_TICKET_PRICE}에 삽니다.<br>
+      <b>🏆 리더보드</b> <b>1위</b>는 이벤트가 끝난 뒤 <b>한정판 프로필 사진</b>을 받습니다.<br>
       ${CHUSEOK.open ? '' : '아직 <b>준비중</b>입니다 — 문을 열면 공지로 알려드립니다.<br>'}
       이벤트가 끝나면 남은 송편은 사라집니다. 미리 바꿔두세요.
     </div>
@@ -18308,11 +18528,11 @@ function renderChuStory(){
    ⚠ 카드게임과는 아무 상관이 없다. 등급 글자만 빌려 쓴다.
    ########################################################################## */
 const SP_LIVES   = 3;
-const SP_TIME_MS = 6000;      /* 4초 → 10초 → 6초 */
-const SP_GAP_MS  = 1000;      /* 성공 뒤 다음 문자열까지 */
+const SP_TIME_MS = 7000;      /* 4초 → 10초 → 6초 → [Ver 16.9] 7초 */
+const SP_GAP_MS  = 500;       /* 성공 뒤 다음 문자열까지 — [Ver 16.9] 1초 → 0.5초 */
 const SP_LEN_START = 6;
 const SP_LEN_MAX   = 49;     /* 7 x 7 — 여기까지 가면 카드가 확 작아진다 */
-const SP_BOARD_H   = 420;    /* 제시 칸 높이 예산(px). 카드 높이를 여기서 나눠 쓴다 */
+const SP_BOARD_H   = 366;    /* 제시 칸 높이 예산(px). 카드 높이를 여기서 나눠 쓴다 */
 const SP_GRADES  = ['E','D','C','B','A','S'];          /* 기본으로 나오는 등급 */
 const SP_SR_ROUND  = 15;      /* 이 판부터 SR 이 섞인다 */
 const SP_SSR_ROUND = 25;      /* 이 판부터 SSR 도 섞인다 */
@@ -18398,8 +18618,23 @@ const SP_POWERS = [
   { k:'flip',   ic:'🍽️', name:'밥상엎기',        when:'next', d:'다음 판이 <b>180도</b> 뒤집힙니다' },
   { k:'steal',  ic:'🏃', name:'떡 절도',         when:'next', d:'다음 판의 재료가 <b>이리저리 움직입니다</b>' },
   { k:'fake',   ic:'🎭', name:'떡훼이크',        when:'next', d:'다음 판의 재료 하나가 <b>도중에 바뀝니다</b>' },
+  /* [Ver 16.9] 밥상엎기는 한 번 뒤집고 마는데, 이건 **계속 돈다** */
+  { k:'roll',   ic:'🌀', name:'송편굴러가유~',   when:'next', d:'다음 판이 <b>빙글빙글 돌아갑니다</b>' },
 ];
 function spPowerOf(k){ return SP_POWERS.find(p=> p.k === k) || null; }
+/* [Ver 16.9] 어느 것이 나올지 **매번 새로 굴리면** 몇 판을 해도 한 번을 못 보는 능력이
+   생긴다 — ⏱️ 시간 추가 · ⌛ 시간 감소가 그랬다(9종 × 3판에 한 번 = 27판에 한 번).
+   그래서 **가장 적게 나온 것** 중에서 고른다. 이모티콘 쏠림을 잡을 때 쓴 방법과 같다.
+   ⚠ 판이 아니라 **탭 단위**로 센다. 한 판마다 초기화하면 짧은 판에서는 아무 소용이 없다. */
+let SP_PW_SEEN = Object.create(null);
+function spPickPower(){
+  let min = Infinity;
+  SP_POWERS.forEach(p=>{ const n = SP_PW_SEEN[p.k] | 0; if(n < min) min = n; });
+  const pool = SP_POWERS.filter(p=> (SP_PW_SEEN[p.k] | 0) === min);
+  const p = pool[Math.floor(Math.random() * pool.length)];
+  SP_PW_SEEN[p.k] = (SP_PW_SEEN[p.k] | 0) + 1;
+  return p;
+}
 
 let SP = null;   /* { round, life, score, buns, seq, at, deadline, raf, to, over, shift, mods, nextMods, pw } */
 let __spPend = null, __spPendTo = null;   /* 동시 입력 판정용 */
@@ -18472,18 +18707,26 @@ function spNewRound(){
   SP.mods = SP.nextMods || {};
   SP.nextMods = {};
   SP.hidden = null;
+  /* [Ver 16.9] 🌀 도는 방향은 판마다 새로 뽑는다 — 한쪽으로만 돌면 금방 익숙해진다 */
+  SP.rollCcw = SP.mods.roll ? (Math.random() < 0.5) : false;
   SP.seq = spMakeSeq(SP.round, SP.mods.plus5 ? 5 : 0);
   SP.at = 0;
-  /* 떡훼이크 — 바뀔 자리를 미리 정해 둔다(첫 장은 제외, 앞을 눌러야 바뀐다) */
-  SP.fakeAt = (SP.mods.fake && SP.seq.length > 1)
-    ? 1 + Math.floor(Math.random() * (SP.seq.length - 1)) : -1;
+  /* 떡훼이크 — 바뀔 자리를 미리 정해 둔다.
+     [Ver 16.9] **맨 앞 두 장은 건드리지 않는다.** 판이 열리자마자 바뀌면
+     "원래 그거였나" 싶어 속은 줄도 모른다. 3번째 장부터다. */
+  SP.fakeAt = (SP.mods.fake && SP.seq.length > 2)
+    ? 2 + Math.floor(Math.random() * (SP.seq.length - 2)) : -1;
   /* 능력 심기 — 3판에 한 번꼴, 한 장에만 */
   SP.pw = null;
   if(Math.random() < SP_POWER_RATE){
-    const p = SP_POWERS[Math.floor(Math.random() * SP_POWERS.length)];
+    const p = spPickPower();
     SP.pw = { at: Math.floor(Math.random() * SP.seq.length), k: p.k };
   }
   SP.deadline = performance.now() + SP_TIME_MS;
+  /* [Ver 16.9] 이 판의 시간 막대 길이. ⏱️ 로 늘어나면 같이 늘어난다 —
+     SP_TIME_MS 로 나눠 그리면 비율이 1을 넘어 **막대가 꽉 찬 채 안 움직였다.** */
+  SP.tmax = SP_TIME_MS;
+  SP.fx = '';
   renderSp();
   spLoop();
   /* rAF 는 탭이 숨으면 멈춘다 — 실제 마감은 타이머가 한 번 더 본다 */
@@ -18494,10 +18737,11 @@ function spLoop(){
   if(!SP || SP.over) return;
   const bar = document.getElementById('spBar');
   const left = Math.max(0, SP.deadline - performance.now());
+  const span = Math.max(1, SP.tmax || SP_TIME_MS);
   if(bar){
-    bar.style.transform = `scaleX(${left / SP_TIME_MS})`;
+    bar.style.transform = `scaleX(${Math.min(1, left / span)})`;
     const wrap = bar.parentNode;
-    if(wrap) wrap.classList.toggle('warn', left < SP_TIME_MS * 0.3);
+    if(wrap) wrap.classList.toggle('warn', left < span * 0.3);
   }
   if(left <= 0){ spFail('시간 초과'); return; }
   SP.raf = requestAnimationFrame(spLoop);
@@ -18510,6 +18754,10 @@ function spLoop(){
 function spInput(tok){
   if(!SP || SP.over || SP.count > 0) return;   /* 세는 중에는 받지 않는다 */
   if(SP.at < 0) return;                        /* [잠수함] 틀린 뒤 다음 판까지는 받지 않는다 */
+  /* [Ver 16.9] 다 만든 뒤 다음 판이 열릴 때까지의 0.5초.
+     ⚠ 이때 SP.seq[SP.at] 은 undefined 라, 연타하던 손가락이 멈추기 전에 눌린 한 번이
+       그대로 "틀렸습니다" 가 되어 라이프를 깎았다. 마지막 장을 빨리 칠수록 더 잘 걸렸다. */
+  if(SP.at >= SP.seq.length) return;
   if(tok === 'SHIFT'){ SP.shift = !SP.shift; SP.__shiftSticky = SP.shift; renderSp(); return; }
   if(__spPend){
     const pair = (__spPend === 'S' && tok === 'R') || (__spPend === 'R' && tok === 'S');
@@ -18537,16 +18785,23 @@ function spFirePower(k){
     if(k === 'flip')   SP.nextMods.flip   = true;
     if(k === 'steal')  SP.nextMods.steal  = true;
     if(k === 'fake')   SP.nextMods.fake   = true;
+    if(k === 'roll')   SP.nextMods.roll   = true;
     SP.msgKind = 'ok';
     SP.msg = `${p.ic} ${p.name} — 다음 판에 걸립니다`;
     return;
   }
   if(k === 'plus'){
     SP.deadline += 2500;
+    /* 막대가 실제로 길어지도록 이 판의 길이를 같이 늘린다 */
+    SP.tmax = Math.max(SP.tmax || SP_TIME_MS, SP.deadline - performance.now());
+    SP.fx = 'boost';
+    spRearmDeadline();
     SP.msgKind = 'ok'; SP.msg = `${p.ic} ${p.name} — +2.5초`;
   } else if(k === 'minus'){
     /* ⚠ 0 밑으로 내리지 않는다 — 누르는 순간 실패로 떨어지면 왜 죽었는지 모른다 */
     SP.deadline = Math.max(performance.now() + 400, SP.deadline - 1000);
+    SP.fx = 'cut';
+    spRearmDeadline();
     SP.msgKind = 'bad'; SP.msg = `${p.ic} ${p.name} — -1초`;
   } else if(k === 'dark'){
     SP.msgKind = 'bad'; SP.msg = `${p.ic} ${p.name} — 3초 뒤 불이 꺼집니다`;
@@ -18567,9 +18822,19 @@ function spFirePower(k){
     }, 3000);
   }
 }
+/* [Ver 16.9] 마감이 바뀌면 예비 타이머도 다시 건다.
+   ⚠ rAF 는 탭이 숨으면 멈춘다. 그때 마감을 보는 건 이 타이머뿐이라,
+     +2.5초를 받고도 예전 시각에 걸린 타이머가 그대로 남아 있으면 안 된다. */
+function spRearmDeadline(){
+  if(!SP || SP.over) return;
+  try{ if(SP.to) clearTimeout(SP.to); }catch(e){}
+  const wait = Math.max(50, SP.deadline - performance.now() + 150);
+  SP.to = setTimeout(()=>{ try{ if(SP && !SP.over && performance.now() >= SP.deadline) spFail('시간 초과'); }catch(e){} }, wait);
+}
 /* 실제 판정 — 여기서부터는 등급 하나가 정해진 상태다 */
 function spResolve(g){
   if(!SP || SP.over || !SP.seq.length) return;
+  if(SP.at < 0 || SP.at >= SP.seq.length) return;   /* [Ver 16.9] 판 사이의 빈 시간 */
   const want = SP.seq[SP.at] && SP.seq[SP.at].g;
   /* 🪨 개쩌는 절구 — 이 판은 무엇을 눌러도 맞는다 */
   if(g !== want && !SP.mods.anykey){ spFail(g === 'R' ? 'R 은 혼자 쓰지 않습니다' : '틀렸습니다'); return; }
@@ -18578,14 +18843,19 @@ function spResolve(g){
   SP.at++;
   /* 방금 누른 것이 능력 카드였나 */
   if(SP.pw && SP.pw.at === hitIdx){ const k = SP.pw.k; SP.pw = null; try{ spFirePower(k); }catch(e){} }
-  /* 🎭 떡훼이크 — 바로 앞을 누른 직후, 다음 재료가 다른 등급으로 바뀐다 */
-  if(SP.fakeAt === SP.at && SP.seq[SP.at]){
-    const cur = SP.seq[SP.at].g;
+  /* 🎭 떡훼이크 — [Ver 16.9] 그 자리에 닿기 **두 장 전**에 바뀐다.
+     예전에는 바로 앞 장을 누른 직후에 바뀌어서, 눈이 따라가기 전에 손이 먼저 나갔다.
+     두 장 전이면 바뀌는 걸 보고 손을 고칠 수 있다 — 그게 이 능력의 재미다.
+     ⚠ 바뀔 자리가 3번째(fi=2)면 두 장 전은 0판째, 즉 아무것도 안 누른 때다.
+       그때는 첫 장을 누른 직후(1)로 당긴다. */
+  const fi = SP.fakeAt;
+  if(fi >= 0 && SP.at === Math.max(1, fi - 2) && SP.seq[fi]){
+    const cur = SP.seq[fi].g;
     const alt = (spPoolForRound(SP.round).filter(x=> x !== cur));
     if(alt.length){
       const ng = alt[Math.floor(Math.random()*alt.length)];
       const pool = SP_CARDS[ng] || [ng];
-      SP.seq[SP.at] = { g:ng, name: pool[Math.floor(Math.random()*pool.length)], faked:true };
+      SP.seq[fi] = { g:ng, name: pool[Math.floor(Math.random()*pool.length)], faked:true };
       SP.msgKind = 'bad'; SP.msg = '🎭 떡훼이크 — 재료가 바뀌었습니다!';
     }
     SP.fakeAt = -1;
@@ -18700,7 +18970,12 @@ function spSettle(){
   SP.settled = true;
   const D = chuLoad();
   const newBest = SP.score > (D.best | 0);
-  if(newBest){ D.best = SP.score; chuSave(); }
+  if(newBest){
+    D.best = SP.score; chuSave();
+    /* [Ver 16.9] 신기록만 올린다. 매 판 올리면 한 시간에 수백 번 쓰게 된다. */
+    try{ fbPushProfileSoon(); }catch(e){}
+    try{ CHU_LB.at = 0; }catch(e){}   /* 다음에 리더보드를 열면 새로 받는다 */
+  }
   if(SP.buns > 0) chuAddSongpyeon(SP.buns);
   /* [Ver 16.6] 송편박스 — 10판을 넘길 때마다 1개 */
   SP.boxes = Math.floor(Math.max(0, SP.round - 1) / CHU_BOX_PER_ROUNDS);
@@ -18786,7 +19061,7 @@ function renderSp(newBest){
     let st = SP.at < 0 ? 'bad' : i < SP.at ? 'done' : i === SP.at ? 'cur' : '';
     if(SP.hidden && SP.hidden.has(i) && i >= SP.at) st += ' hid';
     if(SP.pw && SP.pw.at === i) st += ' pw';
-    if(it.faked && i === SP.at) st += ' faked';
+    if(it.faked && i >= SP.at) st += ' faked';   /* [Ver 16.9] 닿기 전부터 티가 난다 */
     const p = (SP.pw && SP.pw.at === i) ? spPowerOf(SP.pw.k) : null;
     return spCardHtml(it, st, p ? p.ic : '');
   }).join('');
@@ -18797,6 +19072,7 @@ function renderSp(newBest){
   if(SP.mods.flip)   modTx.push('🍽️ 뒤집힌 상');
   if(SP.mods.steal)  modTx.push('🏃 재료가 움직입니다');
   if(SP.mods.fake)   modTx.push('🎭 재료 하나가 바뀝니다');
+  if(SP.mods.roll)   modTx.push(`🌀 판이 ${SP.rollCcw ? '반시계' : '시계'} 방향으로 돕니다`);
   const pwNow = SP.pw ? spPowerOf(SP.pw.k) : null;
   const banner = (modTx.length || pwNow) ? `<div class="sp-banner">
       ${modTx.join(' · ')}${modTx.length && pwNow ? ' · ' : ''}
@@ -18807,11 +19083,16 @@ function renderSp(newBest){
        20장만 넘어가도 아래쪽 카드가 화면 밖으로 밀린다. */
   const cols = Math.max(3, Math.ceil(Math.sqrt(SP.seq.length)));
   const rows = Math.ceil(SP.seq.length / cols);
-  const ch   = Math.max(46, Math.min(118, Math.round((SP_BOARD_H - (rows - 1) * 6) / rows)));
-  const tier = ch >= 92 ? '' : ch >= 72 ? 'mid' : ch >= 58 ? 'small' : 'tiny';
+  /* [Ver 16.9] 바닥이 50px 이다 — 글자를 안 줄이기로 했으니 등급칩 한 줄 + 이름 두 줄이
+     들어갈 최소 높이가 곧 카드의 최소 크기다. 그 밑으로 내리면 이름이 잘린다. */
+  const ch   = Math.max(50, Math.min(96, Math.round((SP_BOARD_H - (rows - 1) * 4) / rows)));
+  const tier = ch >= 82 ? '' : ch >= 68 ? 'mid' : ch >= 58 ? 'small' : 'tiny';
   /* ⚠ tier 가 정해진 **뒤에** 만든다 — 위에 두었다가 TDZ 로 터졌다 */
-  const boardCls = [tier, SP.mods.flip ? 'flip' : '', SP.mods.steal ? 'steal' : ''].filter(Boolean).join(' ');
+  const boardCls = [tier, SP.mods.flip ? 'flip' : '', SP.mods.steal ? 'steal' : '',
+                    SP.mods.roll ? 'roll' : '', (SP.mods.roll && SP.rollCcw) ? 'ccw' : ''].filter(Boolean).join(' ');
   const key = (k, cls)=> `<button class="sp-key ${cls||''}" data-k="${k}" onclick="spHit('${k}')">${k}</button>`;
+  const fxNow = SP.fx || '';
+  SP.fx = '';   /* 한 번만 번쩍인다 */
   w.innerHTML = `
     <div class="chu-head">
       <div class="chu-moon">🥟</div>
@@ -18823,7 +19104,7 @@ function renderSp(newBest){
         <div class="sp-lives">${'❤️'.repeat(Math.max(0,SP.life))}${'🖤'.repeat(Math.max(0, SP_LIVES - SP.life))}</div>
         <div class="sp-stat">${SP.round}판 · 점수 <b>${SP.score.toLocaleString()}</b> · 🥟 <b>${SP.buns}</b></div>
       </div>
-      <div class="sp-timer"><i id="spBar"></i></div>
+      <div class="sp-timer ${fxNow}"><i id="spBar"></i></div>
       ${banner}
       <div class="sp-main">
         <div class="sp-board ${boardCls}" style="--sp-cols:${cols}; --sp-ch:${ch}px;">${cards}</div>
@@ -26241,7 +26522,13 @@ function winRateOf(d){
 const FB_EXTRA_RETRY_MS = 300000;   // 5분
 let __fbExtraRetryAt = 0;           // 이 시각 전까지는 새 필드를 빼고 보낸다
 function fbExtraFieldsOk(){ return Date.now() >= __fbExtraRetryAt; }
-function fbBuildMyDoc(withExtra){
+/* ★ [Ver 16.9] 추석 최고 점수(chuBest)는 **따로** 센다.
+   lv·pfp·fp 와 한 덩어리로 묶으면, 규칙에 chuBest 만 없는 서버에서 쓰기가 거부될 때
+   프사까지 같이 떨어져 나간다(16.1.1 에서 이미 한 번 겪은 증상이다).
+   래치를 나눠 두면 추석 점수만 조용히 빠지고 나머지는 그대로 올라간다. */
+let __fbChuRetryAt = 0;
+function fbChuFieldOk(){ return Date.now() >= __fbChuRetryAt; }
+function fbBuildMyDoc(withExtra, withChu){
   const s = (typeof STATS === 'object' && STATS) ? STATS : {};
   const extra = (withExtra === false) ? {} : {
     /* 지금 살아 움직이는 레벨. 위의 level/exp 는 태초 시즌 고정값이라 따로 둔다. */
@@ -26254,8 +26541,14 @@ function fbBuildMyDoc(withExtra){
          같은 기종이면 겹칠 수 있다. 그래서 자동 제재에는 절대 쓰지 않는다. */
     fp: String((typeof deviceFingerprint==='function' ? deviceFingerprint() : '') || '').slice(0, 24),
   };
+  /* [Ver 16.9] 추석 이벤트 최고 점수 — 이벤트 리더보드 전용.
+     ⚠ 0 이면 아예 싣지 않는다. Firestore 의 orderBy 는 **필드가 없는 문서**를 건너뛰므로,
+       한 번도 안 한 사람이 0점으로 순위표 꼬리를 채우는 일이 없다. */
+  const chuBest = Math.max(0, Math.min(99999999, (()=>{ try{ return chuLoad().best | 0; }catch(e){ return 0; } })()));
+  const chu = (withChu === false || chuBest <= 0) ? {} : { chuBest };
   return {
     ...extra,
+    ...chu,
     code: getUserCode(),
     nick: String(getPlayerNickname() || '이름없음').slice(0, 16),
     /* [Ver 11.5] level/exp는 태초 시즌(11.5 이전) 값 그대로 고정 — 마이그레이션 시점에
@@ -26329,6 +26622,7 @@ function fbPushProfileSoon(){
     /* ★ [Ver 16.1.1] 사용자가 직접 프로필을 바꾼 순간이다 — 5분을 기다리지 않고
        새 필드를 붙여 바로 시도한다. 규칙이 올라가 있으면 그 자리에서 붙는다. */
     __fbExtraRetryAt = 0;
+    __fbChuRetryAt = 0;
     __fbProfilePushT = setTimeout(()=>{
       try{
         fbRetryIfHidden(()=> fbSubmitScore())
@@ -26352,8 +26646,19 @@ async function fbSubmitScore(){
   const { doc, setDoc } = FB.mod;
   const ref = doc(FB.db, 'players', FB.uid);
   try{
-    await setDoc(ref, fbBuildMyDoc(fbExtraFieldsOk()));
+    await setDoc(ref, fbBuildMyDoc(fbExtraFieldsOk(), fbChuFieldOk()));
   }catch(e){
+    /* [Ver 16.9] 추석 필드만 거부됐을 수 있다 — **그것부터** 빼고 한 번 더 본다.
+       여기서 바로 lv·pfp 까지 떨어뜨리면 규칙을 반만 올린 서버에서 프사가 사라진다. */
+    if(fbChuFieldOk() && e && e.code === 'permission-denied'){
+      __fbChuRetryAt = Date.now() + FB_EXTRA_RETRY_MS;
+      console.warn('[리더보드] 새 필드(chuBest)가 거부되어 빼고 다시 보냅니다 — firestore.rules 를 올려주세요.');
+      try{
+        await setDoc(ref, fbBuildMyDoc(fbExtraFieldsOk(), false));
+        try{ __lastSubmitError = null; }catch(e2){}
+        return true;
+      }catch(e2){ e = e2; }
+    }
     /* [Ver 13.15] 규칙을 아직 안 올린 서버는 새 필드(lv·pfp) 때문에 쓰기를 통째로 거부한다.
        그 경우 **한 번만** 새 필드를 빼고 다시 보낸다 — 리더보드가 죽는 것보다 낫다.
        ★ [Ver 16.1.1] 여기서 영구히 끄면 규칙을 올려도 새로고침 전까지 안 붙는다.
@@ -26361,7 +26666,7 @@ async function fbSubmitScore(){
     if(fbExtraFieldsOk() && e && e.code === 'permission-denied'){
       __fbExtraRetryAt = Date.now() + FB_EXTRA_RETRY_MS;
       console.warn('[리더보드] 새 필드(lv·pfp·fp)가 거부되어 빼고 다시 보냅니다 — firestore.rules 를 올려주세요. 5분 뒤 다시 시도합니다.');
-      await setDoc(ref, fbBuildMyDoc(false));
+      await setDoc(ref, fbBuildMyDoc(false, false));
     } else throw e;
   }
   try{ __lastSubmitError = null; }catch(e){}   // [Ver 13.5.1] 성공했으니 경고를 지운다
@@ -27592,6 +27897,45 @@ async function fbLookupRemoteCode(code){
    새 패치를 넣을 땐 BALANCE_PATCHES 맨 앞에 한 덩어리를 추가하면 된다.
    ########################################################################## */
 const BALANCE_PATCHES = [
+  {
+    version: 'Ver 16.9', date: '2026-09-18',
+    groups: [
+      { title:'송편셋트 — 값을 크게 낮춘다',
+        note:'열어 놓고 보니 <b>송편이 모이는 속도</b>가 생각보다 느렸다. 하루 10판으로는 ' +
+             '하급 한 개도 벅찼다. 송편박스는 그대로 두었다 — 그쪽은 실력으로 얻는 것이라 ' +
+             '숫자를 낮추면 위 등급 셋트가 너무 쉬워진다.',
+        rows:[
+          { name:'하급 송편셋트',   icon:'🎁', rows:[{ label:'필요 송편', from:'500개',    to:'<b>200개</b>',   dir:'down' }]},
+          { name:'고급 송편셋트',   icon:'🎀', rows:[{ label:'필요 송편', from:'3,000개',  to:'<b>1,000개</b>', dir:'down' }]},
+          { name:'전설의 송편셋트', icon:'👑', rows:[{ label:'필요 송편', from:'10,000개', to:'<b>3,000개</b>', dir:'down' }]},
+        ]
+      },
+      { title:'송편 만들기 — 시간을 늘리고 대기를 줄인다',
+        note:'6초는 재료가 20장을 넘어가면 <b>읽는 것만으로</b> 다 썼다. 한 박자만 더 준다. ' +
+             '반대로 판 사이 1초는 <b>기다리는 시간</b>이라 짧을수록 좋다.',
+        rows:[
+          { name:'제한시간',   icon:'⏱️', rows:[{ label:'한 판', from:'6초', to:'<b>7초</b>',   dir:'up' }]},
+          { name:'판 사이 대기', icon:'⏳', rows:[{ label:'대기', from:'1초', to:'<b>0.5초</b>', dir:'up' }]},
+        ]
+      },
+      { title:'이벤트 상점 — 하루 한도',
+        note:'값을 낮춘 만큼 <b>하루에 쓸어담는 것</b>은 막는다. 상점 전체가 아니라 ' +
+             '<b>상품 하나당</b> 30개다 — 그래야 싼 것 하나로 하루가 끝나지 않는다.',
+        rows:[
+          { name:'상품별 하루 한도', icon:'🏮', rows:[{ label:'한도', from:'없음', to:'<b>30개</b>', dir:'down' }]},
+        ]
+      },
+      { title:'재료 능력 — 안 나오던 것을 나오게',
+        note:'9종을 매번 새로 뽑으니 <b>27판에 한 번</b>이 평균인데, 운이 나쁘면 100판을 넘겨도 ' +
+             '⏱️ · ⌛ 를 한 번도 못 봤다. <b>가장 적게 나온 것</b>에서 고르게 바꿨다 ' +
+             '(이모티콘 쏠림을 잡을 때 쓴 방법과 같다).',
+        rows:[
+          { name:'능력 종류', icon:'🌀', rows:[{ label:'가짓수', from:'8종', to:'<b>9종</b>', dir:'up' }]},
+          { name:'시간류 첫 등장', icon:'⏱️', rows:[{ label:'최악의 경우', from:'126판', to:'<b>24판</b>', dir:'up' }]},
+        ]
+      },
+    ]
+  },
   {
     version: 'Ver 16.8.1', date: '2026-09-18',
     groups: [
@@ -33577,6 +33921,19 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 16.9', date: '2026-09-18',
+    items: [
+      '🏆 <b>[신규] 추석 이벤트 리더보드.</b> 송편 만들기 <b>최고 점수</b>로 겨룹니다. 이벤트 화면에서 바로 볼 수 있습니다.<br>🖼️ <b>1위 단 한 명</b>에게 한정판 프로필 사진 <b>‘2026 추석 1등’</b>을 드립니다 — 상점의 ‘2026 추석’과는 <b>다른 그림</b>입니다.<br><span style="font-size:11.5px;color:var(--fg-dim);">이벤트가 끝나고 순위가 확정되면 접속할 때 자동으로 지급됩니다.</span>',
+      '🌀 <b>[신규] 재료 능력 <b>송편굴러가유~</b></b> 다음 판이 시계 또는 반시계 방향으로 <b>계속 돌아갑니다.</b> 밥상엎기가 한 번 뒤집고 마는 것과 달리, 이건 멈추지 않습니다.',
+      '🥟 <b>[상향] 송편셋트 값을 크게 낮췄습니다.</b><br>🎁 하급 <b>500 → 200</b> · 🎀 고급 <b>3,000 → 1,000</b> · 👑 전설 <b>10,000 → 3,000</b> (송편박스는 그대로입니다)',
+      '⏱️ <b>[상향] 송편 만들기 제한시간이 <b>6초 → 7초</b>가 되었습니다.</b> 다음 판으로 넘어가는 대기 시간도 <b>1초 → 0.5초</b>로 줄었습니다.',
+      '🏮 <b>[조정] 이벤트 상점에 하루 한도가 생겼습니다.</b> 상품 하나당 <b>하루 30개</b>까지 살 수 있습니다. 칸마다 오늘 남은 개수가 보입니다.',
+      '🎭 <b>[조정] 떡훼이크.</b> 이제 바뀔 재료에 <b>닿기 두 장 전</b>에 바뀌고, <b>맨 앞 두 장은 바뀌지 않습니다.</b> 눈으로 보고 손을 고칠 틈이 생깁니다.',
+      '⏱️ <b>[수정] ⏱️ 시간 추가 · ⌛ 시간 감소가 거의 안 나오던 문제.</b> 능력을 매번 새로 뽑다 보니 100판을 넘게 해도 한 번을 못 보는 일이 있었습니다. 이제 <b>안 나온 것부터</b> 나옵니다.<br><span style="font-size:11.5px;color:var(--fg-dim);">덤으로 +2.5초를 받으면 시간 막대가 실제로 길어집니다 — 예전에는 꽉 찬 채로 멈춰 있어 아무 일도 없어 보였습니다.</span>',
+      '🥟 <b>[수정] 송편을 다 만든 뒤 대기 시간에 한 번 더 누르면 라이프가 깎이던 문제.</b> 마지막 장을 빠르게 칠수록 더 잘 걸렸습니다.',
+    ]
+  },
   {
     version: 'Ver 16.8.2', date: '2026-09-18',
     items: [
