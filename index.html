@@ -9649,7 +9649,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.8.2</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.8.3</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -18509,6 +18509,7 @@ function spLoop(){
      두 개를 정확히 같이 누를 수 없어서, S 치고 바로 R 을 쳐도 SR 로 쳐 준다. */
 function spInput(tok){
   if(!SP || SP.over || SP.count > 0) return;   /* 세는 중에는 받지 않는다 */
+  if(SP.at < 0) return;                        /* [잠수함] 틀린 뒤 다음 판까지는 받지 않는다 */
   if(tok === 'SHIFT'){ SP.shift = !SP.shift; SP.__shiftSticky = SP.shift; renderSp(); return; }
   if(__spPend){
     const pair = (__spPend === 'S' && tok === 'R') || (__spPend === 'R' && tok === 'S');
@@ -18659,6 +18660,10 @@ function spKeyUp(e){
 
 function spFail(why){
   if(!SP || SP.over) return;
+  /* [잠수함] 이미 이번 판에서 한 번 깎였다 — 다음 판이 시작될 때까지는 더 깎지 않는다.
+     ⚠ SP.at 은 실패하면 -1 이 되고 spNewRound 에서 0 으로 돌아온다. 그 사이에는
+       SP.seq[-1] 이 undefined 라 무엇을 눌러도 "틀렸습니다" 가 되어 또 깎였다. */
+  if(SP.at < 0) return;
   spClearPend();
   try{ if(SP.darkTo) clearTimeout(SP.darkTo); }catch(e){}
   SP.darkTo = null;
