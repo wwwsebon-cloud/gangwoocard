@@ -9590,7 +9590,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
       <!-- [Ver 15.9] 점주가 여기서 맞이한다. 마트의 그 아이다. -->
       <div class="bi-clerk">
         <img src="art/rm25.png" alt="" draggable="false" onerror="this.closest('.bi-clerk').remove()">
-        <div class="bi-clerk-say">어서와~ 처음이지?</div>
+        <div class="bi-clerk-say" id="biClerkSay">어서와~ 처음이지?</div>
       </div>
       <div class="bi-login-h">
         <div class="bi-login-t">시작 방법을 고르세요</div>
@@ -9672,7 +9672,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.9</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.9.1</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -81281,6 +81281,10 @@ function biGotoLogin(){
     const d = document.querySelector('.bi-login-d');
     if(d) d.textContent = back ? '이어서 하거나, 다른 기기의 진행도를 가져올 수 있습니다.'
                                : '한 번 고르면 이 기기에 기억됩니다.';
+    /* [잠수함] 두 번째부터는 인사가 달라진다. 몇 번을 와도 "처음이지?" 라고 물으면
+       점주가 나를 못 알아보는 셈이다. */
+    const say = document.getElementById('biClerkSay');
+    if(say) say.textContent = back ? '또왔네? 오랜만이야~' : '어서와~ 처음이지?';
   }catch(e){}
   const sk = document.getElementById('biSkip');
   if(sk) sk.classList.remove('on');    // 고르는 화면에서는 건너뛸 것이 없다
@@ -81297,17 +81301,37 @@ function biShowRestore(){
   const box = document.getElementById('biRestoreBox');
   if(box) box.classList.add('on');
   const inp = document.getElementById('biCode');
+  /* [잠수함] 이 기기가 아는 유저 코드가 있으면 **누른 즉시 찾아본다.**
+     ⚠ 앱이 알 수 있는 코드는 이 기기 것뿐이다 — 다른 기기 코드는 알 방법이 없으니
+       자동으로 되는 건 "내 계정 되찾기" 한 가지다. 입력칸은 그대로 두어
+       다른 코드를 넣고 싶으면 넣을 수 있게 한다.
+     ⚠ 없으면 조용히 비우고 만다. 새 기기에서는 백업이 없는 게 정상이라,
+       빨간 글씨로 "못 찾았습니다" 를 띄우면 뭔가 잘못된 줄 안다. */
+  try{
+    const mine = String(getUserCode() || '').trim().toUpperCase();
+    if(inp && !inp.value && mine){
+      inp.value = mine;
+      biDoRestore(true);
+      return;
+    }
+  }catch(e){}
   if(inp) setTimeout(()=>{ try{ inp.focus(); }catch(e){} }, 60);
 }
 
 /* 유저 코드로 불러오기 — 기존 복원 경로를 그대로 쓴다.
    ⚠ 제재·되돌리기 방지 규칙은 doRestorePrompt 와 똑같이 지킨다. */
-function biDoRestore(){
+function biDoRestore(auto){
   const inp = document.getElementById('biCode');
   const m   = document.getElementById('biMsg');
   const go  = document.querySelector('#biRestoreBox .bi-go');
   const code = (inp && inp.value || '').trim().toUpperCase();
   const say = (html)=>{ if(m) m.innerHTML = html; };
+  /* [잠수함] 자동으로 돌렸는데 없었다 — 입력칸을 비우고 원래 안내로 되돌린다.
+     사용자가 시킨 일이 아니니 실패를 실패처럼 보여주지 않는다. */
+  const giveUp = ()=>{
+    if(inp){ inp.value = ''; setTimeout(()=>{ try{ inp.focus(); }catch(e){} }, 60); }
+    say('기기를 바꿨거나 데이터가 날아갔을 때 씁니다.');
+  };
 
   if(!code){ say('<span class="bad">유저 코드를 입력하세요.</span>'); return; }
   try{ if(typeof isBanned === 'function' && isBanned()){ say('<span class="bad">이용이 제한된 계정입니다.</span>'); return; } }catch(e){}
@@ -81317,7 +81341,7 @@ function biDoRestore(){
   const done = ()=>{ if(go) go.disabled = false; };
 
   fbRetryIfHidden(()=> fbFindBackupByCode(code)).then(found=>{
-    if(!found){ done(); say('<span class="bad">그 코드의 백업을 찾지 못했습니다.</span> 코드를 다시 확인해주세요.'); return; }
+    if(!found){ done(); if(auto) giveUp(); else say('<span class="bad">그 코드의 백업을 찾지 못했습니다.</span> 코드를 다시 확인해주세요.'); return; }
     /* 되돌리기 금지 — 지금보다 오래된 백업은 재화를 되살리는 통로가 된다.
        ⚠ 새 기기라면 이 기기의 계기판이 0이라 어떤 백업이든 통과한다. */
     const myOdo = (typeof loadSpendOdo === 'function') ? loadSpendOdo() : 0;
@@ -81325,6 +81349,7 @@ function biDoRestore(){
     const isDev = (typeof devAnyMode === 'function') && devAnyMode();
     if(!isDev && bkOdo < myOdo){
       done();
+      if(auto){ giveUp(); return; }
       say('<span class="bad">이 백업은 지금 이 기기보다 오래된 상태입니다.</span><br>'
         + '다른 기기에서 먼저 <b>백업</b>을 한 뒤 다시 시도해주세요.');
       return;
@@ -81341,6 +81366,7 @@ function biDoRestore(){
     }
   }).catch(e=>{
     done();
+    if(auto){ giveUp(); return; }
     say('<span class="bad">실패</span> — ' + escapeHtml((typeof fbErrText==='function') ? fbErrText(e) : (e.message||String(e))));
   });
 }
