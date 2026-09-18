@@ -26,12 +26,12 @@
    ⚠ 캐시 이름에 버전을 박아 둔다. 올리면 옛 캐시가 통째로 버려진다.
      그림·소리는 다시 받아야 하지만, 껍데기가 꼬였을 때 확실히 푸는 유일한 수단이다.
    ########################################################################## */
-const SW_VERSION  = 'v16.5';
+const SW_VERSION  = 'v16.6';
 const SHELL_CACHE = 'gg-shell-' + SW_VERSION;   // 게임 본체
 const ASSET_CACHE = 'gg-asset-' + SW_VERSION;   // 그림·소리
 
 /* 쓸 때 담는 폴더들. 여기 없는 경로는 그냥 네트워크로 보낸다. */
-const ASSET_DIRS = ['art/', 'audio/', 'chip/', 'chip2/', 'pfp/', 'pw/', 'icons/'];
+const ASSET_DIRS = ['art/', 'audio/', 'chip/', 'chip2/', 'emo/', 'pfp/', 'pw/', 'icons/'];
 
 /* 설치 — 껍데기만. 실패해도 설치는 성공시킨다(오프라인에서 설치될 수도 있다). */
 self.addEventListener('install', (e) => {
