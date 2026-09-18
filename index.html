@@ -9630,7 +9630,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.8</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.8.1</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -17968,10 +17968,10 @@ function chuMakeSet(t){
    ########################################################################## */
 const CHU_SHOP = [
   { id:'ubi200',  ic:'💎', name:'우비나이트 200',      cost:{low:1},    give:()=> grantUbinite(200) },
-  { id:'pick10',  ic:'⛏️', name:'곡괭이 10개',          cost:{low:1},    give:()=> grantPickaxe(10) },
-  { id:'teeth30', ic:'🦷', name:'랩터의 이빨 30개',     cost:{low:1},    give:()=> grantTeeth(30) },
-  { id:'tick11',  ic:'🎫', name:'10+1 카드뽑기권 2장',  cost:{low:2},    give:()=> grantGachaTickets(22) },
-  { id:'ubi2000', ic:'💠', name:'우비나이트 2,000',     cost:{mid:1},    give:()=> grantUbinite(2000) },
+  { id:'pick10',  ic:'⛏️', name:'곡괭이 2개',           cost:{low:1},    give:()=> grantPickaxe(2) },
+  { id:'teeth30', ic:'🦷', name:'랩터의 이빨 1개',      cost:{low:1},    give:()=> grantTeeth(1) },
+  { id:'tick11',  ic:'🎫', name:'10+1 카드뽑기권 2장',  cost:{mid:1},    give:()=> grantGachaTickets(22) },
+  { id:'key100',  ic:'🔑', name:'상자 열쇠 100개',      cost:{mid:1},    give:()=> grantBoxKeys(100) },
   { id:'legendpw',ic:'👑', name:'랜덤 전설 권능 1개',   cost:{mid:3},    give:()=> popGrantUnownedLegend() },
   { id:'pwstone', ic:'🔮', name:'권능석 1개',           cost:{mid:5},    give:()=> grantPwStones(1) },
   { id:'eph',     ic:'✨', name:'Ephemeral 확정권 1장', cost:{legend:1}, give:()=> grantEvoPick('Ephemeral', 1) },
@@ -24140,7 +24140,7 @@ function artUbiniteMult(){ return 1 + artMine('ring')/100; }
    [Ver 9.11] 곡괭이 — 유물 광산의 입장료
    --------------------------------------------------------------------------
    ▶ 평소에는 최대 5개까지만 갖고, 5개 미만이면 **PICKAXE_REGEN_MS 마다 1개씩** 저절로 찬다.
-     [Ver 16.2] 여기에 더해 **하루 PICKAXE_DAILY_MAX(15)개**까지만 쓸 수 있다.
+     [Ver 16.2] 여기에 더해 **하루 PICKAXE_DAILY_MAX(50)개**까지만 쓸 수 있다.
    ▶ 게임 보상 등으로 받은 곡괭이는 5개를 넘겨서도 쌓인다. 다만 5개를 넘긴 동안에는
      자동 충전이 멈춘다(넘치는 만큼은 "덤"이지 저장고가 커지는 게 아니다).
    ▶ 저장 형식: { n: 보유수, at: 마지막 충전 기준 시각 }
@@ -24221,7 +24221,7 @@ const PICKAXE_REGEN_MS = 60 * 60 * 1000;     // 1시간에 1개
    ⚠ 날짜는 **서버 보정 시각**(todayKey)으로 센다. PC 시계로 세면 날짜를 돌려
      하루에 몇 번이고 다시 캘 수 있다.
    ⚠ 개쩌는 곡괭이는 여기 넣지 않는다 — 별개 자원이고 만드는 비용이 따로 든다. */
-const PICKAXE_DAILY_MAX = 15;
+const PICKAXE_DAILY_MAX = 50;   /* [Ver 16.8.1] 15 → 50 */
 /* [Ver 16.4] 유물 '우빈이의 손목보호대'가 한도를 늘린다.
    ⚠ 상수를 직접 읽던 자리를 전부 이 함수로 바꿨다 — 한 군데라도 상수를 읽으면
      "표시는 16개인데 15개에서 막히는" 어긋남이 생긴다(곡괭이 상한에서 겪은 그대로다). */
@@ -27499,6 +27499,31 @@ async function fbLookupRemoteCode(code){
    새 패치를 넣을 땐 BALANCE_PATCHES 맨 앞에 한 덩어리를 추가하면 된다.
    ########################################################################## */
 const BALANCE_PATCHES = [
+  {
+    version: 'Ver 16.8.1', date: '2026-09-18',
+    groups: [
+      { title:'채굴 — 하루 한도를 크게 연다',
+        note:'16.2 에서 충전을 1시간으로 늘리며 하루 15개 한도를 같이 걸었다. ' +
+             '둘을 한꺼번에 조이니 <b>캘 수 있는 날에도 못 캤다.</b> 한도 쪽만 푼다.',
+        rows:[
+          { name:'하루 곡괭이 한도', icon:'⛏️', rows:[
+            { label:'한도', from:'15개', to:'<b>50개</b>', dir:'up' },
+          ]},
+        ]
+      },
+      { title:'추석 이벤트 상점',
+        note:'🎁 하급 셋트로 살 수 있는 것이 다른 값들에 비해 너무 컸다. ' +
+             '🦷 이빨 1개는 💎 200 어치로, 같은 값의 <b>우비나이트 200</b> 과 정확히 같은 자리다.<br>' +
+             '🎀 고급 셋트 쪽은 <b>우비나이트</b>를 빼고 <b>상자 열쇠</b>로 바꿨다 — 우비나이트는 이미 하급에 있다.',
+        rows:[
+          { name:'곡괭이',            icon:'⛏️', rows:[{ label:'하급 1개', from:'10개', to:'<b>2개</b>', dir:'down' }]},
+          { name:'랩터의 이빨',       icon:'🦷', rows:[{ label:'하급 1개', from:'30개', to:'<b>1개</b>', dir:'down' }]},
+          { name:'10+1 카드뽑기권 2장', icon:'🎫', rows:[{ label:'값', from:'하급 2개', to:'<b>고급 1개</b>', dir:'down' }]},
+          { name:'고급 1개 자리',      icon:'🔑', rows:[{ label:'내용', from:'우비나이트 2,000', to:'<b>상자 열쇠 100개</b>', dir:'neu' }]},
+        ]
+      },
+    ]
+  },
   {
     version: 'Ver 16.7', date: '2026-09-18',
     groups: [
@@ -33459,6 +33484,13 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 16.8.1', date: '2026-09-18',
+    items: [
+      '⛏️ <b>[상향] 하루에 쓸 수 있는 곡괭이가 <b>15개 → 50개</b>가 되었습니다.</b>',
+      '🏮 <b>[조정] 추석 이벤트 상점.</b> 🎁 하급 셋트 쪽은 값을 낮추고, 🎀 고급 셋트 쪽은 내용을 바꿨습니다.<br>⛏️ 곡괭이 <b>10개 → 2개</b> · 🦷 랩터의 이빨 <b>30개 → 1개</b> · 🎫 10+1 카드뽑기권 2장 <b>하급 2개 → 고급 1개</b> · 💠 우비나이트 2,000 <b>→ 🔑 상자 열쇠 100개</b>',
+    ]
+  },
   {
     version: 'Ver 16.8', date: '2026-09-18',
     items: [
