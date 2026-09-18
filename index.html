@@ -5999,6 +5999,25 @@ body.low-spec-mode [class*="grade-glow-"] .hc-grade{ animation:none !important; 
   font-size:12px; font-weight:700; color:var(--tone-yellow,#f0b429);
 }
 .sp-banner small{ font-weight:400; color:var(--fg-dim); }
+/* [Ver 16.8.2] 들어갈 때 세는 3 · 2 · 1 */
+.sp-count{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+  min-height:260px; padding:30px 18px; border-radius:var(--r-lg);
+  background:var(--bg-panel); box-shadow:var(--sh-ring), var(--sh-1);
+}
+.sp-count-n{
+  font-family:var(--font-mono); font-size:96px; font-weight:800; line-height:1;
+  color:var(--tone-yellow,#f0b429);
+  animation:spCount .9s var(--ease);
+}
+.sp-count-go{ font-family:var(--font-display); font-size:52px; color:#7ddc9a; animation:spCount .5s var(--ease); }
+.sp-count-t{ font-size:13.5px; color:var(--fg-dim); line-height:1.8; text-align:center; }
+@keyframes spCount{
+  0%  { transform:scale(1.7); opacity:0; }
+  35% { transform:scale(1);   opacity:1; }
+  100%{ transform:scale(1);   opacity:1; }
+}
+@media (prefers-reduced-motion: reduce){ .sp-count-n,.sp-count-go{ animation:none; } }
 
 /* 오른쪽 버튼 — 작게 */
 .sp-pad{ flex:0 0 176px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
@@ -9630,7 +9649,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.8.1</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.8.2</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -18394,6 +18413,8 @@ function spStop(){
   try{ if(SP && SP.to) clearTimeout(SP.to); }catch(e){}
   /* ⚠ 불끄기 타이머를 안 끄면 다음 판에서 뜬금없이 불이 꺼진다 */
   try{ if(SP && SP.darkTo) clearTimeout(SP.darkTo); }catch(e){}
+  /* ⚠ 카운트다운도 끈다. 안 끄면 나갔다 들어온 뒤 예전 것이 판을 또 시작시킨다 */
+  try{ if(SP && SP.countTo) clearTimeout(SP.countTo); }catch(e){}
   if(SP){ SP.raf = null; SP.to = null; }
   spClearPend();
   try{ document.removeEventListener('keydown', spKeyDown, true); }catch(e){}
@@ -18419,10 +18440,28 @@ function chuOpenSongpyeon(){
   try{ ambientBgmPlay('songpyeonbgm'); }catch(e){}
   SP = { round:1, life:SP_LIVES, score:0, buns:0, seq:[], at:0, deadline:0, raf:null, to:null,
          over:false, msg:'', msgKind:'', shift:false,
-         mods:{}, nextMods:{}, pw:null, hidden:null, fakeAt:-1, darkTo:null, boxes:0 };
+         mods:{}, nextMods:{}, pw:null, hidden:null, fakeAt:-1, darkTo:null, boxes:0,
+         count:0, countTo:null, settled:false };
   document.addEventListener('keydown', spKeyDown, true);
   document.addEventListener('keyup', spKeyUp, true);
-  spNewRound();
+  spCountIn(3);
+}
+/* [Ver 16.8.2] 3 · 2 · 1 — 세고 나서 첫 판을 연다.
+   ⚠ 세는 동안에는 제한시간이 흐르면 안 된다. spNewRound 가 deadline 을 잡으므로
+     다 세고 나서야 부른다. 키 입력도 SP.count 로 막는다. */
+function spCountIn(n){
+  if(!SP || SP.over) return;
+  SP.count = n | 0;
+  renderSp();
+  try{ if(SP.countTo) clearTimeout(SP.countTo); }catch(e){}
+  if(SP.count <= 0){
+    SP.count = 0;
+    SP.countTo = null;
+    spNewRound();
+    return;
+  }
+  try{ spThud(); }catch(e){}
+  SP.countTo = setTimeout(()=>{ try{ if(SP && !SP.over) spCountIn(SP.count - 1); }catch(e){} }, 900);
 }
 function spNewRound(){
   if(!SP || SP.over) return;
@@ -18469,7 +18508,7 @@ function spLoop(){
    ⚠ **눌린 채로 있는지**를 보지 않고 **눌렸다는 사실**을 모아 둔다. 손가락으로는
      두 개를 정확히 같이 누를 수 없어서, S 치고 바로 R 을 쳐도 SR 로 쳐 준다. */
 function spInput(tok){
-  if(!SP || SP.over) return;
+  if(!SP || SP.over || SP.count > 0) return;   /* 세는 중에는 받지 않는다 */
   if(tok === 'SHIFT'){ SP.shift = !SP.shift; SP.__shiftSticky = SP.shift; renderSp(); return; }
   if(__spPend){
     const pair = (__spPend === 'S' && tok === 'R') || (__spPend === 'R' && tok === 'S');
@@ -18645,7 +18684,15 @@ function spEnd(){
   SP.raf = null; SP.to = null;
   try{ document.removeEventListener('keydown', spKeyDown, true); }catch(e){}
   try{ document.removeEventListener('keyup', spKeyUp, true); }catch(e){}
-  /* 송편은 **끝날 때 한 번** 준다 — 중간에 창을 닫아도 두 번 들어가지 않는다 */
+  renderSp(spSettle());
+}
+/* 정산 — 게임오버와 중도 퇴장이 **같은 길**을 쓴다.
+   ⚠ 두 번 들어가지 않게 가드를 여기 둔다. 부르는 쪽마다 두면 한쪽을 빠뜨린다.
+   ⚠ 중도 퇴장도 송편박스를 준다. 넘긴 판수는 이미 넘긴 것이라, 나간다고
+     빼앗으면 "그만두면 손해"가 되어 끝까지 붙잡아 두는 벌이 된다. */
+function spSettle(){
+  if(!SP || SP.settled) return false;
+  SP.settled = true;
   const D = chuLoad();
   const newBest = SP.score > (D.best | 0);
   if(newBest){ D.best = SP.score; chuSave(); }
@@ -18653,7 +18700,30 @@ function spEnd(){
   /* [Ver 16.6] 송편박스 — 10판을 넘길 때마다 1개 */
   SP.boxes = Math.floor(Math.max(0, SP.round - 1) / CHU_BOX_PER_ROUNDS);
   if(SP.boxes > 0) chuAddBoxes(SP.boxes);
-  renderSp(newBest);
+  return newBest;
+}
+/* [Ver 16.8.2] 그만하기 — 한 번 묻고, 모은 것을 정산하고 나간다.
+   ⚠ 예전에는 그냥 나가서 티켓만 쓰고 모은 송편이 통째로 사라졌다. */
+function spQuitAsk(){
+  if(!SP || SP.over){ chuBackHome(); return; }
+  const buns = SP.buns | 0;
+  const boxes = Math.floor(Math.max(0, SP.round - 1) / CHU_BOX_PER_ROUNDS);
+  showModal('🥟 나가시겠습니까?', `<div style="line-height:1.9;">
+      지금까지 모은 것을 <b>정산하고</b> 나갑니다.<br><br>
+      <div style="font-size:15px;">🥟 송편 <b>${buns.toLocaleString()}개</b>${boxes ? ` · 📦 송편박스 <b>${boxes}개</b>` : ''}</div>
+      <div style="font-size:12px;color:var(--fg-dim);margin-top:8px;">
+        ${buns ? '' : '아직 한 판도 못 넘겨 받을 것이 없습니다.<br>'}
+        쓴 티켓은 돌아오지 않습니다.</div>
+    </div>`, [
+      { label:'나가기', solid:true, action: ()=>{
+          try{ spSettle(); }catch(e){}
+          spStop();
+          try{ ambientBgmPlay('loginbgm'); }catch(e){}
+          chuEnsureScreen();
+          renderChuseokHome();
+        } },
+      { label:'계속하기' }
+    ]);
 }
 
 function spCardHtml(item, state, pwIc){
@@ -18685,6 +18755,24 @@ function renderSp(newBest){
         <div style="display:flex;gap:8px;margin-top:6px;">
           <button class="btn btn-solid" onclick="chuOpenSongpyeon()">한 판 더 <small style="opacity:.75;">🎟️ ${chuTickets()}</small></button>
           <button class="btn btn-ghost" onclick="chuBackHome()">그만하기</button>
+        </div>
+      </div>`;
+    return;
+  }
+  if(SP.count > 0){
+    w.innerHTML = `
+      <div class="chu-head">
+        <div class="chu-moon">🥟</div>
+        <div class="chu-head-tx"><b>송편 만들기</b><small>곧 시작합니다</small></div>
+        <div class="chu-pill">🎟️ <b>${chuTickets()}</b> · 🥟 <b>${chuSongpyeon().toLocaleString()}</b></div>
+      </div>
+      <div class="sp-wrap">
+        <div class="sp-count">
+          <div class="sp-count-n">${SP.count}</div>
+          <div class="sp-count-t">
+            화면에 깔린 <b>재료 카드</b>를 등급 순서대로 누르거나 칩니다.<br>
+            키보드 <b>E D C B A S R</b> · <b>Shift</b> — 빠를수록 점수가 큽니다.
+          </div>
         </div>
       </div>`;
     return;
@@ -18747,7 +18835,7 @@ function renderSp(newBest){
         송편은 재료 수만큼, 점수는 <b>빨리 칠수록</b> 더 받습니다.
       </div>
       <div style="display:flex;justify-content:center;">
-        <button class="btn btn-ghost" onclick="chuBackHome()">그만하기</button>
+        <button class="btn btn-ghost" onclick="spQuitAsk()">그만하기</button>
       </div>
     </div>`;
 }
@@ -33484,6 +33572,13 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 16.8.2', date: '2026-09-18',
+    items: [
+      '⏱️ <b>[편의] 송편 만들기에 <b>3 · 2 · 1</b> 카운트다운이 생겼습니다.</b> 들어가자마자 시간이 흐르는 바람에 첫 판을 읽기도 전에 6초를 반 넘게 까먹었습니다.',
+      '🥟 <b>[수정] 중간에 나가면 모은 송편이 사라지던 문제.</b> 이제 <b>그만하기</b>를 누르면 한 번 묻고, <b>지금까지 모은 송편과 송편박스를 정산하고</b> 나갑니다.<br><span style="font-size:11.5px;color:var(--fg-dim);">쓴 티켓은 돌아오지 않습니다.</span>',
+    ]
+  },
   {
     version: 'Ver 16.8.1', date: '2026-09-18',
     items: [
