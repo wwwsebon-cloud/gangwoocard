@@ -5500,6 +5500,12 @@ body.hand-collapsed .zone-hand{ padding-top:var(--sp-2); }
 .card-fx-duolingo{ box-shadow:0 0 20px 4.5px rgba(88,204,2,0.85), 0 0 36px 11px rgba(154,230,63,0.5), 0 6px 14px rgba(0,0,0,0.6) !important; }
 .card-fx-doctorwho{ box-shadow:0 0 20px 4.5px rgba(255,20,147,0.9), 0 0 36px 11px rgba(255,79,195,0.45), 0 6px 14px rgba(0,0,0,0.6) !important; }
 .card-fx-danger-red{ box-shadow:0 0 20px 4.5px rgba(230,20,20,0.9), 0 0 36px 11px rgba(255,60,60,0.45), 0 6px 14px rgba(0,0,0,0.6) !important; }
+/* [Ver 16.10] 치약건포도쌀밥피자 — 민트색 */
+.card-fx-mint{ background:linear-gradient(160deg, rgba(64,224,190,0.18), rgba(150,255,225,0.10)), var(--card-bg) !important; border-color:#5ff0cd !important; box-shadow:0 0 20px 4.5px rgba(64,224,190,0.85), 0 0 36px 11px rgba(150,255,225,0.45), 0 6px 14px rgba(0,0,0,0.6) !important; }
+.card-fx-mint .hc-grade,.card-fx-mint .pc-grade,.card-fx-mint .pk-grade{ background:linear-gradient(90deg,#40e0be,#9affe1) !important; color:#05302a !important; border-color:#e8fff9 !important; }
+/* [Ver 16.10] 광자포 APEX — 초록 · 청록 */
+.card-fx-photon{ background:linear-gradient(160deg, rgba(46,230,120,0.16), rgba(32,210,200,0.14)), var(--card-bg) !important; border-color:#3de89a !important; box-shadow:0 0 20px 4.5px rgba(46,230,120,0.8), 0 0 38px 12px rgba(32,210,200,0.5), 0 6px 14px rgba(0,0,0,0.6) !important; }
+.card-fx-photon .hc-grade,.card-fx-photon .pc-grade,.card-fx-photon .pk-grade{ background:linear-gradient(90deg,#2ee678,#20d2c8) !important; color:#02291f !important; border-color:#e3fff2 !important; }
 .card-fx-radiant-red{ background:linear-gradient(160deg, #2a0808 0%, #3d0d0d 55%, #1c0505 100%) !important; border-color:#ff4444 !important; box-shadow:0 0 18px 3px rgba(220,30,30,0.7), inset 0 0 24px rgba(150,20,20,0.5) !important; }
 .card-fx-charcoal{ background:linear-gradient(160deg, #17171a 0%, #232328 55%, #101012 100%) !important; border-color:#5a5a66 !important; box-shadow:0 0 16px 3px rgba(60,60,70,0.85), inset 0 0 22px rgba(0,0,0,0.7) !important; }
 .card-fx-radiant-sky{ background:linear-gradient(160deg, #071a2a 0%, #0d2c3d 55%, #05141f 100%) !important; border-color:#4fc8ff !important; box-shadow:0 0 18px 3px rgba(40,170,230,0.7), inset 0 0 24px rgba(20,110,150,0.5) !important; }
@@ -9675,7 +9681,7 @@ body.legacy-ui.legacy-ui .nm-res b{ font-family:var(--font-mono); }
 
 <div id="app">
   <header>
-    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.9.2</span></div>
+    <div class="logo"><span class="logo-text">갱갱갱 우빈랩터 카드게임 JavaScript Edition</span><span class="version-badge" onclick="onVersionBadgeClick()" style="cursor:default;">Ver 16.10</span></div>
     <div class="hstat" id="headerStat"></div>
   </header>
 
@@ -11239,7 +11245,9 @@ function shopBasePrice(grade){
   // 파티 타임 곱연산 할인(스택마다 ×0.5) × DJ 부스 % 할인 × 인플레이션. 최종가는 최소 1원 이상으로 보정.
   const partyMult = Math.pow(0.5, Math.max(0, shopPartyDiscountStacks||0));
   const djMult = (1 - Math.min(95, shopDiscountPct||0)/100);
-  const raw = (SHOP_BUY_PRICE[grade] ?? 20) * (shopInflation ? 2 : 1) * shopMegaInflationMult * partyMult * djMult;
+  /* [Ver 16.10] 폐점세일 — 1바퀴 동안 모두에게 90% 할인 */
+  const saleMult = (typeof closingSaleOn === 'function' && closingSaleOn()) ? 0.1 : 1;
+  const raw = (SHOP_BUY_PRICE[grade] ?? 20) * (shopInflation ? 2 : 1) * shopMegaInflationMult * partyMult * djMult * saleMult;
   return Math.max(1, Math.floor(raw));
 }
 
@@ -11347,6 +11355,9 @@ function mktTick(){
 let shopLockDueRound = 0;   // 상점 독점이 해제되는 turnCount (3바퀴 뒤)
 let shopAutoReroll = false; // [5.2.1] 광창시장: 매 턴 상점 자동 리롤
 let shopDiscountPct = 0; // [5.5] DJ 부스: 상점 구매가 % 할인(누적)
+/* [Ver 16.10] 폐점세일 — 이 바퀴까지는 카드·도박이 90% 할인. 지나면 상점이 영영 닫힌다. */
+let closingSaleUntilRound = 0;
+function closingSaleOn(){ return closingSaleUntilRound > 0 && turnCount <= closingSaleUntilRound; }
 // ===================== [Ver 5.3.7 batch2] 개발자 모드 & 안티치트 카드 =====================
 let devMode = false;
 /* [Ver 12.6] 부개발자 모드 — 개발자 모드의 축소판.
@@ -14130,6 +14141,9 @@ function isRevealCard(card){ return REVEAL_TYPES.includes(card.type); }
 /* v4.61: "소지만 하고 있어도(내지 않아도) 조건 충족 시 자동 발동하는" 순수 패시브 카드 목록.
    보여주기 카드(REVEAL_TYPES)와 마찬가지로 등급 옆에 태그를 붙여 한눈에 구분할 수 있게 한다. */
 const PASSIVE_HOLD_TYPES = ['DOTTUSA_COUNTER_PASSIVE','RAPTOR_FANCLUB_PASSIVE','JUMADEUNG_LAST_STAND','PRISON_RETURN_PASSIVE','MIRACLE_REVIVE_PASSIVE','ROYAL_IMPEACH_INHERIT','LAST_STAND_ATK','NINE_TAILED_RAPTOR_PASSIVE','DEATH_WIN_IF_UNSEEN','ADRENALINE_PASSIVE','SUBSTITUTE_EGRADE_PASSIVE','JACKPOT_PASSIVE','AWAKEN_PASSIVE','PENTHOUSE_PASSIVE','RED_OCEAN_PASSIVE','JEOJJEOL_PASSIVE','WIN_IF_HP1','HAND_COUNT_ATK_BUFF_PASSIVE','UNDERDOG_ATK_DR_PASSIVE','NO_REVIVE_AURA_PASSIVE','KKAENIP_INFINITE_PASSIVE','MINE_SHOP','MINE_DRAW','PROPHET_WIN','CURSE_DOLL_PASSIVE','SUPERCONDUCTOR_PASSIVE','UBINCALIBUR_PASSIVE','ANTI_STEAL_KILL_PASSIVE','LUCKY_CHARM_PASSIVE','SIN_PASSIVE','RAPTOR_EGG',
+  /* [Ver 16.10] 소지만 해도 도는 패시브 5종.
+     ⚠ 종이학 1000개는 **모두의 턴마다** 접으므로 자기 턴 훅이 아니라 advanceTurn 쪽에서 센다. */
+  'CHINA_TEAR_PASSIVE','SECLUSION_PASSIVE','EMBEZZLE_PASSIVE','BUS_DRIVER_PASSIVE','PAPER_CRANE_WIN',
   // [Ver 8.10] "잠재력"이 전부 수거할 수 있도록 기존에 이 배열에 빠져있던 (사실상 패시브류인) 타입들을 보강
   'PROBLEM_CHILD_PASSIVE','FLEE_ON_DEATH_PASSIVE','BLUE_OCEAN_PASSIVE',
   /* [Ver 10.5] 소지만으로 발동하는 신규 패시브 3종 — 전부 unplayable이라 낼 수는 없고, 들고 있으면 자동으로 걸린다.
@@ -14157,7 +14171,10 @@ const PLAY_THEN_PASSIVE_TYPES = ['BULLETPROOF_PASSIVE','COACH_JO_PASSIVE','GAMST
   /* [Ver 14.7] 낸 뒤 자신의 턴마다 계속 도는 신규 3종 */
   'MEDITATION_PASSIVE','UBIN_SEED_GROW','UBIN_CULT_JOIN',
   /* [Ver 14.7.4] 낸 뒤 계속 도는 6종 */
-  'SUPERBEE_AURA','BULLETPROOF_GLASS','MONO_SCREEN','ROSE_MARK_AURA','LO285_AURA','GPT_AUTO_POWER'];
+  'SUPERBEE_AURA','BULLETPROOF_GLASS','MONO_SCREEN','ROSE_MARK_AURA','LO285_AURA','GPT_AUTO_POWER',
+  /* [Ver 16.10] 낸 뒤 판이 끝날 때까지 계속 굴러가는 7종 */
+  'SYNC_SPREAD_DEBUFF','APOSTOLOS_IMMUNE','ADAPT_GRADE_MATCH','TAZZA_EX','JIBAL_RAGE_AURA',
+  'CHAOS_MESS_AURA','AGONY_HOURGLASS'];
 function isPlayThenPassiveCard(card){ return !!card && PLAY_THEN_PASSIVE_TYPES.includes(card.type); }
 // [Ver 8.1.6] "금쪽같은 내새끼"(PROBLEM_CHILD_PASSIVE)는 소지만으로 "엄마 공격 허용" 효과가 자동 적용되지만,
 // 손패에 남겨두는 것 외에 "그냥 냈을 때" AOE 피해라는 별도 효과도 있는 이중 역할 카드다. 그래서 소지 즉시
@@ -27915,6 +27932,21 @@ async function fbLookupRemoteCode(code){
    ########################################################################## */
 const BALANCE_PATCHES = [
   {
+    version: 'Ver 16.10', date: '2026-09-20',
+    groups: [
+      { title:'도박 — 한 번의 무게를 올린다',
+        note:'9.14 에서 1% → 2% 로 올린 뒤로도 도박은 <b>거의 공짜로 굴리는 것</b>에 가까웠다. ' +
+             '5% 면 스무 번에 한 번이라, 연달아 굴릴 때 비로소 손이 떨린다.<br>' +
+             '<b>전설·신화도박은 그대로</b> 도뜨사가 없다 — 그쪽은 값 자체가 위험이다.',
+        rows:[
+          { name:'도뜨사 기본 확률', icon:'\u{1F480}', rows:[
+            { label:'하급~최상급 도박', from:'2%', to:'<b>5%</b>', dir:'down' },
+          ]},
+        ]
+      },
+    ]
+  },
+  {
     version: 'Ver 16.9', date: '2026-09-18',
     groups: [
       { title:'송편셋트 — 값을 크게 낮춘다',
@@ -31101,6 +31133,29 @@ let balancePatchIdx = 0;
    ########################################################################## */
 const NEW_CARDS = [
   {
+    version: 'Ver 16.10', date: '2026-09-20',
+    note: '<b>35종</b>이 한꺼번에 들어왔습니다. 이번에는 <b>서로 맞물리는 카드</b>가 많습니다 — ' +
+          '남궁정후의 축복 · 중간나의 약속 · 중국정후의 눈물은 셋이 한 묶음이고, ' +
+          '시내버스기사는 들고만 있으면 시내버스가 흉기가 됩니다. ' +
+          '반대로 <b>죄악 심판 · 응아니야 · 치약건포도쌀밥피자</b>는 한 장으로 사람을 지웁니다.',
+    names: [
+      /* 돈과 상점 */
+      '당첨!','폐점세일','헌혈','민기떡보증금','서울시쇠젓가락도둑',
+      /* 회복과 보호 */
+      '기원의 성배','서정후의 축복','남궁정후의 축복','중간나의 약속','중국정후의 눈물','폐관수련',
+      /* 낸 뒤 계속 도는 것 */
+      '싱크로 EX', '\u{1D4D0}\u{1D4DF}\u{1D4DE}\u{1D4E2}\u{1D4E3}\u{1D4DE}\u{1D4DB}\u{1D4DE}\u{1D4E2}','적응','타짜 EX','지발랄광','우당탕탕 개난장판',
+      '멜트다운','고통의 모래시계','종이학 1000개','점유이탈물횡령죄','시내버스기사',
+      /* 한 방 */
+      '발도','로켓발싸','광자포 APEX','촉@촉하게 만들어주지','치약건포도쌀밥피자','응아니야',
+      '죄악 심판','트루젼SFM',
+      /* 몸을 바꾸는 것 */
+      '우 량아','조이라이드','우빈비누',
+      /* 카드를 불리는 것 */
+      '카드양산버그','카드양산'
+    ]
+  },
+  {
     version: 'Ver 14.7.4', date: '2026-09-11',
     note: '<b>15종</b>이 들어왔습니다. 이번에는 <b>“켜두면 알아서 굴러가는” 카드</b>에 무게를 뒀습니다 — ' +
           '수퍼비 · 예고장 · Lo285 · GPT 는 낸 뒤 자신의 턴마다 저 혼자 일을 합니다. ' +
@@ -33938,6 +33993,18 @@ function exitPlaygroundBar(){
 /* ---------- 업데이트 로그 ---------- */
 /* 최신 항목이 배열 맨 앞에 오도록 추가해나간다. */
 const CHANGELOG = [
+  {
+    version: 'Ver 16.10', date: '2026-09-20',
+    items: [
+      '\u{1F0CF} <b>[신규] 카드 35종.</b> <b>죄악 심판</b>(SR) — 나를 가장 최근에 때린 사람을 재판합니다. 누적 피해 <b>1,000</b>이면 최고 등급 카드를 압수(<b>유죄</b>), <b>1,500</b>이면 3바퀴 동안 자기 손패를 못 보게(<b>몰수</b>), <b>2,500</b>이면 <b>막을 수 없이 처형</b>하고 골드와 카드를 전부 가져옵니다(<b>사형</b>). / <b>응아니야</b>(SSR) — 자신보다 <b>체력+쉴드가 높은 사람을 전부</b> 지웁니다. / <b>치약건포도쌀밥피자</b>(SSR) — 상대에게 먹이고 즉사시킵니다. / <b>적응</b>(S) — <b>직전 카드와 같은 등급</b>의 카드는 무효화되고 내가 가져갑니다. / <b>고통의 모래시계</b>(S) — 쓰러져도 <b>2바퀴</b>를 더 버티고, 그 사이 누군가를 처치하면 <b>영혼을 훔쳐</b> 그 사람의 최대 체력이 됩니다. / <b>멜트다운</b>(S) — 5바퀴 안에 나를 못 죽이면 <b>5000 쉴드 파괴 광역</b>이 터집니다. / <b>조이라이드</b>(S) — 회피율 <b>영구 90%</b>, 대신 고자. / <b>종이학 1000개</b>(E) — 모두의 턴마다 한 개씩 접어 <b>1000개면 즉시 승리</b>합니다.',
+      '\u{1F91D} <b>[신규] 서로 맞물리는 카드들.</b> <b>남궁정후의 축복</b>(A)은 쉴드 700과 <b>보호막</b> 1개를, <b>서정후의 축복</b>(B)은 회복 500과 보호막 1개를 줍니다. <b>중간나의 약속</b>(A)은 남궁정후의 축복을 <b>소모해</b> 그 효과를 내고 <b>60%</b>로 보호막을 하나 더 얻으며, <b>중국정후의 눈물</b>(E)을 들고 있으면 그 확률이 장당 <b>1%</b>씩 오릅니다. <b>시내버스기사</b>(C)는 소지만 해도 <b>시내버스류</b>의 피해가 <b>6974%</b> 오르고 <b>시내버스 pro</b>가 <b>100% 명중</b>합니다.',
+      '\u{1F3AF} <b>[신규] 지속형.</b> <b>𝓐𝓟𝓞𝓢𝓣𝓞𝓛𝓞𝓢</b>(SR) — <b>빨간색·파란색 카드에 완전 면역</b>. / <b>싱크로 EX</b>(SR) — 내가 받는 <b>디버프를 모두가 함께</b> 받습니다. / <b>타짜 EX</b>(SR) — 모든 도박이 <b>1골드</b>에 도뜨사 면역, 대신 매 턴 5%로 장기가 뜯겨 고자가 되고 <b>580,000골드</b>를 받습니다. / <b>지발랄광</b>(B) — 남의 턴 동안 <b>1초마다 2%</b>로 200 광역. / <b>우당탕탕 개난장판</b>(B) — 3바퀴 동안 내 턴마다 전원에게 <b>디버프 하나</b>씩. / <b>폐관수련</b>(A) — 턴마다 공격력·최대체력·회복이 쌓이고, <b>맞은 턴에는 두 배</b>.',
+      '\u{2694}\uFE0F <b>[신규] 공격.</b> <b>광자포 APEX</b>(SR) — <b>1을 49,999,500번</b>. / <b>발도</b>(B) — 전원에게 200을 3번. / <b>로켓발싸</b>(B) — 400 광역을 쏘고 <b>1초 뒤 33%</b>로 <b>실패할 때까지</b> 계속. / <b>트루젼SFM</b>(SR) — 1999 피해, 상대가 살아남으면 <b>공이 그쪽으로 넘어갑니다</b>. / <b>촉@촉하게 만들어주지</b>(C) — 맞은 사람은 이후 <b>노란색 카드에 즉사</b>합니다.',
+      '\u{1F4B0} <b>[신규] 돈과 상점.</b> <b>폐점세일</b>(D) — 1바퀴 동안 카드와 도박이 <b>90% 할인</b>되고, 끝나면 상점이 <b>영원히</b> 닫힙니다. / <b>헌혈</b>(B) — 무한 사용, 체력 절반에 150골드. / <b>서울시쇠젓가락도둑</b>(A) — 골드 10%를 훔치고 <b>훔친 1골드당 공격력 2%</b>. / <b>당첨!</b>(E) — 도박 후보에 뜨면 고르지 않아도 <b>반드시 따라옵니다.</b> / <b>카드양산버그</b>(D)·<b>카드양산</b>(A) — 드로우가 <b>1장 대신 10장</b>이 되지만 그중 <b>10%</b>는 <b>[뽑뜨사]</b>입니다.',
+      '\u{1F3B2} <b>[밸런스] 도뜨사 기본 확률 <b>2% → 5%</b>.</b> 도박 한 번의 무게가 올라갑니다. (전설·신화도박은 원래대로 도뜨사가 없습니다)',
+      '\u{2764}\uFE0F <b>[편의] 연타를 맞으면 스탯창도 한 타씩 깎입니다.</b> 예전에는 <b>100x5</b>를 맞아도 숫자만 다섯 번 뜨고 <b>체력바는 한 번에</b> 끝까지 내려가, 몇 대를 맞았는지 바를 보고는 알 수가 없었습니다.<br><span style="font-size:11.5px;color:var(--fg-dim);">간격은 타수로 나눕니다 — <b>3타면 한 타에 0.25초</b>, 타수가 많을수록 촘촘해집니다.</span>',
+    ]
+  },
   {
     version: 'Ver 16.9', date: '2026-09-18',
     items: [
@@ -39806,6 +39873,196 @@ function tickNewCardsEveryTurn(){
     try{ renderBoard(); checkWinCondition(); }catch(e){}
   });
 }
+/* ##########################################################################
+   [Ver 16.10 신규] 35종이 함께 쓰는 헬퍼
+   ########################################################################## */
+/* ── 보호막 ── */
+function grantWard(p, n, label){
+  if(!p || !(n > 0)) return 0;
+  p.wardCount = (p.wardCount||0) + n;
+  wardRearm(p);
+  log('sys', `\u{1F6E1}\uFE0F ${J(p.name,'이','가')} <b>보호막 ${n}개</b>를 얻었습니다.${label?` (${label})`:''} — 카드 ${p.wardCount + (p.nullifyNext?0:0)}회분`);
+  return p.wardCount;
+}
+/* 보호막이 남아 있고 '무효 대기'가 비었으면 한 개를 꺼내 채운다.
+   ⚠ nullifyNext 를 읽는 자리가 열 군데가 넘어 각각에 훅을 달지 않고 여기 한 곳에서 채운다. */
+function wardRearm(p){
+  if(!p || !p.alive) return;
+  if(!p.nullifyNext && (p.wardCount||0) > 0){ p.wardCount--; p.nullifyNext = true; }
+}
+/* ── 중국정후의 눈물 — 들고 있는 장수만큼 확률이 오른다 ── */
+function chinaTearBonus(p){
+  try{ return (p.hand||[]).reduce((a,c)=> a + ((c && c.type === 'CHINA_TEAR_PASSIVE') ? (c.tearPct||1) : 0), 0); }
+  catch(e){ return 0; }
+}
+/* ── 죄악 심판 — 누구에게 얼마나 맞았는지 ── */
+function sinNoteDamage(target, attackerId, amount){
+  if(!target || !attackerId || !(amount > 0) || attackerId === target.id) return;
+  if(!target.__dmgFrom) target.__dmgFrom = {};
+  target.__dmgFrom[attackerId] = (target.__dmgFrom[attackerId]||0) + amount;
+}
+function sinDamageFrom(p, attackerId){
+  try{ return (p && p.__dmgFrom && p.__dmgFrom[attackerId]) | 0; }catch(e){ return 0; }
+}
+/* ── 로켓발싸 — 1초 뒤 33% 로 한 발 더, 실패할 때까지 ── */
+function rocketVolley(caster, card, shot){
+  if(!caster || !caster.alive || !gameActive) return;
+  const rest = getTargetsForAoe(caster);
+  if(!rest.length) return;
+  log('sys', `\u{1F680} <b>로켓발싸</b> ${shot}발째 — 전원에게 ${(card.power||400).toLocaleString()}.`);
+  renderHoldBegin();
+  try{
+    rest.forEach(t=>{
+      if(!t.alive) return;
+      currentAttackContext = { attackerName: caster.name, attackerId: caster.id, cardName: card.name };
+      dealDamage(caster, t, card.power||400, card.pierce||'NONE', true);
+    });
+  } finally { currentAttackContext = null; renderHoldEnd(); }
+  try{ checkWinCondition(); }catch(e){}
+  /* 실패할 때까지 — 판이 끝났거나 시전자가 죽으면 멈춘다 */
+  if(Math.random()*100 < (card.repeatPct||33)){
+    setTimeout(()=>{ try{ rocketVolley(caster, card, shot+1); }catch(e){} }, 1000);
+  } else if(shot > 1){
+    log('sys', `\u{1F680} 로켓이 떨어졌습니다. (총 ${shot}발)`);
+  }
+}
+/* ── 지발랄광 — 남의 턴 동안 1초마다 ── */
+let __jibalTimer = null;
+function jibalArm(){
+  if(__jibalTimer) return;
+  __jibalTimer = setInterval(()=>{
+    try{
+      if(!gameActive){ return; }
+      const cur = (typeof currentPlayer === 'function') ? currentPlayer() : null;
+      (players||[]).forEach(p=>{
+        if(!p || !p.alive || !p.jibalOn) return;
+        if(cur && cur.id === p.id) return;             // 자기 턴에는 안 터진다
+        if(Math.random()*100 >= (p.jibalPct||2)) return;
+        const rest = getTargetsForAoe(p);
+        if(!rest.length) return;
+        log('highlight', `\u{1F92C} <b>지발랄광!</b> ${J(p.name,'이','가')} 발광해 전원에게 ${(p.jibalPower||200).toLocaleString()}.`);
+        renderHoldBegin();
+        try{
+          rest.forEach(t=>{
+            if(!t.alive) return;
+            currentAttackContext = { attackerName: p.name, attackerId: p.id, cardName: '지발랄광' };
+            dealDamage(p, t, p.jibalPower||200, 'NONE', true);
+          });
+        } finally { currentAttackContext = null; renderHoldEnd(); }
+        try{ checkWinCondition(); }catch(e){}
+      });
+    }catch(e){}
+  }, 1000);
+}
+/* ── 우당탕탕 개난장판 — 수치가 없는 디버프만 고른다 ── */
+const CHAOS_DEBUFFS = [
+  { k:'stun',    t:'기절',      run:(t)=> trySetStunned(t, '우당탕탕 개난장판') },
+  { k:'poison',  t:'중독',      run:(t)=>{ t.poisoned = true; return true; } },
+  { k:'silence', t:'상점 금지',  run:(t)=>{ t.shopBlockDueRound = Math.max(t.shopBlockDueRound||0, turnCount + 1); return true; } },
+  { k:'noDraw',  t:'드로우 금지', run:(t)=>{ t.cultNoDraw = true; return true; } },
+  { k:'impeach', t:'탄핵',      run:(t)=>{ t.impeached = true; t.impeachDueRound = Math.max(t.impeachDueRound||0, turnCount + 1); return true; } },
+];
+function chaosMessTick(p){
+  if(!p || !p.alive) return;
+  if(!(p.chaosUntilRound > 0) || turnCount > p.chaosUntilRound){ p.chaosUntilRound = 0; return; }
+  const victims = alivePlayers().filter(v=> v.id !== p.id);
+  if(!victims.length) return;
+  victims.forEach(v=>{
+    if(v.debuffImmune) return;
+    const d = CHAOS_DEBUFFS[Math.floor(Math.random()*CHAOS_DEBUFFS.length)];
+    let ok = false;
+    applyHarmfulStatus(v, (t)=>{ try{ ok = d.run(t) !== false; }catch(e){} });
+    if(ok) log('sys', `\u{1F4A5} <b>개난장판</b> — ${J(v.name,'이','가')} <b>[${d.t}]</b>을(를) 받았습니다.`);
+  });
+  renderBoard();
+}
+/* ── 종이학 1000개 — 모두의 턴마다 한 개 ── */
+function paperCraneTick(){
+  if(!gameActive) return;
+  let winner = null;
+  (players||[]).forEach(p=>{
+    if(!p || !p.alive) return;
+    (p.hand||[]).forEach(c=>{
+      if(!c || c.type !== 'PAPER_CRANE_WIN') return;
+      c.cranes = (c.cranes||0) + 1;
+      const goal = c.craneGoal || 1000;
+      if(c.cranes % 100 === 0 && c.cranes < goal) log('sys', `\u{1F54A}\uFE0F ${J(p.name,'이','가')} 종이학을 <b>${c.cranes}개</b> 접었습니다. (${goal}개까지 ${goal-c.cranes}개)`);
+      if(c.cranes >= goal && !winner) winner = p;
+    });
+  });
+  if(winner){
+    gameActive = false;
+    try{ clearSavedGame(); }catch(e){}
+    log('highlight', `\u{1F54A}\uFE0F ${J(winner.name,'이','가')} <b>종이학 1000개</b>를 다 접었습니다! <b>즉시 승리.</b>`);
+    try{ document.getElementById('turnIndicator').textContent = `${winner.name} 승리 (종이학 1000개)`; }catch(e){}
+    try{ showVictorySequence([winner], `<b>${escapeHtml(winner.name)}</b>${Jp(winner.name,'이','가')} 종이학 1000개를 다 접어 즉시 승리했습니다!`); }catch(e){}
+    return true;
+  }
+  return false;
+}
+/* ── 타짜 EX · 멜트다운 · 고통의 모래시계 — 모두의 턴마다 본다 ── */
+function tick1610EveryTurn(){
+  if(!gameActive) return;
+  (players||[]).forEach(p=>{
+    if(!p || !p.alive) return;
+    /* 타짜 EX — 장기가 뜯긴다 */
+    if(p.tazzaExOn && Math.random()*100 < 5){
+      if(p.gojaImmune){
+        log('sys', `\u{1F0CF} 타짜 EX — ${J(p.name,'이','가')} "고자방지권"으로 장기를 지켰습니다.`);
+      } else {
+        p.maxHp = 1; p.hp = 1; p.shield = 0;
+        grantGold(p, 580000);
+        try{ cardAudioTriggerKey('sfx','goja',p.id); }catch(e){}
+        log('highlight', `\u{1F0CF} <b>타짜 EX</b> — ${J(p.name,'의','의')} 장기가 뜯겼습니다. <b>고자</b>가 되고 <b>${fmtWon(580000)}</b>을(를) 받았습니다.`);
+        p.tazzaExOn = false;   // 한 번 뜯기면 더 가져갈 것이 없다
+      }
+    }
+    /* 멜트다운 — 5바퀴 안에 못 죽이면 터진다 */
+    if(p.meltdownDueRound > 0 && turnCount >= p.meltdownDueRound){
+      const power = p.meltdownPower || 5000;
+      p.meltdownDueRound = 0;
+      const rest = getTargetsForAoe(p);
+      log('highlight', `\u{2622}\uFE0F <b>멜트다운!</b> ${J(p.name,'이','가')} 살아남아 <b>${power.toLocaleString()} 쉴드 파괴 광역</b>이 터집니다.`);
+      renderHoldBegin();
+      try{
+        rest.forEach(t=>{
+          if(!t.alive) return;
+          currentAttackContext = { attackerName: p.name, attackerId: p.id, cardName: '멜트다운' };
+          dealDamage(p, t, power, 'BREAK', true);
+        });
+      } finally { currentAttackContext = null; renderHoldEnd(); }
+    }
+    /* 고통의 모래시계 — 버티는 시간이 끝나면 그제야 쓰러진다 */
+    if(p.agonyUntil > 0 && turnCount > p.agonyUntil){
+      p.agonyUntil = 0;
+      log('highlight', `\u{23F3} <b>고통의 모래시계</b>가 다 흘렀습니다. ${J(p.name,'이','가')} 쓰러집니다.`);
+      try{ forceKillAbsolute(p, '고통의 모래시계 — 시간 초과'); }catch(e){}
+    }
+    /* 폐점세일 — 세일이 끝나는 순간 상점이 영원히 닫힌다 (한 번만) */
+    if(closingSaleUntilRound > 0 && turnCount > closingSaleUntilRound){
+      closingSaleUntilRound = 0;
+      if(!shopClosedForever){
+        shopClosedForever = true;
+        log('highlight', `\u{1F3EC} <b>폐점세일이 끝났습니다.</b> 상점은 이제 <b>영원히</b> 문을 닫습니다.`);
+      }
+    }
+    /* 죄악 심판 '몰수' — 새로 뽑은 카드도 계속 가린다 */
+    if(p.sinBlindUntil > 0){
+      if(turnCount > p.sinBlindUntil){
+        p.sinBlindUntil = 0;
+        (p.hand||[]).forEach(c=>{ if(c) c.__masked = false; });
+        log('sys', `\u{2696}\uFE0F ${J(p.name,'의','의')} <b>몰수</b>가 풀렸습니다.`);
+      } else {
+        (p.hand||[]).forEach(c=>{ if(c) c.__masked = true; });
+      }
+    }
+  });
+}
+/* [Ver 16.10] 시내버스기사 — 소지 장수를 센다(겹치면 겹친 만큼) */
+function busDriverCount(p){
+  try{ return (p && p.hand ? p.hand.filter(c=> c && c.type === 'BUS_DRIVER_PASSIVE').length : 0); }catch(e){ return 0; }
+}
+function hasBusDriver(p){ return busDriverCount(p) > 0; }
 /* 자기 턴에만 도는 신규 카드 판정 */
 function tickNewCardsOwnTurn(p){
   if(!p || !p.alive) return;
@@ -39829,6 +40086,32 @@ function tickNewCardsOwnTurn(p){
     if(back > 0){ grantGold(p, back); log('gold', `💹 경기 회복 — ${J(p.name,'이','가')} 지난 바퀴에 쓴 돈의 ${p.ecoRebatePct}%인 ${fmtWon(back)}을(를) 돌려받았습니다.`); }
   }
   try{ tick147OwnTurn(p); }catch(e){ console.error('[14.7] 자기 턴 판정 오류', e); }
+  if(!p.alive) return;
+  /* ── [Ver 16.10] ── */
+  /* 폐관수련 — 지난 턴에 맞았으면 두 배로 쌓인다 */
+  try{
+    const seclusions = (p.hand||[]).filter(c=> c && c.type === 'SECLUSION_PASSIVE').length;
+    if(seclusions > 0){
+      const took = Math.max(0, (p.dmgTakenTotal||0) - (p.__seclusionMark||0));
+      p.__seclusionMark = p.dmgTakenTotal||0;
+      const mult = (took > 0 ? 2 : 1) * seclusions;
+      p.seclusionAtk = (p.seclusionAtk||0) + 1 * mult;
+      p.maxHp += 100 * mult;
+      const h = healAmountFor(p, 50 * mult);
+      const real = Math.min(h, Math.max(0, p.maxHp - p.hp));
+      if(real > 0){ p.hp += real; try{ bqNoteHeal(p, real); }catch(e){} }
+      log('sys', `\u{1F9D8} <b>폐관수련</b> — ${J(p.name,'이','가')} 공격력 +${1*mult}% · 최대체력 +${100*mult} · HP ${real.toLocaleString()} 회복${took>0?' <b>(피격 · 2배)</b>':''}`);
+    }
+  }catch(e){ console.error('[16.10] 폐관수련 오류', e); }
+  /* 우 량아 — 홀수 턴엔 공격력, 짝수 턴엔 방어력 */
+  if(p.wooryangaOn){
+    p.wooryangaTurn = (p.wooryangaTurn||0) + 1;
+    const odd = (p.wooryangaTurn % 2) === 1;
+    log('sys', `\u{1F37C} <b>우 량아</b> — ${p.wooryangaTurn}번째 턴, ${odd ? `공격력 <b>+${p.wooryangaAtk}%</b>` : `받는 피해 <b>-${p.wooryangaDr}%</b>`}.`);
+  }
+  /* 우당탕탕 개난장판 */
+  try{ chaosMessTick(p); }catch(e){ console.error('[16.10] 개난장판 오류', e); }
+  if(!p.alive) return;
   if(!p.alive) return;
   // 🩹 우빈 리커버리 — 지난 바퀴에 입은 피해의 일부 회복
   if(p.dmgRebatePct){
@@ -43375,6 +43658,23 @@ function typeLabel(t){
     SELF_HP_TO_1:'자해(HP1)', ONE_PERCENT_GAMBLE:'자해+공격력버프+드로우+턴재개', ATK_SEND_LOW_GRADE:'공격+E/D등급전송', SET_HP_FREE_CHOICE:'HP자유설정(0~2000)', LOW_GRADE_INSURANCE_TRIGGER:'조건부-S등급2장획득(1회)',
     POISON_ATK:'맹독(지속뎀+디버프)', HARDCORE_MODE_BUFF:'지속-공격력2배+회복불가+부활불가',
     SYNC_LINK_DEBUFF:'지속-효과공유(피해제외)', PROXY_LINK_DEBUFF:'지속-효과전가(피해제외)', HP_BUG_MODE:'지속-체력한도해제+과다시즉사',
+    /* [Ver 16.10] */
+    GAMBLE_JACKPOT_PICK:'도박출현시강제획득', CLOSING_SALE:'1바퀴90%할인후영구폐업', BLOOD_DONATION:'무한-체력절반→150골드',
+    GOLD_COINFLIP_69:'50%-69골드획득/상실', CHOPSTICK_THIEF:'지목-골드10%강탈+공증',
+    HEAL_ALL_GRAIL:'전체회복400(5회)', SEO_BLESSING:'회복500+보호막1', NAMGUNG_BLESSING:'쉴드700+보호막1',
+    JUNGGAN_PROMISE:'축복소모발동+60%보호막추가', CHINA_TEAR_PASSIVE:'패시브-보호막확률+1%',
+    SECLUSION_PASSIVE:'패시브-매턴공증/최대체력/회복', SYNC_SPREAD_DEBUFF:'지속-내디버프를전원에게',
+    APOSTOLOS_IMMUNE:'지속-빨강/파랑완전면역', ADAPT_GRADE_MATCH:'지속-같은등급무효화+강탈',
+    TAZZA_EX:'도박1골드+도뜨사면역/매턴5%고자', JIBAL_RAGE_AURA:'지속-상대턴1초당2%광역200',
+    CHAOS_MESS_AURA:'3바퀴-매턴전원무작위디버프', MELTDOWN_TIMER:'5바퀴내미처치시5000광역파괴',
+    AGONY_HOURGLASS:'사망유예2바퀴+처치시영혼강탈', PAPER_CRANE_WIN:'1000개접으면즉시승리',
+    EMBEZZLE_PASSIVE:'패시브-카드강탈자즉사(1회)', BUS_DRIVER_PASSIVE:'패시브-시내버스류+6974%',
+    MULTI_HIT_AOE:'광역연타', ROCKET_BARRAGE_AOE:'광역+33%연쇄발사', PHOTON_APEX:'초다단연타',
+    MOIST_YELLOW_DOOM:'공격+노란색피격시즉사', TOOTHPASTE_PIZZA_KILL:'지목즉사(카드전달)',
+    ANIYA_PURGE:'자신보다높은체력전원즉사', SIN_JUDGEMENT:'누적피해별재판(강탈/봉인/처형)',
+    DODGEBALL_PASS:'공격+생존시카드이전', WOORYANGA_BLOODLINE:'첫턴최대체력4000/홀짝버프',
+    JOYRIDE_EVADE_GOJA:'회피90%+고자', SOAP_SLIP_DEBUFF:'지목-카드사용25%소멸',
+    CARD_MASS_BUG:'자신-드로우10장(10%뽑뜨사)', CARD_MASS_GRANT:'지목-드로우10장(10%뽑뜨사)',
     PERMA_AOE_BUFF:'지속광역버프',SELF_DMG_DRAW_GOLD:'자해+카드+돈',CHOICE_GOLD_OR_ATK:'선택형-돈/공격',
     PERMA_KILL_HEAL:'지속-처치시회복',
     TEMP_HEAL_MULT_BUFF:'한시-회복량2배',
@@ -44751,6 +45051,156 @@ function loadSampleCards(mergeMissing=false){
     {grade:'D', name:'머리박치기', type:'HEADBUTT_SUICIDE', power:1700, pierce:'BREAK',
      desc:'<b>1700</b>의 <b>쉴드 파괴</b> 피해를 입힌다. 대신 자신은 <b>쉴드를 전부 잃고</b> 체력이 <b>100</b>이 되며 <b>1바퀴 기절</b>한다.',
      flavor:'머리가 제일 단단해'}
+    ,
+    /* ══════════════ [Ver 16.10] 신규 35종 ══════════════
+       ⚠ 여기 넣는 것으로 끝이 아니다 — 아래 등록 목록들과 resolveCardEffect 의
+         case 를 같이 채워야 실제로 돈다. */
+
+    /* ── 도박·상점을 건드리는 것 ── */
+    {grade:'E', name:'당첨!', type:'GAMBLE_JACKPOT_PICK', power:0, unplayable:true, pierce:'NONE',
+     desc:'낼 수 없다. <b>도박 후보에 이 카드가 떴다면</b>, 무엇을 골랐든 <b>이 카드가 반드시 따라온다.</b>',
+     flavor:'축하드립니다! (아무 효과도 없습니다)'},
+
+    {grade:'D', name:'폐점세일', type:'CLOSING_SALE', power:0, pierce:'NONE',
+     desc:'<b>1바퀴</b> 동안 <b>모든 카드와 도박의 값</b>이 <b>모두에게 90% 할인</b>된다. 그리고 그 뒤 <b>상점이 영구히 폐업</b>한다.',
+     flavor:'점포정리 · 눈물의 고별전'},
+
+    {grade:'B', name:'헌혈', type:'BLOOD_DONATION', power:0, infinite:true, pierce:'NONE',
+     desc:'무한 사용 가능. <b>현재 체력의 50%</b>를 뽑아 <b>150골드</b>를 받는다.',
+     flavor:'헌혈증은 안 주나요'},
+
+    {grade:'?', name:'민기떡보증금', type:'GOLD_COINFLIP_69', power:0, pierce:'NONE',
+     desc:'<b>50%</b> 확률로 <b>69골드를 얻거나</b>, <b>69골드를 잃는다.</b>',
+     flavor:'보증금은 돌려받는 겁니다. 아마도.'},
+
+    {grade:'A', name:'서울시쇠젓가락도둑', attrs:['melee'], type:'CHOPSTICK_THIEF', power:0, pierce:'NONE',
+     desc:'상대의 <b>골드 10%</b>를 훔친다. 이후 자신의 <b>공격 카드</b>는 <b>훔친 1골드당 공격력 2%</b>가 오른다.',
+     flavor:'닉네임은 69글자에서 690글자 사이로 정해주세요'},
+
+    /* ── 회복·보호 ── */
+    {grade:'C', name:'기원의 성배', type:'HEAL_ALL_GRAIL', power:400, maxUses:5, pierce:'NONE',
+     desc:'<b>자신을 포함한 모두</b>의 HP를 <b>400</b> 회복한다. <b>5번</b> 쓸 수 있다.',
+     flavor:'모두에게 한 모금씩'},
+
+    {grade:'B', name:'서정후의 축복', type:'SEO_BLESSING', power:500, wardCount:1, pierce:'NONE',
+     desc:'HP <b>500</b>을 회복하고, 카드를 <b>1회 막아주는 보호막</b>을 <b>1개</b> 얻는다.',
+     flavor:'복 받으세요'},
+
+    {grade:'A', name:'남궁정후의 축복', type:'NAMGUNG_BLESSING', power:700, wardCount:1, pierce:'NONE',
+     desc:'쉴드를 <b>700</b> 얻고, 카드를 <b>1회 막아주는 보호막</b>을 <b>1개</b> 얻는다.',
+     flavor:'가문의 영광'},
+
+    {grade:'A', name:'중간나의 약속', type:'JUNGGAN_PROMISE', power:900, bonusWardPct:60, pierce:'NONE',
+     desc:'<b>[남궁정후의 축복]</b>을 들고 있으면 그 카드를 <b>소모</b>해 효과를 발동하고, 추가로 <b>60%</b> 확률로 <b>보호막 1개</b>를 더 얻는다.<br>들고 있지 않으면 HP <b>900</b>을 회복한다.',
+     flavor:'약속은 지키라고 있는 거야'},
+
+    {grade:'E', name:'중국정후의 눈물', type:'CHINA_TEAR_PASSIVE', power:0, unplayable:true, tearPct:1, pierce:'NONE',
+     desc:'(패시브) 소지하고 있으면 <b>[중간나의 약속]</b>의 추가 보호막 확률이 <b>1%</b> 오른다. (여러 장이면 겹친다)',
+     flavor:'니 하오'},
+
+    {grade:'A', name:'폐관수련', type:'SECLUSION_PASSIVE', power:0, unplayable:true, pierce:'NONE',
+     desc:'(패시브) 소지 중, <b>자신의 턴이 올 때마다</b> 공격력 <b>+1%</b> · 최대체력 <b>+100</b> · HP <b>50</b> 회복을 얻는다. <b>지난 턴에 공격을 받았다면 전부 2배</b>가 된다.',
+     flavor:'문을 걸어 잠갔다'},
+
+    /* ── 지속(낸 뒤 계속) ── */
+    {grade:'SR', name:'싱크로 EX', type:'SYNC_SPREAD_DEBUFF', power:0, pierce:'NONE',
+     desc:'(지속) 이 카드를 낸 이후 <b>자신에게 디버프가 걸리면</b>, 같은 디버프가 <b>모두에게</b> 함께 걸린다.',
+     flavor:'혼자 죽을 순 없지'},
+
+    {grade:'SR', name:'\u{1D4D0}\u{1D4DF}\u{1D4DE}\u{1D4E2}\u{1D4E3}\u{1D4DE}\u{1D4DB}\u{1D4DE}\u{1D4E2}', type:'APOSTOLOS_IMMUNE', power:0, pierce:'NONE',
+     desc:'(지속) <b>빨간색 · 파란색 계열</b> 카드에 <b>완전 면역</b>이 된다.',
+     flavor:'\u{03B1} \u{03A9}'},
+
+    {grade:'S', name:'적응', type:'ADAPT_GRADE_MATCH', power:0, pierce:'NONE',
+     desc:'(지속) 앞으로 자신이 <b>받는 카드</b>와 <b>그 직전에 나온 카드</b>의 <b>등급이 같으면</b>, 그 카드를 <b>무효화하고 자신이 가져간다.</b>',
+     flavor:'봤으면 외운다'},
+
+    {grade:'SR', name:'타짜 EX', type:'TAZZA_EX', power:0, organPct:5, organGold:580000, pierce:'NONE',
+     desc:'자신의 <b>모든 도박이 1골드</b>가 되고 <b>도뜨사 면역</b>이 된다. 대신 <b>누구의 턴이든</b> 매 턴 <b>5%</b> 확률로 장기가 뜯겨 <b>고자</b>가 된다. 장기를 빼앗긴 사람은 <b>580,000골드</b>를 받는다.',
+     flavor:'손은 눈보다 빠르다'},
+
+    {grade:'B', name:'지발랄광', type:'JIBAL_RAGE_AURA', power:200, ragePct:2, pierce:'NONE',
+     desc:'(지속) 낸 이후 <b>상대의 턴 동안</b> <b>1초마다 2%</b> 확률로 지발랄광을 해 전원에게 <b>200 광역</b> 피해를 입힌다.',
+     flavor:'가만히 좀 있어봐'},
+
+    {grade:'B', name:'우당탕탕 개난장판', type:'CHAOS_MESS_AURA', power:0, chaosRounds:3, pierce:'NONE',
+     desc:'<b>3바퀴</b> 동안, <b>자신의 턴마다</b> 자신을 뺀 <b>모두</b>에게 <b>수치가 없는 디버프</b>를 무작위로 <b>1개</b>씩 건다.',
+     flavor:'와장창'},
+
+    {grade:'S', name:'멜트다운', type:'MELTDOWN_TIMER', power:5000, meltRounds:5, pierce:'BREAK',
+     desc:'<b>5바퀴</b> 안에 누군가 자신을 처치하지 못하면 <b>5000</b>의 <b>쉴드 파괴 광역</b> 피해가 터진다.',
+     flavor:'노심이 녹고 있습니다'},
+
+    {grade:'S', name:'고통의 모래시계', type:'AGONY_HOURGLASS', power:0, agonyRounds:2, pierce:'NONE',
+     desc:'낸 이후 <b>사망하면 2바퀴를 더 버틴다.</b> 그동안 상대를 <b>처치하면</b> 그 영혼을 훔쳐 <b>최대 체력이 그 상대의 최대 체력이 되고 전부 회복</b>한다. 몇 번이든 다시 발동한다.<br><b>2명만 남았을 때는 발동하지 않는다.</b>',
+     flavor:'아직이야'},
+
+    {grade:'E', name:'종이학 1000개', type:'PAPER_CRANE_WIN', power:0, unplayable:true, craneGoal:1000, pierce:'NONE',
+     desc:'낼 수 없다. <b>모두의 턴마다</b> 종이학을 <b>1개</b>씩 접는다. <b>1000개</b>를 접으면 <b>즉시 승리</b>한다.',
+     flavor:'999개까지 접었는데'},
+
+    {grade:'SR', name:'점유이탈물횡령죄', type:'EMBEZZLE_PASSIVE', power:0, unplayable:true, pierce:'NONE',
+     desc:'(패시브) 소지 중, 누군가 <b>카드를 회수하거나 강탈</b>하면 그 사람을 <b>즉사</b>시킨다. 발동한 뒤 이 카드는 <b>소멸</b>한다.',
+     flavor:'주웠다고 다 네 건 아니야'},
+
+    {grade:'C', name:'시내버스기사', attrs:['vehicle'], type:'BUS_DRIVER_PASSIVE', power:0, unplayable:true, busPct:6974, pierce:'NONE',
+     desc:'(패시브) 소지 중, <b>시내버스류</b> 카드의 기본 피해가 <b>6974%</b> 오르고 <b>시내버스 pro</b>의 각 타격이 <b>100% 명중</b>한다.',
+     flavor:'다음 정류장은'},
+
+    /* ── 한 방 ── */
+    {grade:'B', name:'발도', attrs:['melee'], type:'MULTI_HIT_AOE', power:200, hitCount:3, pierce:'NONE',
+     desc:'칼을 뽑아 전원에게 <b>200을 3번</b>(광역) 벤다.',
+     flavor:'뽑았으면 베어야지'},
+
+    {grade:'B', name:'로켓발싸', attrs:['ranged'], type:'ROCKET_BARRAGE_AOE', power:400, repeatPct:33, pierce:'NONE',
+     desc:'전원에게 <b>400 광역</b> 피해를 입힌다. <b>1초 뒤</b> <b>33%</b> 확률로 한 발을 더 쏘고, <b>실패할 때까지</b> 계속된다.',
+     flavor:'발싸!'},
+
+    {grade:'SR', name:'광자포 APEX', attrs:['ranged'], type:'PHOTON_APEX', power:1, hitCount:49999500, pierce:'NONE',
+     desc:'<b>1</b>의 피해를 <b>49,999,500번</b> 쏟아붓는다.',
+     flavor:'광자 하나하나가 아픕니다'},
+
+    {grade:'C', name:'촉@촉하게 만들어주지', type:'MOIST_YELLOW_DOOM', power:25, pierce:'NONE',
+     desc:'<b>25</b>의 피해를 입힌다. 이후 그 상대는 <b>노란색 계열</b> 카드를 맞으면 <b>즉사</b>한다.',
+     flavor:'촉 @ 촉'},
+
+    {grade:'SSR', name:'치약건포도쌀밥피자', type:'TOOTHPASTE_PIZZA_KILL', power:0, pierce:'NONE',
+     desc:'상대에게 이 카드를 <b>먹이고</b> 그 자리에서 <b>즉사</b>시킨다.',
+     flavor:'한 조각 드실래요?'},
+
+    {grade:'SSR', name:'응아니야', type:'ANIYA_PURGE', power:0, pierce:'NONE',
+     desc:'자신보다 <b>체력+쉴드 합이 높은</b> 사람을 <b>전부 즉사</b>시킨다.',
+     flavor:'응 아니야~'},
+
+    {grade:'SR', name:'죄악 심판', type:'SIN_JUDGEMENT', power:0, sinSteal:1000, sinBlind:1500, sinExecute:2500, pierce:'NONE',
+     desc:'가장 최근에 자신에게 피해를 준 상대를 <b>재판</b>한다. 그 상대가 자신에게 넣은 <b>누적 피해</b>에 따라 —<br>· <b>1,000 이상</b> → <b>유죄.</b> 가장 높은 등급의 카드를 <b>강탈</b><br>· <b>1,500 이상</b> → <b>몰수.</b> <b>3바퀴</b> 동안 자기 손패를 볼 수 없게 한다<br>· <b>2,500 이상</b> → <b>사형.</b> <b>막을 수 없이 처형</b>하고 <b>골드와 카드를 전부</b> 가져온다',
+     flavor:'다시 앉아, 2심을 시작하겠다.'},
+
+    {grade:'SR', name:'트루젼SFM', attrs:['ranged'], type:'DODGEBALL_PASS', power:1999, pierce:'NONE',
+     desc:'피구공을 던져 <b>1999</b>의 피해를 입힌다. 상대가 <b>살아남으면</b> 이 카드는 <b>그 상대에게 넘어간다.</b>',
+     flavor:'피구공'},
+
+    /* ── 몸을 바꾸는 것 ── */
+    {grade:'SR', name:'우 량아', type:'WOORYANGA_BLOODLINE', power:0, firstTurnMaxHp:4000, oddAtkPct:30, evenDrPct:30, pierce:'NONE',
+     desc:'<b>첫 턴</b>에 쓰면 태생부터 남다름을 증명해 <b>최대 체력이 4000</b>이 되고 <b>전부 회복</b>한다.<br>그 다음 턴부터는 번갈아 — <b>홀수 번째 턴</b>에는 공격력 <b>+30%</b>, <b>짝수 번째 턴</b>에는 받는 피해 <b>-30%</b>.',
+     flavor:'우량아 선발대회 대상'},
+
+    {grade:'S', name:'조이라이드', attrs:['vehicle'], type:'JOYRIDE_EVADE_GOJA', power:0, evasionPct:90, pierce:'NONE',
+     desc:'회피율이 <b>영구히 90%</b>가 된다. 대신 <b>고자</b>가 된다.',
+     flavor:'안전운행하세요.'},
+
+    {grade:'A', name:'우빈비누', type:'SOAP_SLIP_DEBUFF', power:0, slipPct:25, pierce:'NONE',
+     desc:'상대에게 비누를 묻힌다. 그 상대는 카드를 낼 때 <b>25%</b> 확률로 <b>손에서 흘려</b> 그 카드가 <b>소멸</b>한다.',
+     flavor:'미끌'},
+
+    /* ── 카드를 불리는 것 ── */
+    {grade:'D', name:'카드양산버그', type:'CARD_MASS_BUG', power:0, bugTrapPct:10, pierce:'NONE',
+     desc:'자신에게 <b>[양산버그]</b>를 건다. 카드를 뽑을 때 <b>1장 대신 10장</b>을 얻지만, 그중 <b>10%</b>는 <b>[뽑뜨사]</b>다.',
+     flavor:'개발자님 이거 고쳐주세요'},
+
+    {grade:'A', name:'카드양산', type:'CARD_MASS_GRANT', power:0, bugTrapPct:10, pierce:'NONE',
+     desc:'상대에게 <b>[양산버그]</b>를 건다. 그 상대는 카드를 뽑을 때 <b>1장 대신 10장</b>을 얻지만, 그중 <b>10%</b>는 <b>[뽑뜨사]</b>다.',
+     flavor:'선물이야'}
   ];
   if(mergeMissing){
     const existing = new Set(cards.map(c=> `${c.grade}::${c.name}::${c.type}`));
@@ -47468,6 +47918,24 @@ function mkPlayer(id,name,isBot){
     poisonDamage:0, // 맹독: 턴 시작마다 입는 고정 피해량
     healBlocked:false, // 와우, 하드코어: 어떠한 회복도(역시 정상화는 신창섭 포함) 적용되지 않음
     syncTargetId:null, // 싱크로: 내가 받는 해로운 효과(피해 제외)를 이 상대도 함께 받는다
+    /* [Ver 16.10] 신규 35종이 쓰는 자리 */
+    wardCount:0,          // 카드를 1회 막아주는 보호막 (서정후·남궁정후의 축복)
+    chopstickAtk:0,       // 서울시쇠젓가락도둑 — 훔친 1골드당 +2%
+    seclusionAtk:0,       // 폐관수련 — 턴마다 쌓이는 공격력
+    syncExOn:false,       // 싱크로 EX — 내 디버프를 모두에게
+    apostolosOn:false,    // 𝓐𝓟𝓞𝓢𝓣𝓞𝓛𝓞𝓢 — 빨강·파랑 완전 면역
+    adaptOn:false,        // 적응 — 직전 카드와 같은 등급이면 무효화+강탈
+    tazzaExOn:false,      // 타짜 EX — 매 턴 5% 고자
+    jibalOn:false, jibalPower:0, jibalPct:0,   // 지발랄광
+    chaosUntilRound:0,    // 우당탕탕 개난장판
+    meltdownDueRound:0, meltdownPower:0,       // 멜트다운
+    agonyOn:false, agonyRounds:2, agonyUntil:0,// 고통의 모래시계
+    yellowDoom:false,     // 촉@촉 — 노란색 카드에 즉사
+    soapPct:0,            // 우빈비누 — 카드를 흘릴 확률
+    massBugPct:0,         // 카드양산버그 — 드로우 10장
+    sinBlindUntil:0,      // 죄악 심판 '몰수'
+    wooryangaOn:false, wooryangaAtk:0, wooryangaDr:0, wooryangaTurn:0,  // 우 량아
+    __dmgFrom:null,       // 죄악 심판 — 누구에게 얼마나 맞았는지
     ufcPartnerId:null, ufcAmpPct:0, // UFC: 지정된 두 사람이 서로에게 주는 피해가 ufcAmpPct%만큼 증폭
     baitDebuff:false, // 강태공: [미끼] 디버프(중첩 X). 보유자는 강태공을 "보여주기"로 낼 때 일괄 500 피해 + 해제 대상이 된다
     proxyTargetId:null, // 프록시: 내가 받을 해로운 효과(피해 제외)를 이 상대가 대신 받는다
@@ -50924,6 +51392,10 @@ function tickProphetCheck(){
       if(c.prophetDueRound == null) c.prophetDueRound = totalIndividualTurns + 12; // [5.2.1] 9바퀴→12턴(개인턴 기준)
     });
   });
+  /* [Ver 16.10] 종이학·타짜 EX·멜트다운·모래시계도 **모두의 턴마다** 돈다.
+     예언자와 같은 자리를 쓴다 — 여기가 "누구의 턴이든 한 번" 이 보장되는 곳이다. */
+  try{ if(paperCraneTick()) return; }catch(e){ console.error('[16.10] 종이학 오류', e); }
+  try{ tick1610EveryTurn(); }catch(e){ console.error('[16.10] 매턴 판정 오류', e); }
   const winner = players.find(p=> p.alive && p.hand.some(c=> c.type==='PROPHET_WIN' && c.prophetDueRound!=null && totalIndividualTurns >= c.prophetDueRound));
   if(winner){
     gameActive = false;
@@ -52662,6 +53134,9 @@ function renderHoldEnd(){
 }
 function renderBoard(){
   if(__renderHold > 0){ __renderDirty = true; return; }   // [Ver 14.7.5] 연타 중에는 미뤄둔다
+  /* [Ver 16.10] 보호막 — 한 장을 막아 '무효 대기'가 비면 다음 장을 꺼내 채운다.
+     ⚠ nullifyNext 를 읽는 자리가 열 군데가 넘는다. 각각에 훅을 다는 대신 여기 한 곳에서 채운다. */
+  try{ (players||[]).forEach(p=> wardRearm(p)); }catch(e){}
   try{ bqGojaWatch(); }catch(e){}   // [Ver 13.0] 고자 전환 감지 (카드 효과 직후라 공격 맥락이 아직 살아 있다)
   try{ syncDeathScreenWithLife(); }catch(e){} // [Ver 9.14] 부활했는데 사망 화면이 남아 있으면 걷어낸다
   enforceDraftCaps();            // [Ver 6.10] 드래프트: 골드/쉴드 2000 캡
@@ -52741,8 +53216,10 @@ function renderBoard(){
     if(cultMode && cultKnownToViewer(p)) card.className += ' cult-yellow';
     if(p.impeached) card.className += ' impeached';
 
-    const shieldPct = p.shield>0 ? Math.min(100,(p.shield/p.maxHp)*100) : 0;
-    const hpPct = Math.max(0, Math.min(100, (p.hp/p.maxHp)*100));
+    /* [Ver 16.10] 연타 중에는 **화면용 값**을 그린다(vizHpOf). 판정은 전부 진짜 p.hp 를 본다. */
+    const __vHp = vizHpOf(p), __vSh = vizShieldOf(p);
+    const shieldPct = __vSh>0 ? Math.min(100,(__vSh/p.maxHp)*100) : 0;
+    const hpPct = Math.max(0, Math.min(100, (__vHp/p.maxHp)*100));
     /* 징오징오: 내가 시야 차단 디버프에 걸려있으면, 나 자신을 제외한 모두의 체력바/수치를 검은 네모로 가린다
        [Ver 9.10.7 버그수정] 예전엔 players[0](=p0)의 디버프를 보고 판정했다. 랜서버에서는
        ① p0(남)가 걸리면 아무 상관 없는 참가자들의 화면까지 전부 가려지고
@@ -52778,15 +53255,15 @@ function renderBoard(){
             <div class="bar-track hp-track ${playerColorClass}">
               ${isHpBlinded ? `<div class="bar-fill" style="width:100%;background:#000;"></div>` : `<div class="bar-fill" style="width:${prevHpPct}%"></div>`}
             </div>
-            <span class="stat-num" style="${isHpBlinded?'background:#000;color:#000;border-radius:3px;':''}">${isHpBlinded ? '■■■' : Math.max(0,p.hp)}</span>
+            <span class="stat-num" style="${isHpBlinded?'background:#000;color:#000;border-radius:3px;':''}">${isHpBlinded ? '■■■' : Math.max(0,__vHp)}</span>
           </div>
-          ${p.shield>0 ? `
+          ${__vSh>0 ? `
           <div class="stat-row shield-row">
             <span class="stat-label">SH</span>
             <div class="bar-track shield-track">
               ${isHpBlinded ? `<div class="bar-fill-shield" style="width:100%;background:#000;"></div>` : `<div class="bar-fill-shield" style="width:${prevShieldPct}%"></div>`}
             </div>
-            <span class="stat-num" style="${isHpBlinded?'background:#000;color:#000;border-radius:3px;':''}">${isHpBlinded ? '■■' : p.shield}</span>
+            <span class="stat-num" style="${isHpBlinded?'background:#000;color:#000;border-radius:3px;':''}">${isHpBlinded ? '■■' : __vSh}</span>
           </div>` : ''}
           ${/* [Ver 13.1 버그수정] 예전에는 isMeCard 일 때만 골드를 그려서 **상대 골드가 아예 안 보였다.**
                 이제 모두에게 그린다. 시야 차단(징오징오)에 걸렸으면 체력과 같은 규칙으로 가린다.
@@ -53794,6 +54271,11 @@ const CARD_UNIQUE_VISUALS = {
   '듀오링고': 'card-fx-duolingo', // [Ver 5.6.2] 연두색 그라데이션
   '듀오링고 pro': 'card-fx-duolingo',
   '뽑뜨사': 'card-fx-danger-red',
+  /* [Ver 16.10] 사용자 지정 특수 디자인 3종.
+     𝓐𝓟𝓞𝓢𝓣𝓞𝓛𝓞𝓢 는 "빨/파" 라 이미 있는 태극(빨강↔파랑 회전)을 그대로 쓴다. */
+  '치약건포도쌀밥피자': 'card-fx-mint',
+  '광자포 APEX': 'card-fx-photon',
+  '\u{1D4D0}\u{1D4DF}\u{1D4DE}\u{1D4E2}\u{1D4E3}\u{1D4DE}\u{1D4DB}\u{1D4DE}\u{1D4E2}': 'card-fx-taegeuk',
   '우빈참마도': 'card-fx-danger-red', // [Ver 5.11.1] 빨간색 계열 특수 디자인
   /* [Ver 5.8] "레인보우 디자인" — 조커와 동일한 무지개 연출을 쓰는 카드들.
      앞으로 이 계열 카드를 추가할 땐 여기에 이름만 등록하면 된다. */
@@ -54787,7 +55269,12 @@ function needsSingleTargetBase(type){ return [
   /* [Ver 14.7] 신규 지목 카드 5종. (김하온·우 빈 씨앗·우 빈·우빈교·우빈찌개 정식은 자가사용이라 넣지 않는다) */
   'ANNIHILATOR_UBIN','ANNIHILATE_STRIKE','IGNITION_FUEL','IRON_BOWL_STUN','THUNDER_69',
   /* [Ver 14.7.4] 지목 카드 5종 */
-  'DEBT_COLLECTION_CALL','GUN_FACTORY','APPLE_TOK_AOE','TOILET_TABLET','HEADBUTT_SUICIDE'].includes(type); }
+  'DEBT_COLLECTION_CALL','GUN_FACTORY','APPLE_TOK_AOE','TOILET_TABLET','HEADBUTT_SUICIDE',
+  /* [Ver 16.10] 지목 카드 7종.
+     ⚠ 죄악 심판은 대상이 "가장 최근에 나를 때린 사람"으로 **자동 결정**되므로 넣지 않는다
+       (유능제강과 같은 이유). 나머지 자가사용 카드도 넣지 않는다. */
+  'CHOPSTICK_THIEF','MOIST_YELLOW_DOOM','TOOTHPASTE_PIZZA_KILL','DODGEBALL_PASS',
+  'SOAP_SLIP_DEBUFF','CARD_MASS_GRANT','PHOTON_APEX'].includes(type); }
 
 /* shared helper: who can legally be targeted by this card, for a given caster.
    used by both the human UI and the bot AI so the "no valid target" rule is defined in exactly one place. */
@@ -55445,12 +55932,14 @@ function drawAttackLine(fromId, toId){
 }
 
 /* ---------- core: play a card (with reaction window) ---------- */
-const INFINITE_TYPES = ['INFINITE_ATK_STEAL','INFINITE_ATK_DRAIN','ATK_AOE_INFINITE','INFINITE_ATK_CHROMATIC','PARALLEL_UNIVERSE_SHIFTER','INFINITE_ATK_STUN_NO_REPEAT','INFINITE_ATK_STEAL_PRO','INFINITE_HP_PERCENT_ATK','COMBO','GOLD_STEAL_HALF_INF','INFINITE_ATK_PLAIN','REACT_TIMEMACHINE','JAGYEOM_CHOICE_INFINITE','RANDOM_CARD_TRANSFORM_INFINITE','INFINITE_PORTAL_SELF_EXCLUDE_DELAYED_ATK','GUESS_HAND_COUNT','GOLD_THROW_ATK','SOLEMN_LAMENT','UBIN_GREATSWORD_INFINITE','FISHING_ROD_BAIT','ATK_STEAL_ALL_GOLD','NEXTLEVEL_ATK'];
+const INFINITE_TYPES = ['INFINITE_ATK_STEAL','INFINITE_ATK_DRAIN','ATK_AOE_INFINITE','INFINITE_ATK_CHROMATIC','PARALLEL_UNIVERSE_SHIFTER','INFINITE_ATK_STUN_NO_REPEAT','INFINITE_ATK_STEAL_PRO','INFINITE_HP_PERCENT_ATK','COMBO','GOLD_STEAL_HALF_INF','INFINITE_ATK_PLAIN','REACT_TIMEMACHINE','JAGYEOM_CHOICE_INFINITE','RANDOM_CARD_TRANSFORM_INFINITE','INFINITE_PORTAL_SELF_EXCLUDE_DELAYED_ATK','GUESS_HAND_COUNT','GOLD_THROW_ATK','SOLEMN_LAMENT','UBIN_GREATSWORD_INFINITE','FISHING_ROD_BAIT','ATK_STEAL_ALL_GOLD','NEXTLEVEL_ATK',
+  /* [Ver 16.10] 헌혈 — 체력이 있는 한 계속 판다 */ 'BLOOD_DONATION'];
 // 완전 무한은 아니고 "최대 N회"까지만 손패에 남아있는 카드들 (예: 수상한 알약). 카드 인스턴스에 usesLeft를
 // 직접 저장해두고, resolveCardEffect에서 그 값이 0이 되면 그때 손패에서 제거한다.
 /* ⚠ 여기에 넣지 않으면 usesLeft 가 남아 있어도 **첫 사용에 손패에서 사라진다.** */
 const LIMITED_USE_TYPES = ['LIMITED_HP_GAMBLE','LIMITED_GOLD_GAMBLE','MUTATE_HIGHEST_TO_BLANK','PORK_HOCK_HEAL_EVOLVE','BOUND_CURSE','REACT_BLOCK_BIG_ATK','EAT_SWALLOW_BUFF_DELAYED_ATK','FORCED_ALLY_THEN_BETRAY','HEAL_FROSTBITE',
-  /* [Ver 14.7] */ 'ANNIHILATOR_UBIN','UBIN_STEW_RESTART','IRON_BOWL_STUN'];
+  /* [Ver 14.7] */ 'ANNIHILATOR_UBIN','UBIN_STEW_RESTART','IRON_BOWL_STUN',
+  /* [Ver 16.10] 기원의 성배 — 5번 */ 'HEAL_ALL_GRAIL'];
 // v5.3.1 배치3: 등급 옆 편의 태그 — 무한사용 카드는 INF, 제한된 사용횟수 카드는 ×n(남은 횟수)을 표시
 function isInfiniteCard(card){ return INFINITE_TYPES.includes(card.type) || !!card.infinite; }
 function isInfiniteForPlayer(card, owner){
@@ -56187,7 +56676,12 @@ const ATK_LIKE_TYPES = ['ATK','ATK_AOE','ATK_AOE_COND','NEXT_PERSON','NEXT_TWO',
   /* [Ver 13.4] 뺑소니는 순수 공격 카드다(블로킹·반사·불문율 판정 대상).
      ⚠ trinitrotoluene 과 비겁한 일격은 **여기 넣지 않는다** — 표식/상태이상 카드라
        "공격 카드"로 치면 블로킹·라크로스 반사에 그대로 걸려 설명과 어긋난다. */
-  'HITRUN_ATK'];
+  'HITRUN_ATK',
+  /* [Ver 16.10] 신규 공격 카드.
+     ⚠ 치약건포도쌀밥피자·응아니야·죄악 심판은 **즉사 카드**라 넣지 않는다 —
+       공격 카드로 치면 블로킹·반사에 걸려 설명과 어긋난다.
+     ⚠ 촉@촉하게 만들어주지도 표식 카드라 넣지 않는다(trinitrotoluene 과 같은 이유). */
+  'MULTI_HIT_AOE','ROCKET_BARRAGE_AOE','PHOTON_APEX','DODGEBALL_PASS'];
 /* [Ver 8.9] "손패의 카드를 소모해 막을 수 있는" 공격 카드 타입들. (와!샌즈!·풍차 계열 + 우빈 찌르기) */
 const SANDS_BLOCK_TYPES = ['SANDS_ATK_DBLOCK','UBIN_STAB','COWARD_SHOT'];   // [Ver 13.4] 비겁한 일격
 function isAtkLikeCard(card){
@@ -57950,8 +58444,49 @@ function resolveCardEffect(caster, card, targetId, onDone){
   }catch(e){}
   // [Ver 8.1.6] "건망증"/"나가사키 눈뽕"으로 은폐된(__masked) 카드는 실제로 내는 이 순간 정체가 드러난다.
   if(card.__masked) card.__masked = false;
+  /* ══════════════ [Ver 16.10] 카드가 풀리기 직전에 끼어드는 둘 ══════════════ */
+  /* 🧼 우빈비누 — 손이 미끄러워 카드를 흘린다. 흘린 카드는 그대로 소멸한다. */
+  try{
+    if(caster && caster.soapPct > 0 && Math.random()*100 < caster.soapPct){
+      log('highlight', `\u{1F9FC} <b>우빈비누</b> — ${J(caster.name,'이','가')} "${escapeHtml(card.name)}"을(를) 손에서 <b>흘렸습니다.</b> 카드는 그대로 사라집니다.`);
+      window.__lastCardGrade = card.grade;
+      renderBoard(); onDone({}); return;
+    }
+  }catch(e){}
+  /* 🧬 적응 — **직전에 나온 카드와 등급이 같으면** 무효화하고 그 사람이 가져간다.
+     ⚠ 첫 카드에는 비교할 앞 카드가 없다. 그때는 그냥 지나간다.
+     ⚠ 적응을 켠 본인이 낸 카드에는 걸리지 않는다 — "받는 스킬" 이 조건이다. */
+  try{
+    const __prevGrade = window.__lastCardGrade;
+    const __adaptTarget = (targetId && targetId !== caster.id) ? players.find(p=> p && p.id === targetId) : null;
+    if(__adaptTarget && __adaptTarget.alive && __adaptTarget.adaptOn && __prevGrade && __prevGrade === card.grade){
+      log('highlight', `\u{1F9EC} <b>적응</b> — ${J(__adaptTarget.name,'이','가')} 직전 카드와 같은 <b>${card.grade}등급</b>을 읽어냈습니다. `
+        + `"${escapeHtml(card.name)}"이(가) 무효화되고 ${__adaptTarget.name}${J(__adaptTarget.name,'이','가')} 가져갑니다.`);
+      try{ grantCardToPlayer(__adaptTarget, mkUidCard(card), '적응'); }catch(e){}
+      window.__lastCardGrade = card.grade;
+      renderBoard(); onDone({}); return;
+    }
+    window.__lastCardGrade = card.grade;
+  }catch(e){}
   // [Ver 5.8] 만수무강: 강탈 계열 카드는 면역 대상에게 통하지 않는다 (공용 차단 지점)
   if(CARD_STEAL_TYPES.includes(card.type)){
+    /* [Ver 16.10] 점유이탈물횡령죄 — 남의 카드에 손을 대면 그 자리에서 즉사한다.
+       ⚠ 만수무강(강탈 면역)보다 **먼저** 본다. 면역으로 막히면 "손을 댄" 사실 자체가
+         없던 일이 되어 이 카드가 영영 안 터진다. */
+    try{
+      const __victim = players.find(p=>p.id===targetId);
+      if(__victim && __victim.alive && __victim.id !== caster.id){
+        const __ei = (__victim.hand||[]).findIndex(c=> c && c.type === 'EMBEZZLE_PASSIVE');
+        if(__ei >= 0){
+          __victim.hand.splice(__ei, 1);   // 발동하면 소멸한다
+          log('highlight', `\u{2696}\uFE0F <b>점유이탈물횡령죄</b> — ${J(caster.name,'이','가')} ${__victim.name}의 카드에 손을 댔습니다. <b>즉사.</b>`);
+          try{ forceKillWithRevive(caster, '점유이탈물횡령죄', '점유이탈물횡령죄'); }catch(e){}
+          renderBoard(); renderHand(); checkWinCondition();
+          onDone({});
+          return;
+        }
+      }
+    }catch(e){}
     const stealTarget = players.find(p=>p.id===targetId);
     if(isStealBlockedBy(stealTarget)){
       log('sys', `🍚 ${J(stealTarget.name,'은','는')} "만수무강" 효과로 카드를 빼앗기지 않습니다!`);
@@ -58385,6 +58920,346 @@ function resolveCardEffect(caster, card, targetId, onDone){
     case 'BULLETPROOF_GLASS': {
       caster.bpGlassOn = true;
       log('highlight', `🪟 ${J(caster.name,'이','가')} <b>방탄유리</b>를 세웠습니다. <b>빨간색</b> 카드는 전부 튕겨내지만, <b>총기류</b>에 맞으면 그대로 깨집니다.`);
+      renderBoard(); onDone({}); break;
+    }
+
+    /* ══════════════════════ [Ver 16.10] 신규 35종 ══════════════════════ */
+
+    /* ── 돈 ── */
+    case 'BLOOD_DONATION': {
+      const give = Math.floor(caster.hp / 2);
+      if(give <= 0){ log('sys', `\u{1FA78} 뽑을 피가 없습니다.`); onDone({}); return; }
+      caster.hp = Math.max(1, caster.hp - give);
+      grantGold(caster, 150);
+      try{ showFloatNumber(caster.id, '-'+give.toLocaleString(), ''); }catch(e){}
+      log('gold', `\u{1FA78} <b>헌혈</b> — ${J(caster.name,'이','가')} 체력 ${give.toLocaleString()}을(를) 내주고 ${fmtWon(150)}을(를) 받았습니다.`);
+      renderBoard(); onDone({}); break;
+    }
+
+    case 'GOLD_COINFLIP_69': {
+      const win = hasCausalityLock(caster) || Math.random() < 0.5;
+      if(win){ grantGold(caster, 69); log('gold', `\u{1F4B0} <b>민기떡보증금</b> — ${J(caster.name,'이','가')} ${fmtWon(69)}을(를) 돌려받았습니다.`); }
+      else {
+        const lose = Math.min(caster.gold||0, 69);
+        caster.gold = Math.max(0, (caster.gold||0) - 69);
+        log('gold', `\u{1F4B8} <b>민기떡보증금</b> — 보증금이 돌아오지 않았습니다. ${J(caster.name,'이','가')} ${fmtWon(lose)}을(를) 잃었습니다.`);
+      }
+      renderBoard(); onDone({}); break;
+    }
+
+    case 'CHOPSTICK_THIEF': {
+      const target = players.find(p=>p.id===targetId);
+      if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
+      if(tryNullify(target)){ onDone({}); return; }
+      const stolen = Math.floor((target.gold||0) * 0.1);
+      target.gold = Math.max(0, (target.gold||0) - stolen);
+      if(stolen > 0) grantGold(caster, stolen);
+      /* 훔친 1골드당 공격력 2% — 쓸 때마다 쌓인다 */
+      caster.chopstickAtk = (caster.chopstickAtk||0) + stolen * 2;
+      log('gold', `\u{1F962} <b>서울시쇠젓가락도둑</b> — ${J(caster.name,'이','가')} ${target.name}의 ${fmtWon(stolen)}을(를) 훔쳤습니다. 공격력 <b>+${(stolen*2).toLocaleString()}%</b> (누적 +${(caster.chopstickAtk).toLocaleString()}%)`);
+      renderBoard(); onDone({}); break;
+    }
+
+    case 'CLOSING_SALE': {
+      closingSaleUntilRound = turnCount + 1;
+      log('highlight', `\u{1F3F7}\uFE0F <b>폐점세일!</b> <b>1바퀴</b> 동안 모든 카드와 도박이 <b>90% 할인</b>됩니다. 그 뒤 상점은 <b>영원히 문을 닫습니다.</b>`);
+      renderBoard(); onDone({}); break;
+    }
+
+    /* ── 회복·보호 ── */
+    case 'HEAL_ALL_GRAIL': {
+      const amt = card.power || 400;
+      alivePlayers().forEach(p=>{
+        const h = healAmountFor(p, amt);
+        const real = Math.min(h, Math.max(0, p.maxHp - p.hp));
+        if(real > 0){ p.hp += real; try{ bqNoteHeal(p, real); showFloatNumber(p.id, '+'+real.toLocaleString(), 'heal'); }catch(e){} }
+      });
+      log('heal', `\u{1F3C6} <b>기원의 성배</b> — 모두가 HP <b>${amt.toLocaleString()}</b>을(를) 회복했습니다.`);
+      renderBoard(); onDone({}); break;
+    }
+
+    case 'SEO_BLESSING': {
+      const h = healAmountFor(caster, card.power || 500);
+      const real = Math.min(h, Math.max(0, caster.maxHp - caster.hp));
+      if(real > 0){ caster.hp += real; try{ bqNoteHeal(caster, real); showFloatNumber(caster.id, '+'+real.toLocaleString(), 'heal'); }catch(e){} }
+      grantWard(caster, card.wardCount || 1, '서정후의 축복');
+      log('heal', `\u{1F64F} <b>서정후의 축복</b> — ${J(caster.name,'이','가')} HP ${real.toLocaleString()}을(를) 회복하고 <b>보호막 1개</b>를 받았습니다.`);
+      renderBoard(); onDone({}); break;
+    }
+
+    case 'NAMGUNG_BLESSING': {
+      grantShield(caster, card.power || 700, '남궁정후의 축복');
+      grantWard(caster, card.wardCount || 1, '남궁정후의 축복');
+      log('sys', `\u{1F6E1}\uFE0F <b>남궁정후의 축복</b> — ${J(caster.name,'이','가')} 쉴드 ${(card.power||700).toLocaleString()}과(와) <b>보호막 1개</b>를 받았습니다.`);
+      renderBoard(); onDone({}); break;
+    }
+
+    case 'JUNGGAN_PROMISE': {
+      const bi = caster.hand.findIndex(c=> c && c.type === 'NAMGUNG_BLESSING');
+      if(bi >= 0){
+        const blessing = caster.hand[bi];
+        caster.hand.splice(bi, 1);   // 약속은 그 카드를 소모한다
+        grantShield(caster, blessing.power || 700, '중간나의 약속');
+        grantWard(caster, blessing.wardCount || 1, '중간나의 약속');
+        /* 중국정후의 눈물 — 들고 있는 장수만큼 확률이 오른다 */
+        const bonus = (card.bonusWardPct || 60) + chinaTearBonus(caster);
+        const got = hasCausalityLock(caster) || Math.random()*100 < bonus;
+        if(got) grantWard(caster, 1, '중간나의 약속 (추가)');
+        log('highlight', `\u{1F91D} <b>중간나의 약속</b> — <b>[남궁정후의 축복]</b>을 소모해 쉴드 ${(blessing.power||700).toLocaleString()} · 보호막 1개를 얻었습니다.`
+          + ` 추가 보호막(${bonus}%) — <b>${got ? '성공!' : '실패'}</b>`);
+      } else {
+        const h = healAmountFor(caster, card.power || 900);
+        const real = Math.min(h, Math.max(0, caster.maxHp - caster.hp));
+        if(real > 0){ caster.hp += real; try{ bqNoteHeal(caster, real); showFloatNumber(caster.id, '+'+real.toLocaleString(), 'heal'); }catch(e){} }
+        log('heal', `\u{1F91D} <b>중간나의 약속</b> — 축복이 없어 HP ${real.toLocaleString()}을(를) 회복했습니다.`);
+      }
+      renderBoard(); onDone({}); break;
+    }
+
+    /* ── 지속 ── */
+    case 'SYNC_SPREAD_DEBUFF': {
+      caster.syncExOn = true;
+      log('highlight', `\u{1F517} ${J(caster.name,'이','가')} <b>싱크로 EX</b>를 켰습니다. 앞으로 자신이 받는 <b>디버프를 모두가 함께</b> 받습니다.`);
+      renderBoard(); onDone({}); break;
+    }
+
+    case 'APOSTOLOS_IMMUNE': {
+      caster.apostolosOn = true;
+      log('highlight', `\u{271D}\uFE0F ${J(caster.name,'이','가')} <b>사도</b>가 되었습니다. <b>빨간색 · 파란색</b> 카드가 전부 통하지 않습니다.`);
+      renderBoard(); onDone({}); break;
+    }
+
+    case 'ADAPT_GRADE_MATCH': {
+      caster.adaptOn = true;
+      log('highlight', `\u{1F9EC} ${J(caster.name,'이','가')} <b>적응</b>했습니다. <b>직전 카드와 같은 등급</b>의 카드는 무효화되고 ${J(caster.name,'이','가')} 가져갑니다.`);
+      renderBoard(); onDone({}); break;
+    }
+
+    case 'TAZZA_EX': {
+      caster.gambleOneDollar = true;
+      caster.dottusaImmune = true;
+      caster.tazzaExOn = true;
+      log('highlight', `\u{1F0CF} ${J(caster.name,'이','가')} <b>타짜 EX</b>가 되었습니다. 모든 도박이 <b>1골드</b>, <b>도뜨사 면역</b>. 대신 매 턴 <b>${card.organPct||5}%</b> 확률로 장기를 뜯깁니다.`);
+      renderBoard(); onDone({}); break;
+    }
+
+    case 'JIBAL_RAGE_AURA': {
+      caster.jibalOn = true;
+      caster.jibalPower = card.power || 200;
+      caster.jibalPct = card.ragePct || 2;
+      jibalArm();
+      log('highlight', `\u{1F92C} ${J(caster.name,'이','가')} <b>지발랄광</b>을 시작했습니다. 남의 턴 동안 <b>1초마다 ${caster.jibalPct}%</b> 확률로 터집니다.`);
+      renderBoard(); onDone({}); break;
+    }
+
+    case 'CHAOS_MESS_AURA': {
+      caster.chaosUntilRound = turnCount + (card.chaosRounds || 3);
+      log('highlight', `\u{1F4A5} <b>우당탕탕 개난장판</b> — ${(card.chaosRounds||3)}바퀴 동안 ${J(caster.name,'의','의')} 턴마다 나머지 전원이 <b>디버프 하나</b>씩을 받습니다.`);
+      renderBoard(); onDone({}); break;
+    }
+
+    case 'MELTDOWN_TIMER': {
+      caster.meltdownDueRound = turnCount + (card.meltRounds || 5);
+      caster.meltdownPower = card.power || 5000;
+      log('highlight', `\u{2622}\uFE0F <b>멜트다운</b> — <b>${card.meltRounds||5}바퀴</b> 안에 ${J(caster.name,'을','를')} 처치하지 못하면 <b>${(card.power||5000).toLocaleString()} 쉴드 파괴 광역</b>이 터집니다.`);
+      renderBoard(); onDone({}); break;
+    }
+
+    case 'AGONY_HOURGLASS': {
+      caster.agonyOn = true;
+      caster.agonyRounds = card.agonyRounds || 2;
+      log('highlight', `\u{23F3} <b>고통의 모래시계</b> — ${J(caster.name,'이','가')} 쓰러져도 <b>${caster.agonyRounds}바퀴</b>를 더 버팁니다. 그 사이 누군가를 처치하면 <b>영혼을 훔칩니다.</b>`);
+      renderBoard(); onDone({}); break;
+    }
+
+    /* ── 한 방 ── */
+    case 'MULTI_HIT_AOE': {
+      const per = card.power || 200, hits = card.hitCount || 3;
+      const rest = getTargetsForAoe(caster);
+      if(!rest.length){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
+      log('sys', `\u{2694}\uFE0F <b>발도</b> — 전원에게 ${per}을(를) ${hits}번 벱니다.`);
+      window.__multiHitFloatCollect = []; mhVizBegin();
+      renderHoldBegin();
+      try{
+        for(let i=0;i<hits;i++){
+          rest.forEach(t=>{
+            if(!t.alive) return;
+            currentAttackContext = { attackerName: caster.name, attackerId: caster.id, cardName: card.name };
+            dealDamage(caster, t, per, card.pierce||'NONE', true);
+          });
+        }
+      } finally { currentAttackContext = null; renderHoldEnd(); }
+      try{ flushMultiHitFloats(); }catch(e){ window.__multiHitFloatCollect = null; mhVizClearAll(); }
+      onDone({}); break;
+    }
+
+    case 'ROCKET_BARRAGE_AOE': {
+      rocketVolley(caster, card, 1);
+      onDone({}); break;
+    }
+
+    case 'PHOTON_APEX': {
+      const target = players.find(p=>p.id===targetId);
+      if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
+      /* ⚠ 4,999만 번을 진짜로 돌리면 탭이 얼어붙는다. 총량을 한 번에 구해
+         15덩이로 나눠 때린다 — 스탯창 단계 애니메이션과도 자연스럽게 맞물린다. */
+      const per = card.power || 1, shots = card.hitCount || 49999500;
+      const total = per * shots;
+      const CHUNKS = 15, each = Math.floor(total / CHUNKS);
+      log('sys', `\u{1F7E2} <b>광자포 APEX</b> — ${J(target.name,'에게','에게')} <b>${per}</b>을(를) <b>${shots.toLocaleString()}번</b> 쏟아붓습니다.`);
+      window.__multiHitFloatCollect = []; mhVizBegin();
+      renderHoldBegin();
+      try{
+        for(let i=0;i<CHUNKS;i++){
+          if(!target.alive) break;
+          currentAttackContext = { attackerName: caster.name, attackerId: caster.id, cardName: card.name };
+          const amt = (i === CHUNKS-1) ? (total - each*(CHUNKS-1)) : each;
+          dealDamage(caster, target, amt, card.pierce||'NONE');
+        }
+      } finally { currentAttackContext = null; renderHoldEnd(); }
+      try{ flushMultiHitFloats(); }catch(e){ window.__multiHitFloatCollect = null; mhVizClearAll(); }
+      onDone({}); break;
+    }
+
+    case 'MOIST_YELLOW_DOOM': {
+      const target = players.find(p=>p.id===targetId);
+      if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
+      dealDamage(caster, target, card.power || 25, card.pierce||'NONE');
+      if(target.alive){
+        applyHarmfulStatus(target, (t)=>{ t.yellowDoom = true; });
+        log('highlight', `\u{1F4A7} <b>촉@촉하게 만들어주지</b> — ${J(target.name,'이','가')} 촉촉해졌습니다. 이제 <b>노란색 카드</b>를 맞으면 <b>즉사</b>합니다.`);
+      }
+      renderBoard(); onDone({}); break;
+    }
+
+    case 'TOOTHPASTE_PIZZA_KILL': {
+      const target = players.find(p=>p.id===targetId);
+      if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
+      if(tryNullify(target)){ onDone({}); return; }
+      /* 카드를 "먹인다" — 손패에 넣어주고 즉사시킨다 */
+      try{ grantCardToPlayer(target, mkUidCard(card), '치약건포도쌀밥피자'); }catch(e){}
+      log('highlight', `\u{1F355} <b>치약건포도쌀밥피자</b> — ${J(caster.name,'이','가')} ${target.name}${J(target.name,'에게','에게')} 한 조각을 먹였습니다. <b>즉사.</b>`);
+      forceKillWithRevive(target, '치약건포도쌀밥피자를 먹음', card.name);
+      renderBoard(); checkWinCondition(); onDone({}); break;
+    }
+
+    case 'ANIYA_PURGE': {
+      const mine = (caster.hp||0) + (caster.shield||0);
+      const victims = alivePlayers().filter(p=> p.id !== caster.id && ((p.hp||0) + (p.shield||0)) > mine);
+      if(!victims.length){
+        log('sys', `\u{1F626} <b>응아니야</b> — ${J(caster.name,'보다','보다')} 튼튼한 사람이 없어 아무 일도 일어나지 않았습니다.`);
+        onDone({}); break;
+      }
+      log('highlight', `\u{1F626} <b>응아니야</b> — ${J(caster.name,'이','가')} 자신보다 튼튼한 <b>${victims.length}명</b>을 전부 지워버립니다. (기준 ${mine.toLocaleString()})`);
+      victims.forEach(v=>{ try{ forceKillWithRevive(v, '응아니야', card.name); }catch(e){} });
+      renderBoard(); checkWinCondition(); onDone({}); break;
+    }
+
+    case 'SIN_JUDGEMENT': {
+      const accused = caster.lastAttackerId ? players.find(p=> p.id === caster.lastAttackerId && p.alive) : null;
+      if(!accused || accused.id === caster.id){
+        log('sys', `\u{2696}\uFE0F <b>죄악 심판</b> — 심판할 피고가 없습니다.`);
+        onDone({}); break;
+      }
+      const dmg = sinDamageFrom(caster, accused.id);
+      log('highlight', `\u{2696}\uFE0F <b>죄악 심판</b> — 피고 <b>${escapeHtml(accused.name)}</b>. 누적 피해 <b>${dmg.toLocaleString()}</b>.`);
+      if(dmg >= (card.sinExecute || 2500)){
+        log('highlight', `\u{2696}\uFE0F <b>사형.</b>`);
+        const gold = accused.gold || 0;
+        if(gold > 0){ accused.gold = 0; grantGold(caster, gold); }
+        const loot = (accused.hand||[]).slice();
+        accused.hand = [];
+        loot.forEach(c=>{ try{ grantCardToPlayer(caster, c, '죄악 심판'); }catch(e){} });
+        log('sys', `\u{2696}\uFE0F 형 집행 — ${fmtWon(gold)}과(와) 카드 ${loot.length}장을 압수했습니다.`);
+        forceKillAbsolute(accused, '죄악 심판 — 사형', card.name);
+      } else if(dmg >= (card.sinBlind || 1500)){
+        log('highlight', `\u{2696}\uFE0F <b>몰수.</b>`);
+        applyHarmfulStatus(accused, (t)=>{
+          t.sinBlindUntil = Math.max(t.sinBlindUntil||0, turnCount + 3);
+          (t.hand||[]).forEach(c=>{ if(c) c.__masked = true; });
+          t.maskedBySource = '죄악 심판 · 몰수';
+        });
+        log('sys', `\u{2696}\uFE0F ${J(accused.name,'은','는')} <b>3바퀴</b> 동안 자기 손패를 볼 수 없습니다.`);
+      } else if(dmg >= (card.sinSteal || 1000)){
+        log('highlight', `\u{2696}\uFE0F <b>유죄.</b>`);
+        const hand = (accused.hand||[]).slice().sort((a,b)=> gradeRankOf(b.grade) - gradeRankOf(a.grade));
+        if(hand.length){
+          const take = hand[0];
+          const idx = accused.hand.indexOf(take);
+          if(idx >= 0) accused.hand.splice(idx, 1);
+          try{ grantCardToPlayer(caster, take, '죄악 심판'); }catch(e){}
+          log('sys', `\u{2696}\uFE0F ${J(accused.name,'의','의')} <b>${escapeHtml(take.name)}</b>(${take.grade})을(를) 압수했습니다.`);
+        } else log('sys', `\u{2696}\uFE0F 압수할 카드가 없습니다.`);
+      } else {
+        log('sys', `\u{2696}\uFE0F <b>무죄.</b> 누적 피해가 ${(card.sinSteal||1000).toLocaleString()}에 못 미칩니다.`);
+      }
+      renderBoard(); checkWinCondition(); onDone({}); break;
+    }
+
+    case 'DODGEBALL_PASS': {
+      const target = players.find(p=>p.id===targetId);
+      if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
+      dealDamage(caster, target, card.power || 1999, card.pierce||'NONE');
+      if(target.alive){
+        try{ grantCardToPlayer(target, mkUidCard(card), '트루젼SFM'); }catch(e){}
+        log('sys', `\u{1F3D0} <b>트루젼SFM</b> — ${J(target.name,'이','가')} 공을 받아냈습니다. 공은 ${target.name}${J(target.name,'에게','에게')} 넘어갑니다.`);
+      }
+      renderBoard(); onDone({}); break;
+    }
+
+    /* ── 몸 ── */
+    case 'WOORYANGA_BLOODLINE': {
+      const first = (turnCount <= 1);
+      if(first){
+        caster.maxHp = card.firstTurnMaxHp || 4000;
+        caster.hp = caster.maxHp;
+        log('highlight', `\u{1F37C} <b>우 량아</b> — ${J(caster.name,'이','가')} 태생부터 남다름을 증명했습니다! 최대 체력 <b>${caster.maxHp.toLocaleString()}</b>, 전부 회복.`);
+      } else {
+        log('sys', `\u{1F37C} <b>우 량아</b> — 첫 턴이 아니라 태생 증명은 건너뜁니다.`);
+      }
+      caster.wooryangaOn = true;
+      caster.wooryangaAtk = card.oddAtkPct || 30;
+      caster.wooryangaDr  = card.evenDrPct || 30;
+      caster.wooryangaTurn = 0;
+      log('sys', `\u{1F37C} 이후 <b>홀수 턴</b>에는 공격력 +${caster.wooryangaAtk}%, <b>짝수 턴</b>에는 받는 피해 -${caster.wooryangaDr}%.`);
+      renderBoard(); onDone({}); break;
+    }
+
+    case 'JOYRIDE_EVADE_GOJA': {
+      caster.evasionPct = Math.max(caster.evasionPct||0, card.evasionPct || 90);
+      if(caster.gojaImmune){
+        log('sys', `\u{1F697} <b>조이라이드</b> — "고자방지권"으로 아래쪽은 무사합니다. 회피율만 ${card.evasionPct||90}%가 되었습니다.`);
+      } else {
+        caster.maxHp = 1; caster.hp = 1; caster.shield = 0;
+        try{ cardAudioTriggerKey('sfx','goja',caster.id); }catch(e){}
+        log('highlight', `\u{1F697} <b>조이라이드</b> — ${J(caster.name,'이','가')} 회피율 <b>${card.evasionPct||90}%</b>를 얻었지만 <b>고자</b>가 되었습니다.`);
+      }
+      renderBoard(); onDone({}); break;
+    }
+
+    case 'SOAP_SLIP_DEBUFF': {
+      const target = players.find(p=>p.id===targetId);
+      if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
+      if(target.debuffImmune){ log('sys', `${J(target.name,'은','는')} 디버프 면역이라 ${card.name} 효과가 무시되었습니다.`); onDone({}); return; }
+      if(tryNullify(target)){ onDone({}); return; }
+      applyHarmfulStatus(target, (t)=>{ t.soapPct = Math.max(t.soapPct||0, card.slipPct || 25); });
+      log('highlight', `\u{1F9FC} <b>우빈비누</b> — ${J(target.name,'의','의')} 손이 미끌미끌합니다. 카드를 낼 때 <b>${card.slipPct||25}%</b> 확률로 흘려 <b>소멸</b>합니다.`);
+      renderBoard(); onDone({}); break;
+    }
+
+    /* ── 카드 양산 ── */
+    case 'CARD_MASS_BUG': {
+      caster.massBugPct = card.bugTrapPct || 10;
+      log('highlight', `\u{1F41B} <b>카드양산버그</b> — ${J(caster.name,'이','가')} 이제 카드를 <b>10장씩</b> 뽑습니다. 그중 <b>${caster.massBugPct}%</b>는 <b>[뽑뜨사]</b>입니다.`);
+      renderBoard(); onDone({}); break;
+    }
+
+    case 'CARD_MASS_GRANT': {
+      const target = players.find(p=>p.id===targetId);
+      if(!target || !target.alive){ log('sys','대상이 없어 효과가 무산되었습니다.'); onDone({}); return; }
+      if(tryNullify(target)){ onDone({}); return; }
+      applyHarmfulStatus(target, (t)=>{ t.massBugPct = card.bugTrapPct || 10; });
+      log('highlight', `\u{1F41B} <b>카드양산</b> — ${J(target.name,'이','가')} 이제 카드를 <b>10장씩</b> 뽑습니다. 그중 <b>${card.bugTrapPct||10}%</b>는 <b>[뽑뜨사]</b>입니다.`);
       renderBoard(); onDone({}); break;
     }
 
@@ -60987,7 +61862,8 @@ function resolveCardEffect(caster, card, targetId, onDone){
       // [5.2.1] hitAccuracy가 지정된 카드(시내버스 pro 등)는 각 타격마다 그 확률로만 명중한다.
       // 명중 판정을 먼저 굴려 실제 적중한 타수만 적용한다(빗나간 타격은 무효화·반사 판정도 없음).
       if(card.hitAccuracy != null){
-        const acc = card.hitAccuracy;
+        /* [Ver 16.10] 시내버스기사를 들고 있으면 시내버스류의 각 타격이 100% 명중한다 */
+        const acc = (String(card.name||'').indexOf('시내버스') !== -1 && hasBusDriver(caster)) ? 100 : card.hitAccuracy;
         let landedHits = 0;
         for(let h=0; h<hitCount; h++){ if(Math.random()*100 < acc) landedHits++; }
         log('sys', `${J(caster.name,'이','가')} "${card.name}" ${hitCount}회 시도 중 ${landedHits}회 명중! (각 ${acc}% 명중)`);
@@ -67692,6 +68568,19 @@ function releaseGuardianAngel(dead){
   mate.__gaCardSnapshot = null; dead.__gaCardSnapshot = null;
 }
 function onPlayerDeath(deadPlayer, cause, cardName){
+  /* [Ver 16.10] ⏳ 고통의 모래시계 — 버티는 중에 누군가를 처치했다면 그 영혼을 가져온다.
+     ⚠ 죽은 사람이 곧 모래시계 주인일 수도 있다(시간 초과). 그때는 훔칠 것이 없다. */
+  try{
+    const __killerId = (typeof currentAttackContext === 'object' && currentAttackContext) ? currentAttackContext.attackerId : null;
+    const __killer = __killerId ? (players||[]).find(p=> p && p.id === __killerId) : null;
+    if(__killer && __killer.alive && __killer.agonyUntil > 0 && deadPlayer && deadPlayer.id !== __killer.id){
+      __killer.agonyUntil = 0;
+      __killer.maxHp = Math.max(1, deadPlayer.maxHp || 1);
+      __killer.hp = __killer.maxHp;
+      log('highlight', `\u{23F3} <b>고통의 모래시계</b> — ${J(__killer.name,'이','가')} ${deadPlayer.name}의 <b>영혼을 훔쳤습니다.</b> `
+        + `최대 체력 <b>${__killer.maxHp.toLocaleString()}</b>, 전부 회복.`);
+    }
+  }catch(e){}
   /* [Ver 16.0] 죽은 봇은 한마디, 죽인 쪽이 봇이면 또 한마디.
      ⚠ 확률·쿨타임은 botEmote 안에서 본다 — 여기서 또 따지지 않는다.
      ⚠ 죽은 봇은 곧 alive=false 가 되므로 **지금** 불러야 한다. */
@@ -68382,6 +69271,19 @@ function getTotalAtkPctBonus(caster){
   if(caster.hemorrhoidDraws > 0) pct -= 90;
   /* [Ver 14.7.4] 분노 — 소지 중 + 체력이 생존자 중 꼴찌일 때만 */
   if(rageActive(caster)) pct += 90;
+  /* [Ver 16.10] */
+  if(caster.chopstickAtk) pct += caster.chopstickAtk;     // 서울시쇠젓가락도둑 — 훔친 1골드당 2%
+  if(caster.seclusionAtk) pct += caster.seclusionAtk;     // 폐관수련 — 턴마다 쌓인 것
+  /* 우 량아 — 홀수 번째 턴에만 */
+  if(caster.wooryangaOn && ((caster.wooryangaTurn||0) % 2) === 1) pct += (caster.wooryangaAtk||30);
+  /* 시내버스기사 — 소지 중이면 **시내버스류 카드**의 피해만 크게 오른다.
+     ⚠ 지금 시전 중인 카드를 봐야 하므로 currentCastingCard 를 쓴다. 다른 카드에는 안 붙는다. */
+  try{
+    const __cc = currentCastingCard;
+    if(__cc && String(__cc.name||'').indexOf('시내버스') !== -1 && hasBusDriver(caster)){
+      pct += (6974 * busDriverCount(caster));
+    }
+  }catch(e){}
   /* [Ver 9.7 정리] 9.6에서 폐지된 "돈 재단 Lv2 = 보유 돈 비례 공격력"의 잔재(fdnGoldAtkPct 호출)를 제거.
      항상 0을 더하던 빈 호출이라 계산 결과는 그대로다. Lv2는 이제 매 턴 고정 수입이다. */
   // [Ver 8.2] 공격력 "감소"는 아무리 겹쳐도 최대 95%까지만 (증가 방향은 상한 없음)
@@ -68473,18 +69375,95 @@ function prepareHitPacket(caster, target, amount, pierce){
        잘린 만큼은 마지막 숫자 뒤에 "×N" 꼬리표로 알려준다.
    ========================================================================== */
 const MULTI_HIT_FLOAT_MAX = 15;      // 화면에 연속으로 띄우는 최대 개수
-const MULTI_HIT_FLOAT_GAP = 110;     // 숫자 사이 간격(ms) — "따다닥" 체감이 나는 값
+const MULTI_HIT_FLOAT_GAP = 110;     // (참고용) 예전 고정 간격
+
+/* ##########################################################################
+   [Ver 16.10 신규] 연타는 스탯창도 한 타씩 깎인다
+   --------------------------------------------------------------------------
+   100x5 를 맞으면 숫자는 다섯 번 떴는데 **체력바는 단 한 번에** 끝까지 내려갔다.
+   몇 대를 맞았는지 바를 보고는 알 수가 없었다.
+
+   ▶ p.hp 는 건드리지 않는다. 화면에만 쓰는 값(p.__vizHp)을 따로 두고,
+     renderBoard 가 그 값이 있으면 그것을 그린다. 규칙·판정은 전부 진짜 hp 를 본다.
+   ▶ 간격은 **타수로 나눈다.** 총 길이(MH_VIZ_SPAN_MS)가 고정이라
+     타수가 많을수록 촘촘해지고 적을수록 느긋해진다. 3타면 한 타에 0.25초다.
+   ▶ 999타짜리(이색빔)는 15단계로 추려 그린다 — 숫자 띄우기와 같은 상한이다.
+     마지막 단계는 **반드시 진짜 값**이라, 추려도 끝은 어긋나지 않는다.
+
+   ⚠ 애니메이션이 끝나면 __vizHp 를 **반드시 지운다.** 남으면 그 사람 체력이
+     영영 옛날 값으로 보인다.
+   ⚠ 징오징오(시야 차단)로 가려진 칸은 건드리지 않는다 — 가린 것을 벗기면 안 된다.
+   ########################################################################## */
+const MH_VIZ_SPAN_MS  = 750;   // 연타 하나가 다 깎이는 데 걸리는 총 시간
+const MH_VIZ_MIN_MS   = 45;    // 너무 빨라 한 덩어리로 보이지 않게
+const MH_VIZ_MAX_MS   = 260;   // 2타짜리가 늘어지지 않게
+const MH_VIZ_MAX_STEPS = MULTI_HIT_FLOAT_MAX;
+function vizHpOf(p){ return (p && p.__vizHp != null) ? p.__vizHp : (p ? p.hp : 0); }
+function vizShieldOf(p){ return (p && p.__vizShield != null) ? p.__vizShield : (p ? p.shield : 0); }
+function mhVizClearAll(){
+  try{ (players||[]).forEach(p=>{ if(p){ delete p.__vizHp; delete p.__vizShield; } }); }catch(e){}
+}
+/* 연타가 시작될 때 — 지금 값을 화면 값으로 못박아 둔다.
+   이걸 안 하면 renderHoldEnd 의 renderBoard 가 **끝난 뒤 값**을 먼저 그려버린다. */
+function mhVizBegin(){
+  try{ (players||[]).forEach(p=>{ if(p){ p.__vizHp = p.hp; p.__vizShield = p.shield; } }); }catch(e){}
+}
+/* 한 단계를 화면에 반영한다 — 그 사람 칸의 바와 숫자만 손댄다(전체 렌더 없음) */
+function mhVizApply(p){
+  if(!p) return;
+  const card = document.getElementById('pcard-'+p.id);
+  if(!card) return;
+  const num = card.querySelector('.stat-row .stat-num');
+  if(num && String(num.textContent||'').indexOf('■') !== -1) return;   // 시야 차단 중
+  const hp = Math.max(0, vizHpOf(p)), sh = Math.max(0, vizShieldOf(p));
+  const mx = Math.max(1, p.maxHp||1);
+  const fill = card.querySelector('.bar-fill');
+  if(fill) fill.style.width = Math.max(0, Math.min(100, (hp/mx)*100)) + '%';
+  if(num) num.textContent = hp;
+  const sfill = card.querySelector('.bar-fill-shield');
+  if(sfill) sfill.style.width = (sh > 0 ? Math.min(100, (sh/mx)*100) : 0) + '%';
+  const snum = card.querySelector('.shield-row .stat-num');
+  if(snum) snum.textContent = sh;
+}
+/* 큐에 쌓인 단계를 순서대로 재생한다. 끝나면 화면 값을 걷어내고 한 번 제대로 그린다. */
+function mhVizPlay(steps, gap){
+  if(!Array.isArray(steps) || !steps.length){ mhVizClearAll(); return; }
+  steps.forEach((st, i)=>{
+    setTimeout(()=>{
+      try{
+        const p = (players||[]).find(x=> x && x.id === st.id);
+        if(!p) return;
+        p.__vizHp = st.hp; p.__vizShield = st.shield;
+        mhVizApply(p);
+      }catch(e){}
+    }, i * gap);
+  });
+  setTimeout(()=>{ try{ mhVizClearAll(); renderBoard(); }catch(e){} }, steps.length * gap + 30);
+}
+/* 999타를 15단계로 추린다 — 마지막은 언제나 진짜 마지막 값이다 */
+function mhVizThin(q, max){
+  if(q.length <= max) return q.slice();
+  const out = [];
+  for(let i=0;i<max-1;i++) out.push(q[Math.floor(i * (q.length-1) / (max-1))]);
+  out.push(q[q.length-1]);
+  return out;
+}
 function flushMultiHitFloats(){
   const q = window.__multiHitFloatCollect;
   window.__multiHitFloatCollect = null;
-  if(!Array.isArray(q) || !q.length) return;
+  if(!Array.isArray(q) || !q.length){ mhVizClearAll(); return; }
+  /* [Ver 16.10] 숫자와 체력바가 **같은 박자**로 움직여야 한 대씩 맞는 것으로 보인다.
+     그래서 간격을 한 번만 구해 둘이 같이 쓴다. */
+  const steps = mhVizThin(q, MH_VIZ_MAX_STEPS);
+  const gap = Math.max(MH_VIZ_MIN_MS, Math.min(MH_VIZ_MAX_MS, Math.round(MH_VIZ_SPAN_MS / Math.max(1, steps.length))));
   const shown = q.slice(0, MULTI_HIT_FLOAT_MAX);
   const hidden = q.length - shown.length;
   shown.forEach((f, i)=>{
     const last = (i === shown.length - 1);
     const tx = (last && hidden > 0) ? `${f.tx}<span class="fc-tag">×${q.length}</span>` : f.tx;
-    setTimeout(()=>{ try{ showFloatNumber(f.id, tx, f.cls, last && hidden > 0); }catch(e){} }, i * MULTI_HIT_FLOAT_GAP);
+    setTimeout(()=>{ try{ showFloatNumber(f.id, tx, f.cls, last && hidden > 0); }catch(e){} }, i * gap);
   });
+  mhVizPlay(steps, gap);
 }
 function resolveMultiHitAttack(caster, target, hitAmount, hitCount, pierce){
   if(!caster || !target || !target.alive || hitCount<=0) return false;
@@ -68510,7 +69489,7 @@ function resolveMultiHitAttack(caster, target, hitAmount, hitCount, pierce){
       //          또한 명중 굴림도 caster의 accuracyMod로 다시 돌려 반사가 빗나가는 이상한 상황이 발생했음.
       //          → 반사 데미지는 자동 명중, 배율 없이 hitAmount × hitCount 로 확정.
       const effReflectPierce = (target.permaPierce && pierce === 'NONE') ? 'PIERCE' : pierce;
-      window.__multiHitFloatCollect = [];   // [Ver 10.5] 반사된 연타도 한 타씩 터뜨린다
+      window.__multiHitFloatCollect = []; mhVizBegin();   // [Ver 10.5] 반사된 연타도 한 타씩 터뜨린다
       /* [Ver 14.7.5] 본 루프와 같은 두 가지를 반사 쪽에도 적용한다.
          ① 그리기 보류  ② 5타를 넘으면 타격별 로그를 접는다
          (예전엔 반사만 로그를 그대로 찍어, 이색빔을 반사하면 999줄이 쏟아졌다) */
@@ -68533,7 +69512,7 @@ function resolveMultiHitAttack(caster, target, hitAmount, hitCount, pierce){
       if(!__rVerbose){
         log('dmg', `${currentStatCardName||'연속 공격'} — 반사로 ${__rLanded}타, 총 ${(__rLanded*hitAmount).toLocaleString()} 기준 피해`);
       }
-      try{ flushMultiHitFloats(); }catch(e){ window.__multiHitFloatCollect = null; }
+      try{ flushMultiHitFloats(); }catch(e){ window.__multiHitFloatCollect = null; mhVizClearAll(); }
       return !caster.alive;
     }
   } else if(target.nullifyNext || target.reflectNext){
@@ -68545,7 +69524,7 @@ function resolveMultiHitAttack(caster, target, hitAmount, hitCount, pierce){
      매 타격을 로그에 찍으면 로그가 도배된다. 5타를 넘으면 개별 로그를 접고 마지막에 요약 한 줄만 남긴다. */
   const __verboseHits = hitCount <= 5;
   let __hitLanded = 0, __hitMissed = 0;
-  window.__multiHitFloatCollect = [];   // [Ver 10.5] 이 아래 피해 숫자는 큐에 모았다가 한 타씩 터뜨린다
+  window.__multiHitFloatCollect = []; mhVizBegin();   // [Ver 10.5] 이 아래 피해 숫자는 큐에 모았다가 한 타씩 터뜨린다
   /* [Ver 14.7.5] 타격마다 보드를 다시 그리지 않는다 — 마지막에 한 번만. (주석: renderBoard 위) */
   renderHoldBegin();
   try{
@@ -68568,7 +69547,7 @@ function resolveMultiHitAttack(caster, target, hitAmount, hitCount, pierce){
     const attempted = __hitLanded + __hitMissed;
     log('dmg', `${currentStatCardName||'연속 공격'} — ${hitCount}타 중 ${__hitLanded}타 명중${__hitMissed?` (${__hitMissed}타 빗나감)`:''}, 총 ${(__hitLanded*hitAmount).toLocaleString()} 기준 피해${attempted<hitCount?` · 대상 사망으로 ${attempted}타에서 중단`:''}`);
   }
-  try{ flushMultiHitFloats(); }catch(e){ window.__multiHitFloatCollect = null; }  // [Ver 10.5]
+  try{ flushMultiHitFloats(); }catch(e){ window.__multiHitFloatCollect = null; mhVizClearAll(); }  // [Ver 10.5]
   window.__lastMultiHitLanded = __hitLanded; // [Ver 8.6] 호출부가 "한 대라도 맞았는지" 확인할 수 있게 노출
   return !target.alive;
 }
@@ -69558,6 +70537,18 @@ function applyHarmfulStatus(target, applyFn){
     }
   }
   applyFn(actualTarget);
+  /* [Ver 16.10] 싱크로 EX — 내가 받은 디버프를 **모두가** 함께 받는다.
+     ⚠ 재진입을 막지 않으면 남에게 옮긴 디버프가 또 이 관문을 지나 무한히 번진다. */
+  if(target.syncExOn && !window.__syncExSpreading){
+    window.__syncExSpreading = true;
+    try{
+      const rest = alivePlayers().filter(o=> o.id !== target.id && o.id !== actualTarget.id && !o.debuffImmune);
+      if(rest.length){
+        log('sys', `\u{1F517} <b>싱크로 EX</b> — ${J(target.name,'이','가')} 받은 효과를 <b>${rest.length}명</b>이 함께 받습니다.`);
+        rest.forEach(o=>{ try{ applyFn(o); }catch(e){} });
+      }
+    } finally { window.__syncExSpreading = false; }
+  }
   if(target.syncTargetId){
     const partner = players.find(p=>p.id===target.syncTargetId);
     if(partner && partner.alive && partner.id!==target.id && partner.id!==actualTarget.id){
@@ -69607,6 +70598,23 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
      ⚠ 피해 함수는 카드를 인자로 받지 않는다 — 이름으로 정의를 되찾아 쓴다.
        되찾지 못하면(환경 피해·지연 피해 등) 둘 다 그냥 지나간다.
      ══════════════════════════════════════════════════════════════ */
+  /* [Ver 16.10] 카드의 **색**을 보는 둘. 방탄유리와 같은 자리다. */
+  if(target && target.alive && amount > 0 && (target.apostolosOn || target.yellowDoom)){
+    const __c2 = curAtkCardDef();
+    if(__c2){
+      const __col = cardColorOf(__c2);
+      if(target.apostolosOn && (__col === 'red' || __col === 'blue')){
+        log('sys', `\u{271D}\uFE0F <b>사도</b> — ${J(target.name,'이','가')} ${__col==='red'?'빨간색':'파란색'} 카드 "${escapeHtml(__c2.name)}"을(를) 통째로 흘려보냈습니다.`);
+        return false;
+      }
+      if(target.yellowDoom && __col === 'yellow'){
+        target.yellowDoom = false;
+        log('highlight', `\u{1F4A7} <b>촉@촉</b> — 촉촉해진 ${J(target.name,'이','가')} 노란색 카드 "${escapeHtml(__c2.name)}"에 맞아 <b>즉사</b>합니다.`);
+        try{ forceKillWithRevive(target, '촉촉한 채로 노란색 카드에 맞음', __c2.name); }catch(e){ target.hp=0; target.alive=false; try{ onPlayerDeath(target, '촉@촉'); }catch(e2){} }
+        return true;
+      }
+    }
+  }
   if(target && target.alive && amount > 0 && (target.bpGlassOn || target.monoScreenOn)){
     const __c = curAtkCardDef();
     if(__c){
@@ -69629,6 +70637,10 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
         amount = Math.max(0, Math.round(amount * (hasAttr ? 1.4 : 0.6)));
       }
     }
+  }
+  /* [Ver 16.10] 우 량아 — 짝수 번째 턴에는 받는 피해가 줄어든다 */
+  if(target && target.wooryangaOn && amount > 0 && ((target.wooryangaTurn||0) % 2) === 0 && (target.wooryangaTurn||0) > 0){
+    amount = Math.max(0, Math.round(amount * (1 - (target.wooryangaDr||30)/100)));
   }
   /* ==========================================================================
      [Ver 13.1] 랩터의 권능 — 피격 순간에 끼어드는 둘.
@@ -69736,6 +70748,8 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
   // [Ver 8.5.6] 정중부용: 마지막으로 나를 공격한 사람 기록 (자해 제외)
   if(amount > 0 && currentAttackContext && currentAttackContext.attackerId && currentAttackContext.attackerId !== target.id){
     target.lastAttackerId = currentAttackContext.attackerId;
+    /* [Ver 16.10] 죄악 심판 — 누가 나에게 얼마나 넣었는지 쌓아 둔다 */
+    try{ sinNoteDamage(target, currentAttackContext.attackerId, window.__lastDamageApplied || 0); }catch(e){}
   }
   // [Ver 8.5.6] "알." 반격: 반격 오라가 살아있는 동안 유효한 공격이 들어오면 공격자 즉사
   if(amount > 0 && target.eggRetaliateUntil && totalIndividualTurns < target.eggRetaliateUntil
@@ -70127,6 +71141,17 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
       renderBoard();
       return;
     }
+    /* [Ver 16.10] ⏳ 고통의 모래시계 — 쓰러지는 대신 2바퀴를 더 버틴다.
+       ⚠ 2명만 남았을 때는 발동하지 않는다(사용자 지정) — 그러면 판이 안 끝난다.
+       ⚠ 버티는 동안 누군가를 처치하면 영혼을 훔쳐 최대 체력을 통째로 가져온다(onPlayerDeath). */
+    if(target.agonyOn && target.agonyUntil <= 0 && alivePlayers().length > 2){
+      target.hp = 1;
+      target.agonyUntil = turnCount + (target.agonyRounds || 2);
+      log('highlight', `\u{23F3} <b>고통의 모래시계</b> — ${J(target.name,'이','가')} 쓰러지지 않고 <b>${target.agonyRounds||2}바퀴</b>를 더 버팁니다. `
+        + `그 사이 누군가를 처치하면 <b>영혼을 훔칩니다.</b>`);
+      renderBoard();
+      return;
+    }
     /* [Ver 10.5] 정몽주 / 영정사진 — "더 좋은 부활"이 남아 있으면 그쪽에 양보한다.
        (풀피 부활인 영웅은 죽지 않아요·OH JESUS A MIRACLE·아니 이맛은!!!!!!·무의식이 우선) */
     const __hasBetterRevive = (target.reviveCharge
@@ -70282,10 +71307,12 @@ function applyDamageToPlayer(target, amount, pierce, skipRedirect){
      연타 처리 중(resolveMultiHitAttack)에는 여기서 바로 띄우지 않고 큐에 모아두었다가,
      끝난 뒤 0.11초 간격으로 따다닥 터뜨린다. (자세한 규칙은 flushMultiHitFloats 참고) */
   if(remaining > 0){
-    if(window.__multiHitFloatCollect) window.__multiHitFloatCollect.push({ id: target.id, tx: '-'+remaining.toLocaleString(), cls: '' });
+    /* [Ver 16.10] 숫자와 함께 **그 순간의 체력·쉴드**도 담는다. 이 사진들을 순서대로
+       되짚어 스탯창을 한 타씩 깎는다(flushMultiHitFloats -> mhVizPlay). */
+    if(window.__multiHitFloatCollect) window.__multiHitFloatCollect.push({ id: target.id, tx: '-'+remaining.toLocaleString(), cls: '', hp: target.hp, shield: target.shield });
     else showFloatNumber(target.id, '-'+remaining.toLocaleString(), '');
   } else if(shieldAbsorbedAmount > 0){
-    if(window.__multiHitFloatCollect) window.__multiHitFloatCollect.push({ id: target.id, tx: '-'+shieldAbsorbedAmount.toLocaleString(), cls: 'shield' });
+    if(window.__multiHitFloatCollect) window.__multiHitFloatCollect.push({ id: target.id, tx: '-'+shieldAbsorbedAmount.toLocaleString(), cls: 'shield', hp: target.hp, shield: target.shield });
     else showFloatNumber(target.id, '-'+shieldAbsorbedAmount.toLocaleString(), 'shield');
   }
 
@@ -71415,6 +72442,7 @@ function onDrawClick(){
     const newCard = drawCardRespectingGacha(me);
     if(newCard){
       grantCardToPlayer(me, newCard, '드로우');
+      try{ massBugExtraDraw(me); }catch(e){}   // [Ver 16.10] 카드양산버그
       try{ justDrawnUids.add(newCard.uid); }catch(e){}   // [Ver 13.1] 손패에서 톡 튀게
       log('sys', `${J(me.name,'이','가')} 카드를 뽑았습니다. (${newCard.name})`);
     }
@@ -71818,7 +72846,7 @@ const SHOP_SELL_PRICE = { D:10, C:10, B:10, A:30, S:70, SR:100, SSR:200 };
 /* [Ver 9.14 밸런스] 도뜨사(도박 즉사) 기본 확률 1% → 2%.
    봇 도박(botGamble)과 사람 도박이 각각 따로 굴리므로, 두 곳이 어긋나지 않게 상수 하나로 묶었다.
    (여기에 랜덤이벤트 '도박주의보'의 reDottusaBonus와 타짜 지후의 +4%p가 더해진다) */
-const DOTTUSA_BASE_RATE = 0.02;
+const DOTTUSA_BASE_RATE = 0.05;   /* [Ver 16.10] 2% → 5% */
 const GAMBLE_TIERS = [
   { key:'low',    label:'하급도박',   sub:'3장 중 1장',   cost:10,  pool:3,  pick:1, minGrade:'E', maxGrade:'C' },
   { key:'mid',    label:'중급도박',   sub:'3장 중 1장',   cost:30,  pool:3,  pick:1, minGrade:'E', maxGrade:'A' },
@@ -73895,6 +74923,8 @@ function getEffectiveGambleTiers(p){
       nt.pool += extra;
     }
     if(lowFree && nt.key==='low') nt.cost = 0;
+    /* [Ver 16.10] 폐점세일 — 도박도 90% 할인 */
+    if(typeof closingSaleOn === 'function' && closingSaleOn() && nt.cost > 0) nt.cost = Math.max(1, Math.floor(nt.cost * 0.1));
     if(p.gambleOneDollar) nt.cost = 1;
     /* [Ver 9.0] 도박의 재단 — Lv1 전 티어 -5%, Lv5 최상급 추가 -30%(누적 -35%), Lv4 하·중·상급 무료.
        "1골드 도박(타짜)"이나 "단골 혜택 무료"처럼 이미 확정된 특가는 덮어쓰지 않도록,
@@ -74022,6 +75052,31 @@ function botRandomShopCard(){
   return card;
 }
 function isLowGradeRewardCard(card){ return !!card && ['E','D','C'].includes(card.grade); }
+/* [Ver 16.10] 카드양산버그 — 뽑을 때 1장 대신 10장. 그중 10%는 [뽑뜨사]다.
+   ⚠ 드로우 한 번에 대해서만 돈다(sourceLabel 이 '드로우'). 턴 시작 리필·운송까지
+     10배가 되면 손패가 순식간에 100장이 된다.
+   ⚠ 재진입을 막지 않으면 추가로 준 9장이 각각 또 9장을 부른다. */
+function massBugExtraDraw(p){
+  if(!p || !p.alive || !(p.massBugPct > 0)) return;
+  if(window.__massBugBusy) return;
+  window.__massBugBusy = true;
+  try{
+    const trap = (cards||[]).find(c=> c && c.type === 'TRAP_INSTANT_DEATH');
+    let traps = 0;
+    for(let i=0;i<9;i++){
+      if(!p.alive) break;
+      if(trap && Math.random()*100 < p.massBugPct){
+        traps++;
+        grantCardToPlayer(p, mkUidCard(trap), '카드양산버그');
+      } else {
+        const c = drawCard(p);
+        if(c) grantCardToPlayer(p, c, '카드양산버그');
+      }
+    }
+    log('sys', `\u{1F41B} <b>양산버그</b> — ${J(p.name,'이','가')} 카드를 <b>10장</b> 받았습니다.${traps?` (그중 <b>[뽑뜨사] ${traps}장</b>)`:''}`);
+  }catch(e){ console.error('[16.10] 카드양산버그 오류', e); }
+  finally { window.__massBugBusy = false; }
+}
 function grantCardToPlayer(player, card, sourceLabel=''){
   /* [Ver 14.7.4] 치질 — "카드를 3장 뽑을 때까지". 카드가 손에 들어오는 **유일한 관문**이 여기다. */
   try{
@@ -75509,6 +76564,19 @@ function confirmGamble(){
       // [버그수정] 도박은 자발적 획득이므로 수류탄이 나와도 즉사하지 않는다.
       //   (수류탄은 원래 "남이 훔치거나 받을 때"만 터지는 카드 — 도박·상점·패키지 획득은 안전.)
     }
+    /* [Ver 16.10] 당첨! — 후보에 떴다면 고르지 않았어도 반드시 따라온다. */
+    try{
+      if(!trapDied && me.alive){
+        pool.forEach((c, i)=>{
+          if(!c || c.type !== 'GAMBLE_JACKPOT_PICK' || picked.has(i)) return;
+          const extra = mkUidCard(c);
+          grantCardToPlayer(me, extra, '도박 · 당첨!');
+          __won.push(extra.uid);
+          gained++;
+          log('highlight', `\u{1F389} <b>당첨!</b> — 고르지 않았지만 <b>${escapeHtml(c.name)}</b>이(가) 따라왔습니다.`);
+        });
+      }
+    }catch(e){ console.error('[16.10] 당첨! 오류', e); }
     try{ stopGambleSpinTimer(); }catch(e){}
     gambleState = null;
     if(trapDied){
